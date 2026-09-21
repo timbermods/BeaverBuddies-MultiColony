@@ -7,20 +7,15 @@ entry above the current one.
 
 ## 1.2.0-two-colony-alpha2
 
-Adds **founding on standard maps**, and fixes a critical bug in alpha1. Not yet played in a game. Every player must
-install this build.
+Adds **founding on standard maps**. Not yet played in a game. Every player must install this build.
 
-- **Fixed (critical, alpha1):** the host's record of who sent an action never reached the actions a guest sends in a
-  batch (the mod writes that list in a wrapped JSON shape), so every guest action was judged as the host's. Both the
-  network layer and the host's unpacking now stamp every action; checks now use the real JSON shape.
 - **Standard maps (one start):** the host's colony starts as usual; colony 2's player founds it by placing a district
   center anywhere that leaves colony 1's buildings on its own side (offered on joining, and on **Ctrl+K**). It appears
   finished with the new game's starting food, water, adults and children, and the land is then divided between the
   two district centers. The founding is re-checked at the moment it happens, on every computer, and skipped with a
-  notice if the spot has changed. Colony 1 is measured from its starting building, recorded when the game places it.
-- **Crossings:** a half on the other colony's side is accepted only when the placer's own half really stands behind
-  it, and each half must stand wholly on one side.
-- **Multi-start maps with more than two starts:** only the first two become colonies.
+  notice if the spot has changed (built on, or blasted) in the meantime. Colony 1 is measured from its starting
+  building, recorded when the game places it.
+- A multi-start map played with a single start also uses founding.
 - README rewritten as a player's guide.
 
 ## 1.2.0-two-colony-alpha1
