@@ -14,6 +14,7 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyModeService>().AsSingleton();
             containerDefinition.Bind<ColonyRulesService>().AsSingleton();
             containerDefinition.Bind<ColonyFoundingService>().AsSingleton();
+            containerDefinition.Bind<ColonyViewService>().AsSingleton();
             containerDefinition.Bind<ColonyBorderOverlay>().AsSingleton();
             containerDefinition.MultiBind<IBlockObjectValidator>().To<ColonyPlacementValidator>().AsSingleton();
         }

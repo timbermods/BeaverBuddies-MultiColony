@@ -114,6 +114,20 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.GameStartup.StartingBuildingSpawner", "Timberborn.GameStartup", "get_StartingBuildingTemplateSpec"),
             ("Timberborn.GameStartup.StartingBuildingSpawner", "Timberborn.GameStartup", "PlaceStartingBuilding"),
             ("Timberborn.BlockSystem.BlockValidator", "Timberborn.BlockSystem", "BlocksValid"),
+            // Each player sees their own colony: the display methods the colony view replaces or adjusts.
+            ("Timberborn.GameDistricts.DistrictContextService", "Timberborn.GameDistricts", "SelectDistrict"),
+            ("Timberborn.ResourceCountingSystemUI.ContextualResourceCountingService", "Timberborn.ResourceCountingSystemUI", "GetContextualResourceCount"),
+            ("Timberborn.ResourceCountingSystem.ResourceCountingService", "Timberborn.ResourceCountingSystem", "GetDistrictResourceCounter"),
+            ("Timberborn.PopulationUI.PopulationPanel", "Timberborn.PopulationUI", "GetContextualPopulationData"),
+            ("Timberborn.Population.PopulationDataCollector", "Timberborn.Population", "CollectData"),
+            ("Timberborn.WellbeingUI.BasicStatisticsPanel", "Timberborn.WellbeingUI", "UpdateWellbeing"),
+            ("Timberborn.Wellbeing.WellbeingService", "Timberborn.Wellbeing", "GetAverageDistrictWellbeing"),
+            ("Timberborn.BatchControl.BatchControlRowGroup", "Timberborn.BatchControl", "UpdateVisibleRows"),
+            ("Timberborn.BatchControl.BatchControlBoxDistrictController", "Timberborn.BatchControl", "Show"),
+            ("Timberborn.BatchControl.BatchControlBoxDistrictController", "Timberborn.BatchControl", "UpdateDropdown"),
+            ("Timberborn.StatusSystem.StatusAggregator", "Timberborn.StatusSystem", "IsVisible"),
+            ("Timberborn.StatusSystem.DynamicStatusAggregator", "Timberborn.StatusSystem", "IsVisible"),
+            ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "AddNotification"),
         })
         {
             test($"Colony: the game still has {typeName.Split('.').Last()}.{method}", () =>

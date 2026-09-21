@@ -95,6 +95,21 @@ such as building, planting, cutting or demolishing.
 - **Shared by both colonies:** game speed and pause, working hours, science and building unlocks, renaming,
   pings, chat and saving.
 
+## What you see
+
+In a co-op session each player's interface shows **their own colony only**, never both added together:
+
+- **Top bar:** goods, population, housing, workplaces and wellbeing count your colony's districts. Select one of
+  your buildings to see that one district, as in the game. Selecting the other colony's buildings opens their
+  panels but leaves your figures on your colony.
+- **Batch control window (F1 to F10):** opens on your biggest district. With *Global* chosen, the lists (beavers,
+  homes, workplaces, storage, mechanical, attractions, migration) show your colony only.
+- **Alerts** (no food, homeless, unemployed…) and the **notification journal** (births, deaths…) count your colony only.
+
+Still shared, as they belong to the whole game: science points, and the history graphs when *Global* is chosen in
+the goods and population statistics tabs (F9, F10) and in a good's tooltip, which the game records for the whole
+map. Alone (outside a co-op session) you see everything, as in the game.
+
 ## Building a District Crossing together
 
 In Timberborn a District Crossing is two halves placed back to back with one click. In this mode the pair must
@@ -172,7 +187,7 @@ only for the host, only in debug mode, and every switch is logged.
 
 ## Testing
 
-Automated checks (all passing at `1.2.0-two-colony-alpha4`):
+Automated checks (all passing at `1.2.0-two-colony-alpha5`):
 
 - **StabilityTests**, headless: 31 checks for this feature. They cover the host stamping each guest's actions over the
   real network code (a guest that claims another number is overwritten), grouped actions, seats, land division with

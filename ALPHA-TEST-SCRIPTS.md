@@ -1,6 +1,6 @@
 # Separate colonies: alpha test scripts
 
-Two scripts for `1.2.0-two-colony-alpha4`. Please report a result for **every line**: *works*, *fails* (what you
+Two scripts for `1.2.0-two-colony-alpha5`. Please report a result for **every line**: *works*, *fails* (what you
 saw), or *not tried*. A screenshot helps for anything drawn on screen (the border, a red preview, a notice, the
 connection panel). Send `Player.log` at the end (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`).
 Lines from this mode in the log start with `[Colony]`.
@@ -69,6 +69,20 @@ starting location). Save, then in **Load Game** select that save and choose **Ho
    **Ctrl+Shift+K** then **Ctrl+K**: the founding tool opens, and founding works as in lines 4 to 6. The new colony
    gets the Normal difficulty's starting beavers, food and water (9 adults, 4 children, 130 food). Before founding,
    acting as colony 2 is not refused (it is a shared game until then).
+
+## Script D: each player sees their own colony (two players, about 10 minutes)
+
+After colony 2 is founded (or on a two-start map), with nothing selected:
+
+1. **Top bar food/water:** each player sees only their own colony's stock. Right after founding on a standard map
+   both show the starting amounts (for example 130 food each), not the sum (260).
+2. **Population:** each player's number counts their own beavers. Open **F1**: the list shows your own beavers only
+   (different names on the two screens).
+3. Select one of the **other** colony's buildings: its panel opens, but your top bar keeps showing your own figures.
+   Select one of **your** buildings: the top bar shows that district, as in the game.
+4. **F2, F3, F4, F7:** only your own homes, workplaces, storage and districts are listed.
+5. Make a shortage in one colony only (for example no water): the alert shows for that colony's player only.
+6. When a beaver is born or dies in one colony, only that colony's player gets the journal entry.
 
 ## Script B: two players (about 45 minutes)
 

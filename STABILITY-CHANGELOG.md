@@ -5,6 +5,23 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.2.0-two-colony-alpha5
+
+**Each player's screen shows their own colony only.** Reported from play: right after founding, player 1's top bar
+showed 260 food and player 2's 130, and both saw the same beavers. The game kept the colonies apart; the interface
+added them together, because Timberborn shows the whole settlement whenever no district is selected (player 1 saw
+both colonies' 130; player 2 had their district center selected and saw only it).
+
+- With nothing selected, the top bar's goods, population, housing, workplaces and wellbeing count the local
+  player's districts only.
+- Selecting one of the other colony's buildings opens its panels but no longer switches the top bar to their district.
+- The batch control window (F1 to F10) opens on the player's biggest district, and with *Global* chosen its lists
+  show only the player's colony (tabs that always list everything, mechanical and migration, included).
+- Alerts and the notification journal only count the player's colony.
+- Display only: nothing simulated or saved changes, and each computer may show different figures safely. Outside a
+  co-op session everything is shown, as in the game. Still whole-map: science, and the Global history graphs in
+  F9/F10 and in a good's tooltip.
+
 ## 1.2.0-two-colony-alpha4
 
 **Colony 2 can be founded in any hosted game, once.** Reported from play: the second player pressed Ctrl+K and was

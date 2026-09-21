@@ -98,6 +98,11 @@ such as building, planting, cutting or demolishing.
 
 **Shared by both:** game speed and pause, working hours, science and unlocks, renaming, pings, chat and saving.
 
+**Your screen shows your colony only.** The top bar's goods, population, housing, workplaces and wellbeing, the
+batch control window's lists (F1 to F10), the alerts and the notification journal all count your own colony, never
+both together. Selecting the other colony's buildings opens their panels but leaves your figures alone. (The
+*Global* history graphs in F9/F10 and a good's tooltip still cover the whole map; see [TWO-COLONIES.md](TWO-COLONIES.md#what-you-see).)
+
 The host double-checks every action before anyone's game carries it out, so a refused action never happens anywhere.
 
 ### Trading through a District Crossing
@@ -222,7 +227,7 @@ Design notes and the implementation plan: [design/TWO-COLONY-ALPHA-PLAN.md](desi
    (`-c Release` for a build without Steam networking).
 4. Checks: `dotnet run --project StabilityTests --no-build` (241 headless checks, 31 of them for separate colonies),
    `dotnet run --project RuntimeChecks --no-restore -- <built BeaverBuddies.dll> <Timberborn_Data\Managed> <Harmony folder> <Mod Settings Scripts folder>`
-   (86 checks against the game's own assemblies), and
+   (99 checks against the game's own assemblies), and
    `python -m unittest discover -s RuntimeChecks -p "test_water_snapshots.py"`.
 
 These checks can't start Unity or prove full multiplayer determinism; in-game testing is what confirms behavior.
