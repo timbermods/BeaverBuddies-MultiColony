@@ -22,10 +22,13 @@ namespace BeaverBuddies.Colonies
     }
 
     /// <summary>
-    /// Who owns which land in a separate-colonies game. Every tile belongs to the colony whose starting building is
-    /// nearest (squared distance in X and Y, integers only, ties to the lower colony number), so ownership is a pure
-    /// function of the saved start coordinates and is the same on every computer. Colonies are numbered from 1 in the
-    /// order of the map's starting locations.
+    /// Who owns which land in a separate-colonies game. With two colonies the border is one straight line along the
+    /// map grid, halfway between the two starts, across the axis on which they are further apart: a District Crossing
+    /// is three tiles wide and needs a straight piece of border, which a slanted border between two diagonal starts
+    /// never has. With any other number of starts every tile belongs to the nearest start (squared distance). Both
+    /// use integers only and give ties to the lower colony number, so ownership is a pure function of the saved
+    /// start coordinates and is the same on every computer. Colonies are numbered from 1 in the order of the map's
+    /// starting locations.
     ///
     /// The border strip is the tiles on each side that touch another colony's land (4-neighbours). Only a District
     /// Crossing half may be built there, which keeps the two colonies' roads apart so the game never merges them.
@@ -48,6 +51,7 @@ namespace BeaverBuddies.Colonies
         /// <summary>The colony (1 to ColonyCount) that owns the tile. 0 only when there are no colonies.</summary>
         public int OwnerOf(int x, int y)
         {
+            if (starts.Length == 2) return OwnerOfTwo(x, y);
             int best = 0;
             long bestDistance = long.MaxValue;
             for (int i = 0; i < starts.Length; i++)
@@ -66,6 +70,23 @@ namespace BeaverBuddies.Colonies
         }
 
         public int OwnerOf(ColonyTile tile) => OwnerOf(tile.X, tile.Y);
+
+        /// <summary>
+        /// Two colonies: a straight border halfway between the starts, across the axis on which they are further
+        /// apart (X when equal). A tile exactly halfway is colony 1's.
+        /// </summary>
+        private int OwnerOfTwo(int x, int y)
+        {
+            long dx = Math.Abs((long)starts[1].X - starts[0].X);
+            long dy = Math.Abs((long)starts[1].Y - starts[0].Y);
+            bool alongX = dx >= dy;
+            long first = alongX ? starts[0].X : starts[0].Y;
+            long second = alongX ? starts[1].X : starts[1].Y;
+            long twice = 2L * (alongX ? x : y);
+            long sum = first + second;
+            if (first == second) return 1;
+            return first < second ? (twice <= sum ? 1 : 2) : (twice >= sum ? 1 : 2);
+        }
 
         /// <summary>True when one of the four neighbouring tiles belongs to a different colony.</summary>
         public bool IsStrip(int x, int y)

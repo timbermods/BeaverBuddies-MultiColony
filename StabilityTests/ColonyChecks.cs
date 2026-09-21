@@ -154,6 +154,38 @@ static class ColonyChecks
             Equal(2 * 40, t.StripTiles(40, 40).Count);
         });
 
+        yield return ("Colony: two starts in any direction give a straight border where a three-wide crossing fits", () =>
+        {
+            // A District Crossing half is three tiles wide, so the pair needs three tiles in a row on one side with
+            // the other colony directly behind each. A slanted border has no such place when the starts are diagonal.
+            for (int angle = 0; angle < 360; angle += 5)
+            {
+                double radians = angle * Math.PI / 180;
+                var a = new ColonyTile(64 - (int)Math.Round(25 * Math.Cos(radians)), 64 - (int)Math.Round(25 * Math.Sin(radians)));
+                var b = new ColonyTile(64 + (int)Math.Round(25 * Math.Cos(radians)), 64 + (int)Math.Round(25 * Math.Sin(radians)));
+                var t = new ColonyTerritory(new[] { a, b });
+                Equal(1, t.OwnerOf(a)); Equal(2, t.OwnerOf(b));
+                int spots = 0;
+                for (int x = 0; x < 125; x++)
+                for (int y = 0; y < 125; y++)
+                {
+                    int o = t.OwnerOf(x, y);
+                    if (t.OwnerOf(x + 1, y) == o && t.OwnerOf(x + 2, y) == o && t.OwnerOf(x, y + 1) != o
+                        && t.OwnerOf(x + 1, y + 1) != o && t.OwnerOf(x + 2, y + 1) != o) spots++;
+                    if (t.OwnerOf(x, y + 1) == o && t.OwnerOf(x, y + 2) == o && t.OwnerOf(x + 1, y) != o
+                        && t.OwnerOf(x + 1, y + 1) != o && t.OwnerOf(x + 1, y + 2) != o) spots++;
+                }
+                Check(spots >= 100, $"only {spots} crossing spots with starts {a} and {b}");
+            }
+            // Halfway goes to colony 1, whichever side it is on, and the split follows the longer axis.
+            var right = new ColonyTerritory(new[] { new ColonyTile(10, 10), new ColonyTile(30, 20) });
+            Equal(1, right.OwnerOf(20, 99)); Equal(2, right.OwnerOf(21, -5));
+            var left = new ColonyTerritory(new[] { new ColonyTile(30, 10), new ColonyTile(10, 20) });
+            Equal(1, left.OwnerOf(20, 0)); Equal(2, left.OwnerOf(19, 0));
+            var up = new ColonyTerritory(new[] { new ColonyTile(10, 10), new ColonyTile(15, 40) });
+            Equal(1, up.OwnerOf(99, 25)); Equal(2, up.OwnerOf(0, 26));
+        });
+
         yield return ("Colony: a diagonal border leaves no gap a path could cross", () =>
         {
             foreach (var t in new[]
@@ -176,7 +208,8 @@ static class ColonyChecks
                 bool touching = false;
                 for (int x = 0; x < 64 && !touching; x++)
                 for (int y = 0; y < 64 && !touching; y++)
-                    touching = t.IsStrip(x, y) && t.IsStrip(x + 1, y) && t.OwnerOf(x, y) != t.OwnerOf(x + 1, y);
+                    touching = t.IsStrip(x, y) && ((t.IsStrip(x + 1, y) && t.OwnerOf(x, y) != t.OwnerOf(x + 1, y))
+                        || (t.IsStrip(x, y + 1) && t.OwnerOf(x, y) != t.OwnerOf(x, y + 1)));
                 Check(touching, "no back-to-back strip tiles");
             }
         });

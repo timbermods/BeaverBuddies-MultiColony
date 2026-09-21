@@ -33,6 +33,40 @@ namespace BeaverBuddies.Colonies
         public void Load() { }
 
         /// <summary>
+        /// Host only, before a set of actions is judged one by one. A District Crossing arrives as two placements,
+        /// and the half across the border is only allowed when the placer's own half stands behind it. The own half
+        /// may come second, so every crossing half that stands wholly on its placer's own land is noted first.
+        /// </summary>
+        public static void BeginHostBatch(System.Collections.Generic.IReadOnlyList<ReplayEvent> replayEvents)
+        {
+            var service = SingletonManager.GetSingleton<ColonyRulesService>();
+            if (service == null) return;
+            service.hostWorld.ForgetCrossings();
+            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
+            if (territory == null) return;
+            foreach (ReplayEvent replayEvent in replayEvents)
+            {
+                try
+                {
+                    ColonyScope scope = replayEvent.GetColonyScope();
+                    if (scope?.Kind != ColonyScopeKind.Placement || scope.Placement == null) continue;
+                    if (!service.hostWorld.IsCrossing(scope.Placement.TemplateName)) continue;
+                    var footprint = service.hostWorld.Footprint(scope.Placement);
+                    if (footprint == null || footprint.Count == 0) continue;
+                    int colony = ColonySession.ColonyOfPlayer(replayEvent.player);
+                    bool own = true;
+                    foreach (ColonyTile tile in footprint) own &= territory.OwnerOf(tile) == colony;
+                    if (own) service.hostWorld.RememberCrossing(scope.Placement);
+                }
+                catch (Exception error)
+                {
+                    // Without the note the half across the border is refused, which is the safe side.
+                    Plugin.LogError($"[Colony] Could not note a crossing half of {replayEvent.type}: {error}");
+                }
+            }
+        }
+
+        /// <summary>
         /// Host only, just before an event is replayed. False means refuse: do not replay it and do not send it on.
         /// A list event may be shortened in place to the actor's own tiles or entities.
         /// </summary>
@@ -46,7 +80,6 @@ namespace BeaverBuddies.Colonies
             try
             {
                 verdict = service.Judge(replayEvent, colony, service.hostWorld, rewrite: true);
-                if (verdict.IsAllowed) service.RememberIfCrossing(replayEvent);
             }
             catch (Exception error)
             {
@@ -88,13 +121,6 @@ namespace BeaverBuddies.Colonies
             Plugin.Log($"[Colony] Not sending {replayEvent.type}: {verdict.Refusal}, {verdict.Detail}");
             service.Notify(verdict.Refusal);
             return true;
-        }
-
-        private void RememberIfCrossing(ReplayEvent replayEvent)
-        {
-            ColonyScope scope = replayEvent.GetColonyScope();
-            if (scope?.Kind != ColonyScopeKind.Placement || !hostWorld.IsCrossing(scope.Placement.TemplateName)) return;
-            hostWorld.RememberCrossing(scope.Placement, replayEvent.ticksSinceLoad);
         }
 
         private ColonyVerdict Judge(ReplayEvent replayEvent, int colony, ColonyGameWorld world, bool rewrite)

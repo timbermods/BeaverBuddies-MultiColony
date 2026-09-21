@@ -324,6 +324,8 @@ namespace BeaverBuddies
                 eventsToReplay.Add(replayEvent);
             }
 
+            if (io is ServerEventIO) ColonyRulesService.BeginHostBatch(eventsToReplay);
+
             int currentTick = ticksSinceLoad;
             ReplayExecution.Run(eventsToReplay, replayEvent =>
             {

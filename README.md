@@ -74,7 +74,7 @@ Everyone sees *Colony 2 has been founded.* The connection panel now shows each n
 
 ### Your land and the border
 
-The map is split in two at the line **halfway between the two colonies' district centers**. Everything on your side
+The map is split in two by a **straight line along the map grid, halfway between the two colonies' district centers**. Everything on your side
 is yours: you can build there, and your beavers and districts live there. Everything on the other side is your
 friend's.
 
@@ -101,7 +101,7 @@ The host double-checks every action before anyone's game carries it out, so a re
 
 ### Trading through a District Crossing
 
-1. Press **K** and find a spot where the border strip runs straight for three tiles.
+1. Press **K** to see the border and pick three free, level tiles along it.
 2. Either player picks the **District Crossing** and places the pair so the two halves meet **exactly at the
    border**, one half on each colony's strip. Anywhere else the preview is red.
 3. **Each player builds a path from their roads to the entrance of the half on their side.** Each colony's
@@ -159,8 +159,8 @@ Fork; see [Co-op basics](#co-op-basics).
 - **The game ends** only when every beaver on the map is gone, not per colony.
 - **Beavers work by range.** A lumberjack or gatherer near the border can work on the other side (for example,
   cutting trees your friend marked). The rules only cover what players do.
-- **The split is a straight line** between the two district centers, so where colony 2 is founded decides how the
-  map is shared.
+- **The split is a straight north-south or east-west line** halfway between the two district centers, so where
+  colony 2 is founded decides how the map is shared.
 - **Single player:** without a co-op session nothing is refused and no colony can be founded. Host the game (even
   alone) to play the mode.
 - **Performance:** two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest

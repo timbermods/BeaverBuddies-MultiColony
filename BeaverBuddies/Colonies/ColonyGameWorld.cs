@@ -22,9 +22,9 @@ namespace BeaverBuddies.Colonies
         private readonly BlockService _blockService;
         private readonly bool checkCrossings;
 
-        // Crossing halves allowed in the current tick, which may not stand in the world yet when the second half of
-        // their pair is judged: (tick, tile, height).
-        private int rememberedTick = -1;
+        // Crossing halves on their placer's own land among the actions being replayed together, which do not stand in
+        // the world yet when the other half of their pair is judged: (tile, height). The game records the half under
+        // the cursor first, which is the half across the border for two of the four ways a pair can face.
         private readonly HashSet<(ColonyTile, int)> rememberedCrossings = new HashSet<(ColonyTile, int)>();
 
         /// <param name="checkCrossings">
@@ -69,14 +69,12 @@ namespace BeaverBuddies.Colonies
             return _blockService.GetBottomObjectComponentAt<DistrictCrossing>(new Vector3Int(tile.X, tile.Y, z)) != null;
         }
 
-        /// <summary>The host allowed a crossing half: its pair, judged next, may rely on it standing there.</summary>
-        public void RememberCrossing(ColonyPlacement placement, int tick)
+        /// <summary>A new set of actions is about to be judged: halves remembered for the last one no longer count.</summary>
+        public void ForgetCrossings() => rememberedCrossings.Clear();
+
+        /// <summary>A crossing half on its placer's own land is being placed: its pair may rely on it standing there.</summary>
+        public void RememberCrossing(ColonyPlacement placement)
         {
-            if (tick != rememberedTick)
-            {
-                rememberedCrossings.Clear();
-                rememberedTick = tick;
-            }
             IReadOnlyList<ColonyTile> footprint = Footprint(placement);
             if (footprint == null) return;
             foreach (ColonyTile tile in footprint) rememberedCrossings.Add((tile, placement.Z));

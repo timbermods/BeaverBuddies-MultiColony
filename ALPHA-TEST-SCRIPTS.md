@@ -1,6 +1,6 @@
 # Separate colonies: alpha test scripts
 
-Two scripts for `1.2.0-two-colony-alpha2`. Please report a result for **every line**: *works*, *fails* (what you
+Two scripts for `1.2.0-two-colony-alpha3`. Please report a result for **every line**: *works*, *fails* (what you
 saw), or *not tried*. A screenshot helps for anything drawn on screen (the border, a red preview, a notice, the
 connection panel). Send `Player.log` at the end (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`).
 Lines from this mode in the log start with `[Colony]`.

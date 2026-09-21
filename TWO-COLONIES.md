@@ -61,8 +61,11 @@ one with the lowest internal id is used; found colony 2 early to avoid surprises
 
 ## Whose land is whose
 
-Every tile belongs to the colony whose starting building (on a standard map, the founded district center) is **nearest**, measured on the map and ignoring height.
-With two colonies the border is a straight line halfway between the two starts. A building belongs to the colony
+The border is **one straight line along the map grid**, halfway between the two starting buildings (on a standard
+map, colony 1's starting building and the founded district center). It runs north-south when the starts are further
+apart east-west, and east-west otherwise; height is ignored and a tile exactly halfway is colony 1's. It is straight
+because a District Crossing is three tiles wide and needs a straight piece of border: a slanted border between two
+diagonal starts would have none. A building belongs to the colony
 that owns the tile it stands on, and a district belongs to the colony that owns its District Center's tile.
 
 The tiles on each side that touch the other colony's land are the **border strip**. Only a District Crossing may be
@@ -97,7 +100,7 @@ behind yours. Either player can place it. Each half must stand wholly on one sid
 half on the other side when your own half really stands behind it, so a lone half can never be pushed onto the
 other colony's land.
 
-1. Show the border (**K**) and find a spot where the strip is straight for three tiles.
+1. Show the border (**K**). It is straight, so any three free, level tiles along it will do.
 2. Choose the District Crossing and place it so that the two halves meet exactly at the border. The preview is red
    anywhere else.
 3. Each half joins the district on its own side and is built by that colony's beavers. **Each player needs a path
@@ -145,7 +148,8 @@ only for the host, only in debug mode, and every switch is logged.
 - Beavers do some work by range without anyone acting: a gatherer or lumberjack near the border can work on the
   other colony's side. The rules only cover what players do.
 - Renaming is shared: either player can rename any building or beaver.
-- The border is a straight line between the two starts, so an unevenly placed pair of starts gives an uneven split.
+- The border is a straight north-south or east-west line halfway between the two starts, so starts that are diagonal
+  from each other, or unevenly placed, give an uneven split.
 - Two colonies mean more to simulate. Prefer a small map, and use the speed settings if the guest's frame rate drops.
 - Outside a hosted session (single player) nothing is refused; the land division, trade defaults and migration
   rule still apply.
@@ -165,7 +169,7 @@ only for the host, only in debug mode, and every switch is logged.
 
 ## Testing
 
-Automated checks (all passing at `1.2.0-two-colony-alpha2`):
+Automated checks (all passing at `1.2.0-two-colony-alpha3`):
 
 - **StabilityTests**, headless: 29 checks for this feature. They cover the host stamping each guest's actions over the
   real network code (a guest that claims another number is overwritten), grouped actions, seats, land division with

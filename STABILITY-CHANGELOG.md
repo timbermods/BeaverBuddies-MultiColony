@@ -5,6 +5,20 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.2.0-two-colony-alpha3
+
+Two fixes to District Crossings, found by reading the code. Not yet played in a game. Every player must install this
+build.
+
+- **The border between two colonies is a straight line along the map grid**, halfway between the two starts, across
+  the axis on which they are further apart. A District Crossing is three tiles wide and needs three tiles in a row
+  on each side of the border. With the border measured by nearest start, starts placed diagonally from each other
+  (about 30 to 60 degrees off the grid) left no such place anywhere on the map, so no crossing could be built.
+- **A crossing pair is accepted whichever way it faces.** The game records the half under the cursor first. When
+  that was the half across the border, the host refused it (the placer's own half was not there yet) and then placed
+  the own half alone. The host now notes every crossing half on its placer's own land before judging a set of
+  actions.
+
 ## 1.2.0-two-colony-alpha2
 
 Adds **founding on standard maps**. Not yet played in a game. Every player must install this build.
@@ -27,7 +41,7 @@ check compares the mod build, and each action now carries who sent it.
 - **Opt-in per new game.** A host setting, *Separate colonies for new multi-start games*, gives each start of a new
   multi-start game its own colony. The save records the mode and the start positions; shared-colony games and old
   saves are unchanged and save nothing new.
-- **Land is divided by nearest start**, with a border strip on each side where only District Crossings may stand, so
+- **Land is divided between the starts**, with a border strip on each side where only District Crossings may stand, so
   the colonies' roads never meet.
 - **The host stamps who sent each action** (a guest cannot claim another number) and judges every action just before
   replaying it: actions on the other colony are dropped and never reach anyone; area actions keep only the actor's
