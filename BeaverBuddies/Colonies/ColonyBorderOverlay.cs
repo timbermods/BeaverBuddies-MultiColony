@@ -57,8 +57,8 @@ namespace BeaverBuddies.Colonies
 
         public void PostLoad()
         {
-            // A one-start game gets its border only once colony 2 is founded, so the drawers are made when first shown.
-            if (!ColonyModeService.IsSeparateColonies) return;
+            // Any game may get its border mid-session, when colony 2 is founded, so the key is always listened for and
+            // the drawers are made when first shown. Until there is a border, nothing happens.
             _inputService.AddInputProcessor(this);
             _eventBus.Register(this);
         }

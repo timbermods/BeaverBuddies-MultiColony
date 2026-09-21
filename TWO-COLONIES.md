@@ -16,11 +16,11 @@ change. Expect problems, keep backups of your saves, and play on a copy.
 
 The host decides this when **creating a new game**. Nothing changes for existing saves or for shared-colony games.
 
-1. In **Mod Settings → BeaverBuddies**, tick **Separate colonies for new multi-start games (alpha)**.
+1. In **Mod Settings → BeaverBuddies**, tick **Separate colonies (alpha)**.
 2. Choose **Colony the host plays**: *Colony 1* or *Colony 2*. Every guest plays the other one.
-3. Start a **new game**. On a map with two starting locations (a BeaverBuddies multi-start map) both colonies
-   start at once. On a map with one start (any standard map) the host's colony starts as usual and colony 2 is
-   founded by its player after joining. The mode is recorded in the save.
+3. Pick a game. A **new game on a map with two starting locations** (a BeaverBuddies multi-start map) starts both
+   colonies at once. **Any other game** (a standard map, or any existing save) plays as usual until colony 2's player
+   founds their colony, once, whenever they like.
 4. Save it, then host it as usual (**Load Game** → select the save → **Host co-op game**) and have your friend join
    before you unpause.
 
@@ -33,15 +33,16 @@ they were playing.
 
 ## Standard maps: founding colony 2
 
-On a map with one starting location there is only one district center at the start. It is the host's (colony 1).
-Colony 2 does not exist until its player founds it:
+On a map with one starting location, or in any save that is not already a two-colony game, the district centers
+there are colony 1's (the host's). Colony 2 does not exist until its player founds it, once, at any time:
 
 1. The host starts the new game as usual, saves, hosts it and brings the friend in. The host may play in the
    meantime.
 2. When the friend joins, a message offers to **place their district center**. (If they close it, **Ctrl+K** opens
    the same tool at any time.)
 3. They place it anywhere on the map. It costs nothing, needs no science, and appears **already built**, with the
-   same starting food, water, adults and children the new game gave colony 1.
+   same starting food, water, adults and children the new game gave colony 1 (the game's Normal difficulty for a save
+   that did not record them).
 4. From that moment the land is divided halfway between the two district centers, exactly as on a two-start map,
    and each player controls their own colony. Everyone sees *Colony 2 has been founded.*
 
@@ -50,14 +51,16 @@ the border strip, and the new district center must stand wholly inside colony 2.
 close to the other colony's buildings* when that is not so. Founding early, before colony 1 spreads out, leaves
 the most room.
 
-**Until colony 2 is founded** its player can do nothing but found it (shared things such as speed and chat still
-work); the host plays freely. The land is not divided yet, so there is no border to show.
+**Until colony 2 is founded** the game is one shared colony and both players act on it as in ordinary co-op, with
+one exception: in a new game created with this mode on, colony 2's player can only found it (shared things such as
+speed and chat still work). The land is not divided yet, so there is no border to show. Founding needs the host's
+**Separate colonies (alpha)** setting on (the default).
 
 **When it is founded**, colony 1's districts have their imports set to *Disabled* too, so trade starts closed on
 both sides, as on a two-start map.
 
-Colony 1 is measured from its district center. If colony 1 has built more than one district center by then, the
-one with the lowest internal id is used; found colony 2 early to avoid surprises.
+Colony 1 is measured from its starting building, recorded when the game placed it. In a save without that record,
+its most populated district center is used.
 
 ## Whose land is whose
 
@@ -169,9 +172,9 @@ only for the host, only in debug mode, and every switch is logged.
 
 ## Testing
 
-Automated checks (all passing at `1.2.0-two-colony-alpha3`):
+Automated checks (all passing at `1.2.0-two-colony-alpha4`):
 
-- **StabilityTests**, headless: 29 checks for this feature. They cover the host stamping each guest's actions over the
+- **StabilityTests**, headless: 31 checks for this feature. They cover the host stamping each guest's actions over the
   real network code (a guest that claims another number is overwritten), grouped actions, seats, land division with
   2, 3 and 4 starts, the border strip (including that no gap is left on a diagonal border), placement,
   the crossing rule (including a lone half and a half across the border), area filtering, and the migration

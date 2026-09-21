@@ -30,12 +30,14 @@ namespace BeaverBuddies.Events
         // Separate colonies: the colony the host plays; guests play the other. Absent from an older host, which reads
         // as 0 and means colony 1.
         public int hostColony;
+        // Separate colonies: whether the host allows founding colony 2 in this session.
+        public bool separateColonies;
 
         public override void Replay(IReplayContext context)
         {
             //context.GetSingleton<ReplayService>().SetServerMapName(mapName);
             LargeColonySpeedLimit.AdoptHostChoice(removeLargeColonySpeedLimit);
-            ColonySession.AdoptHostColony(hostColony);
+            ColonySession.AdoptHostColony(hostColony, separateColonies);
             // On a one-start map, the player of colony 2 is offered to found it now.
             SingletonManager.GetSingleton<ColonyFoundingService>()?.OfferFounding();
             string warningMessage = null;
@@ -70,6 +72,7 @@ namespace BeaverBuddies.Events
                 isDebugMode = Settings.Debug,
                 removeLargeColonySpeedLimit = LargeColonySpeedLimit.BeginHostSession(),
                 hostColony = ColonySession.HostColony,
+                separateColonies = ColonySession.HostAllowsFounding,
                 //mapName = mapName,
             };
             return message;

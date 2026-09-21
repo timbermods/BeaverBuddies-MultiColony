@@ -7,6 +7,7 @@ using System.Linq;
 using Timberborn.Beavers;
 using Timberborn.BlockObjectTools;
 using Timberborn.BlockSystem;
+using Timberborn.BlueprintSystem;
 using Timberborn.Buildings;
 using Timberborn.ConstructionSites;
 using Timberborn.Coordinates;
@@ -18,6 +19,7 @@ using Timberborn.GameStartup;
 using Timberborn.Goods;
 using Timberborn.InputSystem;
 using Timberborn.InventorySystem;
+using Timberborn.NewGameConfigurationSystem;
 using Timberborn.SelectionSystem;
 using Timberborn.SimpleOutputBuildings;
 using Timberborn.SingletonSystem;
@@ -52,6 +54,7 @@ namespace BeaverBuddies.Colonies
         private readonly CameraTargeter _cameraTargeter;
         private readonly DialogBoxShower _dialogBoxShower;
         private readonly BlockValidator _blockValidator;
+        private readonly ISpecService _specService;
 
         private BlockObjectTool foundingTool;
 
@@ -59,7 +62,8 @@ namespace BeaverBuddies.Colonies
             StartingBuildingToolDescriber startingBuildingToolDescriber, BlockObjectToolFactory blockObjectToolFactory,
             ConstructionFactory constructionFactory, BeaverFactory beaverFactory,
             EntityComponentRegistry entityComponentRegistry, ToolService toolService, InputService inputService,
-            CameraTargeter cameraTargeter, DialogBoxShower dialogBoxShower, BlockValidator blockValidator)
+            CameraTargeter cameraTargeter, DialogBoxShower dialogBoxShower, BlockValidator blockValidator,
+            ISpecService specService)
         {
             _colonyModeService = colonyModeService;
             _startingBuildingSpawner = startingBuildingSpawner;
@@ -73,6 +77,7 @@ namespace BeaverBuddies.Colonies
             _cameraTargeter = cameraTargeter;
             _dialogBoxShower = dialogBoxShower;
             _blockValidator = blockValidator;
+            _specService = specService;
         }
 
         /// <summary>True while this computer's player is using the founding tool (not the ordinary build menu).</summary>
@@ -87,15 +92,13 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>True when this computer's player is the one who should found colony 2 now.</summary>
         public static bool LocalPlayerMayFound =>
-            ColonyModeService.FoundingPending && !EventIO.IsNull && ColonySession.LocalColony == 2;
+            ColonyModeService.FoundingOpen && !EventIO.IsNull && ColonySession.LocalColony == 2;
 
         public bool ProcessInput()
         {
             if (!_inputService.IsKeyDown(FoundKeyBindingId)) return false;
             if (LocalPlayerMayFound) StartPlacing();
-            else Notice(ColonyModeService.FoundingPending
-                ? "BeaverBuddies.Colony.Founding.NotYours"
-                : "BeaverBuddies.Colony.Founding.NotNeeded");
+            else Notice(WhyNot());
             return false;
         }
 
@@ -118,6 +121,15 @@ namespace BeaverBuddies.Colonies
                 // The key still opens the tool; a missing dialog must not break joining.
                 Plugin.LogError("[Colony] Could not show the founding prompt: " + error);
             }
+        }
+
+        /// <summary>The notice for a player who may not found colony 2 right now.</summary>
+        private static string WhyNot()
+        {
+            if (ColonyModeService.ActiveTerritory != null) return "BeaverBuddies.Colony.Founding.NotNeeded";
+            if (EventIO.IsNull) return "BeaverBuddies.Colony.Founding.HostFirst";
+            if (!ColonyModeService.FoundingOpen) return "BeaverBuddies.Colony.Founding.HostOff";
+            return "BeaverBuddies.Colony.Founding.NotYours";
         }
 
         private void StartPlacing()
@@ -146,8 +158,8 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// Where colony 1's land is measured from: its starting building, as recorded when the game placed it. For a
-        /// save without that record, the district center with the lowest entity id (arbitrary, but the same on every
-        /// computer).
+        /// save without that record, its most populated district center (ties to the lowest entity id), read from
+        /// the world at the moment of founding, which is the same on every computer.
         /// </summary>
         public ColonyTile? FirstColonyStart(out Vector3Int coordinates)
         {
@@ -159,11 +171,53 @@ namespace BeaverBuddies.Colonies
             coordinates = default;
             DistrictCenter first = _entityComponentRegistry.GetEnabled<DistrictCenter>()
                 .Where(dc => dc.GetComponent<EntityComponent>() != null && dc.GetComponent<BlockObject>() != null)
-                .OrderBy(dc => dc.GetComponent<EntityComponent>().EntityId)
+                .OrderByDescending(Population)
+                .ThenBy(dc => dc.GetComponent<EntityComponent>().EntityId)
                 .FirstOrDefault();
             if (first == null) return null;
             coordinates = first.GetComponent<BlockObject>().Coordinates;
             return ColonyGameWorld.TileOf(coordinates);
+        }
+
+        private static int Population(DistrictCenter districtCenter)
+        {
+            DistrictPopulation population = districtCenter.GetComponent<DistrictPopulation>();
+            return population == null ? 0 : population.NumberOfAdults + population.NumberOfChildren;
+        }
+
+        /// <summary>
+        /// What colony 2 starts with: the new game's settings when the save recorded them, otherwise the game's default
+        /// difficulty (the same specs on every computer).
+        /// </summary>
+        private ColonyStartingSettings StartingSettings()
+        {
+            if (_colonyModeService.StartingSettings != null) return _colonyModeService.StartingSettings;
+            GameModeSpec mode = null;
+            try
+            {
+                mode = _specService.GetSpecs<GameModeSpec>().OrderBy(m => m.IsDefault ? 0 : 1).ThenBy(m => m.Order).FirstOrDefault();
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Colony] Could not read the game's difficulty settings: " + error.Message);
+            }
+            if (mode == null)
+            {
+                // The game's Normal difficulty in 1.1.2.4.
+                return new ColonyStartingSettings { Adults = 9, AdultAgeMin = 0.1f, AdultAgeMax = 0.7f, Children = 4,
+                    ChildAgeMin = 0.1f, ChildAgeMax = 0.8f, Food = 130, Water = 0 };
+            }
+            return new ColonyStartingSettings
+            {
+                Adults = mode.StartingAdults,
+                AdultAgeMin = mode.AdultAgeProgress.Min,
+                AdultAgeMax = mode.AdultAgeProgress.Max,
+                Children = mode.StartingChildren,
+                ChildAgeMin = mode.ChildAgeProgress.Min,
+                ChildAgeMax = mode.ChildAgeProgress.Max,
+                Food = mode.StartingFood,
+                Water = mode.StartingWater,
+            };
         }
 
         private IEnumerable<IReadOnlyList<ColonyTile>> ExistingBuildingFootprints()
@@ -183,13 +237,17 @@ namespace BeaverBuddies.Colonies
         /// <param name="checkBlocks">
         /// Also check that the ground is free and allows the building. Previews skip it: the game checks those itself.
         /// </param>
+        /// <param name="atReplay">
+        /// The check every computer makes as the founding happens. It reads saved state only; whether the host allows
+        /// founding this session was decided when the host judged the request.
+        /// </param>
         public ColonyVerdict Judge(int actorColony, Placement placement, IReadOnlyList<ColonyTile> footprint = null,
-            bool checkBlocks = true)
+            bool checkBlocks = true, bool atReplay = false)
         {
-            if (!_colonyModeService.AwaitingFounding)
-                return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "no colony is waiting to be founded");
-            if (_colonyModeService.StartingSettings == null)
-                return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the new game's starting settings were not recorded");
+            if (_colonyModeService.Territory != null)
+                return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "colony 2 already exists");
+            if (!atReplay && !ColonyModeService.FoundingOpen)
+                return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the host has not turned on separate colonies");
             if (checkBlocks && !_blockValidator.BlocksValid(
                     _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>(), placement))
                 return ColonyVerdict.Refuse(ColonyRefusal.Blocked, $"the ground at {placement.Coordinates} is taken or unsuitable");
@@ -202,22 +260,17 @@ namespace BeaverBuddies.Colonies
 
         public void Found(Placement placement)
         {
-            if (!_colonyModeService.AwaitingFounding)
-            {
-                Plugin.LogWarning("[Colony] Ignoring a founding: no colony is waiting to be founded");
-                return;
-            }
             // Judged again here, at the tick it happens: the host judged it when it arrived, but colony 1 may have
             // built or blasted there since. The world is the same on every computer now, so is the answer, and an
             // invalid spot is skipped everywhere instead of failing to place the building.
-            ColonyVerdict verdict = Judge(2, placement);
+            ColonyVerdict verdict = Judge(2, placement, atReplay: true);
             if (!verdict.IsAllowed || FirstColonyStart(out Vector3Int firstStart) == null)
             {
                 Plugin.LogWarning($"[Colony] Founding at {placement.Coordinates} skipped: {verdict.Refusal}, {verdict.Detail}");
                 Notice("BeaverBuddies.Colony.Founding.Failed");
                 return;
             }
-            ColonyStartingSettings start = _colonyModeService.StartingSettings;
+            ColonyStartingSettings start = StartingSettings();
 
             // Colony 1's districts were made before the colonies existed, with the game's open imports. Close them,
             // as a separate-colonies game does for every new district, so trade starts closed on both sides.
@@ -230,7 +283,7 @@ namespace BeaverBuddies.Colonies
             }
 
             // Divide the land first: the new district center then takes the separate-colonies trade defaults.
-            _colonyModeService.CompleteFounding(firstStart, placement.Coordinates);
+            _colonyModeService.CompleteFounding(firstStart, placement.Coordinates, start);
 
             var builder = new EntitySetup.Builder(_startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>().Blueprint);
             BlockObject blockObject = _constructionFactory.CreateAsFinished(builder, placement);

@@ -17,11 +17,14 @@ namespace BeaverBuddies.Colonies
         {
             errorMessage = null;
             if (!blockObject.IsPreview || ReplayService.IsReplayingEvents || EventIO.IsNull) return true;
-            if (!ColonyModeService.IsSeparateColonies || !blockObject.Positioned) return true;
+            if (!blockObject.Positioned) return true;
+            var founding = SingletonManager.GetSingleton<ColonyFoundingService>();
+            bool foundingTool = founding != null && founding.FoundingToolActive;
+            if (!ColonyModeService.IsSeparateColonies && !foundingTool) return true;
             ColonyVerdict verdict;
             try
             {
-                verdict = Judge(blockObject);
+                verdict = Judge(blockObject, founding, foundingTool);
             }
             catch (System.Exception error)
             {
@@ -35,18 +38,17 @@ namespace BeaverBuddies.Colonies
             return false;
         }
 
-        private static ColonyVerdict Judge(BlockObject blockObject)
+        private static ColonyVerdict Judge(BlockObject blockObject, ColonyFoundingService founding, bool foundingTool)
         {
             int colony = ColonySession.LocalColony;
             var world = new ColonyPreviewWorld(blockObject);
+            if (foundingTool)
+                return founding.Judge(colony, blockObject.Placement, world.Footprint(null), checkBlocks: false);
             if (ColonyModeService.FoundingPending)
             {
+                // In a game created to await colony 2, its player's only placement is the founding one.
                 if (colony == 1) return ColonyVerdict.Allow;
-                // Colony 2's only placement before it exists is its own district center, with the founding tool.
-                var founding = SingletonManager.GetSingleton<ColonyFoundingService>();
-                if (founding == null || !founding.FoundingToolActive)
-                    return ColonyVerdict.Refuse(ColonyRefusal.NotFounded, "found your colony first");
-                return founding.Judge(colony, blockObject.Placement, world.Footprint(null), checkBlocks: false);
+                return ColonyVerdict.Refuse(ColonyRefusal.NotFounded, "found your colony first");
             }
             return ColonyRules.Judge(ColonyScope.Place(new ColonyPlacement()), colony, ColonyModeService.ActiveTerritory,
                 world, rewrite: false);

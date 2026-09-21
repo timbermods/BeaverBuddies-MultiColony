@@ -5,6 +5,23 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.2.0-two-colony-alpha4
+
+**Colony 2 can be founded in any hosted game, once.** Reported from play: the second player pressed Ctrl+K and was
+told there was no colony waiting to be founded, because the save had not been created with the setting on.
+
+- Founding no longer depends on how the save was created. In any hosted game without a colony 2, its player can
+  found it once, at any time: offered on joining, and on **Ctrl+K**. A save that recorded no starting settings gives
+  the new colony the game's default (Normal) starting beavers, food and water; colony 1 is measured from its
+  recorded start, or else its most populated district center.
+- The host setting is now **Separate colonies (alpha)**, **on by default**, and also gates founding (off: one shared
+  colony, as in the Stability Fork). The host's choice is sent to guests when they join.
+- Only a new game created with the mode on restricts colony 2's player to founding; any other save plays as one
+  shared colony until colony 2 is founded. Founding itself is still checked at the moment it happens, on every
+  computer, from saved state only.
+- Clearer messages when founding is not possible (colony 2 exists, the host has it off, not in a session).
+- The border key works after a mid-session founding without reloading.
+
 ## 1.2.0-two-colony-alpha3
 
 Two fixes to District Crossings, found by reading the code. Not yet played in a game. Every player must install this

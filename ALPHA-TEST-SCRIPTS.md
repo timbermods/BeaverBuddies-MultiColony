@@ -1,6 +1,6 @@
 # Separate colonies: alpha test scripts
 
-Two scripts for `1.2.0-two-colony-alpha3`. Please report a result for **every line**: *works*, *fails* (what you
+Two scripts for `1.2.0-two-colony-alpha4`. Please report a result for **every line**: *works*, *fails* (what you
 saw), or *not tried*. A screenshot helps for anything drawn on screen (the border, a red preview, a notice, the
 connection panel). Send `Player.log` at the end (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`).
 Lines from this mode in the log start with `[Colony]`.
@@ -10,7 +10,7 @@ copy in `BeaverBuddies-MultiColony`, enable **BeaverBuddies - MultiColony (alpha
 
 ## Script A: host alone (about 20 minutes)
 
-Setup: in **Mod Settings → BeaverBuddies** tick **Separate colonies for new multi-start games (alpha)**, set
+Setup: in **Mod Settings → BeaverBuddies** tick **Separate colonies (alpha)**, set
 **Colony the host plays** to *Colony 1*, and tick **Always Use Detailed Logging** (debug mode). Start a **new game**
 on a map with two starting locations. Save, then in **Load Game** select that save and choose **Host co-op game**; start without anyone joining.
 
@@ -62,9 +62,13 @@ starting location). Save, then in **Load Game** select that save and choose **Ho
    colony 1's (screenshot please).
 6. Press **K**: the border appears halfway between the two district centers. The Distribution tab shows import
    *Disabled* for both districts.
-7. Press **Ctrl+K** again: *There is no colony waiting to be founded.* Save, reload, host again: still two colonies
+7. Press **Ctrl+K** again: *Colony 2 already exists in this game.* Save, reload, host again: still two colonies
    (the log says `loaded from the save` with both positions).
 8. Script A lines 2 to 9 now apply to this game as well.
+9. **An existing save.** Load any save made without this mode (or with an older build), host it, press
+   **Ctrl+Shift+K** then **Ctrl+K**: the founding tool opens, and founding works as in lines 4 to 6. The new colony
+   gets the Normal difficulty's starting beavers, food and water (9 adults, 4 children, 130 food). Before founding,
+   acting as colony 2 is not refused (it is a shared game until then).
 
 ## Script B: two players (about 45 minutes)
 

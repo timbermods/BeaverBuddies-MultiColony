@@ -10,6 +10,13 @@ namespace BeaverBuddies.Colonies
             enabled && starts != null && starts.Count >= 2;
 
         /// <summary>
+        /// Whether colony 2 may be founded: never once the land is divided; otherwise when the save awaits it or the
+        /// host allows it.
+        /// </summary>
+        public static bool FoundingOpen(bool alreadyDivided, bool saveAwaitsFounding, bool hostAllows) =>
+            !alreadyDivided && (saveAwaitsFounding || hostAllows);
+
+        /// <summary>
         /// Whether automatic migration may pair two districts, given their district centers' tiles. With no territory
         /// (the mode is off) every pair is allowed, as in the game.
         /// </summary>

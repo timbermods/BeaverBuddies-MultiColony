@@ -11,6 +11,12 @@ namespace BeaverBuddies.Colonies
         /// <summary>The host's colony for this session. Latched by the host when it starts hosting; told to guests.</summary>
         public static int HostColony { get; private set; } = 1;
 
+        /// <summary>
+        /// The host has separate colonies on for this session: colony 2 may be founded in any save that does not have
+        /// it yet. Latched by the host when it starts hosting; told to guests.
+        /// </summary>
+        public static bool HostAllowsFounding { get; private set; }
+
         /// <summary>Debug only: the host's own actions count as the other colony's, so one person can test both sides.</summary>
         public static bool HostSeatFlipped { get; private set; }
 
@@ -18,14 +24,17 @@ namespace BeaverBuddies.Colonies
         public static void BeginHostSession()
         {
             HostColony = Settings.HostColonyValue;
+            HostAllowsFounding = Settings.SeparateColoniesForNewGames;
             HostSeatFlipped = false;
-            Plugin.Log($"[Colony] Hosting as colony {HostColony}; guests play colony {ColonySeats.GuestColony(HostColony)}");
+            Plugin.Log($"[Colony] Hosting as colony {HostColony}; guests play colony {ColonySeats.GuestColony(HostColony)}; " +
+                       $"founding colony 2 {(HostAllowsFounding ? "allowed" : "off")}");
         }
 
         /// <summary>A guest learns the host's colony from the host's first message.</summary>
-        public static void AdoptHostColony(int hostColony)
+        public static void AdoptHostColony(int hostColony, bool hostAllowsFounding)
         {
             HostColony = ColonySeats.Normalize(hostColony);
+            HostAllowsFounding = hostAllowsFounding;
             HostSeatFlipped = false;
             Plugin.Log($"[Colony] The host plays colony {HostColony}; this computer plays colony {ColonySeats.GuestColony(HostColony)}");
         }

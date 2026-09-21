@@ -72,7 +72,8 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public static bool AllowOnHost(ReplayEvent replayEvent)
         {
-            if (!ColonyModeService.IsSeparateColonies) return true;
+            // Founding is judged in every game: it is how a shared game becomes a separate-colonies one.
+            if (!ColonyModeService.IsSeparateColonies && !(replayEvent is FoundColonyEvent)) return true;
             var service = SingletonManager.GetSingleton<ColonyRulesService>();
             if (service == null) return true;
             int colony = ColonySession.ColonyOfPlayer(replayEvent.player);
@@ -103,7 +104,7 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public static bool RefuseLocally(ReplayEvent replayEvent)
         {
-            if (!ColonyModeService.IsSeparateColonies || EventIO.IsNull) return false;
+            if ((!ColonyModeService.IsSeparateColonies && !(replayEvent is FoundColonyEvent)) || EventIO.IsNull) return false;
             var service = SingletonManager.GetSingleton<ColonyRulesService>();
             if (service == null) return false;
             ColonyVerdict verdict;

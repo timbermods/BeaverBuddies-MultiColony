@@ -66,8 +66,18 @@ namespace BeaverBuddies.Colonies
         /// <summary>True in a one-start game until colony 2 is founded.</summary>
         public static bool FoundingPending => SingletonManager.GetSingleton<ColonyModeService>()?.AwaitingFounding == true;
 
-        /// <summary>True in any separate-colonies game, founded or not.</summary>
+        /// <summary>
+        /// True in a separate-colonies game, and in a game created to await colony 2. A shared game in which colony 2
+        /// may still be founded is not one (yet): it plays as one shared colony until then.
+        /// </summary>
         public static bool IsSeparateColonies => ActiveTerritory != null || FoundingPending;
+
+        /// <summary>
+        /// Colony 2 may be founded now: it does not exist yet, and the save was created for it or the host allows it
+        /// this session. The host's choice only gates who may ask; the founding itself depends on saved state alone.
+        /// </summary>
+        public static bool FoundingOpen =>
+            ColonyModeState.FoundingOpen(ActiveTerritory != null, FoundingPending, ColonySession.HostAllowsFounding);
 
         public ColonyModeService(ISingletonLoader singletonLoader)
         {
@@ -158,8 +168,11 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>Colony 2 is founded: the land is divided between the two district centers from now on.</summary>
-        public void CompleteFounding(Vector3Int firstStart, Vector3Int secondStart)
+        public void CompleteFounding(Vector3Int firstStart, Vector3Int secondStart, ColonyStartingSettings startingSettings)
         {
+            // Also for a game that was never a separate-colonies game: founding makes it one.
+            enabled = true;
+            StartingSettings ??= startingSettings;
             AwaitingFounding = false;
             starts = new List<Vector3Int> { firstStart, secondStart };
             Apply("completed by founding colony 2");

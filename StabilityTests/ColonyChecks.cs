@@ -361,6 +361,19 @@ static class ColonyChecks
 
         // ---- founding colony 2 on a one-start map ----
 
+        yield return ("Colony: colony 2 may be founded in any save until it exists, if the save or the host allows it", () =>
+        {
+            // A save created to await colony 2, whatever the host's setting.
+            Check(ColonyModeState.FoundingOpen(alreadyDivided: false, saveAwaitsFounding: true, hostAllows: false));
+            // Any other save (shared, older, created with the setting off) when the host allows it.
+            Check(ColonyModeState.FoundingOpen(false, false, true));
+            // A shared game whose host keeps separate colonies off stays shared.
+            Check(!ColonyModeState.FoundingOpen(false, false, false));
+            // Once: never when the land is already divided (two-start game, or colony 2 already founded).
+            Check(!ColonyModeState.FoundingOpen(true, false, true));
+            Check(!ColonyModeState.FoundingOpen(true, true, true));
+        });
+
         yield return ("Colony: before colony 2 is founded, colony 1 acts freely and colony 2 may only share", () =>
         {
             Check(ColonyRules.JudgeWhileFounding(ColonyScope.Entities("x"), 1).IsAllowed);

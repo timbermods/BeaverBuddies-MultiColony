@@ -36,18 +36,17 @@ build cannot join.
 
 ## Start a two-colony game
 
-The host sets this up once, **when creating a new game**. Separate colonies cannot be switched on for an existing save.
-
 **1. Host: settings.** Main menu → **Mod Settings → BeaverBuddies**:
 
-- tick **Separate colonies for new multi-start games (alpha)**;
+- **Separate colonies (alpha)** must be ticked (it is by default);
 - set **Colony the host plays** to **Colony 1** (the guest then plays colony 2).
 
-**2. Host: start a new game** on any map.
+**2. Host: pick a game.** Any save works, new or old, on any map:
 
-- **A standard map** (one starting location): your colony starts as usual. Your friend founds theirs after joining (step 5).
-- **A BeaverBuddies multi-start map** (two or more starting locations): both colonies start at once, one at each of
-  the first two starting locations.
+- **A standard map, or any existing save:** your colony plays as usual. Your friend founds theirs after joining
+  (step 5), whenever they like, once.
+- **A new game on a BeaverBuddies multi-start map** (two or more starting locations): both colonies start at once,
+  one at each of the first two starting locations. Nothing to found.
 
 **3. Host: save, then host.** Save the game. Open **Load Game**, select that save and choose **Host co-op game**
 (instead of Load). Invite your friend with **Invite Friends** (Steam), or give them your IP address (port **25565**).
@@ -55,15 +54,17 @@ The host sets this up once, **when creating a new game**. Separate colonies cann
 **4. Guest: join** by accepting the Steam invite (or **Join co-op game** → the host's IP). Your game receives the
 host's save and loads it. **Do not unpause until everyone is in**: nobody can join a game that has already started.
 
-**5. Guest, standard maps only: found your colony.** When you join, a message offers to **place your district
-center**. Choose **Place district center** (or close it and press **Ctrl+K** later), then click anywhere on the map:
+**5. Guest: found your colony** (unless the game started with two colonies). When you join, a message offers to
+**place your district center**. Choose **Place district center**, or cancel and press **Ctrl+K** whenever you are
+ready (there is no time limit), then click anywhere on the map:
 
-- It costs nothing and needs no science. It appears **already built**, with the same starting food, water, adults and
-  children the new game gave the host.
-- It must be far enough from the host's buildings that they all stay on the host's side of the new border. The
+- It costs nothing and needs no science. It appears **already built**, with starting food, water, adults and
+  children: the ones the new game gave the host, or the game's Normal difficulty for a save that did not record them.
+- It must be far enough from the existing buildings that they all stay on the host's side of the new border. The
   preview turns red (*Too close to the other colony's buildings*) where it may not go.
-- Until you found it, you can't build or change anything (speed, chat and pings still work). The host can play in
-  the meantime, but the more the host builds, the less room there is. Found early.
+- It can be done once. After that, colony 2 exists and **Ctrl+K** says so.
+- Until then you play together as one shared colony, except in a game created fresh with this mode on, where you can
+  only found your colony (speed, chat and pings still work). The more gets built, the less room there is: found early.
 
 Everyone sees *Colony 2 has been founded.* The connection panel now shows each name with its colony, e.g.
 *Alex (colony 2)*.
@@ -133,7 +134,7 @@ colony by hand is refused. Migration between your own districts works as normal.
 | Key | Action |
 |---|---|
 | **K** | Show or hide the colony border |
-| **Ctrl+K** | Found your colony (colony 2's player, standard maps, until founded) |
+| **Ctrl+K** | Found your colony (colony 2's player, once, any time until colony 2 exists) |
 | **Ctrl+Shift+K** | *Debug only:* the host acts as the other colony, for testing alone (needs **Always Use Detailed Logging**) |
 
 All of these can be changed under **Options → Bindings → BeaverBuddies**. The co-op keys **Ping Location**, **Toggle
@@ -145,7 +146,7 @@ In **Mod Settings → BeaverBuddies**. Only the host's settings matter for these
 
 | Setting | What it does |
 |---|---|
-| **Separate colonies for new multi-start games (alpha)** | New games get a colony per player (on any map, despite the name). Read when a game is created; existing saves are never changed. |
+| **Separate colonies (alpha)** | On by default. New games on a two-start map get a colony per start; in any other hosted game the second player may found their colony once. Off: one shared colony, as in the Stability Fork. |
 | **Colony the host plays** | *Colony 1* or *Colony 2*. Guests play the other one. Read when hosting starts. |
 
 Everything else (Steam, the connection panel, speed limits, cursors, detailed logging) works as in the Stability
@@ -184,7 +185,8 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 ## Troubleshooting and reporting problems
 
 - **Can't join / stuck on "Receiving map…":** both players must have the same zip. Reinstall from the same file and restart.
-- **The guest can't do anything on a standard map:** colony 2 hasn't been founded yet. Press **Ctrl+K**.
+- **The guest can't do anything:** in a game created fresh with this mode, colony 2 must be founded first. Press **Ctrl+K**.
+- **Ctrl+K says the host has turned off Separate colonies:** the host ticks **Separate colonies (alpha)** and rehosts.
 - **Every placement is red for the guest:** check the host's **Colony the host plays** is set as you expect. The
   connection panel shows who plays which colony.
 - **Reporting:** send `Player.log` from both players
@@ -218,7 +220,7 @@ Design notes and the implementation plan: [design/TWO-COLONY-ALPHA-PLAN.md](desi
 3. Build with `--no-restore`, choosing where the mod folder goes:
    `dotnet build BeaverBuddies/BeaverBuddies.csproj -c "Release Steam" --no-restore -p:BeaverBuddiesModsPath="<folder>\BeaverBuddies\"`
    (`-c Release` for a build without Steam networking).
-4. Checks: `dotnet run --project StabilityTests --no-build` (239 headless checks, 29 of them for separate colonies),
+4. Checks: `dotnet run --project StabilityTests --no-build` (241 headless checks, 31 of them for separate colonies),
    `dotnet run --project RuntimeChecks --no-restore -- <built BeaverBuddies.dll> <Timberborn_Data\Managed> <Harmony folder> <Mod Settings Scripts folder>`
    (86 checks against the game's own assemblies), and
    `python -m unittest discover -s RuntimeChecks -p "test_water_snapshots.py"`.

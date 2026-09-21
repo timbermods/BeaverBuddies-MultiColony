@@ -99,7 +99,7 @@ namespace BeaverBuddies
         // ---- Separate colonies ----
 
         public ModSetting<bool> SeparateColonies { get; } =
-            new(false, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.SeparateColonies")
+            new(true, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.SeparateColonies")
                 .SetLocalizedTooltip("BeaverBuddies.Settings.SeparateColonies.Tooltip"));
 
         public LimitedStringModSetting HostColony { get; } =
@@ -202,7 +202,7 @@ namespace BeaverBuddies
         public static bool RemoveSpeedLimit => instance?.RemoveLargeColonySpeedLimit.Value ?? false;
 
         /// <summary>New multi-start games get one colony per start, each controlled by one player. Read when the game is created.</summary>
-        public static bool SeparateColoniesForNewGames => instance?.SeparateColonies.Value ?? false;
+        public static bool SeparateColoniesForNewGames => instance?.SeparateColonies.Value ?? true;
 
         /// <summary>The colony the host plays in a separate-colonies game (1 or 2). Guests play the other.</summary>
         public static int HostColonyValue =>
