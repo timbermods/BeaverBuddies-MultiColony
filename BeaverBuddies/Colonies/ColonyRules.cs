@@ -64,7 +64,7 @@ namespace BeaverBuddies.Colonies
         public static ColonyScope Entities(params string[] entityIds) =>
             new ColonyScope { Kind = ColonyScopeKind.Entities, EntityIds = entityIds ?? Array.Empty<string>() };
 
-        /// <summary>Removing things: like <see cref="Entities"/>, but a District Crossing may be removed by anyone.</summary>
+        /// <summary>Removing things: like <see cref="Entities"/>, but a Trading Post between two colonies may be removed by either.</summary>
         public static ColonyScope Demolish(params string[] entityIds) =>
             new ColonyScope { Kind = ColonyScopeKind.Entities, EntityIds = entityIds ?? Array.Empty<string>(), CrossingsNeutral = true };
 
@@ -120,7 +120,7 @@ namespace BeaverBuddies.Colonies
         /// <summary>The slot owning the entity (by its district), or null when it has no owner or does not exist.</summary>
         int? OwnerOf(string entityId);
 
-        /// <summary>True for a half of a trading post (a District Crossing between two colonies).</summary>
+        /// <summary>True for a half of a Trading Post between two colonies.</summary>
         bool IsCrossing(string entityId);
 
         /// <summary>Whether this slot's colony may build this building (always true without separate science).</summary>

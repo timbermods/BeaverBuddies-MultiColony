@@ -21,7 +21,7 @@ namespace BeaverBuddies.Colonies
     /// how many, and how many have crossed so far. The partner half holds the other side. Both sides are set, and
     /// cleared, together, by the same action or delivery on every computer.
     /// </summary>
-    public class CrossingExchange : BaseComponent, IPersistentEntity
+    public class CrossingExchange : BaseComponent, IAwakableComponent, IPersistentEntity
     {
         private static readonly ComponentKey ExchangeKey = new ComponentKey("BeaverBuddies.CrossingExchange");
         private static readonly PropertyKey<int> StateKey = new PropertyKey<int>("State");
@@ -33,6 +33,8 @@ namespace BeaverBuddies.Colonies
         private static readonly PropertyKey<int> RepeatKey = new PropertyKey<int>("Repeat");
         private static readonly PropertyKey<int> RoundsKey = new PropertyKey<int>("Rounds");
 
+        /// <summary>This half is a Trading Post's (only those hold exchanges).</summary>
+        public bool AtTradingPost { get; private set; }
         public ExchangeState State { get; private set; }
         /// <summary>This half's colony made the offer (the other one accepts or declines).</summary>
         public bool ProposedHere { get; private set; }
@@ -51,6 +53,8 @@ namespace BeaverBuddies.Colonies
         public int Rounds { get; private set; }
 
         public int Remaining => Math.Max(0, Total - Sent);
+
+        public void Awake() => AtTradingPost = GetComponent<MultiColonyTradingPostSpec>() != null;
         public bool IsOpen => State != ExchangeState.None;
         public bool IsActive => State == ExchangeState.Active;
 
@@ -239,7 +243,7 @@ namespace BeaverBuddies.Colonies
         public string WhyNotPropose(DistrictCrossing half, int actorSlot, string giveGood, int giveAmount, string getGood, int getAmount)
         {
             if (!half) return "no such crossing";
-            if (!TradingPosts.IsTradingPost(half)) return "the crossing is not between two colonies";
+            if (!TradingPosts.IsTradingPost(half)) return "the crossing is not a Trading Post between two colonies";
             if (OwnerOf(half) != actorSlot) return $"the half is slot {OwnerOf(half)}'s, not slot {actorSlot}'s";
             if (!ExchangeTerms.AreValid(giveGood, giveAmount, getGood, getAmount)) return "the terms are not valid";
             if ((giveAmount > 0 && !IsKnownItem(giveGood)) || (getAmount > 0 && !IsKnownItem(getGood)))

@@ -190,9 +190,9 @@ namespace BeaverBuddies.Colonies
             int me = ColonySession.LocalSlot;
             ColonyExchangeService exchanges = ColonyExchangeService.Instance;
 
-            // Trading posts of this player's colony, each seen from its own half.
+            // Trading Posts with a half in this player's colony (trading or not yet), each seen from that half.
             var posts = _entityComponentRegistry.GetEnabled<DistrictCrossing>()
-                .Where(half => TradingPosts.IsTradingPost(half) && DistrictOwner.OwnerOfDistrict(TradingPosts.DistrictOf(half)) == me)
+                .Where(half => TradingPosts.IsTradingPostBuilding(half) && DistrictOwner.OwnerOfDistrict(TradingPosts.DistrictOf(half)) == me)
                 .Select(half => (key: ReplayEvent.GetEntityID(half), half))
                 .Where(p => p.key != null).OrderBy(p => p.key, StringComparer.Ordinal).ToList();
             postsTitle.text = string.Format(T("BeaverBuddies.Colony.Overview.Posts"), posts.Count);
@@ -270,6 +270,7 @@ namespace BeaverBuddies.Colonies
 
         private string Describe(DistrictCrossing half, ColonyExchangeService exchanges)
         {
+            if (!TradingPosts.IsTradingPost(half)) return T("BeaverBuddies.Colony.Overview.NotTrading");
             DistrictCrossing partner = TradingPosts.Partner(half);
             int them = DistrictOwner.OwnerOfDistrict(TradingPosts.DistrictOf(partner)) ?? -1;
             string with = string.Format(T("BeaverBuddies.Colony.Overview.With"), ColonyExchangeService.ColonyName(them));

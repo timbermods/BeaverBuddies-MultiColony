@@ -5,6 +5,7 @@ using Timberborn.DistributionSystem;
 using Timberborn.EntityPanelSystem;
 using Timberborn.GameDistricts;
 using Timberborn.TemplateInstantiation;
+using Timberborn.ToolSystem;
 
 namespace BeaverBuddies.Colonies
 {
@@ -24,8 +25,8 @@ namespace BeaverBuddies.Colonies
             }
         }
 
-        // The trading post's panel, at the bottom of a District Crossing's (whose own district-distribution panels are
-        // hidden at a trading post: TradingPostPanelPatches.cs).
+        // The Trading Post's panel, at the bottom of its own (the crossing's district-distribution panels it would get are
+        // hidden there: TradingPostPanelPatches.cs).
         private class EntityPanelModuleProvider : IProvider<EntityPanelModule>
         {
             private readonly TradingPostFragment _tradingPostFragment;
@@ -73,6 +74,7 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<TradingPostFragment>().AsSingleton();
             containerDefinition.MultiBind<EntityPanelModule>().ToProvider<EntityPanelModuleProvider>().AsSingleton();
             containerDefinition.MultiBind<IBlockObjectValidator>().To<ColonyPlacementValidator>().AsSingleton();
+            containerDefinition.MultiBind<IToolDisabler>().To<TradingPostToolDisabler>().AsSingleton();
         }
     }
 }

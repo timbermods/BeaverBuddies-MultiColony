@@ -733,6 +733,12 @@ static class ColonyChecks
                     .Select(match => match.Groups[1].Value))
                 .Where(key => !key.EndsWith(".")).Distinct().ToList();
             Check(keys.Count > 60, "the trading post's texts were not found: " + keys.Count);
+            // The Trading Post building's own name, description and flavour line, named by its blueprints.
+            var blueprintKeys = Directory.GetFiles(Path.Combine(mod, "Buildings"), "*.blueprint.json", SearchOption.AllDirectories)
+                .SelectMany(file => System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(file), @"""[A-Za-z]*LocKey""\s*:\s*""([^""]+)""")
+                    .Select(match => match.Groups[1].Value)).Distinct().ToList();
+            Check(blueprintKeys.Count == 3, "the Trading Post's blueprint texts were not found: " + blueprintKeys.Count);
+            keys.AddRange(blueprintKeys);
             var missing = keys.Where(key => !lines.Contains(key)).ToList();
             Check(missing.Count == 0, "no English line for " + string.Join(", ", missing));
         });

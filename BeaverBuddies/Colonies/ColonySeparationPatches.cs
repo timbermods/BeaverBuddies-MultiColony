@@ -127,7 +127,7 @@ namespace BeaverBuddies.Colonies
         if (!_constructionSite.IsOn || !district || !workplaceAccessible.FindRoadToTerrainPath(...)) ...
      */
     // A colony's builders build only their own colony's sites, so nobody spends goods on another colony's buildings.
-    // A District Crossing is built by the colony that placed it (both halves stand side by side, within its reach).
+    // A Trading Post is built by the colony that placed it (both halves stand side by side, within its reach).
     [HarmonyPatch(typeof(ConstructionJob), nameof(ConstructionJob.StartConstructionJob))]
     static class ColonyConstructionJobPatcher
     {

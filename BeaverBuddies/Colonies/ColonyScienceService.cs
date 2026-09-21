@@ -257,9 +257,8 @@ namespace BeaverBuddies.Colonies
                 {
                     if (!(toolButton.Tool is BlockObjectTool tool)) continue;
                     BuildingSpec spec = tool.Template?.GetSpec<BuildingSpec>();
-                    // Buildings the game locks for science, and the District Crossing, which needs none in a
-                    // separate-colonies game (the toolbar locked it while loading, before the mode began).
-                    if (spec == null || (spec.ScienceCost == 0 && !TradingPostCost.IsCrossing(spec))) continue;
+                    // Buildings the game locks for science (the Trading Post needs none).
+                    if (spec == null || spec.ScienceCost == 0) continue;
                     bool unlockedHere = _buildingUnlockingService.Unlocked(spec);
                     bool locked = _toolUnlockingService.IsLocked(tool);
                     if (unlockedHere && locked) _toolUnlockingService.Unlock(tool);

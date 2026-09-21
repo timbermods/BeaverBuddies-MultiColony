@@ -59,7 +59,8 @@ namespace BeaverBuddies.Colonies
     /// removed. Everything it reads is the same on every computer (which buildings stand, and whose they are, in the
     /// order they came), and it only changes in the simulation, so the answers are the same on every computer at every
     /// tick. The owners of tiles two colonies reach depend on that order, so they are saved.
-    /// District Crossings count for nobody: they stand between colonies.
+    /// Trading Posts count for nobody: they stand between colonies. A District Crossing is its colony's, like any
+    /// building.
     /// </summary>
     public class ColonyReach : RegisteredSingleton, ILoadableSingleton, IPostLoadableSingleton, ITickableSingleton, ISaveableSingleton
     {
@@ -215,7 +216,7 @@ namespace BeaverBuddies.Colonies
             if (stamp == null || unstamped.Contains(stamp)) return;
             BlockObject blockObject = entity.GetComponent<BlockObject>();
             if (blockObject == null || blockObject.IsPreview || !blockObject.Positioned) return;
-            if (entity.GetComponent<DistrictCrossing>() != null) return;
+            if (TradingPosts.IsTradingPostBuilding(entity)) return;
             // A district center is its owner's from the moment it is made (saved with it), whether it was founded, a
             // map's start, or the game's own starting building, which no action places.
             DistrictOwner districtOwner = entity.GetComponent<DistrictOwner>();

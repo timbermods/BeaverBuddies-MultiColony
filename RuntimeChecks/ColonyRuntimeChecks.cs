@@ -182,12 +182,11 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.DistributionSystem.DistrictCrossingInventoryInitializer", "Timberborn.DistributionSystem", "AllowEveryGoodAsTakeable"),
             ("Timberborn.InventorySystem.Inventory", "Timberborn.InventorySystem", "UnreservedCapacity"),
             ("Timberborn.CoreUI.VisualElementInitializer", "Timberborn.CoreUI", "InitializeVisualElement"),
-            // The trading post is only a trading post on screen: the crossing's distribution panels hidden, its title
-            // and description the trading post's.
+            // The Trading Post's panel hides the crossing's distribution panels it would otherwise get.
             ("Timberborn.DistributionSystemUI.DistrictCrossingFragment", "Timberborn.DistributionSystemUI", "UpdateRootAndIcons"),
             ("Timberborn.DistributionSystemUI.DistrictCrossingInventoryFragment", "Timberborn.DistributionSystemUI", "ShowFragment"),
-            ("Timberborn.EntityPanelSystem.EntityPanel", "Timberborn.EntityPanelSystem", "UpdateEntityBadge"),
-            ("Timberborn.BlockSystemUI.PlaceableBlockObjectDescriber", "Timberborn.BlockSystemUI", "DescribeEntity"),
+            // The Trading Post's toolbar button shows only in a separate-colonies game (a tool disabler).
+            ("Timberborn.ToolSystem.IToolDisabler", "Timberborn.ToolSystem", "IsEnabled"),
             // Keeping colonies apart.
             ("Timberborn.YielderFinding.YielderFinder", "Timberborn.YielderFinding", "FindLivingYielderWithoutAccessible"),
             ("Timberborn.YielderFinding.YielderFinder", "Timberborn.YielderFinding", "FindYielderWithAccessible"),
@@ -206,8 +205,6 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.TimeSystemUI.ClockPanel", "Timberborn.TimeSystemUI", "UpdateMovingParts"),
             ("Timberborn.TimeSystemUI.ClockPanel", "Timberborn.TimeSystemUI", "NormalizeRotation"),
             ("Timberborn.WorkSystemUI.WorkingHoursPanel", "Timberborn.WorkSystemUI", "UpdateTitle"),
-            ("Timberborn.Buildings.BuildingSpec", "Timberborn.Buildings", "get_ScienceCost"),
-            ("Timberborn.Buildings.BuildingSpec", "Timberborn.Buildings", "get_BuildingCost"),
             ("Timberborn.Carrying.CarrierInventoryFinder", "Timberborn.Carrying", "TryCarryFromAnyInventoryLimited"),
             // Road networks.
             ("Timberborn.ZiplineSystem.ZiplineTower", "Timberborn.ZiplineSystem", "IsConnectedTo"),
@@ -258,6 +255,7 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.DistributionSystemUI.DistrictCrossingFragment", "Timberborn.DistributionSystemUI", "_districtCrossing"),
             ("Timberborn.DistributionSystemUI.DistrictCrossingFragment", "Timberborn.DistributionSystemUI", "_root"),
             ("Timberborn.DistributionSystemUI.DistrictCrossingInventoryFragment", "Timberborn.DistributionSystemUI", "_root"),
+            ("Timberborn.ToolButtonSystem.ToolButton", "Timberborn.ToolButtonSystem", "_toolDisablers"),
             ("Timberborn.WorkSystem.WorkerWorkingHours", "Timberborn.WorkSystem", "_ignoreWorkingHours"),
             ("Timberborn.WorkSystem.WorkplaceWorkingHours", "Timberborn.WorkSystem", "_ignoreWorkingHours"),
             ("Timberborn.WorkSystem.WorkingHoursManager", "Timberborn.WorkSystem", "_startHours"),
@@ -316,34 +314,6 @@ internal static class ColonyRuntimeChecks
             object operand = codeType.GetField("operand")!.GetValue(result[0]);
             if (opcode != OpCodes.Ldc_I4 || !(operand is int value) || value != 100)
                 throw new Exception($"got {opcode} {operand}");
-            if (result.Count != 2) throw new Exception("instructions were added or lost");
-        });
-
-        // A trading post's panel is titled "Trading Post": the mod replaces the one read of the name the game's panel
-        // title comes from. These fail if the game reads it elsewhere, more than once, or not at all.
-        var entityName = Assembly.Load("Timberborn.EntityNaming").GetType("Timberborn.EntityNaming.NamedEntity", true)!
-            .GetProperty("EntityName", all)!.GetGetMethod(true)!;
-        test("Colony: the entity panel's title is the one read of the entity's name while it updates", () =>
-        {
-            var panel = Assembly.Load("Timberborn.EntityPanelSystem").GetType("Timberborn.EntityPanelSystem.EntityPanel", true)!;
-            int reads = MethodsCalled(panel.GetMethod("UpdateEntityBadge", all)!).Count(m => m == entityName);
-            if (reads != 1) throw new Exception($"it reads the name {reads} times");
-        });
-        test("Colony: the title patch reads the trading post's title there instead", () =>
-        {
-            var codeType = Assembly.Load("0Harmony").GetType("HarmonyLib.CodeInstruction", true)!;
-            var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(codeType))!;
-            list.Add(Activator.CreateInstance(codeType, OpCodes.Callvirt, entityName)!);
-            list.Add(Activator.CreateInstance(codeType, OpCodes.Ret, null)!);
-            var patcher = mod.GetType("BeaverBuddies.Colonies.TradingPostTitlePatcher", true)!;
-            var result = ((IEnumerable)patcher.GetMethod("Transpiler", all)!.Invoke(null, new object[] { list })!).Cast<object>().ToList();
-            var opcode = (OpCode)codeType.GetField("opcode")!.GetValue(result[0])!;
-            var operand = codeType.GetField("operand")!.GetValue(result[0]) as MethodInfo;
-            if (opcode != OpCodes.Call || operand != patcher.GetMethod("Title", all))
-                throw new Exception($"got {opcode} {operand}");
-            var parameters = operand!.GetParameters();
-            if (operand.ReturnType != typeof(string) || parameters.Length != 1 || parameters[0].ParameterType != entityName.DeclaringType)
-                throw new Exception("the title does not take the name's place on the stack");
             if (result.Count != 2) throw new Exception("instructions were added or lost");
         });
 

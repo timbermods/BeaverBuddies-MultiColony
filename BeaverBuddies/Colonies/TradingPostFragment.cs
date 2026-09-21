@@ -20,11 +20,12 @@ using UnityEngine.UIElements;
 namespace BeaverBuddies.Colonies
 {
     /// <summary>
-    /// The trading post's panel, under a District Crossing that joins two players' colonies, built from the game's own
-    /// panel pieces so it reads as part of the game: who trades here, then the exchange (the offer form, an offer
-    /// waiting for an answer, or the progress of each side), what waits at the post, what has passed between the two
-    /// colonies, and a science gift. It scrolls rather than run off a short screen. Display and buttons only; each
-    /// button sends an ordinary action that every computer plays.
+    /// The Trading Post's panel, built from the game's own panel pieces so it reads as part of the game: who trades
+    /// here, then the exchange (the offer form, an offer waiting for an answer, or the progress of each side), what
+    /// waits at the post, what has passed between the two colonies, and a science gift. A Trading Post not yet between
+    /// two colonies says what it is waiting for; a District Crossing that ends up joining two colonies says it moves
+    /// nothing between them. It scrolls rather than run off a short screen. Display and buttons only; each button sends
+    /// an ordinary action that every computer plays.
     /// </summary>
     public class TradingPostFragment : IEntityPanelFragment
     {
@@ -98,6 +99,9 @@ namespace BeaverBuddies.Colonies
         private Button stopButton;
         // Seen by a player of neither colony, with nothing going on.
         private Label idleLabel, viewOnlyLabel;
+        // A post that cannot trade (yet), or a crossing between two colonies: only this, and why.
+        private Label noticeLabel;
+        private VisualElement historySection;
         // At the post, what has passed, and science.
         private ChipRow dockRow, sentRow, receivedRow;
         private Label historyTitle;
@@ -158,6 +162,9 @@ namespace BeaverBuddies.Colonies
             body.contentContainer.style.paddingRight = 0;
             root.Add(body);
 
+            noticeLabel = RichText(13);
+            noticeLabel.style.marginTop = 6;
+            body.Add(noticeLabel);
             body.Add(BuildCompose());
             body.Add(BuildProposal());
             body.Add(BuildActive());
@@ -168,7 +175,8 @@ namespace BeaverBuddies.Colonies
             dockRow.Root.style.marginTop = 6;
             _tooltipRegistrar.Register(dockRow.Root, T("BeaverBuddies.Colony.Trade.AtThisPostTooltip"));
             body.Add(dockRow.Root);
-            body.Add(BuildHistory());
+            historySection = BuildHistory();
+            body.Add(historySection);
             body.Add(BuildGift());
             viewOnlyLabel = NativeElements.MutedText(T("BeaverBuddies.Colony.Trade.ViewOnly"));
             viewOnlyLabel.style.marginTop = 8;
@@ -547,7 +555,9 @@ namespace BeaverBuddies.Colonies
 
         private void RefreshUnsafe()
         {
-            if (!crossing || !TradingPosts.IsTradingPost(crossing))
+            bool tradingPost = crossing && TradingPosts.IsTradingPostBuilding(crossing);
+            bool strayCrossing = crossing && !tradingPost && TradingPosts.JoinsTwoColonies(crossing);
+            if (!tradingPost && !strayCrossing)
             {
                 picker.Close();
                 StopTyping();
@@ -555,6 +565,19 @@ namespace BeaverBuddies.Colonies
                 return;
             }
             NativeElements.Show(root, true);
+            bool trading = tradingPost && TradingPosts.IsTradingPost(crossing);
+            NativeElements.Show(noticeLabel, !trading);
+            foreach (VisualElement section in new[] { compose, proposal, active, idleLabel, dockRow.Root, historySection, giftRow, viewOnlyLabel })
+                if (!trading) NativeElements.Show(section, false);
+            if (!trading)
+            {
+                picker.Close();
+                StopTyping();
+                ShowNotice(strayCrossing);
+                FitToScreen();
+                return;
+            }
+            NativeElements.Show(historySection, true);
             DistrictCrossing myHalf = MyHalf();
             bool mine = myHalf != null;
             // Seen from the local player's half, or, for anyone else, from the half that was clicked.
@@ -590,6 +613,31 @@ namespace BeaverBuddies.Colonies
             NativeElements.Show(viewOnlyLabel, !mine);
             picker.RefreshCounts();
             FitToScreen();
+        }
+
+        /// <summary>
+        /// Why nothing trades here: a Trading Post whose halves are not (yet) reached by two different colonies' roads,
+        /// or a District Crossing that ended up joining two colonies (which moves nothing between them).
+        /// </summary>
+        private void ShowNotice(bool strayCrossing)
+        {
+            if (strayCrossing)
+            {
+                int a = OwnerOf(crossing), b = OwnerOf(TradingPosts.Partner(crossing));
+                NativeElements.SetText(headerText, string.Format(T("BeaverBuddies.Colony.Trade.Between"), ColoredName(a), ColoredName(b)));
+                NativeElements.SetText(noticeLabel, T("BeaverBuddies.Colony.Trade.CrossingBetweenColonies"));
+                noticeLabel.style.color = NativeElements.Warning;
+                return;
+            }
+            noticeLabel.style.color = NativeElements.Muted;
+            if (!ColonyModeService.IsSeparateColonies)
+            {
+                NativeElements.SetText(headerText, T("BeaverBuddies.Colony.Trade.NotTradingTitle"));
+                NativeElements.SetText(noticeLabel, T("BeaverBuddies.Colony.Trade.NoColonies"));
+                return;
+            }
+            NativeElements.SetText(headerText, T("BeaverBuddies.Colony.Trade.NotTradingTitle"));
+            NativeElements.SetText(noticeLabel, T("BeaverBuddies.Colony.Trade.NotLinked"));
         }
 
         private void Remember(ExchangeState state, CrossingExchange ax, CrossingExchange bx)

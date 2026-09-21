@@ -5,6 +5,39 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha10
+
+**The Trading Post is its own building, and the District Crossing is the game's own again.** Until now a District
+Crossing became a trading post wherever it joined two colonies, and every District Crossing was cheap (10 logs, no
+science) in a separate-colonies game.
+
+- **New: the Trading Post** (District Management, after the District Crossing): the District Crossing's model and
+  workings (each faction's own; two linked halves, each run by its own district's workers) under its own name, icon
+  and description. It **costs 10 logs and needs no science**. All of alpha9's trading moves to it: the trading panel,
+  the goods grid, exchanges, repeat deals, gifts and the science gift; its panel has no *Imported goods*, **Manage
+  distribution** or stock list. It trades once its two halves are in two different colonies' districts; until then
+  its panel says what it is waiting for, and nothing crosses it (import settings never move anything across it).
+  It only appears in the toolbar of a separate-colonies game (or in dev mode, which shows every tool).
+- **The District Crossing is the game's own:** its usual cost and science, import and export settings, and its own
+  panels, for linking a colony's own districts. For the colony rules it is an ordinary building: it may not stand on
+  another colony's land or beside its roads, and it counts towards its colony's land. One that ends up joining two
+  colonies anyway (another colony's road reaching its far half) moves nothing between them, and its panel says so.
+- The Trading Post, not the crossing, is what the colony rules treat as the meeting point: it needs only one block on
+  the placer's own or free land, it counts for no colony's land, and either colony may remove one between them.
+- **Ctrl+T** also lists your Trading Posts that are not trading yet.
+- Built from the game's own blueprints: `Buildings/DistrictManagement/MultiColonyTradingPost` holds each faction's
+  blueprint (the game's District Crossing blueprint with the name, price, tool order, texts and icon changed, and the
+  mod's `MultiColonyTradingPostSpec` added), and `TemplateCollections` appends it to each faction's toolbar. The
+  toolbar button is hidden outside separate-colonies games by an `IToolDisabler`.
+- Old saves are not carried over: a District Crossing between two colonies in an earlier alpha's save no longer
+  trades.
+- Removed with the old behaviour: the crossing's cost and science patches, and alpha9's crossing title and
+  description patches (the Trading Post has its own).
+- Checks: StabilityTests 259 (the building's texts have English lines); RuntimeChecks 210 (each faction's Trading
+  Post blueprint is the game's District Crossing except for its name, price, texts, icon and mark; each faction's
+  toolbar lists it once; its icon is a sprite; no game assembly uses its spec's name; the game still has the tool
+  disabler hook).
+
 ## 1.4.0-alpha9
 
 **A trading post is now only a trading post, with a panel that looks like one of the game's own.** A District

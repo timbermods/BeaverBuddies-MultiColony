@@ -2,7 +2,6 @@ using BeaverBuddies.Events;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -21,26 +20,63 @@ using Timberborn.WorldPersistence;
 namespace BeaverBuddies.Colonies
 {
     /// <summary>
-    /// A District Crossing between two players' districts is a trading post. It keeps its two halves, each run by its
-    /// own district's beavers, but goods cross it only by exchanges agreed between the two colonies (see
-    /// ColonyExchangeService); the districts' import and export settings do not apply there. Whether a crossing is a
-    /// trading post is worked out from its districts' owners, never saved.
+    /// The Trading Post is its own building (Buildings/DistrictManagement/MultiColonyTradingPost, marked by
+    /// <see cref="MultiColonyTradingPostSpec"/>): a District Crossing's model and two halves, each run by its own
+    /// district's beavers, that colonies barter through. Goods cross it only by exchanges agreed between the two
+    /// colonies (see ColonyExchangeService), never by import and export settings. The game's District Crossing is left
+    /// as it is, for a colony's own districts; one that ends up joining two colonies anyway moves nothing between them.
+    /// Whether a post trades is worked out from its districts' owners, never saved.
     /// </summary>
     public static class TradingPosts
     {
+        // Per building spec (specs are shared objects): whether it is a Trading Post.
+        private static readonly Dictionary<BuildingSpec, bool> isTradingPostTemplate = new Dictionary<BuildingSpec, bool>();
+
         public static DistrictCenter DistrictOf(BaseComponent half) =>
             half ? half.GetComponent<DistrictBuilding>()?.District : null;
 
         public static DistrictCrossing Partner(DistrictCrossing half) => half ? half._linked : null;
 
-        /// <summary>Both halves stand in districts of different players.</summary>
-        public static bool IsTradingPost(DistrictCrossing half)
+        /// <summary>A half of a Trading Post building, in any game, whatever it joins.</summary>
+        public static bool IsTradingPostBuilding(DistrictCrossing half) => ColonyExchangeService.Of(half)?.AtTradingPost == true;
+
+        /// <summary>An entity, or a building's preview, is a Trading Post half.</summary>
+        public static bool IsTradingPostBuilding(BaseComponent entity) =>
+            entity && entity.GetComponent<MultiColonyTradingPostSpec>() != null;
+
+        /// <summary>A building template is the Trading Post (either faction's).</summary>
+        public static bool IsTradingPostTemplate(BuildingSpec spec)
+        {
+            if (spec == null) return false;
+            lock (isTradingPostTemplate)
+            {
+                if (!isTradingPostTemplate.TryGetValue(spec, out bool tradingPost))
+                {
+                    tradingPost = spec.HasSpec<MultiColonyTradingPostSpec>();
+                    isTradingPostTemplate[spec] = tradingPost;
+                }
+                return tradingPost;
+            }
+        }
+
+        /// <summary>The two halves stand in districts of different players (whatever the crossing is).</summary>
+        public static bool JoinsTwoColonies(DistrictCrossing half)
         {
             if (!ColonyModeService.IsSeparateColonies || !half) return false;
             int? mine = DistrictOwner.OwnerOfDistrict(DistrictOf(half));
             int? theirs = DistrictOwner.OwnerOfDistrict(DistrictOf(Partner(half)));
             return mine != null && theirs != null && mine.Value != theirs.Value;
         }
+
+        /// <summary>A Trading Post (both halves) between two colonies: it can hold an exchange.</summary>
+        public static bool IsTradingPost(DistrictCrossing half) =>
+            IsTradingPostBuilding(half) && IsTradingPostBuilding(Partner(half)) && JoinsTwoColonies(half);
+
+        /// <summary>
+        /// Nothing crosses by import and export settings: never at a Trading Post, and never between two colonies
+        /// (a District Crossing that ends up joining two colonies moves nothing between them).
+        /// </summary>
+        public static bool TradesOnlyByExchange(DistrictCrossing half) => IsTradingPostBuilding(half) || JoinsTwoColonies(half);
     }
 
     /// <summary>
@@ -162,23 +198,25 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    // At a trading post goods pass only for a running exchange, up to what the sending colony still owes. A load
-    // still on the way when the exchange ends (or one over the amount) stays on its own half, and its colony's workers
-    // carry it home (the game empties a crossing half of what nobody takes across).
+    // At a Trading Post goods pass only for a running exchange, up to what the sending colony still owes (and a
+    // crossing that joins two colonies passes nothing). A load still on the way when the exchange ends (or one over
+    // the amount) stays on its own half, and its colony's workers carry it home (the game empties a crossing half of
+    // what nobody takes across).
     [HarmonyPatch(typeof(DistrictCrossingInventory), nameof(DistrictCrossingInventory.TransferStock))]
     static class TradingPostPassPatcher
     {
         static void Prefix(DistrictCrossingInventory __instance, string goodId, ref int amount)
         {
             DistrictCrossing half = __instance.GetComponent<DistrictCrossing>();
-            if (!TradingPosts.IsTradingPost(half)) return;
-            amount = Math.Min(amount, ColonyExchangeService.MayPass(half, goodId));
+            if (!TradingPosts.TradesOnlyByExchange(half)) return;
+            amount = TradingPosts.IsTradingPost(half) ? Math.Min(amount, ColonyExchangeService.MayPass(half, goodId)) : 0;
         }
     }
 
-    // At a trading post a half's workers bring only their colony's side of a running exchange, as far as the pace
+    // At a Trading Post a half's workers bring only their colony's side of a running exchange, as far as the pace
     // allows; nothing moves by import and export settings. The other colony's workers haul away what arrives on their
-    // half as the game already does (emptying). Crossings between one colony's own districts are the game's.
+    // half as the game already does (emptying). A crossing that joins two colonies brings nothing. District Crossings
+    // between one colony's own districts are the game's.
     [HarmonyPatch(typeof(DistrictCrossingWorkplaceBehavior), nameof(DistrictCrossingWorkplaceBehavior.TryExport))]
     static class TradingPostCarryPatcher
     {
@@ -198,8 +236,9 @@ namespace BeaverBuddies.Colonies
         static bool Carry(DistrictCrossingWorkplaceBehavior __instance, BehaviorAgent agent, ref bool __result)
         {
             DistrictCrossing crossing = __instance._districtCrossing;
-            if (!TradingPosts.IsTradingPost(crossing)) return true;
+            if (!TradingPosts.TradesOnlyByExchange(crossing)) return true;
             __result = false;
+            if (!TradingPosts.IsTradingPost(crossing)) return false;
             DistrictCrossingInventory crossingInventory = __instance._districtCrossingInventory;
             string goodId = ColonyExchangeService.GoodGiven(crossing);
             if (goodId == null || ExchangeTerms.IsSpecial(goodId) || !crossing.CanExport || !crossingInventory) return false;
@@ -214,59 +253,17 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    // Distribution settings never send goods across a trading post, neither by workers nor by the crossing's own
-    // exporter of goods left waiting on a half (which would otherwise send an exchange's goods straight back).
+    // Distribution settings never send goods across a Trading Post (or between two colonies), neither by workers nor
+    // by the crossing's own exporter of goods left waiting on a half (which would otherwise send an exchange's goods
+    // straight back).
     [HarmonyPatch(typeof(DistrictCrossing), nameof(DistrictCrossing.CanExportGood))]
     static class TradingPostNoSettingsTradePatcher
     {
         static bool Prefix(DistrictCrossing __instance, ref bool __result)
         {
-            if (!TradingPosts.IsTradingPost(__instance)) return true;
+            if (!TradingPosts.TradesOnlyByExchange(__instance)) return true;
             __result = false;
             return false;
-        }
-    }
-
-    // ---- a District Crossing is available from the start, and cheap, in a separate-colonies game ----
-
-    static class TradingPostCost
-    {
-        // Per building spec (specs are shared objects): whether it is a District Crossing.
-        private static readonly Dictionary<BuildingSpec, bool> isCrossing = new Dictionary<BuildingSpec, bool>();
-
-        public static bool IsCrossing(BuildingSpec spec)
-        {
-            lock (isCrossing)
-            {
-                if (!isCrossing.TryGetValue(spec, out bool crossing))
-                {
-                    crossing = spec.Blueprint?.HasSpec<DistrictCrossingSpec>() == true;
-                    isCrossing[spec] = crossing;
-                }
-                return crossing;
-            }
-        }
-
-        public static readonly ImmutableArray<GoodAmountSpec> CheapCost =
-            ImmutableArray.Create(new GoodAmountSpec { Id = "Log", Amount = 10 });
-    }
-
-    // Players need a crossing most when they are short of everything; it must not wait for planks or 600 science.
-    [HarmonyPatch(typeof(BuildingSpec), nameof(BuildingSpec.ScienceCost), MethodType.Getter)]
-    static class TradingPostScienceCostPatcher
-    {
-        static void Postfix(BuildingSpec __instance, ref int __result)
-        {
-            if (__result != 0 && ColonyModeService.IsSeparateColonies && TradingPostCost.IsCrossing(__instance)) __result = 0;
-        }
-    }
-
-    [HarmonyPatch(typeof(BuildingSpec), nameof(BuildingSpec.BuildingCost), MethodType.Getter)]
-    static class TradingPostBuildingCostPatcher
-    {
-        static void Postfix(BuildingSpec __instance, ref ImmutableArray<GoodAmountSpec> __result)
-        {
-            if (ColonyModeService.IsSeparateColonies && TradingPostCost.IsCrossing(__instance)) __result = TradingPostCost.CheapCost;
         }
     }
 

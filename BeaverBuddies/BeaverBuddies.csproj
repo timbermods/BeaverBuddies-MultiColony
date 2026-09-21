@@ -17,7 +17,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>BeaverBuddies</AssemblyName>
     <Description>TimberModTest</Description>
-    <Version>1.4.0-alpha9</Version>
+    <Version>1.4.0-alpha10</Version>
     <!-- Report exactly the version above, without a +<commit> suffix. -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <TimberbornTargetVersion>1.1</TimberbornTargetVersion>
@@ -107,6 +107,9 @@
     <None Update="Localizations\*" CopyToOutputDirectory="PreserveNewest" />
     <None Update="KeyBindings\*" CopyToOutputDirectory="PreserveNewest" />
     <None Update="KeyBindingGroups\*" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The Trading Post building: its blueprints, icon, and its place in each faction's toolbar. -->
+    <None Update="Buildings\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="TemplateCollections\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Resources.Designer.cs">
@@ -138,6 +141,8 @@
       <LocalizationFileToCopy Include="$(ProjectDir)$(OutDir)Localizations\*" />
       <KeyBindingFileToCopy Include="$(ProjectDir)$(OutDir)KeyBindings\*" />
       <KeyBindingGroupFileToCopy Include="$(ProjectDir)$(OutDir)KeyBindingGroups\*" />
+      <BuildingFileToCopy Include="$(ProjectDir)$(OutDir)Buildings\**\*" />
+      <TemplateCollectionFileToCopy Include="$(ProjectDir)$(OutDir)TemplateCollections\**\*" />
       <RootDirFilesToCopy Include="$(ProjectDir)thumbnail.png" />
     </ItemGroup>
     <!-- Clear VersionOutputPath Directory & Copy Output files inside -->
@@ -147,6 +152,8 @@
     <Copy SourceFiles="@(LocalizationFileToCopy)" DestinationFolder="$(VersionOutputPath)\Localizations" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(KeyBindingFileToCopy)" DestinationFolder="$(VersionOutputPath)\KeyBindings" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(KeyBindingGroupFileToCopy)" DestinationFolder="$(VersionOutputPath)\KeyBindingGroups" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BuildingFileToCopy)" DestinationFolder="$(VersionOutputPath)\Buildings\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(TemplateCollectionFileToCopy)" DestinationFolder="$(VersionOutputPath)\TemplateCollections\%(RecursiveDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(RootDirFilesToCopy)" DestinationFolder="$(BeaverBuddiesModsPath)" SkipUnchangedFiles="true" />
   </Target>
 

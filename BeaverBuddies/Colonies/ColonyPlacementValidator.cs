@@ -1,7 +1,6 @@
 using BeaverBuddies.IO;
 using System.Linq;
 using Timberborn.BlockSystem;
-using Timberborn.DistributionSystem;
 using UnityEngine;
 
 namespace BeaverBuddies.Colonies
@@ -55,7 +54,7 @@ namespace BeaverBuddies.Colonies
             if (!ColonyModeService.IsSeparateColonies || slot < 0 || world == null) return ColonyVerdict.Allow;
             Vector3Int? doorstep = blockObject.HasEntrance ? blockObject.PositionedEntrance.DoorstepCoordinates : (Vector3Int?)null;
             ColonyRefusal refusal = world.TilesConflict(slot, blockObject.PositionedBlocks.GetAllCoordinates().ToList(), doorstep,
-                crossing: blockObject.GetComponent<DistrictCrossing>() != null, out string detail);
+                crossing: TradingPosts.IsTradingPostBuilding(blockObject), out string detail);
             return refusal == ColonyRefusal.None ? ColonyVerdict.Allow : ColonyVerdict.Refuse(refusal, detail);
         }
     }

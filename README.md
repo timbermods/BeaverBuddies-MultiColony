@@ -2,7 +2,7 @@
 
 **Two players, one map, a colony each.** A Timberborn co-op mod where each player runs their own colony (their own
 districts, land, beavers, stock, science and working hours) on a shared map. The colonies meet only at **trading
-posts**: District Crossings where their roads come together, through which they barter goods. Co-op, not a race.
+posts**: a building placed where their roads come together, through which they barter goods. Co-op, not a race.
 Works on the game's standard maps and on BeaverBuddies multi-start maps.
 
 ![Timberborn 1.1.2.4](https://img.shields.io/badge/Timberborn-1.1.2.4-2a4034?labelColor=172620&style=flat-square) ![Status: alpha](https://img.shields.io/badge/status-alpha-e0812f?labelColor=172620&style=flat-square) [![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-2a4034?labelColor=172620&style=flat-square)](License.txt)
@@ -94,11 +94,14 @@ Steam): you get the same colony every time, whoever hosts. The connection panel 
 
 ## Trading posts
 
-Build a **District Crossing** where your land meets another colony's: one half on each side of the edge, each
-reached by its own colony's road on its own land. You may place it when part of it is on your land (or free land).
-In a separate-colonies game it needs **no science and costs 10 logs**. Each colony's beavers run their own half.
-Between two colonies the crossing is a **Trading Post** and nothing else: its panel is titled so, and the game's
-district-distribution controls (the imported goods beside it, **Manage distribution**) are gone from it.
+Build a **Trading Post** (District Management, next to the District Crossing) where your land meets another
+colony's: one half on each side of the edge, each reached by its own colony's road on its own land. You may place it
+when part of it is on your land (or free land). It **costs 10 logs and needs no science**, and looks like a District
+Crossing. Each colony's beavers run their own half. It only appears in separate-colonies games.
+
+The **District Crossing** is the game's own again, for linking your own districts (import and export settings, its
+usual cost and science). It can't reach into another colony's land, and one that somehow ends up joining two
+colonies moves nothing between them.
 
 Goods cross a trading post only through an **exchange** the two colonies agree on:
 
@@ -109,8 +112,8 @@ Goods cross a trading post only through an **exchange** the two colonies agree o
    Gears*. **Set a side to 0** for a gift (or to ask for help). Tick **Repeat until cancelled** for a standing deal that
    starts again each time it completes. Then **Make offer**.
 2. **The other player accepts** (or declines) on the same panel. They get a notice when you make the offer.
-3. **The beavers do the rest.** Each colony's crossing workers fetch their side's goods from their own storage and
-   bring them to the crossing; the other colony's workers haul them away into theirs. Everything **moves in step**:
+3. **The beavers do the rest.** Each colony's Trading Post workers fetch their side's goods from their own storage
+   and bring them to the post; the other colony's workers haul them away into theirs. Everything **moves in step**:
    neither side gets more than a tenth of its amount (at least 10) ahead of the other. When both amounts have
    crossed, both players get a notice (a repeating exchange simply starts its next round).
 
@@ -122,12 +125,12 @@ always stays).
 colony, its exchange and its progress, with a **Go to** button; and every colony, its population and whether its
 player is playing.
 
-- **One exchange at a time** per trading post; build more crossings for more at once. Either player may cancel an
+- **One exchange at a time** per trading post; build more Trading Posts for more at once. Either player may cancel an
   exchange at any time; what has crossed stays crossed.
 - **Each half holds up to 100** of each good waiting to be hauled away (the game's own crossing holds 30). Staff both
   halves, and keep storage room for what you receive, and houses for beavers.
-- **Import and export settings don't apply** at a trading post. They still move goods between your own districts,
-  as in the game (with the bigger buffer: every crossing holds 100, in every game).
+- **Import and export settings don't apply** at a Trading Post. They still move goods between your own districts
+  through District Crossings, as in the game (with the bigger buffer: every crossing holds 100, in every game).
 - The panel also shows each side's progress as a bar, what is waiting at the post, what has passed each way, and,
   with separate science, **Gift science 50 / 250**.
 - Either player may remove a trading post.
@@ -194,7 +197,7 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 - **Can't join / stuck on "Receiving map…":** every player must have the same zip. Reinstall from the same file and restart.
 - **Ctrl+K says the host has turned off Separate colonies:** the host ticks **Separate colonies (alpha)** and rehosts.
 - **"That is another colony's land":** that tile is within 10 tiles of their buildings or paths, and they were
-  there first. Build on your side. To trade, put a District Crossing across the edge of your two lands.
+  there first. Build on your side. To trade, put a Trading Post across the edge of your two lands.
 - **Everything is refused right after joining:** the host has not seated you yet; wait a moment. If it persists,
   send the logs.
 - **Diagnostics report:** press **Ctrl+Shift+J** (or *Diagnostics report* in the Ctrl+T window) when something

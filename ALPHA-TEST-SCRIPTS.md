@@ -33,9 +33,12 @@ colony (alpha)** are ticked, and tick **Always Use Detailed Logging** (debug mod
    colony). As colony 2, place and mark freely on colony 2's land. As colony 1, lay a path towards colony 2: it can go
    no further than the edge of colony 2's land. Drag the demolish tool over colony 2's crop fields: their planting
    marks stay.
-7. **A trading post.** Bring a road from each district to the edge where the two lands meet and place a **District
-   Crossing** across it, one half on each side (flip to colony 2 to build colony 2's road). It needs no science and costs 10 logs. Each colony's beavers
-   build and staff their own half.
+7. **A trading post.** Open District Management: after the District Crossing there is a **Trading Post** (the
+   crossing's model, its own icon; hover it: 10 logs, no science). The District Crossing shows the game's own price
+   and science. Try to place a District Crossing reaching into colony 2's land: red, *That is another colony's land*.
+   Bring a road from each district to the edge where the two lands meet and place a **Trading Post** across it, one
+   half on each side (flip to colony 2 to build colony 2's road). Each colony's beavers build and staff their own
+   half. Before colony 2's road reaches its half, select the post: *Not trading yet*, and why.
 8. **The panel.** Select a half. The panel is titled **Trading Post** and describes a trading post; there is no
    *Imported goods* box beside it (no **Manage distribution**) and no stock list. At the bottom: *Trading with Colony
    2* in its colour with **All posts**; a **You give** and a **You get** card, each with a good (the one that colony
@@ -76,8 +79,9 @@ colony (alpha)** are ticked, and tick **Always Use Detailed Logging** (debug mod
     later (if you can, let one starve and check).
 15. **Save, reload, host again:** owners, land, marks, working hours, science pools, unlocks, the totals and an
     exchange under way (or an offer waiting) are unchanged.
-16. **Mode off.** Untick **Separate colonies** and start a new game: one shared colony, no refusals, no trading-post
-    panel, crossings trade by import settings as in the game (holding up to 100), science is one pool.
+16. **Mode off.** Untick **Separate colonies** and start a new game: one shared colony, no refusals, no Trading Post
+    in District Management, District Crossings trade by import settings as in the game (holding up to 100), science is
+    one pool.
 17. Send `Player.log`.
 
 ## Script B: two players (about 45 minutes)

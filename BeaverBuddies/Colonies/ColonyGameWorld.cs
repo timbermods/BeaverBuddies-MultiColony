@@ -48,7 +48,7 @@ namespace BeaverBuddies.Colonies
             return DistrictOwner.OwnerOf(entity) ?? ColonySeparation.NaturalOwnerOf(entity.GetComponent<BlockObject>());
         }
 
-        /// <summary>A half of a trading post (a District Crossing between two colonies): either colony may remove it.</summary>
+        /// <summary>A half of a Trading Post between two colonies: either colony may remove it.</summary>
         public bool IsCrossing(string entityId) => TradingPosts.IsTradingPost(Entity(entityId)?.GetComponent<DistrictCrossing>());
 
         public bool IsUnlockedFor(int slot, string templateName) =>
@@ -59,8 +59,9 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// A building may not stand on another colony's land, and neither it nor its doorstep may touch another
-        /// colony's roads, which would join it to that colony or block it. A District Crossing links two colonies at the
-        /// edge of their lands: it needs only to touch the placer's own land (or free land).
+        /// colony's roads, which would join it to that colony or block it. A Trading Post links two colonies at the edge
+        /// of their lands: it needs only to touch the placer's own land (or free land). A District Crossing is an
+        /// ordinary building here: it joins a colony's own districts, not two colonies.
         /// </summary>
         public ColonyRefusal PlacementConflict(int slot, ColonyPlacement colonyPlacement, out string detail)
         {
@@ -74,14 +75,14 @@ namespace BeaverBuddies.Colonies
             Vector3Int? doorstep = spec.Entrance != null && spec.Entrance.HasEntrance
                 ? PositionedEntrance.From(spec.GetBlocks(), spec.Entrance, placement)?.DoorstepCoordinates
                 : null;
-            ColonyRefusal refusal = TilesConflict(slot, tiles, doorstep, TradingPostCost.IsCrossing(building), out detail);
+            ColonyRefusal refusal = TilesConflict(slot, tiles, doorstep, TradingPosts.IsTradingPostTemplate(building), out detail);
             if (detail != null) detail = colonyPlacement.TemplateName + " " + detail;
             return refusal;
         }
 
         /// <summary>
         /// The check itself, for a building's blocks and doorstep: none on another colony's land, and none on or beside
-        /// another colony's roads. A crossing needs only one block on the placer's own or free land.
+        /// another colony's roads. A Trading Post needs only one block on the placer's own or free land.
         /// </summary>
         public ColonyRefusal TilesConflict(int slot, IEnumerable<Vector3Int> footprint, Vector3Int? doorstep, bool crossing,
             out string detail)

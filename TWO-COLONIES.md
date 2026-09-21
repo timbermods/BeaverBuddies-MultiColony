@@ -17,8 +17,8 @@ the road-network checks are covered by automated checks only. Play on a copy of 
   both reach, the land is the one's that got there first, and stays theirs while they reach it.
 - **Build, mark and plant on your land or free land.** Never on another colony's land or right next to its roads.
   Building towards another colony stops at the edge of its land.
-- **Roads never join, except through a District Crossing.** A crossing between two players' districts is a
-  **trading post**, and it is the only place colonies meet.
+- **Two colonies' roads never join, except through a Trading Post**, the building colonies barter through, and the
+  only place colonies meet. (A District Crossing links a colony's own districts, as in the game.)
 - **You change your own colony only**, whether or not the other player is playing.
 - **Each colony's beavers work for it alone** (see *Keeping colonies apart*).
 - **Shared by everyone:** game speed and pause, pings, chat, saving, and the map itself: water, droughts, badwater
@@ -52,16 +52,23 @@ colony's. Every other player **founds** their colony once:
 
 ## Trading posts
 
-Build a **District Crossing** across the edge where your land meets another colony's: one half on each side, each
-half reached by its own colony's road on its own land. Either colony may place it, as long as part of it is on the
-placer's land (or free land); the placer's builders build both halves. In a separate-colonies game a crossing needs
-**no science and costs 10 logs**, so colonies can trade from the start.
+The **Trading Post** is its own building, in the District Management group next to the District Crossing. It has the
+District Crossing's model (each faction's own) and works like one, two linked halves each run by its own district's
+workers, but it only ever trades between colonies. It **costs 10 logs and needs no science**, so colonies can trade
+from the start, and it only shows in the toolbar of a separate-colonies game. Build it across the edge where your
+land meets another colony's: one half on each side, each half reached by its own colony's road on its own land.
+Either colony may place it, as long as part of it is on the placer's land (or free land); the placer's builders
+build both halves. It trades once its two halves are in two different colonies' districts; until then its panel
+says so, and nothing crosses it.
 
-**Goods cross a trading post only through an exchange** agreed by the two colonies. Import and export settings (the
-Distribution tab) do not move anything across a trading post; between one colony's own districts they work as in the
-game. So a crossing between two colonies is only a trading post, on screen too: its panel is titled **Trading Post**
-and describes it as one, and the game's district-distribution panels (the imported goods beside it with **Manage
-distribution**, and the crossing's own stock list) are not shown there.
+**Goods cross a Trading Post only through an exchange** agreed by the two colonies. Import and export settings (the
+Distribution tab) never move anything across one, so its panel has no *Imported goods* box, no **Manage
+distribution** and no stock list; it lists what waits on the half itself.
+
+**The District Crossing is the game's own**, with its usual cost, science and import and export settings, for
+linking a colony's own districts. It is an ordinary building for the colony rules: it may not stand on another
+colony's land or next to its roads. If one ever ends up joining two colonies anyway (another colony's road reaching
+its far half), it moves nothing between them, and its panel says to build a Trading Post.
 
 **An exchange** is "this many of one good for that many of another", for example *1000 logs for 250 gears*:
 
@@ -74,8 +81,8 @@ distribution**, and the crossing's own stock list) are not shown there.
    0: asking for 0 is a gift, giving 0 asks for help. The other player gets a notice.
 2. **Answer.** The other colony's player selects the trading post and chooses **Accept** or **Decline**. The offering
    player may **Withdraw offer** until then. An offer changed in the meantime is never accepted by mistake.
-3. **Delivery.** Each colony's crossing workers fetch their colony's side from its storage and bring it to their
-   half; it passes to the other half at once, and the other colony's workers haul it away into their storage. No
+3. **Delivery.** Each colony's Trading Post workers fetch their colony's side from its storage and bring it to
+   their half; it passes to the other half at once, and the other colony's workers haul it away into their storage. No
    beaver crosses.
 4. **In step.** Neither side may deliver more than a tenth of its amount (at least 10) ahead of what the other side
    has delivered, so an exchange is never filled one way only. The panel says when your beavers are waiting.
@@ -87,13 +94,13 @@ distribution**, and the crossing's own stock list) are not shown there.
 separate science), 25 at a time, and adult beavers move from the giving half's district to the other, one at a
 time, the last adult always staying. Both keep the same pace as goods.
 
-**Ctrl+T** (or **Trade** at the top right) opens the trading posts and colonies window: each of your trading posts
-with its exchange and progress and a **Go to** button, and each colony with its population and whether its player is
+**Ctrl+T** (or **Trade** at the top right) opens the trading posts and colonies window: each of your Trading Posts
+with its exchange and progress (or *not trading yet*) and a **Go to** button, and each colony with its population and whether its player is
 playing.
 
 **Good to know:**
 
-- One exchange at a time per trading post. Build more crossings for more exchanges at once.
+- One exchange at a time per trading post. Build more Trading Posts for more exchanges at once.
 - A half holds up to **100 of each good** waiting to be hauled away (30 in the game). What has not been hauled away
   holds up further deliveries of that good: staff both halves, and keep storage room for what you receive.
 - Anything of an exchange's good that crosses counts towards it.
@@ -107,8 +114,8 @@ amounts; and, with separate science, **Gift science 50 / 250**. A player of neit
 the game's sections above it leave too little room on the screen, its content scrolls instead of running off the
 bottom.
 
-Either colony may remove a trading post (deleting one half removes both, as in the game); a crossing between one
-colony's own districts is that colony's alone. Running a half (workers,
+Either colony may remove a Trading Post between them (deleting one half removes both, as in the game); a District
+Crossing, or a Trading Post within one colony, is that colony's alone. Running a half (workers,
 priority) stays with its colony.
 
 ## When a colony is handed over
@@ -129,7 +136,8 @@ unlocks too.
   colony to it.
 
 The player who lost their colony gets a notice and may **found a new one** (Ctrl+K). A trading post between the two
-colonies becomes a crossing within one colony, and its exchange ends.
+colonies then stands within one colony: its exchange ends, and it trades again only if another colony's roads reach
+its other half.
 
 ## Separate science and unlocks
 
@@ -181,12 +189,12 @@ records for the whole map.
 ## Road networks
 
 The game refuses to place a road, building or tubeway that would join two districts' roads, so two colonies' roads
-can only meet at a crossing. Two gaps are closed by this mod:
+can only meet at a crossing (a Trading Post, between colonies). Two gaps are closed by this mod:
 
 - **Zipline links** are judged once, by the host, with the game's own check.
 - **Two placements that are each fine alone** can join roads once both are built (two players placing at the same
   moment). Every computer notices at the same moment and warns both players ("Two districts' roads have been joined
-  without a District Crossing"): remove the joining path or building. The game's district bookkeeping cannot handle
+  without a District Crossing or Trading Post"): remove the joining path or building. The game's district bookkeeping cannot handle
   joined roads, so do this at once.
 
 ## Water and the map
@@ -256,7 +264,7 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   computer. Beavers choose their work from these only, so every computer's beavers choose alike.
 - **Science** keeps one pool and one unlock set per colony in the save. Simulation code that earns, spends or reads
   science names the colony of the building doing it; everything else is display.
-- **Exchanges** are saved on the two halves of the crossing. Goods are counted at the one place they pass from one
+- **Exchanges** are saved on the two halves of the Trading Post. Goods are counted at the one place they pass from one
   half to the other, identically on every computer; the totals delivered each way are kept there too.
 
 ## Testing
