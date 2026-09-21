@@ -214,8 +214,10 @@ on, and desync the game. A notice says so when dev mode is switched on in co-op.
   reach a little further than its beavers do.
 - Land is first come. Founding keeps 20 tiles from other colonies, but a colony that grows quickly towards another
   still claims the land between them first.
-- In a save from before this version, buildings take their colony when they next have a district (a path: the
-  district whose road it is); an older dam, levee or platform, which has none, counts only by the land it stands on.
+- A building nobody placed as an action (built before the game was hosted, or in a save older than the two-colony
+  builds) takes its colony on its own, checked every 16 ticks: its district's, else the owner of the road at its
+  entrance (a path: the road it is), else the colony whose land it stands on. One on nobody's land, or across two
+  colonies' land, waits until one of these applies.
 - A half of a trading post holds at most 100 of a good; an exchange stalls while the receiving colony has nowhere to
   put what arrives.
 - Trading happens in a co-op session: host the game (even alone) to trade.

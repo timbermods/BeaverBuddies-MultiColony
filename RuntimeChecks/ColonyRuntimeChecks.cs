@@ -209,6 +209,8 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.Navigation.DistrictConflictDetector", "Timberborn.Navigation", "AreDistrictsInConflict"),
             ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "IsOnDistrictRoad"),
             ("Timberborn.GameDistrictsUI.DistrictPreviewsValidator", "Timberborn.GameDistrictsUI", "IsValid"),
+            // Land: a building nobody stamped takes the owner of the road at its entrance.
+            ("Timberborn.Buildings.BuildingAccessible", "Timberborn.Buildings", "CalculateAccess"),
             ("Timberborn.ScienceSystem.UnlockableOnceSpec", "Timberborn.ScienceSystem", "GetSpec"),
             // Dev mode's shortcuts that are played on every computer.
             ("Timberborn.BuildingTools.BuildingToolLocker", "Timberborn.BuildingTools", "UnlockIgnoringScienceCost"),
@@ -319,6 +321,44 @@ internal static class ColonyRuntimeChecks
             var tick = MethodsCalled(synchronizer.GetMethod("Tick", all)!).Select(m => m.Name).ToList();
             if (!tick.SequenceEqual(new[] { "ProcessRegularChanges", "NotifyAllNavmeshChanges" }))
                 throw new Exception("its Tick now calls: " + string.Join(", ", tick));
+        });
+
+        // A building placed before the game was hosted carries no colony. While it is a construction site it has no
+        // district either, so ColonyReach reads the road at its entrance: the point the game finds a construction
+        // site's builders by. These fail if the game stops using that point, or the land code reads anything that
+        // differs between computers.
+        test("Colony: the game finds a construction site's builders by the road at BuildingAccessible.CalculateAccess", () =>
+        {
+            var districtBuilding = Assembly.Load("Timberborn.GameDistricts").GetType("Timberborn.GameDistricts.DistrictBuilding", true)!;
+            var calls = MethodsCalled(districtBuilding.GetMethod("ShouldBeAssignedToConstructionDistrict", all)!)
+                .Select(m => m.DeclaringType!.Name + "." + m.Name).ToList();
+            if (!calls.SequenceEqual(new[] { "BuildingAccessible.CalculateAccess", "DistrictCenter.IsOnInstantDistrictRoad" }))
+                throw new Exception("it now calls: " + string.Join(", ", calls));
+        });
+
+        test("Colony: land bookkeeping reads the entrance on the tick-updated district map, and nothing that differs between computers", () =>
+        {
+            var reach = mod.GetType("BeaverBuddies.Colonies.ColonyReach", true)!;
+            var stamp = mod.GetType("BeaverBuddies.Colonies.ColonyStamp", true)!;
+            // Their own methods and their lambdas' (compiled into nested types).
+            const BindingFlags declared = all | BindingFlags.DeclaredOnly;
+            var calls = new[] { reach, stamp }
+                .SelectMany(t => new[] { t }.Concat(t.GetNestedTypes(all)))
+                .SelectMany(t => t.GetMethods(declared).Cast<MethodBase>().Concat(t.GetConstructors(declared)))
+                .SelectMany(MethodsCalled)
+                .Select(m => m.DeclaringType!.Name + "." + m.Name)
+                .ToHashSet();
+            foreach (string needed in new[] { "BuildingAccessible.CalculateAccess", "IDistrictService.IsOnDistrictRoad" })
+                if (!calls.Contains(needed)) throw new Exception("no longer calls " + needed);
+            // The instant map and a building's construction district follow the frame, and the local and displayed
+            // slot are this computer's.
+            var forbidden = new[] { "IDistrictService.IsOnInstantDistrictRoad", "DistrictCenter.IsOnInstantDistrictRoad",
+                "DistrictCenter.AccessibleIsOnInstantDistrictRoad", "DistrictBuilding.get_InstantDistrict",
+                "DistrictBuilding.get_ConstructionDistrict", "DistrictBuilding.GetDistrictOrConstructionDistrict",
+                "DistrictBuilding.GetInstantOrConstructionDistrict", "DistrictOwner.OwnerOf", "ColonySession.get_LocalSlot",
+                "ColonyScienceService.get_DisplaySlot" };
+            var found = forbidden.Where(calls.Contains).ToList();
+            if (found.Count > 0) throw new Exception("calls " + string.Join(", ", found));
         });
     }
 

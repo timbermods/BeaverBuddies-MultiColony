@@ -471,6 +471,23 @@ static class ColonyChecks
             Check(!grid.OthersReachNear(0, new[] { (55, 50) }), "its own colony does not count");
         });
 
+        yield return ("Colony: a building nobody stamped and no road reaches takes the land it stands on, if it is one colony's", () =>
+        {
+            var grid = new ColonyReachGrid(100, 100);
+            grid.Apply(0, new[] { (20, 50) }, +1);
+            grid.Apply(1, new[] { (35, 50) }, +1);
+            // A 2 by 3 pump at the edge of colony 0's land, partly over land nobody holds: colony 0's.
+            Equal<int?>(0, grid.SoleOwner(new[] { (20, 59), (21, 59), (20, 60), (21, 60), (20, 61), (21, 61) }));
+            Equal<int?>(null, grid.Owner(20, 61));
+            // Wholly on colony 1's land.
+            Equal<int?>(1, grid.SoleOwner(new[] { (40, 50), (41, 50) }));
+            // Across the line between the two: nobody's to decide, so it keeps waiting.
+            Equal<int?>(null, grid.SoleOwner(new[] { (30, 50), (31, 50) }));
+            // On nobody's land, or no tiles at all.
+            Equal<int?>(null, grid.SoleOwner(new[] { (80, 80) }));
+            Equal<int?>(null, grid.SoleOwner(Array.Empty<(int, int)>()));
+        });
+
         yield return ("Colony: land stays quick at the size of a big game", () =>
         {
             // A 256 by 256 map, four colonies of 5000 building tiles each (paths and buildings).

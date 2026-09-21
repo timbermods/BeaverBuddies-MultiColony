@@ -106,6 +106,23 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>
+        /// The one colony whose land these tiles are (a building's footprint), leaving out tiles nobody holds. Null when
+        /// none of them is anyone's, or they are two colonies'.
+        /// </summary>
+        public int? SoleOwner(IEnumerable<(int x, int y)> tiles)
+        {
+            int? owner = null;
+            foreach (var (x, y) in tiles)
+            {
+                int? here = Owner(x, y);
+                if (here == null) continue;
+                if (owner != null && owner.Value != here.Value) return null;
+                owner = here;
+            }
+            return owner;
+        }
+
+        /// <summary>
         /// Whether any colony other than <paramref name="slot"/> reaches a tile within <see cref="Radius"/> of these:
         /// a colony founded here would have its land run straight into another's.
         /// </summary>

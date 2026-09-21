@@ -5,6 +5,31 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha6
+
+**Fixed: buildings placed before the game was hosted belonged to no colony.** A new co-op game starts in single
+player, and what the host places before clicking Host is placed directly, not as an action, so nothing names its
+colony. The mod gave such buildings a colony later, but only once they had a district, and a construction site has
+none until it is finished. Seen after two days of a new game: 7 of the first colony's construction sites (three
+lodges, a farmhouse, a warehouse, a pump and a tank) still "waiting for a colony" in the diagnostics report. While
+they waited, their land didn't count, and in the simulation they were nobody's (any colony's builders could build
+them). Every computer agreed, so it was never a desync.
+
+- **A building with no colony now takes the owner of the road at its entrance**: the point the game finds a
+  construction site's builders by, read from the road map that changes only at tick boundaries. Before, it looked at
+  the building's own corner tile, which is right for a path but never a road for a building.
+- **Failing that, the colony whose land it stands on**, if it is one colony's: for a site no road reaches, such as a
+  pump placed a level above its path. One on nobody's land, or across two colonies' land, keeps waiting.
+- **A district center has its colony from the moment it is made.** The game's own starting building on a one-start
+  map was placed with no colony and took one 16 ticks later; its land now counts from the start.
+- The same rules apply to buildings from saves older than the two-colony builds, and to a dam, levee or platform with
+  no district.
+- Saves from 1.4.0-alpha5 load as they are; buildings still waiting take their colony within 16 ticks, at the same
+  tick on every computer.
+- Checks: StabilityTests 255 (a building takes the land under it only when that is one colony's); RuntimeChecks 187
+  (the game still finds a construction site's builders by the entrance the mod reads; the land code reads nothing that
+  differs between computers).
+
 ## 1.4.0-alpha5
 
 **A guest sees its own actions sooner.** Placing a building or marking an area as a guest took well over a second to

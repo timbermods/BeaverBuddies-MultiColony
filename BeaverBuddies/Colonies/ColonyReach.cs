@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Timberborn.BaseComponentSystem;
 using Timberborn.BlockSystem;
+using Timberborn.Buildings;
 using Timberborn.Coordinates;
 using Timberborn.Navigation;
 using Timberborn.DistributionSystem;
@@ -18,8 +19,9 @@ namespace BeaverBuddies.Colonies
     /// <summary>
     /// The colony that placed a building, saved with it. Every building a player places carries the placer's colony
     /// from the moment it is a construction site, so it has an owner before it joins a district, and keeps one if its
-    /// road is ever cut. Buildings from older saves, and those the game creates itself, take their district's owner the
-    /// first time they have one (see <see cref="ColonyReach"/>).
+    /// road is ever cut. A district center carries its owner's from the start. The rest take an owner later (see
+    /// <see cref="ColonyReach"/>): buildings from older saves, those the game creates itself, and those placed before
+    /// the game was hosted (placed directly, not as an action, so nothing named the placer).
     /// </summary>
     public class ColonyStamp : BaseComponent, IPersistentEntity, IInitializableEntity
     {
@@ -92,7 +94,8 @@ namespace BeaverBuddies.Colonies
         // What each building added, so removing it takes exactly that away again.
         private readonly Dictionary<EntityComponent, (int slot, List<(int, int)> tiles)> added =
             new Dictionary<EntityComponent, (int, List<(int, int)>)>();
-        // Buildings with no colony yet (older saves, buildings the game made): stamped once they have a district.
+        // Buildings with no colony yet (older saves, buildings the game made, buildings placed before hosting): stamped
+        // once they have a district, a district's road at their entrance, or else one colony's land under them.
         private readonly List<ColonyStamp> unstamped = new List<ColonyStamp>();
 
         public static ColonyReach Instance => SingletonManager.GetSingleton<ColonyReach>();
@@ -155,8 +158,10 @@ namespace BeaverBuddies.Colonies
         public void Tick()
         {
             if (unstamped.Count == 0 || ++ticks % UnstampedCheckInterval != 0) return;
-            // A building without a colony takes the owner of its finished district, or, for a path, of the district
-            // whose road it is, the first time it has one. Read from the tick-updated district map, in the simulation.
+            // A building without a colony takes the owner of its finished district, or else of the district whose road
+            // is at its entrance (a construction site has no district until it is finished) or, for a path, whose road
+            // it is. Read from the tick-updated district map, in the simulation. Failing those (no road reaches it),
+            // the colony whose land it stands on. It keeps waiting while it has none of these.
             for (int i = unstamped.Count - 1; i >= 0; i--)
             {
                 ColonyStamp stamp = unstamped[i];
@@ -165,7 +170,8 @@ namespace BeaverBuddies.Colonies
                     unstamped.RemoveAt(i);
                     continue;
                 }
-                int? owner = DistrictOwner.OwnerOfDistrict(stamp.GetComponent<DistrictBuilding>()?.District) ?? RoadOwner(stamp);
+                int? owner = DistrictOwner.OwnerOfDistrict(stamp.GetComponent<DistrictBuilding>()?.District)
+                    ?? RoadOwner(stamp) ?? LandOwner(stamp);
                 if (owner == null) continue;
                 unstamped.RemoveAt(i);
                 stamp.Stamp(owner.Value);
@@ -177,7 +183,13 @@ namespace BeaverBuddies.Colonies
         {
             BlockObject blockObject = stamp.GetComponent<BlockObject>();
             if (!blockObject || !blockObject.Positioned) return null;
-            Vector3 position = CoordinateSystem.GridToWorldCentered(blockObject.Coordinates);
+            // A building with an entrance: the tile its road must reach, the one the game picks a construction site's
+            // builders by (DistrictBuilding.ShouldBeAssignedToConstructionDistrict), worked out from its placement.
+            // Anything else (a path): its own tile.
+            BuildingAccessible accessible = stamp.GetComponent<BuildingAccessible>();
+            Vector3 position = accessible != null
+                ? accessible.CalculateAccess()
+                : CoordinateSystem.GridToWorldCentered(blockObject.Coordinates);
             foreach (DistrictCenter districtCenter in _districtCenterRegistry.FinishedDistrictCenters)
             {
                 if (districtCenter.District == null) continue;
@@ -185,6 +197,15 @@ namespace BeaverBuddies.Colonies
                     return DistrictOwner.OwnerOfDistrict(districtCenter);
             }
             return null;
+        }
+
+        // A building no road reaches (a construction site its builders cannot get to, or one cut off from its roads):
+        // the colony whose land it stands on, if it is one colony's. Land is the same on every computer at every tick.
+        private int? LandOwner(ColonyStamp stamp)
+        {
+            BlockObject blockObject = stamp.GetComponent<BlockObject>();
+            if (!blockObject || !blockObject.Positioned) return null;
+            return grid.SoleOwner(blockObject.PositionedBlocks.GetAllCoordinates().Select(c => (c.x, c.y)));
         }
 
         private void Track(EntityComponent entity)
@@ -195,6 +216,10 @@ namespace BeaverBuddies.Colonies
             BlockObject blockObject = entity.GetComponent<BlockObject>();
             if (blockObject == null || blockObject.IsPreview || !blockObject.Positioned) return;
             if (entity.GetComponent<DistrictCrossing>() != null) return;
+            // A district center is its owner's from the moment it is made (saved with it), whether it was founded, a
+            // map's start, or the game's own starting building, which no action places.
+            DistrictOwner districtOwner = entity.GetComponent<DistrictOwner>();
+            if (!stamp.IsStamped && districtOwner != null) stamp.Stamp(districtOwner.Slot);
             if (stamp.IsStamped) Add(entity, stamp.Slot);
             else unstamped.Add(stamp);
         }
