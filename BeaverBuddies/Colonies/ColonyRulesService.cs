@@ -2,7 +2,10 @@ using BeaverBuddies.Events;
 using BeaverBuddies.IO;
 using BeaverBuddies.Util;
 using System;
+using Timberborn.Buildings;
 using Timberborn.EntitySystem;
+using Timberborn.GameDistricts;
+using Timberborn.Navigation;
 using Timberborn.QuickNotificationSystem;
 using Timberborn.SingletonSystem;
 
@@ -18,14 +21,18 @@ namespace BeaverBuddies.Colonies
         private readonly ColonyGameWorld world;
         private readonly QuickNotificationService _quickNotificationService;
 
-        public ColonyRulesService(EntityRegistry entityRegistry, QuickNotificationService quickNotificationService)
+        public ColonyRulesService(EntityRegistry entityRegistry, QuickNotificationService quickNotificationService,
+            BuildingService buildingService, IDistrictService districtService, DistrictCenterRegistry districtCenterRegistry)
         {
-            world = new ColonyGameWorld(entityRegistry);
+            world = new ColonyGameWorld(entityRegistry, buildingService, districtService, districtCenterRegistry);
             _quickNotificationService = quickNotificationService;
         }
 
         // Loadable only so the game builds it at load: it is found through SingletonManager, not injected.
         public void Load() { }
+
+        /// <summary>The rules' view of the game, for previews that check the same things.</summary>
+        public ColonyGameWorld World => world;
 
         /// <summary>
         /// Host only, just before an event is replayed. Writes the actor's slot into the event (every computer's
@@ -59,8 +66,10 @@ namespace BeaverBuddies.Colonies
 
             // A player the host has not seated yet has no colony to spend science from, give from or found for.
             if (replayEvent.slot < 0 && ColonyModeService.IsSeparateColonies && (replayEvent is BuildingUnlockedEvent
-                || replayEvent is WorkerTypeUnlockedEvent || replayEvent is GiftScienceEvent || replayEvent is GiftGoodsEvent
-                || replayEvent is BuildingPlacedEvent || replayEvent is FoundColonyEvent))
+                || replayEvent is WorkerTypeUnlockedEvent || replayEvent is GiftScienceEvent || replayEvent is ExchangeProposedEvent
+                || replayEvent is ExchangeAcceptedEvent || replayEvent is BuildingPlacedEvent || replayEvent is FoundColonyEvent
+                || replayEvent is WorkingHoursChangedEvent || replayEvent is PlantingAreaMarkedEvent
+                || replayEvent is TreeCuttingAreaEvent || replayEvent is ClearResourcesMarkedEvent))
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: not seated yet");
                 return false;
@@ -143,17 +152,20 @@ namespace BeaverBuddies.Colonies
                 if (founding == null) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "no founding service");
                 return founding.Judge(slot, ColonyGameWorld.ToPlacement(scope.Placement));
             }
-            return ColonyRules.Judge(scope, slot, world, ColonySession.IsPresent, rewrite);
+            return ColonyRules.Judge(scope, slot, world, rewrite);
         }
 
         /// <summary>Shows the refusal in the game's own notification line.</summary>
         public void Notify(ColonyRefusal refusal) => ShowNotice(RefusalMessage(refusal));
 
-        public void ShowNotice(string text)
+        public void ShowNotice(string text) => ShowNotice(text, warning: true);
+
+        public void ShowNotice(string text, bool warning)
         {
             try
             {
-                _quickNotificationService.SendWarningNotification(text);
+                if (warning) _quickNotificationService.SendWarningNotification(text);
+                else _quickNotificationService.SendNotification(text);
             }
             catch (Exception error)
             {
@@ -171,6 +183,8 @@ namespace BeaverBuddies.Colonies
             ColonyRefusal.Blocked => "BeaverBuddies.Colony.Refused.Blocked",
             ColonyRefusal.FoundingConflict => "BeaverBuddies.Colony.Refused.FoundingConflict",
             ColonyRefusal.NotEnoughScience => "BeaverBuddies.Colony.Refused.NotEnoughScience",
+            ColonyRefusal.OtherColonyArea => "BeaverBuddies.Colony.Refused.OtherColonyArea",
+            ColonyRefusal.TouchesOtherColony => "BeaverBuddies.Colony.Refused.TouchesOtherColony",
             _ => "BeaverBuddies.Colony.Refused.OtherColony",
         });
     }

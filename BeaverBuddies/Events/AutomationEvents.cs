@@ -20,7 +20,11 @@ namespace BeaverBuddies.Events
 
     public class AutomationEvent : ReplayEvent
     {
-        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+        // The building being set, and any building it is wired to (a relay's or memory cell's input arrives here as
+        // an entity id among the arguments), must be the actor's. Other text arguments name no entity and count for
+        // nobody.
+        public override ColonyScope GetColonyScope() =>
+            ColonyScope.Entities(new[] { entityID }.Concat(arguments?.OfType<string>() ?? Enumerable.Empty<string>()).ToArray());
 
         public string entityID;
         public string methodKey;
@@ -308,8 +312,9 @@ namespace BeaverBuddies.Events
 
     public class SetAutomatableInputEvent : ReplayEvent
     {
-        // The building being wired must be yours; the sensor it listens to may be anyone's.
-        public override ColonyScope GetColonyScope() => ColonyScope.Entities(automatableID);
+        // Both the building being wired and the sensor it listens to must be yours: another colony could otherwise
+        // change what its sensor says and so run your building.
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(automatableID, inputID);
 
         public string automatableID;
         public string inputID;

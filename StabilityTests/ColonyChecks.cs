@@ -256,71 +256,92 @@ static class ColonyChecks
         yield return ("Colony: your own things, and things in no district, are yours to change", () =>
         {
             var w = new FakeWorld().Own("mine", 1).Own("dc1", 1);
-            Check(ColonyRules.Judge(ColonyScope.Entities("mine", "dc1"), 1, w, Present(0, 1), true).IsAllowed);
+            Check(ColonyRules.Judge(ColonyScope.Entities("mine", "dc1"), 1, w, true).IsAllowed);
             // A tree, a building cut off from roads: nobody's.
-            Check(ColonyRules.Judge(ColonyScope.Entities("loose"), 1, w, Present(0, 1), true).IsAllowed);
+            Check(ColonyRules.Judge(ColonyScope.Entities("loose"), 1, w, true).IsAllowed);
             // Missing and empty ids are left to the event.
-            Check(ColonyRules.Judge(ColonyScope.Entities("gone", null!, ""), 1, w, Present(0, 1), true).IsAllowed);
+            Check(ColonyRules.Judge(ColonyScope.Entities("gone", null!, ""), 1, w, true).IsAllowed);
         });
 
-        yield return ("Colony: another player's things are refused while they play, and editable while they are away", () =>
+        yield return ("Colony: another colony's things are refused, whether or not its player is playing", () =>
         {
-            var w = new FakeWorld().Own("theirs", 0);
-            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("theirs"), 1, w, Present(0, 1), true).Refusal);
-            Check(ColonyRules.Judge(ColonyScope.Entities("theirs"), 1, w, Present(1), true).IsAllowed);
+            var w = new FakeWorld().Own("theirs", 0).Own("mine", 1);
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("theirs"), 1, w, true).Refusal);
+            Check(ColonyRules.Judge(ColonyScope.Entities("mine"), 1, w, true).IsAllowed);
+            // Things nobody owns (in no district, on nobody's land) stay free.
+            Check(ColonyRules.Judge(ColonyScope.Entities("loose"), 1, w, true).IsAllowed);
+            // One owned thing among several refuses the whole action.
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("mine", "theirs"), 1, w, true).Refusal);
             // A player not seated yet (slot -1) may change nothing that is owned.
-            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("theirs"), -1, w, Present(0), true).Refusal);
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("theirs"), -1, w, true).Refusal);
+            Check(!ColonyRules.MayChange(1, 0));
+            Check(ColonyRules.MayChange(1, 1));
+            Check(ColonyRules.MayChange(1, null));
         });
 
         yield return ("Colony: anyone may demolish a District Crossing, but not run the other side's half", () =>
         {
             var w = new FakeWorld().Own("crossingB", 0).Crossing("crossingB").Own("houseB", 0);
-            Check(ColonyRules.Judge(ColonyScope.Demolish("crossingB"), 1, w, Present(0, 1), true).IsAllowed);
-            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("crossingB"), 1, w, Present(0, 1), true).Refusal);
-            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Demolish("houseB"), 1, w, Present(0, 1), true).Refusal);
+            Check(ColonyRules.Judge(ColonyScope.Demolish("crossingB"), 1, w, true).IsAllowed);
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("crossingB"), 1, w, true).Refusal);
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Demolish("houseB"), 1, w, true).Refusal);
         });
 
-        yield return ("Colony: beavers may be sent to another colony, but not taken from it", () =>
+        yield return ("Colony: beavers move only between a colony's own districts", () =>
         {
-            var w = new FakeWorld().Own("dcA", 0).Own("dcB", 1);
-            Check(ColonyRules.Judge(ColonyScope.Migration("dcB", "dcA"), 1, w, Present(0, 1), true).IsAllowed);
-            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Migration("dcA", "dcB"), 1, w, Present(0, 1), true).Refusal);
+            var w = new FakeWorld().Own("dcA", 0).Own("dcB", 1).Own("dcB2", 1);
+            Check(ColonyRules.Judge(ColonyScope.Migration("dcB", "dcB2"), 1, w, true).IsAllowed);
+            // Neither sent to another colony (it would have to feed them) nor taken from one.
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Migration("dcB", "dcA"), 1, w, true).Refusal);
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Migration("dcA", "dcB"), 1, w, true).Refusal);
         });
 
-        yield return ("Colony: building is allowed anywhere, if your colony has it unlocked", () =>
+        yield return ("Colony: building needs the unlock, and a spot off another colony's land and roads", () =>
         {
-            var w = new FakeWorld().Locked(1, "Observatory");
-            Check(ColonyRules.Judge(ColonyScope.Place(Place("House")), 1, w, Present(0, 1), true).IsAllowed);
-            Equal(ColonyRefusal.Locked, ColonyRules.Judge(ColonyScope.Place(Place("Observatory")), 1, w, Present(0, 1), true).Refusal);
-            Check(ColonyRules.Judge(ColonyScope.Place(Place("Observatory")), 0, w, Present(0, 1), true).IsAllowed);
+            var w = new FakeWorld().Locked(1, "Observatory")
+                .Conflict("Dam", ColonyRefusal.OtherColonyArea).Conflict("Path", ColonyRefusal.TouchesOtherColony);
+            Check(ColonyRules.Judge(ColonyScope.Place(Place("House")), 1, w, true).IsAllowed);
+            Equal(ColonyRefusal.Locked, ColonyRules.Judge(ColonyScope.Place(Place("Observatory")), 1, w, true).Refusal);
+            Check(ColonyRules.Judge(ColonyScope.Place(Place("Observatory")), 0, w, true).IsAllowed);
+            Equal(ColonyRefusal.OtherColonyArea, ColonyRules.Judge(ColonyScope.Place(Place("Dam")), 1, w, true).Refusal);
+            Equal(ColonyRefusal.TouchesOtherColony, ColonyRules.Judge(ColonyScope.Place(Place("Path")), 1, w, true).Refusal);
         });
 
-        yield return ("Colony: map areas are shared", () =>
+        yield return ("Colony: marking map tiles keeps only the tiles the colony may work", () =>
         {
-            var tiles = new List<(int, int, int)> { (1, 1, 1), (99, 99, 1) };
-            var scope = ColonyScope.TileList(tiles);
-            Check(ColonyRules.Judge(scope, 1, new FakeWorld(), Present(0, 1), true).IsAllowed);
-            Equal(2, tiles.Count);
+            Func<(int x, int y, int z), string> key = t => $"{t.x}|{t.y}|{t.z}";
+            var w = new FakeWorld().OthersTile("99|99|1");
+            var tiles = new List<(int x, int y, int z)> { (1, 1, 1), (99, 99, 1), (2, 2, 1) };
+            // Judged on the player's own computer: nothing changes, one tile would go.
+            var local = ColonyRules.Judge(ColonyScope.Tiles(tiles, key), 1, w, false);
+            Check(local.IsAllowed); Equal(1, local.Removed); Equal(3, tiles.Count);
+            // Judged by the host: the tile on another colony's land is taken out, the rest keep their order.
+            var host = ColonyRules.Judge(ColonyScope.Tiles(tiles, key), 1, w, true);
+            Check(host.IsAllowed); Equal(1, host.Removed);
+            Check(tiles.SequenceEqual(new[] { (1, 1, 1), (2, 2, 1) }));
+            // Only another colony's land: nothing is marked.
+            var theirs = new List<(int x, int y, int z)> { (99, 99, 1) };
+            Equal(ColonyRefusal.NothingOwn, ColonyRules.Judge(ColonyScope.Tiles(theirs, key), 1, w, true).Refusal);
         });
 
         yield return ("Colony: a list of things is cut down to yours and nobody's, in order", () =>
         {
             var w = new FakeWorld().Own("a", 1).Own("b", 0).Own("c", 1);
             var ids = new List<string> { "b", "a", "loose", "c" };
-            var judged = ColonyRules.Judge(ColonyScope.EntityList(ids, id => id), 1, w, Present(0, 1), false);
+            var judged = ColonyRules.Judge(ColonyScope.EntityList(ids, id => id), 1, w, false);
             Check(judged.IsAllowed); Equal(1, judged.Removed); Equal(4, ids.Count);
-            var v = ColonyRules.Judge(ColonyScope.EntityList(ids, id => id), 1, w, Present(0, 1), true);
+            var v = ColonyRules.Judge(ColonyScope.EntityList(ids, id => id), 1, w, true);
             Check(v.IsAllowed); Equal(1, v.Removed);
             Check(ids.SequenceEqual(new[] { "a", "loose", "c" }));
-            Equal(ColonyRefusal.NothingOwn, ColonyRules.Judge(ColonyScope.EntityList(new List<string> { "b" }, id => id), 1, w, Present(0, 1), true).Refusal);
+            Equal(ColonyRefusal.NothingOwn, ColonyRules.Judge(ColonyScope.EntityList(new List<string> { "b" }, id => id), 1, w, true).Refusal);
             // Demolition lists may include a crossing.
             var dem = new List<string> { "x" };
-            Check(ColonyRules.Judge(ColonyScope.EntityList(dem, id => id, demolition: true), 1, new FakeWorld().Own("x", 0).Crossing("x"), Present(0, 1), true).IsAllowed);
+            Check(ColonyRules.Judge(ColonyScope.EntityList(dem, id => id, demolition: true), 1, new FakeWorld().Own("x", 0).Crossing("x"), true).IsAllowed);
         });
 
         yield return ("Colony: shared actions are always allowed", () =>
         {
-            Check(ColonyRules.Judge(ColonyScope.Global, -1, new FakeWorld(), Present(0), true).IsAllowed);
+            Check(ColonyRules.Judge(ColonyScope.Global, -1, new FakeWorld(), true).IsAllowed);
         });
 
         // ---- founding ----
@@ -333,6 +354,7 @@ static class ColonyChecks
             Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(true, false, false, true, false).Refusal);
             Equal(ColonyRefusal.Blocked, ColonyRules.JudgeFounding(true, false, true, false, false).Refusal);
             Equal(ColonyRefusal.FoundingConflict, ColonyRules.JudgeFounding(true, false, true, true, true).Refusal);
+            Equal(ColonyRefusal.OtherColonyArea, ColonyRules.JudgeFounding(true, false, true, true, false, onOtherColonyLand: true).Refusal);
         });
 
         // ---- automatic migration ----
@@ -342,6 +364,197 @@ static class ColonyChecks
             Check(ColonyModeState.SameOwner(0, 0));
             Check(!ColonyModeState.SameOwner(0, 1));
             Check(ColonyModeState.SameOwner(null, 1));
+        });
+
+        // ---- the land each colony works ----
+
+        yield return ("Colony: a colony reaches every tile within 10 of its buildings, and no further", () =>
+        {
+            var grid = new ColonyReachGrid(100, 100);
+            grid.Apply(0, new[] { (50, 50) }, +1);
+            Check(grid.Reaches(0, 50, 50));
+            Check(grid.Reaches(0, 60, 50), "10 tiles away");
+            Check(grid.Reaches(0, 56, 58), "6 and 8 away: 10 as the crow flies");
+            Check(!grid.Reaches(0, 61, 50), "11 tiles away");
+            Check(!grid.Reaches(0, 58, 58), "8 and 8 away: more than 10");
+            Check(!grid.Reaches(1, 50, 50), "only the building's own colony");
+            // At the edge of the map nothing breaks, and nothing outside is reached.
+            grid.Apply(1, new[] { (0, 0), (99, 99) }, +1);
+            Check(grid.Reaches(1, 0, 10)); Check(!grid.Reaches(1, -1, 0)); Check(!grid.Reaches(1, 100, 99));
+        });
+
+        yield return ("Colony: a tile is the land of the colony that reached it first", () =>
+        {
+            var grid = new ColonyReachGrid(100, 100);
+            grid.Apply(0, new[] { (20, 50) }, +1);
+            grid.Apply(1, new[] { (35, 50) }, +1);
+            // Both reach 25..30; colony 0 got there first, so it is colony 0's.
+            Check(grid.Reaches(1, 28, 50));
+            Equal<int?>(0, grid.Owner(28, 50));
+            Check(grid.MayUse(0, 28, 50)); Check(!grid.MayUse(1, 28, 50));
+            // Colony 1's own land, and land nobody holds.
+            Equal<int?>(1, grid.Owner(40, 50));
+            Check(!grid.MayUse(0, 40, 50)); Check(grid.MayUse(1, 40, 50));
+            Equal<int?>(null, grid.Owner(80, 80));
+            Check(grid.MayUse(0, 80, 80)); Check(grid.MayUse(1, 80, 80));
+        });
+
+        yield return ("Colony: a colony cannot build its way into another colony's land", () =>
+        {
+            var grid = new ColonyReachGrid(100, 100);
+            grid.Apply(0, new[] { (20, 50) }, +1);
+            // Colony 1 lays a path towards colony 0, one tile at a time, wherever it may.
+            int x = 60;
+            grid.Apply(1, new[] { (x, 50) }, +1);
+            while (x > 0 && grid.MayUse(1, x - 1, 50))
+            {
+                x--;
+                grid.Apply(1, new[] { (x, 50) }, +1);
+            }
+            Equal(31, x);
+            // Colony 0's land is still all colony 0's, right up to its edge.
+            for (int tx = 10; tx <= 30; tx++) Equal<int?>(0, grid.Owner(tx, 50));
+        });
+
+        yield return ("Colony: land passes on only when its colony no longer reaches it, and saved owners come back", () =>
+        {
+            var grid = new ColonyReachGrid(100, 100);
+            grid.Apply(0, new[] { (20, 50) }, +1);
+            grid.Apply(1, new[] { (35, 50) }, +1);
+            // What saving keeps: the tiles both reach, with their owner.
+            var contested = grid.ContestedTiles().ToList();
+            Check(contested.Count > 0 && contested.All(t => t.slot == 0 && t.x >= 25 && t.x <= 30));
+            // Built again in the other order, the shared tiles would be colony 1's; the saved owners put them back.
+            var rebuilt = new ColonyReachGrid(100, 100);
+            rebuilt.Apply(1, new[] { (35, 50) }, +1);
+            rebuilt.Apply(0, new[] { (20, 50) }, +1);
+            Equal<int?>(1, rebuilt.Owner(28, 50));
+            foreach (var (tx, ty, slot) in contested) rebuilt.RestoreOwner(tx, ty, slot);
+            Equal<int?>(0, rebuilt.Owner(28, 50));
+            // Colony 0 takes its building down: the tiles colony 1 still reaches become colony 1's, the rest nobody's.
+            grid.Apply(0, new[] { (20, 50) }, -1);
+            Equal<int?>(1, grid.Owner(28, 50));
+            Equal<int?>(null, grid.Owner(15, 50));
+        });
+
+        yield return ("Colony: reach follows the buildings standing now, whatever order they came and went in", () =>
+        {
+            var a = new ColonyReachGrid(60, 60);
+            a.Apply(0, new[] { (10, 10), (11, 10) }, +1);
+            a.Apply(1, new[] { (30, 30) }, +1);
+            a.Apply(0, new[] { (40, 40) }, +1);
+            a.Apply(0, new[] { (10, 10), (11, 10) }, -1);
+            var b = new ColonyReachGrid(60, 60);
+            b.Apply(0, new[] { (40, 40) }, +1);
+            b.Apply(1, new[] { (30, 30) }, +1);
+            for (int x = 0; x < 60; x++)
+            {
+                for (int y = 0; y < 60; y++)
+                {
+                    for (int slot = 0; slot < 2; slot++)
+                        Check(a.Reaches(slot, x, y) == b.Reaches(slot, x, y), $"slot {slot} at {x},{y}");
+                }
+            }
+            // Two buildings next to each other: removing one keeps the other's land.
+            var c = new ColonyReachGrid(60, 60);
+            c.Apply(0, new[] { (20, 20) }, +1);
+            c.Apply(0, new[] { (21, 20) }, +1);
+            c.Apply(0, new[] { (21, 20) }, -1);
+            Check(c.Reaches(0, 30, 20)); Check(!c.Reaches(0, 31, 20));
+        });
+
+        // ---- exchanges at a trading post ----
+
+        yield return ("Colony: an exchange's terms name two different goods, amounts up to 9999, not both 0", () =>
+        {
+            Check(ExchangeTerms.AreValid("Log", 1000, "Gear", 250));
+            Check(!ExchangeTerms.AreValid("Log", 1000, "Log", 250), "the same good both ways");
+            Check(!ExchangeTerms.AreValid("Log", 0, "Gear", 0), "nothing either way");
+            Check(!ExchangeTerms.AreValid("Log", -1, "Gear", 5));
+            Check(!ExchangeTerms.AreValid("Log", 10000, "Gear", 5));
+            Check(!ExchangeTerms.AreValid(null, 10, "Gear", 5), "an amount without a good");
+            // A gift (asking for nothing) and a request (giving nothing) are exchanges too.
+            Check(ExchangeTerms.AreValid("Log", 1000, null, 0));
+            Check(ExchangeTerms.AreValid("Log", 0, "Gear", 250));
+            Check(ExchangeTerms.AreValid("Log", 30, "Log", 0), "a gift's unused good does not count");
+            Equal(null, ExchangeTerms.GoodOf("Log", 0));
+            Equal("Log", ExchangeTerms.GoodOf("Log", 1));
+        });
+
+        yield return ("Colony: 1000 logs for 250 gears move in step: each side runs at most a tenth ahead", () =>
+        {
+            // Nothing delivered yet: each side may bring its lead.
+            Equal(100, ExchangeTerms.StillToBring(1000, 0, 250, 0));
+            Equal(25, ExchangeTerms.StillToBring(250, 0, 1000, 0));
+            // Logs ran their lead; they wait for gears.
+            Equal(0, ExchangeTerms.StillToBring(1000, 100, 250, 0));
+            // 25 gears arrived (a tenth of theirs): logs may go on to 2 tenths.
+            Equal(100, ExchangeTerms.StillToBring(1000, 100, 250, 25));
+            // A share is rounded up, so one gear already lets some logs move.
+            Equal(4, ExchangeTerms.StillToBring(1000, 100, 250, 1));
+            // Once gears are done, the rest of the logs may come.
+            Equal(900, ExchangeTerms.StillToBring(1000, 100, 250, 250));
+            Equal(0, ExchangeTerms.StillToBring(1000, 1000, 250, 250));
+        });
+
+        yield return ("Colony: small exchanges and gifts are never held back", () =>
+        {
+            // The lead is at least 10 (or the whole side when smaller).
+            Equal(10, ExchangeTerms.Lead(50));
+            Equal(1, ExchangeTerms.Lead(1));
+            Equal(1, ExchangeTerms.StillToBring(1, 0, 1, 0));
+            // A gift: the giver brings it all; the side giving nothing is done from the start.
+            Equal(30, ExchangeTerms.StillToBring(30, 0, 0, 0));
+            Equal(0, ExchangeTerms.StillToBring(0, 0, 30, 0));
+            Check(!ExchangeTerms.IsComplete(30, 29, 0, 0));
+            Check(ExchangeTerms.IsComplete(30, 30, 0, 0));
+        });
+
+        yield return ("Colony: only what a side still owes counts; the rest is ordinary trade", () =>
+        {
+            Equal(15, ExchangeTerms.Counted(100, 80, 15));
+            Equal(20, ExchangeTerms.Counted(100, 80, 35));
+            Equal(0, ExchangeTerms.Counted(100, 100, 5));
+        });
+
+        yield return ("Colony: exchanges with uneven loads always finish, and never run ahead of the pace", () =>
+        {
+            // Beavers carry uneven loads, one side at a time, in a random order. Every delivery must stay within
+            // what the pace allowed, and every exchange must finish without getting stuck.
+            var random = new Random(20260921);
+            for (int round = 0; round < 500; round++)
+            {
+                int totalA = random.Next(0, 3000), totalB = random.Next(0, 3000);
+                if (totalA == 0 && totalB == 0) totalB = 1;
+                int sentA = 0, sentB = 0, steps = 0;
+                while (!ExchangeTerms.IsComplete(totalA, sentA, totalB, sentB))
+                {
+                    Check(++steps < 100000, $"stuck at {sentA}/{totalA} and {sentB}/{totalB}");
+                    bool sideA = random.Next(2) == 0;
+                    int may = sideA ? ExchangeTerms.StillToBring(totalA, sentA, totalB, sentB)
+                        : ExchangeTerms.StillToBring(totalB, sentB, totalA, sentA);
+                    if (may == 0)
+                    {
+                        // Waiting is fine as long as the other side can move.
+                        int other = sideA ? ExchangeTerms.StillToBring(totalB, sentB, totalA, sentA)
+                            : ExchangeTerms.StillToBring(totalA, sentA, totalB, sentB);
+                        Check(other > 0 || ExchangeTerms.IsComplete(totalA, sentA, totalB, sentB),
+                            $"both sides wait at {sentA}/{totalA} and {sentB}/{totalB}");
+                        continue;
+                    }
+                    int load = Math.Min(may, random.Next(1, 16));
+                    if (sideA) sentA += ExchangeTerms.Counted(totalA, sentA, load);
+                    else sentB += ExchangeTerms.Counted(totalB, sentB, load);
+                    Check(sentA <= totalA && sentB <= totalB, "a side delivered more than its amount");
+                    // Neither side's share is ever more than its lead ahead of the other's (in the other's goods).
+                    if (totalA > 0 && totalB > 0 && sentB < totalB)
+                        Check(sentA <= ExchangeTerms.Allowed(totalA, totalB, sentB), "side A ran ahead of the pace");
+                    if (totalA > 0 && totalB > 0 && sentA < totalA)
+                        Check(sentB <= ExchangeTerms.Allowed(totalB, totalA, sentA), "side B ran ahead of the pace");
+                }
+                Equal(totalA, sentA);
+                Equal(totalB, sentB);
+            }
         });
     }
 
@@ -359,20 +572,28 @@ static class ColonyChecks
 
     static ColonyPlacement Place(string template) => new ColonyPlacement { TemplateName = template };
 
-    static Func<int, bool> Present(params int[] slots) => slot => slots.Contains(slot);
-
     sealed class FakeWorld : IColonyWorld
     {
         readonly Dictionary<string, int> owners = new();
         readonly HashSet<string> crossings = new();
         readonly HashSet<(int, string)> locked = new();
+        readonly HashSet<string> othersTiles = new();
+        readonly Dictionary<string, ColonyRefusal> conflicts = new();
 
         public FakeWorld Own(string id, int slot) { owners[id] = slot; return this; }
         public FakeWorld Crossing(string id) { crossings.Add(id); return this; }
         public FakeWorld Locked(int slot, string template) { locked.Add((slot, template)); return this; }
+        public FakeWorld OthersTile(string tile) { othersTiles.Add(tile); return this; }
+        public FakeWorld Conflict(string template, ColonyRefusal refusal) { conflicts[template] = refusal; return this; }
 
         public int? OwnerOf(string entityId) => owners.TryGetValue(entityId, out int slot) ? slot : null;
         public bool IsCrossing(string entityId) => crossings.Contains(entityId);
         public bool IsUnlockedFor(int slot, string templateName) => !locked.Contains((slot, templateName));
+        public bool MayUseTile(int slot, string tileId) => !othersTiles.Contains(tileId);
+        public ColonyRefusal PlacementConflict(int slot, ColonyPlacement placement, out string detail)
+        {
+            detail = null;
+            return conflicts.TryGetValue(placement.TemplateName, out ColonyRefusal refusal) ? refusal : ColonyRefusal.None;
+        }
     }
 }

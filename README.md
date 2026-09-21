@@ -1,9 +1,9 @@
 # BeaverBuddies MultiColony
 
 **Two players, one map, a colony each.** A Timberborn co-op mod where each player runs their own colony (their own
-districts, beavers, stock and science) on a shared map, and the colonies help each other through **trading posts**:
-District Crossings where their roads meet. Co-op, not a race. Works on the game's standard maps and on BeaverBuddies
-multi-start maps.
+districts, land, beavers, stock, science and working hours) on a shared map. The colonies meet only at **trading
+posts**: District Crossings where their roads come together, through which they barter goods. Co-op, not a race.
+Works on the game's standard maps and on BeaverBuddies multi-start maps.
 
 ![Timberborn 1.1.2.4](https://img.shields.io/badge/Timberborn-1.1.2.4-2a4034?labelColor=172620&style=flat-square) ![Status: alpha](https://img.shields.io/badge/status-alpha-e0812f?labelColor=172620&style=flat-square) [![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-2a4034?labelColor=172620&style=flat-square)](License.txt)
 
@@ -65,31 +65,50 @@ Steam): you get the same colony every time, whoever hosts. The connection panel 
 
 ## Playing your colony
 
-- **Build anywhere.** There is no border and no land of your own.
-- **A colony is its districts.** Your district centers are yours; buildings belong to the district they are in,
-  beavers to the district they live in, goods to the district that stores them.
-- **Your roads never join another colony's**, except through a District Crossing (the game itself refuses anything
-  else).
-- **You change your own colony.** Another player's buildings, districts, migration and distribution are refused
-  while they are playing (*That belongs to another colony…*). While they are away, you may look after their colony.
+- **Your colony is your districts and your land**: every tile within 10 tiles of your buildings and paths that no
+  other colony reached first. It grows as you build, and stops where another colony's land begins. Everything you
+  place is yours from the moment you place it.
+- **You build, mark trees and plant on your own land or free land.** Never on another colony's land or right next to
+  its roads (the preview turns red and says why). Building towards another colony does not take its land: your land
+  ends where theirs begins.
+- **You change only your own colony**, whether or not the other player is playing: their buildings, beavers,
+  districts, marks and settings are refused (*That belongs to another colony.*).
+- **Your beavers work only for your colony:**
+  - builders build, demolish and pick up leftovers only for your colony;
+  - lumberjacks cut only trees you marked;
+  - foresters and farmers plant only on your marks;
+  - gatherers, farmers and scavengers take only what grows on your marks, or wild things on land no other colony holds.
 - **Your screen shows your colony only:** the top bar (goods, population, wellbeing, science), the batch control
-  lists (F1 to F10), alerts and the notification journal.
-- **Shared by everyone:** speed, pause, working hours, pings, chat, saving, and the map: water, droughts, badwater,
-  trees and berries. A dam upstream changes what flows downstream. Stored water belongs to its colony.
-- **Beavers stay in their colony**, except when you send them to another colony by hand (the Migration tab), which
-  is how a failing colony is rescued.
+  lists (F1 to F10), alerts, the notification journal, and the working hours (top right, and the clock's needle).
+- **Your own working hours** and, with separate science, your own science, unlocks and bot worker types.
+- **Beavers stay in their colony.** They never move to another colony, on their own or by the Migration tab.
+- **Shared by everyone:** speed, pause, pings, chat, saving, and the map itself: water, droughts, badwater, weather.
+  A dam upstream still changes what flows downstream.
 
 ## Trading posts
 
-Build a **District Crossing** where your roads come close to another colony's: one half on each side. In a
-separate-colonies game it needs **no science and costs 10 logs**. Each colony's beavers run their own half.
+Build a **District Crossing** where your land meets another colony's: one half on each side of the edge, each
+reached by its own colony's road on its own land. You may place it when part of it is on your land (or free land).
+In a separate-colonies game it needs **no science and costs 10 logs**. Each colony's beavers run their own half.
 
-- **Goods move by each colony's Distribution settings** (the **Distribution** tab, F8): the receiving colony opens a
-  good's **import** (*Auto* or *Forced*); the giving colony limits it with the **export threshold**. **Every good starts
-  at import Disabled**, so nothing moves until the receiving player opens it (between your own districts too).
-- **The trading-post panel** under the crossing shows what the other colony could use, **Give 10** buttons that send
-  goods whatever their import settings, what has passed each way, and (with separate science) **Give 50 / 250
-  science**.
+Goods cross a trading post only through an **exchange** the two colonies agree on:
+
+1. **Make an offer.** Select the crossing. In the **Trading post** section at the bottom of its panel, pick what you
+   give and what you ask for (**<** and **>** choose a good, the box takes an amount up to 9999), then **Make offer**.
+   For example: *1000 logs for 250 gears*. **Ask for 0 to give a gift**; give 0 to ask for help.
+2. **The other player accepts** (or declines) on the same panel. They get a notice when you make the offer.
+3. **The beavers do the rest.** Each colony's crossing workers fetch their side's goods from their own storage and
+   bring them to the crossing; the other colony's workers haul them away into theirs. The goods **move in step**:
+   neither side gets more than a tenth of its amount (at least 10) ahead of the other. When both amounts have
+   crossed, both players get a notice.
+
+- **One exchange at a time** per trading post; build more crossings for more at once. Either player may cancel an
+  exchange at any time; what has crossed stays crossed.
+- **Each half holds up to 100** of each good waiting to be hauled away (the game's own crossing holds 30). Staff both
+  halves, and keep storage room for what you receive.
+- **Import and export settings don't apply** at a trading post. They still move goods between your own districts,
+  as in the game (with the bigger buffer: every crossing holds 100, in every game).
+- The panel also shows what has passed each way and, with separate science, **Give 50 / 250 science**.
 - Either player may remove a crossing.
 
 Details: [TWO-COLONIES.md](TWO-COLONIES.md#trading-posts).
@@ -108,11 +127,8 @@ connection panel** and **Chat: start typing** are unbound until you set them the
 
 - **Up to four colonies.** More players join as helpers of the host's colony.
 - **The game ends** only when every beaver on the map is gone, not per colony.
-- **Beavers work by range:** a lumberjack or gatherer can work on anything it reaches, including another colony's
-  marked trees.
 - **Two placements at the same moment** can join two districts' roads once both are built; both players are warned
   (*Two districts' roads have been joined…*): remove the joining path or building at once.
-- **Bot worker types** stay unlocked for everyone; whoever unlocks one pays.
 - **Single player:** without a co-op session nothing is refused and no colony can be founded. Host the game (even
   alone) to play the mode.
 - **Performance:** more colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest
@@ -137,6 +153,8 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 
 - **Can't join / stuck on "Receiving map…":** every player must have the same zip. Reinstall from the same file and restart.
 - **Ctrl+K says the host has turned off Separate colonies:** the host ticks **Separate colonies (alpha)** and rehosts.
+- **"That is another colony's land":** that tile is within 10 tiles of their buildings or paths, and they were
+  there first. Build on your side. To trade, put a District Crossing across the edge of your two lands.
 - **Everything is refused right after joining:** the host has not seated you yet; wait a moment. If it persists,
   send the logs.
 - **Reporting:** send `Player.log` from every player
@@ -153,10 +171,10 @@ not to the original BeaverBuddies project.
   into the action, checks it against the rules just before playing it, and then plays and forwards it, keeps only
   the actor's part of a list action, or drops it (logged as `[Colony] Refused …`). Guests never judge, so the
   computers can't disagree.
-- **Ownership is saved on district centers**; everything else follows from districts, which every computer
-  simulates identically. Science keeps one pool and one unlock set per colony in the save.
-- The save gets a few small extra entries (the mode, who plays which colony, owners, science, the trade ledger).
-  Shared-colony games save nothing new.
+- **Ownership is saved**: on district centers, on every building (the colony that placed it) and on map marks. Land
+  is worked out from the buildings standing. Beavers' choices of work read only these, identically on every computer.
+- The save gets a few small extra entries (the mode, who plays which colony, owners, marks, science, working hours,
+  exchanges, the trade ledger). Shared-colony games save only the building owners.
 
 Design notes and the plans: [design/TRADING-EXCHANGE-PLAN.md](design/TRADING-EXCHANGE-PLAN.md),
 [design/TWO-COLONY-ALPHA-PLAN.md](design/TWO-COLONY-ALPHA-PLAN.md).

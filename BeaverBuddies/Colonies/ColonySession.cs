@@ -68,10 +68,6 @@ namespace BeaverBuddies.Colonies
             }
         }
 
-        /// <summary>Someone playing this session plays this slot (the host counts as the slot it acts as).</summary>
-        public static bool IsPresent(int slot) =>
-            (Slots?.IsPresent(slot) ?? slot == 0) || slot == SlotOfPlayer(HostPlayer);
-
         /// <summary>
         /// Debug only, host only: the host's own actions count as the next slot's. Returns false (and changes nothing)
         /// anywhere else, so a guest can never use it.

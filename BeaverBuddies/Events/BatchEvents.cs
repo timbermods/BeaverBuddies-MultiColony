@@ -352,8 +352,7 @@ namespace BeaverBuddies.Events
         static bool Prefix(GoodDistributionSetting __instance)
         {
             var exportThreshold = 0f;
-            // A separate-colonies game defaults to Disabled (see GoodDistributionSettingColonyDefaultPatcher).
-            var importOption = BeaverBuddies.Colonies.ColonyTradeDefaults.DefaultImportOption(__instance._goodSpec.ForceImport);
+            var importOption = ((!__instance._goodSpec.ForceImport) ? ImportOption.Auto : ImportOption.Forced);
             if (__instance.ImportOption == importOption && __instance.ExportThreshold == exportThreshold) return true;
             return GoodDistributionSettingChangedEvent.DoPrefix(__instance, exportThreshold, importOption, false);
         }

@@ -1,5 +1,6 @@
 using Bindito.Core;
 using Timberborn.BlockSystem;
+using Timberborn.Buildings;
 using Timberborn.DistributionSystem;
 using Timberborn.EntityPanelSystem;
 using Timberborn.GameDistricts;
@@ -9,14 +10,16 @@ namespace BeaverBuddies.Colonies
 {
     public static class ColonyConfigurator
     {
-        // Every district center carries its owner's slot; every crossing half can carry a gift under way.
+        // Every district center carries its owner's slot, every building the colony that placed it, and every crossing
+        // half its side of an exchange.
         private class TemplateModuleProvider : IProvider<TemplateModule>
         {
             public TemplateModule Get()
             {
                 TemplateModule.Builder builder = new TemplateModule.Builder();
                 builder.AddDecorator<DistrictCenter, DistrictOwner>();
-                builder.AddDecorator<DistrictCrossing, CrossingGift>();
+                builder.AddDecorator<Building, ColonyStamp>();
+                builder.AddDecorator<DistrictCrossing, CrossingExchange>();
                 return builder.Build();
             }
         }
@@ -46,7 +49,8 @@ namespace BeaverBuddies.Colonies
         public static void Configure(IContainerDefinition containerDefinition)
         {
             containerDefinition.Bind<DistrictOwner>().AsTransient();
-            containerDefinition.Bind<CrossingGift>().AsTransient();
+            containerDefinition.Bind<CrossingExchange>().AsTransient();
+            containerDefinition.Bind<ColonyStamp>().AsTransient();
             containerDefinition.MultiBind<TemplateModule>().ToProvider<TemplateModuleProvider>().AsSingleton();
             containerDefinition.Bind<ColonyModeService>().AsSingleton();
             containerDefinition.Bind<ColonySlotService>().AsSingleton();
@@ -56,6 +60,10 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyScienceService>().AsSingleton();
             containerDefinition.Bind<ColonyRoadNetworks>().AsSingleton();
             containerDefinition.Bind<ColonyTradeLedger>().AsSingleton();
+            containerDefinition.Bind<ColonyExchangeService>().AsSingleton();
+            containerDefinition.Bind<ColonyReach>().AsSingleton();
+            containerDefinition.Bind<ColonyMarks>().AsSingleton();
+            containerDefinition.Bind<ColonyWorkingHours>().AsSingleton();
             containerDefinition.Bind<TradingPostFragment>().AsSingleton();
             containerDefinition.MultiBind<EntityPanelModule>().ToProvider<EntityPanelModuleProvider>().AsSingleton();
             containerDefinition.MultiBind<IBlockObjectValidator>().To<ColonyPlacementValidator>().AsSingleton();

@@ -1,14 +1,18 @@
 using BeaverBuddies.IO;
+using System.Linq;
 using Timberborn.BlockSystem;
+using Timberborn.DistributionSystem;
+using UnityEngine;
 
 namespace BeaverBuddies.Colonies
 {
     /// <summary>
-    /// Marks the founding tool's preview invalid, with the reason, where a colony may not be founded (it would join
-    /// another colony's roads), so the refusal shows before the click. Previews only, and never while events replay:
-    /// the game also checks validity inside a replayed placement, on every computer, and the answer there must not
-    /// depend on who is looking. The host's verdict at replay time still decides; this only saves a click. Ordinary
-    /// building is allowed anywhere; the game's own check already refuses roads that would merge two districts.
+    /// Marks a building's preview invalid, with the reason, where the colony rules would refuse it: on another colony's
+    /// land or roads, or (the founding tool) where a colony may not be founded. It checks the same blocks and doorstep
+    /// the host does. So the refusal shows before the click.
+    /// Previews only, and never while events replay: the game also checks validity inside a replayed placement, on
+    /// every computer, and the answer there must not depend on who is looking. The host's verdict still decides; this
+    /// only saves a click.
     /// </summary>
     public class ColonyPlacementValidator : IBlockObjectValidator
     {
@@ -19,12 +23,10 @@ namespace BeaverBuddies.Colonies
             errorMessage = null;
             if (!blockObject.IsPreview || ReplayService.IsReplayingEvents || EventIO.IsNull) return true;
             if (!blockObject.Positioned) return true;
-            var founding = SingletonManager.GetSingleton<ColonyFoundingService>();
-            if (founding == null || !founding.FoundingToolActive) return true;
             ColonyVerdict verdict;
             try
             {
-                verdict = founding.Judge(ColonySession.LocalSlot, blockObject.Placement, checkBlocks: false);
+                verdict = Judge(blockObject);
             }
             catch (System.Exception error)
             {
@@ -36,6 +38,20 @@ namespace BeaverBuddies.Colonies
             if (verdict.IsAllowed) return true;
             errorMessage = ColonyRulesService.RefusalMessage(verdict.Refusal);
             return false;
+        }
+
+        private static ColonyVerdict Judge(BlockObject blockObject)
+        {
+            var founding = SingletonManager.GetSingleton<ColonyFoundingService>();
+            if (founding != null && founding.FoundingToolActive)
+                return founding.Judge(ColonySession.LocalSlot, blockObject.Placement, checkBlocks: false);
+            int slot = ColonySession.LocalSlot;
+            var world = SingletonManager.GetSingleton<ColonyRulesService>()?.World;
+            if (!ColonyModeService.IsSeparateColonies || slot < 0 || world == null) return ColonyVerdict.Allow;
+            Vector3Int? doorstep = blockObject.HasEntrance ? blockObject.PositionedEntrance.DoorstepCoordinates : (Vector3Int?)null;
+            ColonyRefusal refusal = world.TilesConflict(slot, blockObject.PositionedBlocks.GetAllCoordinates().ToList(), doorstep,
+                crossing: blockObject.GetComponent<DistrictCrossing>() != null, out string detail);
+            return refusal == ColonyRefusal.None ? ColonyVerdict.Allow : ColonyVerdict.Refuse(refusal, detail);
         }
     }
 }

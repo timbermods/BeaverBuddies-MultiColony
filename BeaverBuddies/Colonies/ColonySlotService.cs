@@ -120,9 +120,6 @@ namespace BeaverBuddies.Colonies
         /// <summary>The slot a connection plays this session, or -1 if it has not said hello.</summary>
         public int SlotOfPlayer(int player) => session.TryGetValue(player, out int slot) ? slot : -1;
 
-        /// <summary>Someone playing this session plays this slot.</summary>
-        public bool IsPresent(int slot) => session.Values.Contains(slot);
-
         public IEnumerable<KeyValuePair<int, int>> Session => session;
 
         /// <summary>Host only, before a hello is replayed: seat the player and write the tables into the event.</summary>

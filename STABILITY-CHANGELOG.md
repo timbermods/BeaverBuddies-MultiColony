@@ -5,6 +5,68 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.3.0-exchange-alpha2
+
+**Barter exchanges at trading posts, and colonies kept apart everywhere else.** A trading post now works like one: the
+two colonies agree on "1000 logs for 250 gears" and their beavers carry it out. And an audit of everything else one
+colony could do to another closed every way except the trading post and the shared world (water, weather, the game
+clock). Not yet played in a game. Every player must install this build. Saves from alpha1 load; a gift that was under
+way in one is dropped.
+
+**Kept apart**
+
+- **A colony changes only itself.** The rule that let a player change the colony of a player who was not playing is
+  gone: another colony's things are refused, always. Renaming follows the same rule, and buildings, relays and memory
+  cells may be wired only to their own colony's. A District Crossing between one colony's own districts is that
+  colony's; only a trading post may be taken down by either.
+- **Every building carries the colony that placed it** (saved), from its first moment as a construction site. So a
+  site not yet connected, a building cut off from its roads, and a dam or levee (which have no district) all have an
+  owner. Buildings from older saves take their district's owner the first time they have one (a path, the owner of
+  the district whose road it is); an older dam or levee counts only by the land it stands on.
+- **Land.** A colony's land is every tile within 10 tiles of its buildings and paths, first come: a tile two colonies
+  reach is the land of the one that got there first (saved), so building towards another colony stops at its edge.
+  Building, founding, marking trees and planting are refused on another colony's land, and nothing may be built on or
+  next to another colony's roads; a District Crossing goes across the edge of two lands. The building preview turns
+  red with the reason before the click. Demolishing and clearing wild things on another colony's land is refused,
+  and the demolish tool's rectangle no longer clears another colony's planting marks.
+- **Marks are per colony.** Planting marks and trees marked for cutting remember the colony that made them (saved).
+  A colony's planters plant only on its own marks, its lumberjacks cut only the trees it marked, and unmarking an area
+  removes only your own marks.
+- **Each colony's beavers work for it alone.** The game hands some work to any beaver who can walk there; now:
+  builders build, demolish and pick up recovered goods only for their own colony (the placer builds a District
+  Crossing; either colony may take down a trading post), and lumberjacks, gatherers, farmhouses and scavengers take
+  only what grows on their colony's marks, or wild things on land no other colony holds.
+- **Working hours per colony.** A player's working-hours buttons set their own colony's hours; its beavers, workshops
+  and chronometers follow them, and the panel and the clock's needle show the player's own. The game's setting stays
+  as it was, identical everywhere, for a colony that never chose.
+- **Bot worker types per colony** (with separate science), like building unlocks. A save from before keeps its bot
+  workplaces: every colony starts with the bot worker types the game had.
+- **No migration between colonies**, in either direction, by the Migration tab or otherwise.
+
+**Exchanges**
+
+- **Exchanges.** One colony offers a number of one good for a number of another; either number may be 0 (a gift, or a
+  request for help). The other colony accepts or declines; the offering colony may withdraw; either may cancel a
+  running exchange. Each colony's crossing workers fetch their side from their own storage and bring it to their
+  half; the other colony's workers haul it away. The sides move in step: neither side more than a tenth of its
+  amount (at least 10) ahead of the other. The other player gets a notice when an offer is made, answered or ended,
+  both when it completes, and a player whose offer or answer could not be played is told so. One exchange per
+  trading post, saved on the two halves of the crossing, with a number that keeps answers and cancels from reaching
+  a later exchange. Only the colony whose half it is may offer, answer or cancel from it.
+- **Only what is owed crosses.** Goods pass only for a running exchange and only up to what their colony still owes;
+  a load still on the way when an exchange ends stays on its own half and is carried home.
+- **Only exchanges cross a trading post.** Import and export settings no longer move goods between two colonies,
+  neither by the crossing's workers nor by the crossing's own exporter. Crossings between one colony's own districts
+  work as in the game.
+- **Gifts of goods are gone** (the *Give 10* buttons and the *could use* list): an exchange asking for 0 is a gift.
+  Science gifts stay.
+- **Imports no longer start Disabled** in a separate-colonies game. That only stopped goods from flowing to another
+  colony, which trading posts now do themselves. New districts get the game's own defaults, and founding in a shared
+  game no longer closes the existing districts' imports. Districts made with alpha1 keep their saved settings.
+- **A District Crossing holds 100 of each good** (the game's is 30), in every game. The patch rewrites the one place
+  the game reads its fixed number, and a check fails if the game changes that.
+- The trading-post panel's buttons say so when there is no co-op session, instead of doing nothing.
+
 ## 1.3.0-exchange-alpha1
 
 **Colonies as owned districts, trading posts and separate science**, following

@@ -80,39 +80,4 @@ namespace BeaverBuddies.Colonies
             return false;
         }
     }
-
-    static class ColonyTradeDefaults
-    {
-        /// <summary>The import option a good starts with: the game's, or Disabled in a separate-colonies game.</summary>
-        public static ImportOption DefaultImportOption(bool forceImport) =>
-            ColonyModeService.IsSeparateColonies ? ImportOption.Disabled
-            : forceImport ? ImportOption.Forced : ImportOption.Auto;
-    }
-
-    /*
-     * 9/20/2026 (Timberborn 1.1.2.4)
-        ExportThreshold = 0f;
-        ImportOption = ((!_goodSpec.ForceImport) ? ImportOption.Auto : ImportOption.Forced);
-        this.SettingChanged?.Invoke(this, EventArgs.Empty);
-     */
-    // Trade is closed until a player opens it: in a separate-colonies game every good of a new district starts with
-    // import Disabled, so a crossing moves nothing until the receiving colony's player chooses a good. Settings loaded
-    // from a save do not pass through here. The Reset button is recorded by GoodDistributionSettingSetDefaultPatcher
-    // (with this same default) and replayed as ordinary setting changes; then the original does not run here, and
-    // nothing may change locally, which is what __runOriginal guards.
-    [HarmonyPatch(typeof(GoodDistributionSetting), nameof(GoodDistributionSetting.SetDefault))]
-    static class GoodDistributionSettingColonyDefaultPatcher
-    {
-        static readonly AccessTools.FieldRef<GoodDistributionSetting, EventHandler> settingChanged =
-            AccessTools.FieldRefAccess<GoodDistributionSetting, EventHandler>("SettingChanged");
-
-        static void Postfix(GoodDistributionSetting __instance, bool __runOriginal)
-        {
-            if (!__runOriginal || !ColonyModeService.IsSeparateColonies) return;
-            if (__instance.ImportOption == ImportOption.Disabled) return;
-            __instance.ImportOption = ImportOption.Disabled;
-            // Listeners already heard about the game's default; tell them about the one that stands.
-            settingChanged(__instance)?.Invoke(__instance, EventArgs.Empty);
-        }
-    }
 }

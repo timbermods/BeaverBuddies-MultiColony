@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 
 // Separate colonies, against the compiled mod and the game's own assemblies: every action declares what it touches,
@@ -49,9 +51,11 @@ internal static class ColonyRuntimeChecks
             // Printed so a reviewer sees what either player may do regardless of colony.
             Console.WriteLine("      Shared by both colonies: " + string.Join(", ", shared));
             // Map areas (planting, tree cutting) are shared on purpose: resources near another colony are contested.
-            var expected = new[] { "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent", "EntityRenamedEvent",
+            // Unmarking trees (an empty tree event unmarks) only ever removes the actor's own marks, and working hours
+            // are set for the actor's own colony: both are checked when played, not here.
+            var expected = new[] { "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
                 "GiftScienceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
-                "PlantingAreaMarkedEvent", "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent",
+                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent",
                 "TreeCuttingAreaEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
             if (!shared.SequenceEqual(expected))
                 throw new Exception("The shared list changed; review it and update this check: " + string.Join(", ", shared));
@@ -149,6 +153,28 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.DistributionSystem.DistrictCrossingInventory", "Timberborn.DistributionSystem", "TransferStock"),
             ("Timberborn.DistributionSystem.DistrictCrossingWorkplaceBehavior", "Timberborn.DistributionSystem", "TryExport"),
             ("Timberborn.DistributionSystem.DistrictCrossing", "Timberborn.DistributionSystem", "CanExportGood"),
+            ("Timberborn.DistributionSystem.DistrictCrossingInventory", "Timberborn.DistributionSystem", "IncomingStock"),
+            ("Timberborn.DistributionSystem.DistrictCrossingInventoryInitializer", "Timberborn.DistributionSystem", "AllowEveryGoodAsTakeable"),
+            ("Timberborn.InventorySystem.Inventory", "Timberborn.InventorySystem", "UnreservedCapacity"),
+            ("Timberborn.CoreUI.VisualElementInitializer", "Timberborn.CoreUI", "InitializeVisualElement"),
+            // Keeping colonies apart.
+            ("Timberborn.YielderFinding.YielderFinder", "Timberborn.YielderFinding", "FindLivingYielderWithoutAccessible"),
+            ("Timberborn.YielderFinding.YielderFinder", "Timberborn.YielderFinding", "FindYielderWithAccessible"),
+            ("Timberborn.Planting.PlantingSpotFinder", "Timberborn.Planting", "CanPlantAt"),
+            ("Timberborn.Planting.PlantingService", "Timberborn.Planting", "SetPlantingCoordinates"),
+            ("Timberborn.Planting.PlantingService", "Timberborn.Planting", "UnsetPlantingCoordinates"),
+            ("Timberborn.Forestry.TreeCuttingArea", "Timberborn.Forestry", "AddCoordinates"),
+            ("Timberborn.Forestry.TreeCuttingArea", "Timberborn.Forestry", "RemoveCoordinates"),
+            ("Timberborn.ConstructionSites.ConstructionJob", "Timberborn.ConstructionSites", "StartConstructionJob"),
+            ("Timberborn.Demolishing.DemolishJob", "Timberborn.Demolishing", "CanStartJob"),
+            ("Timberborn.RecoveredGoodSystem.RecoverGoodStackJobProvider", "Timberborn.RecoveredGoodSystem", "IsStackRecoverable"),
+            ("Timberborn.WorkSystem.WorkerWorkingHours", "Timberborn.WorkSystem", "get_AreWorkingHours"),
+            ("Timberborn.WorkSystem.WorkplaceWorkingHours", "Timberborn.WorkSystem", "get_AreWorkingHours"),
+            ("Timberborn.AutomationBuildings.Chronometer", "Timberborn.AutomationBuildings", "Sample"),
+            ("Timberborn.AutomationBuildings.Chronometer", "Timberborn.AutomationBuildings", "UpdateOutputState"),
+            ("Timberborn.TimeSystemUI.ClockPanel", "Timberborn.TimeSystemUI", "UpdateMovingParts"),
+            ("Timberborn.TimeSystemUI.ClockPanel", "Timberborn.TimeSystemUI", "NormalizeRotation"),
+            ("Timberborn.WorkSystemUI.WorkingHoursPanel", "Timberborn.WorkSystemUI", "UpdateTitle"),
             ("Timberborn.Buildings.BuildingSpec", "Timberborn.Buildings", "get_ScienceCost"),
             ("Timberborn.Buildings.BuildingSpec", "Timberborn.Buildings", "get_BuildingCost"),
             ("Timberborn.Carrying.CarrierInventoryFinder", "Timberborn.Carrying", "TryCarryFromAnyInventoryLimited"),
@@ -175,6 +201,16 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.DistributionSystem.DistrictCrossing", "Timberborn.DistributionSystem", "_linked"),
             ("Timberborn.DistributionSystem.DistrictCrossingWorkplaceBehavior", "Timberborn.DistributionSystem", "_districtCrossing"),
             ("Timberborn.DistributionSystem.DistrictCrossingWorkplaceBehavior", "Timberborn.DistributionSystem", "_districtCrossingInventory"),
+            ("Timberborn.DistributionSystem.DistrictCrossingInventoryInitializer", "Timberborn.DistributionSystem", "DistrictCrossingCapacity"),
+            ("Timberborn.WorkSystem.WorkerWorkingHours", "Timberborn.WorkSystem", "_ignoreWorkingHours"),
+            ("Timberborn.WorkSystem.WorkplaceWorkingHours", "Timberborn.WorkSystem", "_ignoreWorkingHours"),
+            ("Timberborn.WorkSystem.WorkingHoursManager", "Timberborn.WorkSystem", "_startHours"),
+            ("Timberborn.AutomationBuildings.Chronometer", "Timberborn.AutomationBuildings", "_sampledWorkEndHours"),
+            ("Timberborn.AutomationBuildings.Chronometer", "Timberborn.AutomationBuildings", "_dayNightCycle"),
+            ("Timberborn.TimeSystemUI.ClockPanel", "Timberborn.TimeSystemUI", "_workTimeEndMarker"),
+            ("Timberborn.WorkSystemUI.WorkingHoursPanel", "Timberborn.WorkSystemUI", "_hours"),
+            ("Timberborn.WorkSystemUI.WorkingHoursPanel", "Timberborn.WorkSystemUI", "_increaseHoursButton"),
+            ("Timberborn.WorkSystemUI.WorkingHoursPanel", "Timberborn.WorkSystemUI", "_decreaseHoursButton"),
             ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "_districtMap"),
             ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "_districtConflictDetector"),
             ("Timberborn.Population.PopulationService", "Timberborn.Population", "_populationDataCollector"),
@@ -196,5 +232,66 @@ internal static class ColonyRuntimeChecks
             if (blockObject.GetMethod("CoordinatesBehind", all) == null) throw new Exception("BlockObject.CoordinatesBehind is gone");
             Assembly.Load("Timberborn.BlockSystem").GetType("Timberborn.BlockSystem.IBlockObjectValidator", true);
         });
+
+        // A trading post buffers 100 of each good. The mod rewrites the one place the game reads its fixed 30; if the
+        // game ever reads the number elsewhere, or not at all, these fail instead of crossings silently keeping 30.
+        var initializer = Assembly.Load("Timberborn.DistributionSystem")
+            .GetType("Timberborn.DistributionSystem.DistrictCrossingInventoryInitializer", true)!;
+        var capacityField = initializer.GetField("DistrictCrossingCapacity", all)!;
+
+        test("Colony: the game's crossing buffer is 30, read once where every good is allowed in", () =>
+        {
+            if ((int)capacityField.GetValue(null)! != 30) throw new Exception("the game's number changed: " + capacityField.GetValue(null));
+            var readers = initializer.GetMethods(all).Where(m => StaticFieldsRead(m).Contains(capacityField)).Select(m => m.Name).ToList();
+            if (!readers.SequenceEqual(new[] { "AllowEveryGoodAsTakeable" }))
+                throw new Exception("read by: " + string.Join(", ", readers));
+        });
+
+        test("Colony: the buffer patch turns that read into 100", () =>
+        {
+            var codeType = Assembly.Load("0Harmony").GetType("HarmonyLib.CodeInstruction", true)!;
+            var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(codeType))!;
+            list.Add(Activator.CreateInstance(codeType, OpCodes.Ldsfld, capacityField)!);
+            list.Add(Activator.CreateInstance(codeType, OpCodes.Ret, null)!);
+            var transpiler = mod.GetType("BeaverBuddies.Colonies.TradingPostCapacityPatcher", true)!.GetMethod("Transpiler", all)!;
+            var result = ((IEnumerable)transpiler.Invoke(null, new object[] { list })!).Cast<object>().ToList();
+            var opcode = (OpCode)codeType.GetField("opcode")!.GetValue(result[0])!;
+            object operand = codeType.GetField("operand")!.GetValue(result[0]);
+            if (opcode != OpCodes.Ldc_I4 || !(operand is int value) || value != 100)
+                throw new Exception($"got {opcode} {operand}");
+            if (result.Count != 2) throw new Exception("instructions were added or lost");
+        });
+    }
+
+    /// <summary>The static fields a method reads (ldsfld), decoded from its IL.</summary>
+    static List<FieldInfo> StaticFieldsRead(MethodBase method)
+    {
+        var fields = new List<FieldInfo>();
+        byte[] body = method.GetMethodBody()?.GetILAsByteArray();
+        if (body == null) return fields;
+        var opcodes = typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Select(f => (OpCode)f.GetValue(null)!).ToDictionary(o => (ushort)o.Value);
+        int position = 0;
+        while (position < body.Length)
+        {
+            ushort code = body[position++];
+            if (code == 0xfe) code = (ushort)(0xfe00 | body[position++]);
+            OpCode op = opcodes[code];
+            switch (op.OperandType)
+            {
+                case OperandType.InlineNone: break;
+                case OperandType.ShortInlineBrTarget: case OperandType.ShortInlineI: case OperandType.ShortInlineVar: position += 1; break;
+                case OperandType.InlineVar: position += 2; break;
+                case OperandType.InlineI8: case OperandType.InlineR: position += 8; break;
+                case OperandType.InlineSwitch: position += 4 + 4 * BitConverter.ToInt32(body, position); break;
+                case OperandType.InlineField:
+                    int token = BitConverter.ToInt32(body, position);
+                    if (op == OpCodes.Ldsfld) fields.Add(method.Module.ResolveField(token)!);
+                    position += 4;
+                    break;
+                default: position += 4; break;
+            }
+        }
+        return fields;
     }
 }

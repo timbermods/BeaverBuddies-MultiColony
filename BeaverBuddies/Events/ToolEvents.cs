@@ -192,8 +192,11 @@ namespace BeaverBuddies.Events
     [Serializable]
     class PlantingAreaMarkedEvent : ReplayEvent
     {
-        // Map areas are nobody's: crops and trees near a colony's buildings are shared.
-        public override ColonyScope GetColonyScope() => ColonyScope.TileList(inputBlocks);
+        // Marking plants only where the actor's colony may work; unmarking only ever removes the actor's own marks
+        // (checked tile by tile when it is played, see ColonyMarks).
+        public override ColonyScope GetColonyScope() => prefabName == UNMARK
+            ? ColonyScope.Global
+            : ColonyScope.Tiles(inputBlocks, Colonies.ColonyGameWorld.TileKey);
 
         public List<Vector3Int> inputBlocks;
         public Ray ray;
@@ -204,13 +207,22 @@ namespace BeaverBuddies.Events
         public override void Replay(IReplayContext context)
         {
             var plantingService = context.GetSingleton<PlantingSelectionService>();
-            if (prefabName == UNMARK)
+            // Separate colonies: every mark made or removed is the actor's colony's (see ColonyMarks).
+            if (Colonies.ColonyModeService.IsSeparateColonies) Colonies.ColonyMarks.ActingSlot = System.Math.Max(0, slot);
+            try
             {
-                plantingService.UnmarkArea(inputBlocks, ray);
+                if (prefabName == UNMARK)
+                {
+                    plantingService.UnmarkArea(inputBlocks, ray);
+                }
+                else
+                {
+                    plantingService.MarkArea(inputBlocks, ray, prefabName);
+                }
             }
-            else
+            finally
             {
-                plantingService.MarkArea(inputBlocks, ray, prefabName);
+                Colonies.ColonyMarks.ActingSlot = null;
             }
         }
 
@@ -277,13 +289,23 @@ namespace BeaverBuddies.Events
                 Plugin.LogWarning($"Skipping {ToActionString()}: none of the {blocks.Count} entities exist anymore");
                 return;
             }
-            if (markForDemolition)
+            // The game's demolish tool also clears planting marks in the dragged rectangle: with separate colonies, only
+            // the actor's own (see ColonyMarks).
+            if (Colonies.ColonyModeService.IsSeparateColonies) Colonies.ColonyMarks.ActingSlot = System.Math.Max(0, slot);
+            try
             {
-                context.GetSingleton<DemolishableSelectionTool>().ActionCallback(blockObjects, start, end, false, false);
+                if (markForDemolition)
+                {
+                    context.GetSingleton<DemolishableSelectionTool>().ActionCallback(blockObjects, start, end, false, false);
+                }
+                else
+                {
+                    context.GetSingleton<DemolishableUnselectionTool>().ActionCallback(blockObjects, start, end, false, false);
+                }
             }
-            else
+            finally
             {
-                context.GetSingleton<DemolishableUnselectionTool>().ActionCallback(blockObjects, start, end, false, false);
+                Colonies.ColonyMarks.ActingSlot = null;
             }
         }
 
@@ -342,7 +364,10 @@ namespace BeaverBuddies.Events
     [Serializable]
     class TreeCuttingAreaEvent : ReplayEvent
     {
-        public override ColonyScope GetColonyScope() => ColonyScope.TileList(coordinates);
+        // Marking only where the actor's colony may work; unmarking only ever removes the actor's own marks.
+        public override ColonyScope GetColonyScope() => wasAdded
+            ? ColonyScope.Tiles(coordinates, Colonies.ColonyGameWorld.TileKey)
+            : ColonyScope.Global;
 
         public List<Vector3Int> coordinates;
         public bool wasAdded;
@@ -350,6 +375,13 @@ namespace BeaverBuddies.Events
         public override void Replay(IReplayContext context)
         {
             var treeService = context.GetSingleton<TreeCuttingArea>();
+            // Separate colonies: each colony's marks are its own (only its lumberjacks cut them).
+            var marks = Colonies.ColonyMarks.Instance;
+            if (Colonies.ColonyModeService.IsSeparateColonies && marks != null)
+            {
+                marks.MarkCutting(coordinates, System.Math.Max(0, slot), wasAdded);
+                return;
+            }
             if (wasAdded)
             {
                 treeService.AddCoordinates(coordinates);
@@ -493,6 +525,13 @@ namespace BeaverBuddies.Events
 
         public override void Replay(IReplayContext context)
         {
+            // Separate colonies: the actor's colony's hours only (the game's own setting stays as it is).
+            var colonyHours = Colonies.ColonyWorkingHours.Instance;
+            if (Colonies.ColonyModeService.IsSeparateColonies && colonyHours != null)
+            {
+                colonyHours.Set(System.Math.Max(0, slot), hours);
+                return;
+            }
             var panel = context.GetSingleton<WorkingHoursPanel>();
             panel._hours = hours;
             panel.OnHoursChanged();

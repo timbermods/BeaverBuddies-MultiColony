@@ -69,10 +69,15 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// The slot owning an entity: a district center directly, a beaver or bot by the district it lives in, a
-        /// building by its district (or, while under construction, the district building it). Null when it has no
-        /// district: nobody owns it.
+        /// finished building by its district, otherwise the colony that placed it (a construction site, a building cut
+        /// off from its roads, a building with no entrance such as a dam). So a finished District Crossing half is its
+        /// district's colony's, whoever placed it. Null when none of these applies: nobody owns it.
         /// </summary>
-        public static int? OwnerOf(BaseComponent component)
+        /// <param name="useConstructionDistrict">
+        /// Last, for a building from an older save that nobody placed in this mode: the district building it. The game
+        /// works that out from its instant map, so simulation code passes false.
+        /// </param>
+        public static int? OwnerOf(BaseComponent component, bool useConstructionDistrict = true)
         {
             if (!component) return null;
             DistrictOwner owner = component.GetComponent<DistrictOwner>();
@@ -80,7 +85,11 @@ namespace BeaverBuddies.Colonies
             Citizen citizen = component.GetComponent<Citizen>();
             if (citizen != null) return OwnerOfDistrict(citizen.AssignedDistrict);
             DistrictBuilding districtBuilding = component.GetComponent<DistrictBuilding>();
-            if (districtBuilding != null) return OwnerOfDistrict(districtBuilding.GetDistrictOrConstructionDistrict());
+            if (districtBuilding != null && districtBuilding.District) return OwnerOfDistrict(districtBuilding.District);
+            ColonyStamp stamp = component.GetComponent<ColonyStamp>();
+            if (stamp != null && stamp.IsStamped) return stamp.Slot;
+            if (districtBuilding != null && useConstructionDistrict)
+                return OwnerOfDistrict(districtBuilding.GetDistrictOrConstructionDistrict());
             return null;
         }
     }

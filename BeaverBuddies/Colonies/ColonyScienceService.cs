@@ -14,6 +14,7 @@ using Timberborn.SingletonSystem;
 using Timberborn.TemplateSystem;
 using Timberborn.ToolButtonSystem;
 using Timberborn.ToolSystem;
+using Timberborn.WorkSystem;
 using Timberborn.Workshops;
 using Timberborn.WorldPersistence;
 
@@ -28,16 +29,20 @@ namespace BeaverBuddies.Colonies
     /// The game keeps one pool in ScienceService. Every read, add and subtract goes through it, so each is sent to a
     /// slot: simulation code that earns, spends or reads science names the slot of the building doing it (a context
     /// set around the call, below); everything else is display and reads the local player's pool. Bot worker types
-    /// stay unlocked for everyone (their unlocks are read while loading, before buildings know their district); their
-    /// cost is paid from the pool of whoever unlocks them.
+    /// ("bots may work here") are unlocked per colony too: a workplace asks for its own colony's.
     /// </summary>
-    public class ColonyScienceService : RegisteredSingleton, ISaveableSingleton, ILoadableSingleton
+    public class ColonyScienceService : RegisteredSingleton, ISaveableSingleton, ILoadableSingleton, IPostLoadableSingleton
     {
         private static readonly SingletonKey ScienceKey = new SingletonKey("BeaverBuddies.ColonyScience");
         private static readonly PropertyKey<bool> EnabledKey = new PropertyKey<bool>("Enabled");
         private static readonly ListKey<int> PointsKey = new ListKey<int>("Points");
         private static readonly ListKey<string>[] UnlockedKeys =
             Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(i => new ListKey<string>("Unlocked" + i)).ToArray();
+        private static readonly ListKey<string>[] WorkerKeys =
+            Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(i => new ListKey<string>("Workers" + i)).ToArray();
+
+        /// <summary>A context meaning "any colony": a workplace whose colony is not known (an older save, loading).</summary>
+        public const int AnyColony = -2;
 
         private readonly ISingletonLoader _singletonLoader;
         private readonly ScienceService _scienceService;
@@ -45,13 +50,25 @@ namespace BeaverBuddies.Colonies
         private readonly BuildingService _buildingService;
         private readonly ToolButtonService _toolButtonService;
         private readonly ToolUnlockingService _toolUnlockingService;
+        private readonly WorkplaceUnlockingService _workplaceUnlockingService;
 
         private readonly int[] points = new int[ColonySlotTable.MaxSlots];
         // Sorted, so saving never depends on the order things were unlocked in.
         private readonly SortedSet<string>[] unlocked =
             Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(_ => new SortedSet<string>(StringComparer.Ordinal)).ToArray();
+        // Bot worker types per colony, as "workplace|worker type".
+        private readonly SortedSet<string>[] workerUnlocked =
+            Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(_ => new SortedSet<string>(StringComparer.Ordinal)).ToArray();
+        private bool workerSetsLoaded;
 
         public bool Enabled { get; private set; }
+
+        /// <summary>
+        /// The per-colony bot worker types exist: loaded, or made when separate science began. A save from before
+        /// them has none until PostLoad copies the game's in, and workplaces read theirs while loading, before that:
+        /// until then the game's own set answers (the one the copies come from).
+        /// </summary>
+        public bool WorkerSetsReady => workerSetsLoaded;
 
         public static ColonyScienceService Instance => SingletonManager.GetSingleton<ColonyScienceService>();
 
@@ -68,8 +85,10 @@ namespace BeaverBuddies.Colonies
 
         public ColonyScienceService(ISingletonLoader singletonLoader, ScienceService scienceService,
             BuildingUnlockingService buildingUnlockingService, BuildingService buildingService,
-            ToolButtonService toolButtonService, ToolUnlockingService toolUnlockingService)
+            ToolButtonService toolButtonService, ToolUnlockingService toolUnlockingService,
+            WorkplaceUnlockingService workplaceUnlockingService)
         {
+            _workplaceUnlockingService = workplaceUnlockingService;
             _singletonLoader = singletonLoader;
             _scienceService = scienceService;
             _buildingUnlockingService = buildingUnlockingService;
@@ -91,6 +110,12 @@ namespace BeaverBuddies.Colonies
             {
                 if (loader.Has(UnlockedKeys[i])) unlocked[i].UnionWith(loader.Get(UnlockedKeys[i]));
             }
+            for (int i = 0; i < WorkerKeys.Length; i++)
+            {
+                if (!loader.Has(WorkerKeys[i])) continue;
+                workerUnlocked[i].UnionWith(loader.Get(WorkerKeys[i]));
+                workerSetsLoaded = true;
+            }
             if (Enabled) Plugin.Log($"[Colony] Separate science: pools {string.Join(", ", points)}");
         }
 
@@ -101,6 +126,35 @@ namespace BeaverBuddies.Colonies
             saver.Set(EnabledKey, true);
             saver.Set(PointsKey, points.ToList());
             for (int i = 0; i < UnlockedKeys.Length; i++) saver.Set(UnlockedKeys[i], unlocked[i].ToList());
+            for (int i = 0; i < WorkerKeys.Length; i++) saver.Set(WorkerKeys[i], workerUnlocked[i].ToList());
+        }
+
+        // A save made before bot worker types were per colony: every colony keeps the ones the game had.
+        public void PostLoad()
+        {
+            if (!Enabled || workerSetsLoaded) return;
+            List<string> shared = SharedWorkerTypes();
+            foreach (SortedSet<string> set in workerUnlocked) set.UnionWith(shared);
+            workerSetsLoaded = true;
+        }
+
+        private List<string> SharedWorkerTypes() =>
+            _workplaceUnlockingService._unlockedWorkerTypes.Select(WorkerKey).OrderBy(key => key, StringComparer.Ordinal).ToList();
+
+        private static string WorkerKey(UnlockableWorkerType workerType) => workerType.WorkplaceTemplateName + "|" + workerType.WorkerType;
+
+        /// <summary>Whether a colony (or <see cref="AnyColony"/>) has unlocked this worker type for this workplace.</summary>
+        public bool IsWorkerTypeUnlocked(int slot, UnlockableWorkerType workerType)
+        {
+            string key = WorkerKey(workerType);
+            if (slot == AnyColony) return workerUnlocked.Any(set => set.Contains(key));
+            return slot >= 0 && slot < workerUnlocked.Length && workerUnlocked[slot].Contains(key);
+        }
+
+        public void UnlockWorkerType(int slot, UnlockableWorkerType workerType)
+        {
+            if (slot < 0 || slot >= workerUnlocked.Length) slot = 0;
+            workerUnlocked[slot].Add(WorkerKey(workerType));
         }
 
         /// <summary>
@@ -115,11 +169,14 @@ namespace BeaverBuddies.Colonies
             // between computers, and this runs on every computer.
             List<string> sharedUnlocked = _buildingUnlockingService._unlockedBuildings
                 .Where(name => !IsUnlockableOnce(name)).OrderBy(name => name, StringComparer.Ordinal).ToList();
+            List<string> sharedWorkers = SharedWorkerTypes();
             Enabled = true;
+            workerSetsLoaded = true;
             points[0] = shared;
             for (int i = 0; i < unlocked.Length; i++)
             {
                 if (i == 0 || newGame) unlocked[i].UnionWith(sharedUnlocked);
+                if (i == 0 || newGame) workerUnlocked[i].UnionWith(sharedWorkers);
             }
             Plugin.Log($"[Colony] Separate science switched on: slot 0 keeps {shared} science and {sharedUnlocked.Count} unlocks");
             RefreshToolLocks();
@@ -322,5 +379,50 @@ namespace BeaverBuddies.Colonies
             service.RecordUnlock(slot, buildingSpec);
             return slot == ColonyScienceService.DisplaySlot;
         }
+    }
+
+    // ---- bot worker types, per colony ----
+
+    // Whether bots may work in a workplace: the colony asking's own unlocks (a workplace, below, or a replayed unlock),
+    // else the local player's (display). Free worker types stay free, as in the game.
+    [HarmonyPatch(typeof(WorkplaceUnlockingService), nameof(WorkplaceUnlockingService.Unlocked))]
+    static class ColonyWorkerTypeUnlockedPatcher
+    {
+        static bool Prefix(WorkplaceUnlockingService __instance, UnlockableWorkerType unlockableWorkerType, ref bool __result)
+        {
+            ColonyScienceService service = ColonyScienceService.Instance;
+            if (service == null || !service.Enabled || !service.WorkerSetsReady
+                || __instance.GetUnlockCost(unlockableWorkerType) <= 0) return true;
+            __result = service.IsWorkerTypeUnlocked(ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot, unlockableWorkerType);
+            return false;
+        }
+    }
+
+    // An unlock goes to the colony paying for it (the replayed unlock sets it), never to everyone.
+    [HarmonyPatch(typeof(WorkplaceUnlockingService), nameof(WorkplaceUnlockingService.UnlockIgnoringCost))]
+    static class ColonyWorkerTypeUnlockPatcher
+    {
+        static bool Prefix(UnlockableWorkerType unlockableWorkerType)
+        {
+            ColonyScienceService service = ColonyScienceService.Instance;
+            if (service == null || !service.Enabled) return true;
+            service.UnlockWorkerType(ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot, unlockableWorkerType);
+            return false;
+        }
+    }
+
+    // A workplace asks for its own colony's unlocks (from simulation state: its district, or the colony that placed
+    // it). One whose colony is not known yet, from an older save while loading, keeps what any colony unlocked.
+    [HarmonyPatch(typeof(WorkplaceWorkerType), nameof(WorkplaceWorkerType.IsWorkerTypeUnlocked))]
+    static class ColonyWorkplaceWorkerTypePatcher
+    {
+        static void Prefix(WorkplaceWorkerType __instance, out int? __state)
+        {
+            __state = ColonyScienceService.Context;
+            if (ColonyScienceService.IsEnabled)
+                ColonyScienceService.Context = ColonySeparation.SimOwnerOf(__instance) ?? ColonyScienceService.AnyColony;
+        }
+
+        static void Finalizer(int? __state) => ColonyScienceService.Context = __state;
     }
 }

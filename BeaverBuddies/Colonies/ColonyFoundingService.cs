@@ -234,7 +234,29 @@ namespace BeaverBuddies.Colonies
                 actorOwnsDistrict: actorSlot >= 0 && SlotOwnsDistrict(actorSlot),
                 foundingAllowed: atReplay || FoundingAllowed,
                 blocksValid: blocksValid,
-                touchesOtherDistrict: TouchesAnotherDistrict(placement));
+                touchesOtherDistrict: TouchesAnotherDistrict(placement),
+                onOtherColonyLand: OnOtherColonyLand(actorSlot, placement));
+        }
+
+        /// <summary>
+        /// Whether the district center would stand where another colony works (near its buildings and paths). Read from
+        /// <see cref="ColonyReach"/>, which is the same on every computer, so the replay's answer is too.
+        /// </summary>
+        private bool OnOtherColonyLand(int actorSlot, Placement placement)
+        {
+            ColonyReach reach = ColonyReach.Instance;
+            if (reach == null) return false;
+            BlockObjectSpec spec = _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>();
+            for (int x = 0; x < spec.Size.x; x++)
+            {
+                for (int y = 0; y < spec.Size.y; y++)
+                {
+                    Vector3Int tile = placement.Orientation.Transform(placement.FlipMode.Transform(new Vector3Int(x, y, 0), spec.Size.x))
+                        + placement.Coordinates;
+                    if (!reach.MayUse(actorSlot, tile)) return true;
+                }
+            }
+            return false;
         }
 
         // ---- founding (replayed on every computer) ----
@@ -255,16 +277,8 @@ namespace BeaverBuddies.Colonies
 
             if (!_colonyModeService.Enabled)
             {
-                // A shared game becomes a separate-colonies game. Its districts were made with the game's open imports;
-                // close them, as a separate-colonies game does for every new district, so trade starts closed.
-                foreach (DistrictCenter districtCenter in _entityComponentRegistry.GetEnabled<DistrictCenter>().ToList())
-                {
-                    DistrictDistributionSetting setting = districtCenter.GetComponent<DistrictDistributionSetting>();
-                    if (setting == null) continue;
-                    foreach (GoodDistributionSetting good in setting.GoodDistributionSettings.ToList())
-                        good.SetImportOption(ImportOption.Disabled);
-                }
-                // Every computer founds it, so the choice of separate science is the host's (told to every guest).
+                // A shared game becomes a separate-colonies game. Every computer founds it, so the choice of separate
+                // science is the host's (told to every guest).
                 _colonyModeService.Enable(start, $"slot {slot} founded a colony in a shared game",
                     ColonySession.HostSeparateScience, newGame: false);
             }

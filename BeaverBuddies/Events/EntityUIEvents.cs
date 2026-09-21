@@ -783,7 +783,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class EntityRenamedEvent : ReplayEvent
     {
-        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+        // A name is part of its colony: only its own player renames it.
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
 
         public string entityID;
         public string newName;
@@ -838,13 +839,17 @@ namespace BeaverBuddies.Events
         public override void Replay(IReplayContext context)
         {
             var service = context.GetSingleton<WorkplaceUnlockingService>();
-            if (service.Unlocked(workerType))
+            // With separate science, the unlock is the actor's colony's (the host wrote the actor's slot into the event).
+            int actorSlot = System.Math.Max(0, slot);
+            bool already = Colonies.ColonyScienceService.IsEnabled
+                ? Colonies.ColonyScienceService.InSlot(actorSlot, () => service.Unlocked(workerType))
+                : service.Unlocked(workerType);
+            if (already)
             {
                 Plugin.LogWarning($"Tried to unlock {workerType.WorkerType} for {workerType.WorkplaceTemplateName} but it was already unlocked");
                 return;
             }
-            // Bot worker types stay unlocked for everyone; with separate science the actor's colony pays.
-            int actorSlot = System.Math.Max(0, slot);
+            // With separate science the actor's colony pays, and only it gets the unlock.
             bool affordable = Colonies.ColonyScienceService.IsEnabled
                 ? Colonies.ColonyScienceService.InSlot(actorSlot, () => service.Unlockable(workerType))
                 : service.Unlockable(workerType);
