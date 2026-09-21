@@ -5,9 +5,35 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.2.0-two-colony-alpha1
+
+An alpha of **separate colonies** ([TWO-COLONIES.md](TWO-COLONIES.md)), on top of 1.1.10, in the new
+BeaverBuddies-MultiColony repository. Not yet played in a game. Every player must install this build: the join
+check compares the mod build, and each action now carries who sent it.
+
+- **Opt-in per new game.** A host setting, *Separate colonies for new multi-start games*, gives each start of a new
+  multi-start game its own colony. The save records the mode and the start positions; shared-colony games and old
+  saves are unchanged and save nothing new.
+- **Land is divided by nearest start**, with a border strip on each side where only District Crossings may stand, so
+  the colonies' roads never meet.
+- **The host stamps who sent each action** (a guest cannot claim another number) and judges every action just before
+  replaying it: actions on the other colony are dropped and never reach anyone; area actions keep only the actor's
+  own tiles and objects. Every action type declares what it touches, and a check fails when one does not.
+- **Seats:** the host chooses its colony in the settings (*Colony the host plays*); guests play the other.
+- **Placement previews turn red** with the reason on the other colony's land or on the strip; refused actions show a
+  notice. A District Crossing pair may straddle the border, each half on its colony's strip; the half on the other
+  side is accepted only when the placer's own half stands behind it.
+- **Trade starts closed:** every good of a new district starts at import Disabled, so goods cross only once the
+  receiving player opens a good; the giver limits it with the export threshold.
+- **No automatic migration between colonies**; manual migration to the other colony is refused.
+- **Border display** (key **K**, and whenever a tool is active), the colony beside each name in the connection
+  panel, and a debug key for a host testing alone (**Ctrl+Shift+K**, debug mode only).
+- Mod renamed *BeaverBuddies - MultiColony (alpha)* in the mod list; the mod ID is unchanged, so remove other
+  BeaverBuddies copies before installing.
+
 ## 1.1.10
 
-The current release, on top of 1.0.9. It contains everything from the three 1.1.10 pre-releases (1.1.10-release-candidate, -2 and -3): a
+The last Stability Fork release, on top of 1.0.9. It contains everything from the three 1.1.10 pre-releases (1.1.10-release-candidate, -2 and -3): a
 cheaper pass over every entity on each tick, a plainer connection panel, and chat drawn in the color of each player's cursor. Every player
 should install this build: the join check compares the mod build, so it will not join a session with an earlier version. Nothing new is sent
 over the network.

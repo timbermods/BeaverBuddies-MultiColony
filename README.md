@@ -1,4 +1,21 @@
-# BeaverBuddies Stability Fork
+# BeaverBuddies MultiColony
+
+**Separate colonies for BeaverBuddies co-op (alpha).** Two players, one map, a colony each: your own district,
+beavers and land, with the other player's colony out of your reach, and goods traded through District Crossings
+on the border. How to switch it on, the rules, and what has and has not been tested: **[TWO-COLONIES.md](TWO-COLONIES.md)**.
+
+This repository continues the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
+from its 1.1.10 release. Everything below describes the co-op features it inherits, which work as before; separate
+colonies are opt-in per new game, and old saves and shared-colony games behave exactly as in 1.1.10.
+
+- **Status:** `1.2.0-two-colony-alpha1`. Automated checks pass; **not yet played in a game**.
+- **Install:** download `BeaverBuddies-MultiColony-1.2.0-two-colony-alpha1.zip`, copy the `BeaverBuddies-MultiColony`
+  folder into `Documents\Timberborn\Mods`, and remove any other BeaverBuddies copy first (including the Stability
+  Fork): they share one mod ID. Every player must install the same zip.
+
+---
+
+## Inherited from the BeaverBuddies Stability Fork
 
 Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game connection panel**, and a long list of crash and desync fixes.
 

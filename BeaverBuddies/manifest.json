@@ -1,9 +1,9 @@
 {
-  "Name": "BeaverBuddies - Stability Fork",
-  "Version": "1.1.10",
+  "Name": "BeaverBuddies - MultiColony (alpha)",
+  "Version": "1.2.0-two-colony-alpha1",
   "Id": "beaverbuddies",
   "MinimumGameVersion": "1.1.0.0",
-  "Description": "BeaverBuddies is a Timberborn mod that adds multiplayer co-op!",
+  "Description": "BeaverBuddies co-op with separate colonies: two players, one map, a colony each, trading through District Crossings. Alpha, based on the BeaverBuddies Stability Fork 1.1.10.",
   "RequiredMods": [
     { "Id": "Harmony" },
     {
