@@ -1,3 +1,4 @@
+using BeaverBuddies.Colonies;
 using BeaverBuddies.IO;
 using System;
 using Timberborn.BaseComponentSystem;
@@ -19,6 +20,11 @@ namespace BeaverBuddies.Events
 
         public int ticksSinceLoad;
         public int? randomS0Before;
+        /// <summary>
+        /// Who did this: 0 for the host, a guest's connection number for a guest. Written by the host (a guest's own
+        /// value is replaced when the host receives it) and sent on with the event. Only separate colonies read it.
+        /// </summary>
+        public int player;
 
         public string type => GetType().Name;
 
@@ -31,6 +37,13 @@ namespace BeaverBuddies.Events
         }
 
         public abstract void Replay(IReplayContext context);
+
+        /// <summary>
+        /// What this action touches, for separate colonies: shared, named entities, a placement, or a list that is cut
+        /// down to the actor's own part. Every event type declares one (RuntimeChecks fails otherwise); null means
+        /// "not declared". May be called on the host before Replay, so it must only read.
+        /// </summary>
+        public virtual ColonyScope GetColonyScope() => null;
 
         public override string ToString()
         {
@@ -123,6 +136,10 @@ namespace BeaverBuddies.Events
             // Get the event and if it's null, just use default behavior
             ReplayEvent message = getEvent();
             if (message == null) return true;
+
+            // Separate colonies: an action on the other colony is refused here with a notice. The host would refuse
+            // it anyway; this only explains it at once. Refused means not recorded and not done.
+            if (ColonyRulesService.RefuseLocally(message)) return false;
 
             // Optional: Log the message
             Plugin.Log(message.ToActionString());

@@ -59,6 +59,20 @@ namespace BeaverBuddies.MultiStart
 			int maxStartingLocations = startBuildingService.MaxStartLocations();
 			Plugin.Log($"Max players: {maxStartingLocations}; Map supports players: {startingLocations.Count}");
 
+			// Separate colonies are chosen for a new game here, before the first starting building is placed: new
+			// district centers read the mode for their trade defaults. The first two starts, in player order, become
+			// colonies 1 and 2; seats exist for two colonies only, so any further start is left out of the division
+			// and its land belongs to whichever of the two is nearer. The starting locations are deleted below, so
+			// this is the last chance to read them.
+			var colonyStarts = startingLocations.Take(Math.Min(maxStartingLocations, 2))
+				.Select(sl => sl.GetComponent<BlockObject>().Coordinates).ToList();
+			if (Settings.SeparateColoniesForNewGames && colonyStarts.Count >= 2)
+			{
+				if (Math.Min(maxStartingLocations, startingLocations.Count) > 2)
+					Plugin.LogWarning("[Colony] More than two starts: only the first two become colonies");
+				GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Activate(colonyStarts);
+			}
+
 			// Initialize each starting location; not just the first
 			foreach (var startingLocation in startingLocations)
 			{

@@ -1,0 +1,15 @@
+{
+  "KeyBindingSpec": {
+    "Id": "BeaverBuddies.KeyBind.ToggleColonyBorder",
+    "GroupId": "KeyBindingGroup.BeaverBuddies",
+    "LocKey": "BeaverBuddies.KeyBindings.ToggleColonyBorder",
+    "Order": 3,
+    "AllowOtherModifiers": false,
+    "DevModeOnly": false
+  },
+  "PrimaryInputBindingSpec": {
+    "Path": "/Keyboard/k",
+    "InputModifiers": "None",
+    "Unchangeable": false
+  }
+}

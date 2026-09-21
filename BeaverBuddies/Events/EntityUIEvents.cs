@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using BeaverBuddies.Colonies;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,6 +44,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     abstract class BuildingDropdownEvent<Selector> : ReplayEvent where Selector : BaseComponent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string itemID;
         public string entityID;
 
@@ -184,6 +187,8 @@ namespace BeaverBuddies.Events
 
     class FarmHousePrioritizePlantingChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public bool prioritizePlanting;
 
@@ -311,6 +316,8 @@ namespace BeaverBuddies.Events
 
     class BuildingPausedChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public bool wasPaused;
 
@@ -366,6 +373,8 @@ namespace BeaverBuddies.Events
 
     abstract class PriorityChangedEvent<T> : ReplayEvent where T : BaseComponent, IPrioritizable
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public Timberborn.PrioritySystem.Priority priority;
 
@@ -425,6 +434,8 @@ namespace BeaverBuddies.Events
 
     class WorkplaceDesiredWorkersChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public bool increased;
 
@@ -479,6 +490,8 @@ namespace BeaverBuddies.Events
 
     class FloodgateHeightChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public float height;
 
@@ -517,6 +530,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class FloodgateSynchronizedChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public bool isSynchronized;
 
@@ -565,6 +580,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class StockpilePriorityChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public StockpilePriorityState priority;
 
@@ -650,6 +667,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class DemolishButtonClickedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public bool mark;
 
@@ -693,6 +712,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class DynamiteTriggeredEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
 
         public override void Replay(IReplayContext context)
@@ -726,6 +747,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class GoodStackDeletedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
 
         public override void Replay(IReplayContext context)
@@ -759,6 +782,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class EntityRenamedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
         public string entityID;
         public string newName;
 
@@ -805,6 +830,8 @@ namespace BeaverBuddies.Events
     }
     class WorkerTypeUnlockedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
         public UnlockableWorkerType workerType;
 
         public override void Replay(IReplayContext context)
@@ -841,6 +868,8 @@ namespace BeaverBuddies.Events
 
     class WorkerTypeSetEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(workplaceEntityID);
+
         public string workplaceEntityID;
         public string workerType;
 
@@ -913,6 +942,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class HaulPrioritizablePrioritizedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public bool prioritized;
 
@@ -952,6 +983,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class ToggleForresterReplantDeadTreesEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public bool shouldReplant;
 
@@ -995,6 +1028,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class WaterMoverModeChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         // could represent this in a different way, but this is consistent with the game
         public bool moveCleanWater;
@@ -1045,6 +1080,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class ZiplineConnectionChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(currentTowerEntityID, otherTowerEntityID);
+
         public string currentTowerEntityID;
         public string otherTowerEntityID;
         public bool add;
@@ -1114,6 +1151,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class WonderActivatedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
 
         public override void Replay(IReplayContext context)
@@ -1145,6 +1184,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class DefaultWorkerTypeChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public string workerType;
 

@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using BeaverBuddies.Colonies;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +26,17 @@ namespace BeaverBuddies.Events
     [Serializable]
     class BuildingPlacedEvent : ReplayEvent
     {
+        // The duplication source may be anyone's; the footprint decides.
+        public override ColonyScope GetColonyScope() => ColonyScope.Place(new ColonyPlacement
+        {
+            TemplateName = prefabName,
+            X = coordinates.x,
+            Y = coordinates.y,
+            Z = coordinates.z,
+            Orientation = (int)orientation,
+            IsFlipped = isFlipped,
+        });
+
         public string prefabName;
         public Vector3Int coordinates;
         public Orientation orientation;
@@ -118,6 +130,8 @@ namespace BeaverBuddies.Events
 
     class BuildingsDeconstructedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.EntityList(entityIDs, id => id);
+
         public List<string> entityIDs = new List<string>();
 
         public override void Replay(IReplayContext context)
@@ -168,6 +182,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class PlantingAreaMarkedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.TileList(inputBlocks, block => new ColonyTile(block.x, block.y));
+
         public List<Vector3Int> inputBlocks;
         public Ray ray;
         public string prefabName;
@@ -230,6 +246,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class ClearResourcesMarkedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.EntityList(blocks, id => id.ToString());
+
         public List<Guid> blocks;
         public Vector3Int start;
         public Vector3Int end;
@@ -313,6 +331,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class TreeCuttingAreaEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.TileList(coordinates, tile => new ColonyTile(tile.x, tile.y));
+
         public List<Vector3Int> coordinates;
         public bool wasAdded;
 
@@ -371,6 +391,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class BuildingUnlockedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
         public string buildingName;
 
         public override void Replay(IReplayContext context)
@@ -428,6 +450,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class WorkingHoursChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
         public int hours;
 
         public override void Replay(IReplayContext context)
@@ -465,6 +489,9 @@ namespace BeaverBuddies.Events
     [Serializable]
     class DuplicationEvent : ReplayEvent
     {
+        // Copying settings from anyone's building is harmless; only the building that changes must be yours.
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(targetEntityID);
+
         public string sourceEntityID;
         public string targetEntityID;
 

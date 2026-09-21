@@ -642,7 +642,12 @@ static class SteamLinkChecks
         Check(SpinWait.SpinUntil(() =>
         {
             foreach (var e in server.ReadEvents(24))
-                if ((string)e[Type]! == "Guest") { e.Remove(Ticks); atHost.Add(Compact(e)); }
+                if ((string)e[Type]! == "Guest")
+                {
+                    // The host writes the tick and who sent it; everything else must arrive untouched.
+                    Equal(1, (int)e[TimberNetBase.PLAYER_KEY]!);
+                    e.Remove(Ticks); e.Remove(TimberNetBase.PLAYER_KEY); atHost.Add(Compact(e));
+                }
             return atHost.Count >= guestSent.Count;
         }, 4500), $"the host received {atHost.Count} of {guestSent.Count} guest events");
         Check(atHost.SequenceEqual(guestSent), "guest events were altered, duplicated or reordered on the way to the host");

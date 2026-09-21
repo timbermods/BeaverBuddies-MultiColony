@@ -1,4 +1,5 @@
-﻿using BeaverBuddies.IO;
+﻿using BeaverBuddies.Colonies;
+using BeaverBuddies.IO;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     public class AutosaveEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
         public override void Replay(IReplayContext context)
         {
             // We only defer non-instant saves

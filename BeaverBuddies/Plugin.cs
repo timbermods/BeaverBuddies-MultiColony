@@ -40,6 +40,7 @@ namespace BeaverBuddies
             containerDefinition.Bind<ModListService>().AsSingleton();
 
             MultiStartConfigurator.Configure(containerDefinition);
+            BeaverBuddies.Colonies.ColonyConfigurator.Configure(containerDefinition);
 
             // EventIO gets set before load, so if it's null, this is a regular
             // game, so don't initialize these services.

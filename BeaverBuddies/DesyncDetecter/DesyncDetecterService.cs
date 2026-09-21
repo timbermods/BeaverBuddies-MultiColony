@@ -1,4 +1,5 @@
-﻿using BeaverBuddies.Events;
+﻿using BeaverBuddies.Colonies;
+using BeaverBuddies.Events;
 using BeaverBuddies.Reporting;
 using Newtonsoft.Json;
 using System;
@@ -28,6 +29,8 @@ namespace BeaverBuddies.DesyncDetecter
     [Serializable]
     public class TraceLoggedForTickEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
         // tick refers to the tick for which these traces are captures
         // while ReplayEvent.ticksSinceLoad is the timing of when the
         // event was actually sent, which is usually 1 tick later

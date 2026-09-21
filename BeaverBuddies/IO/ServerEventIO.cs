@@ -40,6 +40,8 @@ namespace BeaverBuddies.IO
         // We only support a static map; see note above
         public void Start(byte[] mapBytes)
         {
+            // Seats for separate colonies are fixed for the whole session, like the other host choices.
+            BeaverBuddies.Colonies.ColonySession.BeginHostSession();
             try
             {
                 List<ISocketListener> listeners = [
