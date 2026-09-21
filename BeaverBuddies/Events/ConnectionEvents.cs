@@ -1,4 +1,5 @@
-﻿using BeaverBuddies.Connect;
+﻿using BeaverBuddies.Colonies;
+using BeaverBuddies.Connect;
 using BeaverBuddies.IO;
 using BeaverBuddies.Reporting;
 using BeaverBuddies.Util;
@@ -18,17 +19,27 @@ namespace BeaverBuddies.Events
     [Serializable]
     public class InitializeClientEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
         public string serverModVersion;
         public string serverGameVersion;
         //public string mapName;
         public bool isDebugMode;
         // The host's choice for the session. Absent from an older host, which reads as the game's default.
         public bool removeLargeColonySpeedLimit;
+        // Separate colonies: the colony the host plays; guests play the other. Absent from an older host, which reads
+        // as 0 and means colony 1.
+        public int hostColony;
+        // Separate colonies: whether the host allows founding colony 2 in this session.
+        public bool separateColonies;
 
         public override void Replay(IReplayContext context)
         {
             //context.GetSingleton<ReplayService>().SetServerMapName(mapName);
             LargeColonySpeedLimit.AdoptHostChoice(removeLargeColonySpeedLimit);
+            ColonySession.AdoptHostColony(hostColony, separateColonies);
+            // On a one-start map, the player of colony 2 is offered to found it now.
+            SingletonManager.GetSingleton<ColonyFoundingService>()?.OfferFounding();
             string warningMessage = null;
             if (serverGameVersion != GameVersions.CurrentVersion.ToString())
             {
@@ -60,6 +71,8 @@ namespace BeaverBuddies.Events
                 serverGameVersion = GameVersions.CurrentVersion.ToString(),
                 isDebugMode = Settings.Debug,
                 removeLargeColonySpeedLimit = LargeColonySpeedLimit.BeginHostSession(),
+                hostColony = ColonySession.HostColony,
+                separateColonies = ColonySession.HostAllowsFounding,
                 //mapName = mapName,
             };
             return message;
@@ -69,6 +82,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     public class ClientDesyncedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
         public string desyncID;
         public string desyncTrace;
 

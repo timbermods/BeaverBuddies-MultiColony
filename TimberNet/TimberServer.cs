@@ -73,6 +73,13 @@ namespace TimberNet
             this.initEventProvider = initEventProvider;
         }
 
+        protected override void StampReceivedEvent(ISocketStream source, JObject message)
+        {
+            // Same source of truth as chat and activity: the host numbered this connection when it joined. A
+            // connection without a number is stamped -1, which controls no colony.
+            StampPlayer(message, playerIds.TryGetValue(source, out int id) ? id : -1);
+        }
+
         protected override void ReceiveEvent(JObject message)
         {
             message[TICKS_KEY] = TickCount;

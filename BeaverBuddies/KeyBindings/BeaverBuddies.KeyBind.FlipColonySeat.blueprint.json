@@ -1,0 +1,15 @@
+{
+  "KeyBindingSpec": {
+    "Id": "BeaverBuddies.KeyBind.FlipColonySeat",
+    "GroupId": "KeyBindingGroup.BeaverBuddies",
+    "LocKey": "BeaverBuddies.KeyBindings.FlipColonySeat",
+    "Order": 4,
+    "AllowOtherModifiers": false,
+    "DevModeOnly": false
+  },
+  "PrimaryInputBindingSpec": {
+    "Path": "/Keyboard/k",
+    "InputModifiers": "Ctrl, Shift",
+    "Unchangeable": false
+  }
+}

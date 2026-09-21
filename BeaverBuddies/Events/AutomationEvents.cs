@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using BeaverBuddies.Colonies;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,8 @@ namespace BeaverBuddies.Events
 
     public class AutomationEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public string methodKey;
         public object[] arguments;
@@ -305,6 +308,9 @@ namespace BeaverBuddies.Events
 
     public class SetAutomatableInputEvent : ReplayEvent
     {
+        // The building being wired must be yours; the sensor it listens to may be anyone's.
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(automatableID);
+
         public string automatableID;
         public string inputID;
 
@@ -347,6 +353,8 @@ namespace BeaverBuddies.Events
 
     public class SetTimerIntervalEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public TimerIntervalInput input;
         public float time;
@@ -431,6 +439,8 @@ namespace BeaverBuddies.Events
 
     public class ResetTransmitterEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public bool resetAll;
 
@@ -490,6 +500,8 @@ namespace BeaverBuddies.Events
 
     public class WeatherStationSetActivateEarlyEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
         public string entityID;
         public bool activateEarly;
 

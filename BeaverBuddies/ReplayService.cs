@@ -2,6 +2,7 @@
 // update, rather than amortizing ticks over multiple.
 //#define ONE_TICK_PER_UPDATE
 
+using BeaverBuddies.Colonies;
 using BeaverBuddies.Connect;
 using BeaverBuddies.DesyncDetecter;
 using BeaverBuddies.Events;
@@ -53,6 +54,8 @@ namespace BeaverBuddies
      */
     class GroupedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
         public List<ReplayEvent> events;
 
         public GroupedEvent(List<ReplayEvent> events)
@@ -69,6 +72,8 @@ namespace BeaverBuddies
 
     class HeartbeatEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
         public override void Replay(IReplayContext context)
         {
             // No op
@@ -272,6 +277,8 @@ namespace BeaverBuddies
             }
             if (behavior == UserEventBehavior.QueuePlay)
             {
+                // The host's own action. A guest's is numbered by the host when it arrives (see TimberServer).
+                replayEvent.player = ColonySeats.HostPlayer;
                 eventsToPlay.Enqueue(replayEvent);
             }
             else
@@ -283,6 +290,16 @@ namespace BeaverBuddies
         private List<ReplayEvent> ReadEventsFromIO(int tick)
         {
             List<ReplayEvent> eventsToReplay = io.ReadEvents(tick);
+            // Every event a guest sends reaches the host inside a group, and the host numbered the group by the
+            // connection it came from. The events inside take the group's number, whatever the guest wrote on them.
+            // (A guest must not do this: the host's own groups carry 0 and hold events from several players.)
+            if (io is ServerEventIO)
+            {
+                foreach (var grouped in eventsToReplay.OfType<GroupedEvent>())
+                {
+                    foreach (var child in grouped.events) child.player = grouped.player;
+                }
+            }
             // Spread grouped events into a flat list because we need to
             // replay each individually (since we only record them if successful).
             eventsToReplay = eventsToReplay
@@ -307,6 +324,8 @@ namespace BeaverBuddies
                 eventsToReplay.Add(replayEvent);
             }
 
+            if (io is ServerEventIO) ColonyRulesService.BeginHostBatch(eventsToReplay);
+
             int currentTick = ticksSinceLoad;
             ReplayExecution.Run(eventsToReplay, replayEvent =>
             {
@@ -319,6 +338,14 @@ namespace BeaverBuddies
                     Plugin.LogWarning($"Event past time: {eventTime} < {currentTick}");
                 }
                 //Plugin.Log($"Replaying event [{replayEvent.ticksSinceLoad}]: {replayEvent.type}");
+
+                // Separate colonies: the host decides, for everyone, whether this player may do this. A refused event
+                // is not played and not sent on, so guests never see it; it is not a failure, so carry on. A list event
+                // may come out shorter, and is then played and sent in its shortened form. Guests do not judge.
+                if (io is ServerEventIO && !ColonyRulesService.AllowOnHost(replayEvent))
+                {
+                    return true;
+                }
                 
                 // If this event was played (e.g. on the server) and recorded a 
                 // random state, make sure we're in the same state.

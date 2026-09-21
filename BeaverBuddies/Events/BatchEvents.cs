@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using BeaverBuddies.Colonies;
+using HarmonyLib;
 using System;
 using Timberborn.DistributionSystem;
 using Timberborn.GameDistricts;
@@ -59,6 +60,9 @@ namespace BeaverBuddies.Events
 
     class ManualMigrationEvent : ReplayEvent
     {
+        // Both districts must be yours: this is what keeps beavers from being sent to the other colony.
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(fromDistrictID, toDistrictID);
+
         public string fromDistrictID;
         public string toDistrictID;
         public int amount;
@@ -118,6 +122,8 @@ namespace BeaverBuddies.Events
 
     class SetDistrictMinimumPopulationEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(districtEntityID);
+
         public string districtEntityID;
         public int minimumPopulation;
         public DistributorType distributorType;
@@ -162,6 +168,8 @@ namespace BeaverBuddies.Events
 
     class SetDistrictMigrationToggledEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(districtEntityID);
+
         public string districtEntityID;
         public bool isImmigration;
         public bool allow;
@@ -261,6 +269,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class GoodDistributionSettingChangedEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(districtEntityID);
+
         public string districtEntityID;
         public string goodID;
         public float threshold;
@@ -342,7 +352,8 @@ namespace BeaverBuddies.Events
         static bool Prefix(GoodDistributionSetting __instance)
         {
             var exportThreshold = 0f;
-            var importOption = ((!__instance._goodSpec.ForceImport) ? ImportOption.Auto : ImportOption.Forced);
+            // A separate-colonies game defaults to Disabled (see GoodDistributionSettingColonyDefaultPatcher).
+            var importOption = BeaverBuddies.Colonies.ColonyTradeDefaults.DefaultImportOption(__instance._goodSpec.ForceImport);
             if (__instance.ImportOption == importOption && __instance.ExportThreshold == exportThreshold) return true;
             return GoodDistributionSettingChangedEvent.DoPrefix(__instance, exportThreshold, importOption, false);
         }

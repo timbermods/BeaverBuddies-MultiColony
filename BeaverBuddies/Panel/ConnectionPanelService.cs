@@ -327,6 +327,13 @@ namespace BeaverBuddies.Panel
                 // Before the host's first update arrives we still know we are here.
                 if (!foundYou) result.Players.Add(new PanelPlayer { Id = status.YourPlayerId, Name = me, IsYou = true });
             }
+            // Separate colonies: which colony each player controls, beside the name.
+            if (BeaverBuddies.Colonies.ColonyModeService.IsSeparateColonies)
+            {
+                string format = BeaverBuddies.Util.RegisteredLocalizationService.T("BeaverBuddies.Colony.PanelName");
+                foreach (var player in result.Players)
+                    player.Name = string.Format(format, player.Name, BeaverBuddies.Colonies.ColonySession.ColonyOfPlayer(player.Id));
+            }
             return result;
         }
 

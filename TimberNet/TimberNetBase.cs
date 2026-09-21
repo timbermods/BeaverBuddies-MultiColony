@@ -142,6 +142,35 @@ namespace TimberNet
 
         protected virtual void HandleStatusFrame(ISocketStream source, string type, JObject message) { }
 
+        /// <summary>The JSON key of the player number the host writes onto each event a guest sends.</summary>
+        public const string PLAYER_KEY = "player";
+
+        /// <summary>
+        /// Called for each event received from <paramref name="source"/> before it is queued. The host overrides it to
+        /// write who sent the event; a guest trusts whatever the host sends it.
+        /// </summary>
+        protected virtual void StampReceivedEvent(ISocketStream source, JObject message) { }
+
+        /// <summary>
+        /// Writes <paramref name="player"/> onto an event and onto every event grouped inside it, replacing any value
+        /// the sender wrote, so a guest can never claim to be someone else.
+        /// </summary>
+        public static void StampPlayer(JObject message, int player)
+        {
+            message[PLAYER_KEY] = player;
+            // The mod writes a grouped list with its type name ({"$type": ..., "$values": [...]}); accept a plain
+            // array as well.
+            JToken? events = message["events"];
+            JArray? children = events as JArray ?? (events as JObject)?["$values"] as JArray;
+            if (children != null)
+            {
+                foreach (JToken child in children)
+                {
+                    if (child is JObject childObject) childObject[PLAYER_KEY] = player;
+                }
+            }
+        }
+
         /// <summary>Called on the game thread from <see cref="Update"/> while the session is running.</summary>
         protected virtual void OnUpdate() { }
 
@@ -435,6 +464,7 @@ namespace TimberNet
                     return;
                 }
                 //Log($"Queuing message of length {messageLength} bytes");
+                StampReceivedEvent(client, control);
                 receivedEventQueue.Enqueue(control);
                 messageCount++;
             }

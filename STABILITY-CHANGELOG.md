@@ -5,9 +5,100 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.2.0-two-colony-alpha5
+
+**Each player's screen shows their own colony only.** Reported from play: right after founding, player 1's top bar
+showed 260 food and player 2's 130, and both saw the same beavers. The game kept the colonies apart; the interface
+added them together, because Timberborn shows the whole settlement whenever no district is selected (player 1 saw
+both colonies' 130; player 2 had their district center selected and saw only it).
+
+- With nothing selected, the top bar's goods, population, housing, workplaces and wellbeing count the local
+  player's districts only.
+- Selecting one of the other colony's buildings opens its panels but no longer switches the top bar to their district.
+- The batch control window (F1 to F10) opens on the player's biggest district, and with *Global* chosen its lists
+  show only the player's colony (tabs that always list everything, mechanical and migration, included).
+- Alerts and the notification journal only count the player's colony.
+- Display only: nothing simulated or saved changes, and each computer may show different figures safely. Outside a
+  co-op session everything is shown, as in the game. Still whole-map: science, and the Global history graphs in
+  F9/F10 and in a good's tooltip.
+
+## 1.2.0-two-colony-alpha4
+
+**Colony 2 can be founded in any hosted game, once.** Reported from play: the second player pressed Ctrl+K and was
+told there was no colony waiting to be founded, because the save had not been created with the setting on.
+
+- Founding no longer depends on how the save was created. In any hosted game without a colony 2, its player can
+  found it once, at any time: offered on joining, and on **Ctrl+K**. A save that recorded no starting settings gives
+  the new colony the game's default (Normal) starting beavers, food and water; colony 1 is measured from its
+  recorded start, or else its most populated district center.
+- The host setting is now **Separate colonies (alpha)**, **on by default**, and also gates founding (off: one shared
+  colony, as in the Stability Fork). The host's choice is sent to guests when they join.
+- Only a new game created with the mode on restricts colony 2's player to founding; any other save plays as one
+  shared colony until colony 2 is founded. Founding itself is still checked at the moment it happens, on every
+  computer, from saved state only.
+- Clearer messages when founding is not possible (colony 2 exists, the host has it off, not in a session).
+- The border key works after a mid-session founding without reloading.
+
+## 1.2.0-two-colony-alpha3
+
+Two fixes to District Crossings, found by reading the code. Not yet played in a game. Every player must install this
+build.
+
+- **The border between two colonies is a straight line along the map grid**, halfway between the two starts, across
+  the axis on which they are further apart. A District Crossing is three tiles wide and needs three tiles in a row
+  on each side of the border. With the border measured by nearest start, starts placed diagonally from each other
+  (about 30 to 60 degrees off the grid) left no such place anywhere on the map, so no crossing could be built.
+- **A crossing pair is accepted whichever way it faces.** The game records the half under the cursor first. When
+  that was the half across the border, the host refused it (the placer's own half was not there yet) and then placed
+  the own half alone. The host now notes every crossing half on its placer's own land before judging a set of
+  actions.
+
+## 1.2.0-two-colony-alpha2
+
+Adds **founding on standard maps**. Not yet played in a game. Every player must install this build.
+
+- **Standard maps (one start):** the host's colony starts as usual; colony 2's player founds it by placing a district
+  center anywhere that leaves colony 1's buildings on its own side (offered on joining, and on **Ctrl+K**). It appears
+  finished with the new game's starting food, water, adults and children, and the land is then divided between the
+  two district centers. The founding is re-checked at the moment it happens, on every computer, and skipped with a
+  notice if the spot has changed (built on, or blasted) in the meantime. Colony 1 is measured from its starting
+  building, recorded when the game places it.
+- A multi-start map played with a single start also uses founding.
+- README rewritten as a player's guide.
+
+## 1.2.0-two-colony-alpha1
+
+An alpha of **separate colonies** ([TWO-COLONIES.md](TWO-COLONIES.md)), on top of 1.1.10, in the new
+BeaverBuddies-MultiColony repository. Not yet played in a game. Every player must install this build: the join
+check compares the mod build, and each action now carries who sent it.
+
+- **Opt-in per new game.** A host setting, *Separate colonies for new multi-start games*, gives each start of a new
+  multi-start game its own colony. The save records the mode and the start positions; shared-colony games and old
+  saves are unchanged and save nothing new.
+- **Land is divided between the starts**, with a border strip on each side where only District Crossings may stand, so
+  the colonies' roads never meet.
+- **The host stamps who sent each action** (a guest cannot claim another number) and judges every action just before
+  replaying it: actions on the other colony are dropped and never reach anyone; area actions keep only the actor's
+  own tiles and objects. Every action type declares what it touches, and a check fails when one does not.
+- **Seats:** the host chooses its colony in the settings (*Colony the host plays*); guests play the other.
+- **Placement previews turn red** with the reason on the other colony's land or on the strip; refused actions show a
+  notice. A District Crossing pair may straddle the border, each half on its colony's strip; the half on the other
+  side is accepted only when the placer's own half stands behind it.
+- **Trade starts closed:** every good of a new district starts at import Disabled, so goods cross only once the
+  receiving player opens a good; the giver limits it with the export threshold.
+- **Standard maps (one start):** the host's colony starts as usual; the second player founds colony 2 by placing
+  a district center anywhere that leaves colony 1's buildings on its own side. It appears finished, with the new
+  game's starting food, water, adults and children, and the land is then divided between the two district centers.
+  Offered on joining, and on **Ctrl+K**.
+- **No automatic migration between colonies**; manual migration to the other colony is refused.
+- **Border display** (key **K**, and whenever a tool is active), the colony beside each name in the connection
+  panel, and a debug key for a host testing alone (**Ctrl+Shift+K**, debug mode only).
+- Mod renamed *BeaverBuddies - MultiColony (alpha)* in the mod list; the mod ID is unchanged, so remove other
+  BeaverBuddies copies before installing.
+
 ## 1.1.10
 
-The current release, on top of 1.0.9. It contains everything from the three 1.1.10 pre-releases (1.1.10-release-candidate, -2 and -3): a
+The last Stability Fork release, on top of 1.0.9. It contains everything from the three 1.1.10 pre-releases (1.1.10-release-candidate, -2 and -3): a
 cheaper pass over every entity on each tick, a plainer connection panel, and chat drawn in the color of each player's cursor. Every player
 should install this build: the join check compares the mod build, so it will not join a session with an earlier version. Nothing new is sent
 over the network.

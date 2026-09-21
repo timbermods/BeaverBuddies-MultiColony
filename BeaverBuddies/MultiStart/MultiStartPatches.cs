@@ -48,7 +48,14 @@ namespace BeaverBuddies.MultiStart
 			Plugin.Log($"Found {startingLocations.Count} starting locations");
 
 			// If we don't have multiple starting locations, then use default behavior
-			if (startingLocations.Count <= 1) return true;
+			if (startingLocations.Count <= 1)
+			{
+				// Separate colonies on a one-start map: the game starts colony 1 as usual (below, before any district
+				// center exists), and colony 2's player founds theirs later with the same starting settings.
+				if (Settings.SeparateColoniesForNewGames)
+					GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.ActivateAwaitingFounding(ReadStartingSettings(startBuildingService));
+				return true;
+			}
 
 			// Order the locations by player index
 			startingLocations = startingLocations.OrderBy(
@@ -58,6 +65,25 @@ namespace BeaverBuddies.MultiStart
 			int count = 0;
 			int maxStartingLocations = startBuildingService.MaxStartLocations();
 			Plugin.Log($"Max players: {maxStartingLocations}; Map supports players: {startingLocations.Count}");
+
+			// Separate colonies are chosen for a new game here, before the first starting building is placed: new
+			// district centers read the mode for their trade defaults. The first two starts, in player order, become
+			// colonies 1 and 2; seats exist for two colonies only, so any further start is left out of the division
+			// and its land belongs to whichever of the two is nearer. The starting locations are deleted below, so
+			// this is the last chance to read them.
+			var colonyStarts = startingLocations.Take(Math.Min(maxStartingLocations, 2))
+				.Select(sl => sl.GetComponent<BlockObject>().Coordinates).ToList();
+			if (Settings.SeparateColoniesForNewGames && colonyStarts.Count >= 2)
+			{
+				if (Math.Min(maxStartingLocations, startingLocations.Count) > 2)
+					Plugin.LogWarning("[Colony] More than two starts: only the first two become colonies");
+				GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Activate(colonyStarts, ReadStartingSettings(startBuildingService));
+			}
+			else if (Settings.SeparateColoniesForNewGames)
+			{
+				// A multi-start map played with one start: colony 2 is founded later, as on a one-start map.
+				GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.ActivateAwaitingFounding(ReadStartingSettings(startBuildingService));
+			}
 
 			// Initialize each starting location; not just the first
 			foreach (var startingLocation in startingLocations)
@@ -81,6 +107,31 @@ namespace BeaverBuddies.MultiStart
 			__instance._startingLocationService.DeleteStartingLocations();
 
 			return false;
+		}
+
+		/// <summary>The new game's starting population and goods, kept so a colony founded later starts the same.</summary>
+		static BeaverBuddies.Colonies.ColonyStartingSettings ReadStartingSettings(StartBuildingsService startBuildingsService)
+		{
+			try
+			{
+				GameModeSpec gameMode = startBuildingsService._sceneLoader.GetSceneParameters<GameSceneParameters>().NewGameConfiguration.GameMode;
+				return new BeaverBuddies.Colonies.ColonyStartingSettings
+				{
+					Adults = gameMode.StartingAdults,
+					AdultAgeMin = gameMode.AdultAgeProgress.Min,
+					AdultAgeMax = gameMode.AdultAgeProgress.Max,
+					Children = gameMode.StartingChildren,
+					ChildAgeMin = gameMode.ChildAgeProgress.Min,
+					ChildAgeMax = gameMode.ChildAgeProgress.Max,
+					Food = gameMode.StartingFood,
+					Water = gameMode.StartingWater,
+				};
+			}
+			catch (Exception error)
+			{
+				Plugin.LogError("[Colony] Could not read the new game's starting settings: " + error);
+				return null;
+			}
 		}
 
 		public static List<StartingLocation> GetAllStartingLocations(StartingLocationService sls)

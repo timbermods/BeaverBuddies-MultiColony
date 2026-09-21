@@ -1,3 +1,4 @@
+using BeaverBuddies.Colonies;
 using BeaverBuddies.Events;
 using Newtonsoft.Json;
 using System;
@@ -8,6 +9,8 @@ namespace BeaverBuddies.Ping
     [Serializable]
     public class PingEvent : ReplayEvent
     {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
 
         public float worldX;
         public float worldY;
