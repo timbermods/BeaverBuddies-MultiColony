@@ -35,7 +35,7 @@ sits at the same edge.
 
 | Item | Meaning |
 | --- | --- |
-| **Status** | *In sync* is normal. *Catching up* (guests): this game is a few ticks behind the host. *Waiting for host* (guests): nothing has arrived from the host for a moment. *Connection unstable*: someone has stopped responding for five seconds. *Out of sync*: a desync was detected. *Disconnected*: the session has ended. The dot beside it follows the status: green when in sync, yellow while catching up or waiting for the host, red when unstable, out of sync or disconnected. |
+| **Status** | *In sync* is normal. *Catching up* (guests): this game is a few ticks behind the host. *Waiting for host* (guests): this game has been held at the start of a tick for a moment, waiting for the host's word for it (since 1.4.0-alpha5; before, it meant nothing had arrived from the host for a moment). *Connection unstable*: someone has stopped responding for five seconds. *Out of sync*: a desync was detected. *Disconnected*: the session has ended. The dot beside it follows the status: green when in sync, yellow while catching up or waiting for the host, red when unstable, out of sync or disconnected. |
 | **Players** | Everyone in the session, host first, each as a name and a ping. Your own row is bold and shows a dash instead of a ping. |
 | **Ping** | Round-trip time between you and that player, in milliseconds. Normal text: 80 ms or less. Yellow: up to 160 ms. Red: more, or **No response**. `...`: not measured yet. |
 | **Tick rate** | Simulation ticks per second right now, averaged over about three seconds. Around 1.7 at normal speed; it rises with game speed and drops to 0 when paused. |

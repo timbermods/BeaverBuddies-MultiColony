@@ -78,7 +78,8 @@ static class NetworkStatusChecks
         });
         yield return ("The host measures each guest's ping, and a slow guest reads slower", () =>
         {
-            using var rig = new Rig(guestReplyDelays: new[] { 0, 40 });
+            // Each reply is one write (length and message together), held 80 ms on the slow guest.
+            using var rig = new Rig(guestReplyDelays: new[] { 0, 80 });
             var status = rig.WaitFor(() => rig.Host.GetNetworkStatus(), s => s.Peers.Count == 2 && s.Peers.All(p => p.RttMs != null), "pings never appeared");
             Check(status.IsHost && status.YourPlayerId == 0 && status.HostSilenceSeconds == null);
             var fast = status.Peers.Single(p => p.PlayerId == 1); var slow = status.Peers.Single(p => p.PlayerId == 2);

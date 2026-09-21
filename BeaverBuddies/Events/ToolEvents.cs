@@ -85,17 +85,34 @@ namespace BeaverBuddies.Events
 
         // Note: This may not catch every possible invalid placement (e.g. if terrain height changes or something)
         // but I think it should catch the vast majority of cases due to double placement.
+        // Where the check's throwaway copies are made. Made once per game instead of asking the scene for all its root
+        // objects at every replayed placement (Unity destroys it with the scene, and it is made again).
+        private static GameObject checkParent;
+
         private static bool IsPlacementValid(IReplayContext context, Placement placement, BuildingSpec spec)
         {
+            long started = Colonies.ColonyProfiler.Start();
+            try
+            {
+                return IsPlacementValidTimed(context, placement, spec);
+            }
+            finally
+            {
+                Colonies.ColonyProfiler.Stop("Placement checks in replays", started);
+            }
+        }
+
+        private static bool IsPlacementValidTimed(IReplayContext context, Placement placement, BuildingSpec spec)
+        {
             var templateInstantiator = context.GetSingleton<TemplateInstantiator>();
-            var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+            if (checkParent == null) checkParent = new GameObject("BeaverBuddies_PlacementChecks");
             // It's a bit wasteful to instantiate the object just to check if it's valid,
             // but this is likely the best choice because:
             // 1) This only happens occasionally, based on UI actions, and
             // 2) There's no easy way to get at the cache of previews the UI uses,
             //    and each blueprint requires a different GameObject, so we can't cache just one.
             // TODO: Check if this is still the case with the new blueprint system.
-            GameObject gameObject = templateInstantiator.Instantiate(spec.Blueprint, roots.First().transform);
+            GameObject gameObject = templateInstantiator.Instantiate(spec.Blueprint, checkParent.transform);
             gameObject.SetActive(value: false);
             var blockObject = gameObject.GetComponentSlow<BlockObject>();
             blockObject.MarkAsPreviewAndInitialize();

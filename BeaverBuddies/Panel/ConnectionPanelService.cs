@@ -282,8 +282,10 @@ namespace BeaverBuddies.Panel
             myPlayerId = status.IsHost ? 0 : status.YourPlayerId;
             myPlayerIdKnown = myPlayerId >= 0;
 
-            // A guest is only "waiting" if it has been out of events for a while, not between ticks.
-            bool outOfEvents = !status.IsHost && io != null && io.IsOutOfEvents;
+            // A guest is only "waiting" if it has been held at the start of a tick for a while. Having nothing queued is
+            // normal: a guest in step with the host plays each tick as soon as it arrives (1.4.0-alpha5).
+            bool outOfEvents = !status.IsHost && io != null
+                && (BeaverBuddies.Latency.PendingActions.Instance?.IsWaitingForHost ?? io.IsOutOfEvents);
             if (!outOfEvents) waitingSince = -1;
             else if (waitingSince < 0) waitingSince = now;
 

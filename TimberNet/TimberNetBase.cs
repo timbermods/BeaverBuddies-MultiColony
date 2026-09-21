@@ -253,12 +253,15 @@ namespace TimberNet
             return ready;
         }
 
+        /// <summary>How many ticks late an event may normally be read (see TimberServer).</summary>
+        protected virtual int ExpectedLateness => 0;
+
         private List<JObject> PopEventsToProcess(List<JObject> events)
         {
             if (events.Count == 0) return new List<JObject>();
             JObject firstEvent = events[0];
             int firstEventTick = GetTick(firstEvent);
-            if (firstEventTick < TickCount)
+            if (firstEventTick < TickCount - ExpectedLateness)
                 Log($"Warning: late event {GetType(firstEvent)}: {firstEventTick} < {TickCount}");
 
             return PopEventsForTick(TickCount, events, GetTick);
@@ -307,18 +310,26 @@ namespace TimberNet
             // workers and the game thread can otherwise interleave their writes.
             lock (stream)
             {
-                SendLength(stream, data.Length);
                 int chunkSize = stream.MaxChunkSize;
+                // The length and the start of the message go out in one write: two small writes in a row are what
+                // makes a TCP link hold the second back (Nagle and delayed acknowledgements), and on a Steam link it
+                // is one message instead of two. The first write stays within the stream's chunk size (a stream whose
+                // chunks are smaller than the length gets the length alone, as before).
+                int first = Math.Max(0, Math.Min(data.Length, chunkSize - 4));
+                byte[] head = new byte[4 + first];
+                byte[] length = BitConverter.GetBytes(data.Length);
+                if (BitConverter.IsLittleEndian)
+                    Array.Reverse(length);
+                Buffer.BlockCopy(length, 0, head, 0, 4);
+                Buffer.BlockCopy(data, 0, head, 4, first);
+                stream.Write(head, 0, head.Length);
                 // How long to sleep between chunks (may be 0)
                 int sleepMS = stream.MaxChunkSize * 1000 / stream.MaxBytesPerSecond;
-                for (int i = 0; i < data.Length; i += chunkSize)
+                for (int i = first; i < data.Length; i += chunkSize)
                 {
-                    if (i != 0)
-                    {
-                        Thread.Sleep(sleepMS);
-                    }
-                    int length = Math.Min(chunkSize, data.Length - i);
-                    stream.Write(data, i, length);
+                    Thread.Sleep(sleepMS);
+                    int count = Math.Min(chunkSize, data.Length - i);
+                    stream.Write(data, i, count);
                 }
             }
         }

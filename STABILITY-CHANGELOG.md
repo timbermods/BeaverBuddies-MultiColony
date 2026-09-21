@@ -5,6 +5,52 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha5
+
+**A guest sees its own actions sooner.** Placing a building or marking an area as a guest took well over a second to
+show at speed 1, with a 9 ms ping and a fast computer.
+
+- **The guest no longer runs a tick behind the host by design.** A guest paused itself whenever it had played every
+  tick the host had sent, until the host sent the next one. So it could not play a tick until the host had already
+  started the tick after it: always at least a whole tick behind (0.6 s at speed 1). Now it plays the tick it is in and
+  waits only at the start of the next one, for the host's word for that tick (the gate was already there). A guest in
+  step now runs a few milliseconds behind the host instead of a tick. A guest held there for more than 0.1 s (the host
+  or the network is late) still stands still, so its beavers don't walk on the spot. The connection panel's *Waiting
+  for host* now means held there for a while, not "nothing queued", which is normal for most of a tick now.
+- **Catching up after a hitch goes further at speeds 1 to 3.** A guest caught up only once more than two ticks behind,
+  and stopped at one. At speeds 1 to 3 (a tick of 0.2 s or more) it now catches up once more than one tick behind, and
+  all the way. Faster speeds keep the wider buffer, where a tick is short and the network's jitter would show.
+- **The click shows at once.** Until the host's answer comes back, the tiles of what a guest placed, marked for
+  planting or cutting, or marked for removal are tinted (red for a removal). The tint only draws: it creates nothing
+  in the game and can't cause a desync. It goes when the action comes back, when the host refuses it, or after 8 s.
+- **A refused action is explained.** When the host refuses a guest's action (another colony's land, not unlocked,
+  dev mode off...), it now tells that guest why, instead of saying nothing. The message changes nothing in the game.
+  When one click is refused twice in a row (an unlock for lack of science, then the building it was for), the first
+  reason is the one shown.
+- **Direct IP links send without delay:** no Nagle delay on the socket, and each message's length and first bytes go
+  out in one write (up to about 200 ms saved per message on some systems). On Steam links it is one message instead
+  of two.
+- The host's placement check in replays no longer asks the scene for all its root objects every time. How long those
+  checks take is now in the report ("Placement checks in replays").
+- No more warnings for normal play: the host no longer logs "Event past time" and "late event" for every guest
+  action (they arrive a tick before the host plays them, as designed), and a guest no longer logs a warning each time
+  it waits for the host at the start of a tick.
+- **Diagnostics report:** a *Co-op* part under Performance lists:
+  - each link (Steam or Direct, ping, ticks behind, frame rate);
+  - for a guest, how long its own actions take to come back at each speed (average, median, slowest, in ms and
+    ticks), how many were refused or never answered, how far behind the host it runs (sampled once a second), and how
+    often and how long it waits for the host.
+- Checks: StabilityTests 254 (catch-up at speeds 1 to 3, message framing, the delay numbers); RuntimeChecks 184 (a
+  guest's tag and a refusal's reason survive the event JSON; the game methods the tint uses).
+
+Not done, and why:
+- **Playing a guest's action in the middle of the host's tick** (the plan's first item) would need both computers to
+  apply it at the same point inside a tick, which a guest can't reproduce. At a tick boundary, which is safe, the host
+  already plays a guest's action at the next boundary and sends it on at once.
+- **Reusing one preview per building for the host's placement check:** moving a preview tells its components, which
+  feed the preview-only services, so a reused preview could change a later check. Without testing it in a game that
+  risks a desync; the check now reports its cost instead.
+
 ## 1.4.0-alpha4
 
 **Fixed: a desync while building roads to construction sites**, seen on the guest a few ticks after the host placed

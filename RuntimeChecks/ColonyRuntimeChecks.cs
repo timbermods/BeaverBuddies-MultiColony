@@ -53,8 +53,8 @@ internal static class ColonyRuntimeChecks
             // Map areas (planting, tree cutting) are shared on purpose: resources near another colony are contested.
             // Unmarking trees (an empty tree event unmarks) only ever removes the actor's own marks, and working hours
             // are set for the actor's own colony: both are checked when played, not here. Presence and handovers are
-            // refused from anyone but the host (ColonyRulesService).
-            var expected = new[] { "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
+            // refused from anyone but the host (ColonyRulesService), and so is telling a guest its action was refused.
+            var expected = new[] { "ActionRefusedEvent", "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
                 "ColonyHandoverEvent", "ColonyPresenceEvent", "GiftScienceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
                 "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent",
                 "TreeCuttingAreaEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
@@ -76,6 +76,30 @@ internal static class ColonyRuntimeChecks
             object old = json.GetMethod("Deserialize")!.MakeGenericMethod(replayEvent).Invoke(null,
                 new object[] { text.Replace("\"player\": 2,", "").Replace(",\r\n  \"player\": 2", "").Replace(",\n  \"player\": 2", "") })!;
             if ((int)replayEvent.GetField("player")!.GetValue(old)! != 0) throw new Exception("an event without player did not read as 0");
+        });
+
+        test("Colony: a guest's tag and a refusal's reason survive the trip through the event JSON", () =>
+        {
+            // A guest recognises its own action coming back, or refused, by the tag the host keeps (Latency.PendingActions).
+            var json = mod.GetType("BeaverBuddies.IO.JsonSettings", true)!;
+            MethodInfo serialize = json.GetMethod("Serialize")!.MakeGenericMethod(replayEvent);
+            MethodInfo deserialize = json.GetMethod("Deserialize")!.MakeGenericMethod(replayEvent);
+            var placed = mod.GetType("BeaverBuddies.Events.BuildingPlacedEvent", true)!;
+            object e = Activator.CreateInstance(placed, true)!;
+            replayEvent.GetField("requestId")!.SetValue(e, "abcd1234:17");
+            object back = deserialize.Invoke(null, new object[] { serialize.Invoke(null, new[] { e })! })!;
+            if ((string)replayEvent.GetField("requestId")!.GetValue(back)! != "abcd1234:17") throw new Exception("the tag was lost");
+            if (back.GetType() != placed) throw new Exception("came back as " + back.GetType().Name);
+
+            var refusedType = mod.GetType("BeaverBuddies.Events.ActionRefusedEvent", true)!;
+            var refusalType = mod.GetType("BeaverBuddies.Colonies.ColonyRefusal", true)!;
+            object refused = Activator.CreateInstance(refusedType, true)!;
+            refusedType.GetField("refusedRequestId")!.SetValue(refused, "abcd1234:17");
+            refusedType.GetField("refusal")!.SetValue(refused, Enum.Parse(refusalType, "OtherColonyArea"));
+            object again = deserialize.Invoke(null, new object[] { serialize.Invoke(null, new[] { refused })! })!;
+            if (again.GetType() != refusedType) throw new Exception("the refusal came back as " + again.GetType().Name);
+            if ((string)refusedType.GetField("refusedRequestId")!.GetValue(again)! != "abcd1234:17") throw new Exception("the refused tag was lost");
+            if (refusedType.GetField("refusal")!.GetValue(again)!.ToString() != "OtherColonyArea") throw new Exception("the reason was lost");
         });
 
         test("Colony: a real serialized group of actions is stamped all the way down", () =>
@@ -192,6 +216,11 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.WorkSystem.WorkplaceUnlockingService", "Timberborn.WorkSystem", "UnlockIgnoringCost"),
             ("Timberborn.ConstructionSitesUI.ConstructionSiteDebugFragment", "Timberborn.ConstructionSitesUI", "OnFinishNowClick"),
             ("Timberborn.ConstructionSites.ConstructionSite", "Timberborn.ConstructionSites", "FinishNow"),
+            // A guest's pending actions, drawn until the host answers.
+            ("Timberborn.Rendering.AreaTileDrawer", "Timberborn.Rendering", "UpdateArea"),
+            ("Timberborn.Rendering.AreaTileDrawerFactory", "Timberborn.Rendering", "Create"),
+            ("Timberborn.TerrainQueryingSystem.TerrainAreaService", "Timberborn.TerrainQueryingSystem", "InMapLeveledCoordinates"),
+            ("Timberborn.BlockSystem.BlockObjectSpec", "Timberborn.BlockSystem", "GetBlocks"),
             ("Timberborn.Debugging.DevModeManager", "Timberborn.Debugging", "get_Enabled"),
         })
         {

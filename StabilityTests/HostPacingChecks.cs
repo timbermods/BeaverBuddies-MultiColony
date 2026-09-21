@@ -119,7 +119,7 @@ static class HostPacingChecks
         {
             var held = Simulate(guestTicksPerSecond: _ => 17, hitchEverySeconds: 0, oneStallAtSeconds: 20, stallSeconds: 30);
             Check(held.WorstBehindOverall <= HostPacing.StopTicks + 12, $"worst lag {held.WorstBehindOverall}");
-            Check(held.FinalBehind <= CatchUpSpeed.BufferTicks + 1 && held.FinalPercent == 100, $"behind {held.FinalBehind}, {held.FinalPercent}%");
+            Check(held.FinalBehind <= CatchUpSpeed.BufferTicksFor(7) + 1 && held.FinalPercent == 100, $"behind {held.FinalBehind}, {held.FinalPercent}%");
             Check(held.HostTicksPerSecondLateOn > 11, $"host at {held.HostTicksPerSecondLateOn:0.0} ticks/s afterwards");
         });
         yield return ("Pacing model: a fast guest with hitches never slows the host", () =>
@@ -134,7 +134,7 @@ static class HostPacingChecks
             {
                 var run = Simulate(guestTicksPerSecond: _ => 17, hitchEverySeconds: 0, oneStallAtSeconds: 20, stallSeconds: stall);
                 Check(run.LowestPercent == 100, $"a {stall} s stall eased the host to {run.LowestPercent}%");
-                Check(run.FinalBehind <= CatchUpSpeed.BufferTicks + 1, $"a {stall} s stall left the guest {run.FinalBehind} behind");
+                Check(run.FinalBehind <= CatchUpSpeed.BufferTicksFor(7) + 1, $"a {stall} s stall left the guest {run.FinalBehind} behind");
             }
         });
         yield return ("Pacing model: without easing a slow guest falls behind without limit", () =>
@@ -154,7 +154,7 @@ static class HostPacingChecks
             var run = Simulate(guestTicksPerSecond: t => t < 90 ? 7 : 17, hitchEverySeconds: 0, totalSeconds: 240);
             Check(run.LowestPercent < 100, "the slow spell should have eased the host");
             Equal(100, run.FinalPercent);
-            Check(run.FinalBehind <= CatchUpSpeed.BufferTicks + 1, $"final lag {run.FinalBehind}");
+            Check(run.FinalBehind <= CatchUpSpeed.BufferTicksFor(7) + 1, $"final lag {run.FinalBehind}");
         });
         yield return ("The host learns how far behind each guest is from their replies", () =>
         {

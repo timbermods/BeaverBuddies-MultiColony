@@ -158,6 +158,10 @@ namespace BeaverBuddies.Colonies
         TouchesOtherColony,
         /// <summary>A new colony here would have its land run straight into another's: no room for either to grow.</summary>
         TooCloseToColony,
+        /// <summary>A dev mode shortcut while the host's dev mode is off (host only).</summary>
+        DevModeOff,
+        /// <summary>Refused by the host for a reason of its own (not seated yet, a zipline the game refuses...).</summary>
+        HostRefused,
     }
 
     public readonly struct ColonyVerdict

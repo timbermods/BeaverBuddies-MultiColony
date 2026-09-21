@@ -42,9 +42,11 @@ namespace BeaverBuddies.Colonies
         /// Host only, just before an event is replayed. Writes the actor's slot into the event (every computer's
         /// replay then uses it), seats a player saying hello, and judges the action. False means refuse: do not
         /// replay it and do not send it on. A list event may be shortened in place to what the actor may change.
+        /// <paramref name="refusal"/> says why, for the player told (see ActionRefusedEvent).
         /// </summary>
-        public static bool AllowOnHost(ReplayEvent replayEvent)
+        public static bool AllowOnHost(ReplayEvent replayEvent, out ColonyRefusal refusal)
         {
+            refusal = ColonyRefusal.None;
             var service = SingletonManager.GetSingleton<ColonyRulesService>();
             if (service == null) return true;
             try
@@ -60,10 +62,12 @@ namespace BeaverBuddies.Colonies
                 Plugin.LogError($"[Colony] Could not seat or stamp {replayEvent.type}: {error}");
             }
 
-            // Who is playing, and handing a colony over, are the host's to say.
-            if ((replayEvent is ColonyPresenceEvent || replayEvent is ColonyHandoverEvent) && replayEvent.player != ColonySession.HostPlayer)
+            // Who is playing, handing a colony over, and telling a player an action was refused, are the host's to say.
+            if ((replayEvent is ColonyPresenceEvent || replayEvent is ColonyHandoverEvent || replayEvent is ActionRefusedEvent)
+                && replayEvent.player != ColonySession.HostPlayer)
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: only the host sends it");
+                refusal = ColonyRefusal.HostRefused;
                 return false;
             }
 
@@ -72,6 +76,7 @@ namespace BeaverBuddies.Colonies
             if (IsDevShortcut(replayEvent) && !service._devModeManager.Enabled)
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: the host's dev mode is off");
+                refusal = ColonyRefusal.DevModeOff;
                 return false;
             }
 
@@ -80,6 +85,7 @@ namespace BeaverBuddies.Colonies
                 && !ColonyRoadNetworks.Instance.HostAllowsZipline(zipline, out string why))
             {
                 Plugin.Log($"[Colony] Refused a zipline link from player {replayEvent.player}: {why}");
+                refusal = ColonyRefusal.HostRefused;
                 return false;
             }
 
@@ -91,6 +97,7 @@ namespace BeaverBuddies.Colonies
                 || replayEvent is TreeCuttingAreaEvent || replayEvent is ClearResourcesMarkedEvent))
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: not seated yet");
+                refusal = ColonyRefusal.HostRefused;
                 return false;
             }
 
@@ -105,11 +112,13 @@ namespace BeaverBuddies.Colonies
             {
                 // Thrown here, it would count as a failed replay and stop the session. One refused action is better.
                 Plugin.LogError($"[Colony] Could not judge {replayEvent.type}; refusing it: {error}");
+                refusal = ColonyRefusal.HostRefused;
                 return false;
             }
             if (!verdict.IsAllowed)
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player} (slot {replayEvent.slot}): {verdict.Refusal}, {verdict.Detail}");
+                refusal = verdict.Refusal;
                 return false;
             }
             if (verdict.Removed > 0)
@@ -210,6 +219,8 @@ namespace BeaverBuddies.Colonies
             ColonyRefusal.OtherColonyArea => "BeaverBuddies.Colony.Refused.OtherColonyArea",
             ColonyRefusal.TouchesOtherColony => "BeaverBuddies.Colony.Refused.TouchesOtherColony",
             ColonyRefusal.TooCloseToColony => "BeaverBuddies.Colony.Refused.TooCloseToColony",
+            ColonyRefusal.DevModeOff => "BeaverBuddies.Colony.Refused.DevModeOff",
+            ColonyRefusal.HostRefused => "BeaverBuddies.Colony.Refused.HostRefused",
             _ => "BeaverBuddies.Colony.Refused.OtherColony",
         });
     }

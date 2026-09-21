@@ -186,6 +186,8 @@ BeaverBuddies.Colony.Diagnostics.Written,"Diagnostics report saved and copied to
 BeaverBuddies.DevMode.CoopWarning,"Dev mode is on. In co-op, only its instant unlock (Ctrl-click) and a construction site's Finish now are shared with the other players, and only while the host has dev mode on. Its other tools change only your game and will desync it.",""
 BeaverBuddies.Colony.Overview.Report,"Diagnostics report (Ctrl+Shift+J)",""
 BeaverBuddies.Colony.Refused.OtherColony,"That belongs to another colony.",""
+BeaverBuddies.Colony.Refused.DevModeOff,"Dev mode shortcuts only work while the host has dev mode on.",""
+BeaverBuddies.Colony.Refused.HostRefused,"The host could not accept that action.",""
 BeaverBuddies.Colony.Refused.NothingOwn,"None of that is your colony's to change.",""
 BeaverBuddies.Colony.Refused.Locked,"Your colony has not unlocked this building yet.",""
 BeaverBuddies.Colony.Refused.Blocked,"That spot is taken or the ground does not allow a district center.",""

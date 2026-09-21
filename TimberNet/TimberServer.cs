@@ -86,6 +86,10 @@ namespace TimberNet
             base.ReceiveEvent(message);
         }
 
+        // A guest's event is numbered with the tick the host is in when it arrives, and read at the start of the next
+        // tick: one tick late is how every guest event is read, not a sign of trouble.
+        protected override int ExpectedLateness => 1;
+
         public override void Start()
         {
             base.Start();

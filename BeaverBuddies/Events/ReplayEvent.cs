@@ -30,6 +30,12 @@ namespace BeaverBuddies.Events
         /// replay uses the same one. -1 when not known (outside a hosted session).
         /// </summary>
         public int slot = -1;
+        /// <summary>
+        /// A guest's own tag on an action it sends ("who:number"). The host keeps it when it plays the action and sends
+        /// it on, so the guest recognises its own action coming back, or being refused, and times the round trip. Null on
+        /// the host's own actions. Nothing in the game's simulation reads it.
+        /// </summary>
+        public string requestId;
 
         public string type => GetType().Name;
 

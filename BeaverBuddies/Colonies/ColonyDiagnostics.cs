@@ -329,6 +329,34 @@ namespace BeaverBuddies.Colonies
             r.AppendLine("Colony code since load (name: calls, total ms, average µs, slowest ms):");
             foreach (var (name, calls, totalMs, maxMs) in ColonyProfiler.Snapshot())
                 r.AppendLine($"  {name}: {calls}, {totalMs:0.0}, {(calls > 0 ? totalMs * 1000 / calls : 0):0.0}, {maxMs:0.00}");
+            CoopDelay(r);
+        }
+
+        // A guest's delay: the link to each player, how long its own actions take to come back, how far behind the host
+        // it runs and how often it waits for the host (see Latency.PendingActions).
+        private static void CoopDelay(StringBuilder r)
+        {
+            EventIO io = EventIO.Get();
+            TimberNet.TimberNetBase net = io is ServerEventIO host ? host.NetBase : io is ClientEventIO guest ? guest.NetBase : null;
+            if (net == null) return;
+            r.AppendLine("Co-op:");
+            try
+            {
+                var peers = net.GetNetworkStatus().Peers.Select(peer => $"player {peer.PlayerId} over {peer.Transport}"
+                    + (peer.RttMs.HasValue ? $", ping {peer.RttMs:0} ms" : "")
+                    + (peer.TicksBehind.HasValue ? $", {peer.TicksBehind} ticks behind" : "")
+                    + (peer.Fps.HasValue ? $", {peer.Fps} fps" : "")).ToList();
+                r.AppendLine("  Links: " + (peers.Count == 0 ? "none" : string.Join("; ", peers)));
+            }
+            catch (Exception error)
+            {
+                r.AppendLine("  Links: could not be read (" + error.Message + ")");
+            }
+            if (io is ClientEventIO && Latency.PendingActions.Instance != null)
+            {
+                r.AppendLine($"  Now {io.TicksBehind} ticks behind the host");
+                foreach (string line in Latency.PendingActions.Instance.ReportLines()) r.AppendLine("  " + line);
+            }
         }
 
         private void Colonies(StringBuilder r)

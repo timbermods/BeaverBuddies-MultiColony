@@ -283,6 +283,8 @@ namespace BeaverBuddies
             }
             else
             {
+                // A guest's own action: tagged, so it can tell it coming back (and mark it until then).
+                if (io is ClientEventIO) Latency.PendingActions.Instance?.Sent(replayEvent);
                 EnqueueEventForSending(replayEvent);
             }
         }
@@ -331,7 +333,10 @@ namespace BeaverBuddies
                 int eventTime = replayEvent.ticksSinceLoad;
                 if (eventTime > currentTick)
                     return false;
-                if (eventTime < currentTick)
+                // The host numbers a guest's action with the tick it is in when the action arrives and plays it at the
+                // start of the next one, so one tick late is how every guest action reaches the host's replay. Only
+                // more than that is worth a warning.
+                if (eventTime < currentTick - (io is ServerEventIO ? 1 : 0))
                 {
                     Plugin.LogWarning($"Event past time: {eventTime} < {currentTick}");
                 }
@@ -340,8 +345,9 @@ namespace BeaverBuddies
                 // Separate colonies: the host decides, for everyone, whether this player may do this. A refused event
                 // is not played and not sent on, so guests never see it; it is not a failure, so carry on. A list event
                 // may come out shorter, and is then played and sent in its shortened form. Guests do not judge.
-                if (io is ServerEventIO && !ColonyRulesService.AllowOnHost(replayEvent))
+                if (io is ServerEventIO && !ColonyRulesService.AllowOnHost(replayEvent, out ColonyRefusal refusal))
                 {
+                    TellRefused(replayEvent, refusal);
                     return true;
                 }
                 
@@ -366,12 +372,41 @@ namespace BeaverBuddies
                 {
                     EnqueueEventForSending(replayEvent);
                 }
+                // A guest's own action, back from the host.
+                if (replayEvent.requestId != null && io is ClientEventIO) Latency.PendingActions.Instance?.Echoed(replayEvent);
                 return !IsDesynced && !HasReplayFailure && !EventIO.IsNull;
             }, (replayEvent, error) =>
             {
                 Plugin.LogError($"Failed to replay event {replayEvent?.type}: {error}");
                 AbortReplay("A multiplayer action could not be completed.");
             }, active => IsReplayingEvents = active, IsReplayingEvents);
+        }
+
+        /// <summary>
+        /// Host: an action was refused. The host's own: say why here. A guest's: send that guest the reason, in the
+        /// refused action's place, so it hears at once instead of waiting for an answer that never comes. The message
+        /// changes nothing in the game on any computer.
+        /// </summary>
+        private void TellRefused(ReplayEvent replayEvent, ColonyRefusal refusal)
+        {
+            try
+            {
+                if (replayEvent.player == ColonySession.HostPlayer)
+                {
+                    if (refusal != ColonyRefusal.None) SingletonManager.GetSingleton<ColonyRulesService>()?.Notify(refusal);
+                    return;
+                }
+                if (replayEvent.requestId == null || !CanAct || EventIO.SkipRecording) return;
+                EnqueueEventForSending(new ActionRefusedEvent()
+                {
+                    refusedRequestId = replayEvent.requestId,
+                    refusal = refusal == ColonyRefusal.None ? ColonyRefusal.HostRefused : refusal,
+                });
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning($"Could not tell player {replayEvent.player} their action was refused: {error.Message}");
+            }
         }
 
         public void AbortReplay(string reason)
@@ -628,11 +663,23 @@ namespace BeaverBuddies
             }
         }
 
+        // How long a guest waits at the start of a tick, running, before it stands still (see UpdateSpeed).
+        private const double GuestHoldSeconds = 0.1;
+
         private void UpdateSpeed()
         {
             if (EventIO.IsNull) return;
 
-            if (io.IsOutOfEvents)
+            // A guest that has played every tick the host has sent so far carries on with the tick it is in; the tick
+            // gate (TickingService.ShouldTick) stops it at the start of the next tick until the host's word for that
+            // tick arrives. Pausing here instead, as before 1.4.0-alpha5, held every tick back until the host had
+            // started the next one: a guest ran a whole tick behind the host (0.6 s at speed 1), and saw its own
+            // actions that much later. Other kinds of IO, and a guest whose session is over, still pause.
+            // A guest held at the start of a tick for longer than a moment (the host or the network is late) does stand
+            // still, as before, so its beavers don't walk on the spot; it carries on as soon as the host's word arrives.
+            bool liveGuest = io is ClientEventIO && !io.IsSessionOver;
+            bool heldLong = liveGuest && (Latency.PendingActions.Instance?.SecondsWaitingForHost ?? 0) > GuestHoldSeconds;
+            if (io.IsOutOfEvents && (!liveGuest || heldLong))
             {
                 // Also pause the game (silently) if we're out of events
                 if (_speedManager.CurrentSpeed != 0)
@@ -680,6 +727,7 @@ namespace BeaverBuddies
             }
 
             ticksSinceLoad++;
+            if (io is ClientEventIO) Latency.PendingActions.Instance?.TickStarted(ticksSinceLoad);
 
             if (io.ShouldSendHeartbeat)
             {
@@ -821,17 +869,15 @@ namespace BeaverBuddies
                 // it would be overly conservative.
                 if (!replayService.IsReadyToStartTick)
                 {
-                    // In theory the game should be paused to prevent this, but some logs
-                    // suggest the client can get ahead of the server, which would
-                    // trigger this warning (and now prevent the client's tick)
+                    // A guest in step with the host reaches the start of a tick about when the host starts it, and
+                    // waits here for the host's word for that tick. That is how it should run (see UpdateSpeed), so
+                    // it is not logged; the diagnostics report shows how often and how long it waits.
                     int tick = replayService.TicksSinceLoad;
-                    // This runs every time the game asks to tick, which can be every frame while a
-                    // caught-up guest waits for the host, so log it once per tick.
-                    if (tick > 0 && tick != lastNotReadyWarningTick)
+                    if (tick > 0) Latency.PendingActions.Instance?.WaitingForHost(tick + 1);
+                    if (tick > 0 && tick != lastNotReadyWarningTick && Settings.Debug && Settings.VerboseLogging)
                     {
                         lastNotReadyWarningTick = tick;
-                        Plugin.LogWarning($"Client trying to tick before receiving " +
-                            $"Heartbeat at tick: {tick}");
+                        Plugin.Log($"Waiting for the host's heartbeat for tick {tick + 1}");
                     }
                     return false;
                 }

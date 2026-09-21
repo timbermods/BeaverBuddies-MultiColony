@@ -12,13 +12,41 @@ static class CatchUpSpeedChecks
 
     static readonly float[] Speeds = { 0, 1, 2, 3, 7, 10 };
 
+    // The rule before 1.4.0-alpha5: a buffer of two ticks and a release at one, at every speed.
+    static float TwoTickBuffer(float targetSpeed, int ticksBehind, float currentSpeed)
+    {
+        float speed = ticksBehind > targetSpeed ? Math.Min(ticksBehind, 10) : targetSpeed;
+        if (targetSpeed <= 0) return speed;
+        bool catchingUp = currentSpeed > targetSpeed;
+        if (ticksBehind > (catchingUp ? 1 : 2))
+        {
+            float boosted = targetSpeed + Math.Max(1, ticksBehind - 2);
+            if (catchingUp) boosted = Math.Max(boosted, currentSpeed);
+            speed = Math.Max(speed, Math.Min(boosted, 10));
+        }
+        return speed;
+    }
+
     public static IEnumerable<(string Name, Action Run)> Tests()
     {
         yield return ("Catch-up: a guest within the buffer runs at the chosen speed", () =>
         {
-            foreach (float target in new float[] { 3, 7 })
-                for (int behind = 0; behind <= CatchUpSpeed.BufferTicks; behind++)
+            foreach (float target in new float[] { 1, 3, 7 })
+                for (int behind = 0; behind <= CatchUpSpeed.BufferTicksFor(target); behind++)
                     Equal(target, CatchUpSpeed.For(target, behind, target));
+        });
+        yield return ("Catch-up: at speeds 1 to 3 the buffer is one tick, and catching up goes all the way", () =>
+        {
+            Equal(1, CatchUpSpeed.BufferTicksFor(1)); Equal(1, CatchUpSpeed.BufferTicksFor(3)); Equal(2, CatchUpSpeed.BufferTicksFor(4));
+            Equal(0, CatchUpSpeed.ReleaseTicksFor(3)); Equal(1, CatchUpSpeed.ReleaseTicksFor(7));
+            // Two ticks behind (a whole tick later than an in-step guest): speed up.
+            Equal(2f, CatchUpSpeed.For(1, 2, 1));
+            Equal(4f, CatchUpSpeed.For(3, 2, 3));
+            // Catching up keeps going at one tick behind, and stops only once level.
+            Equal(2f, CatchUpSpeed.For(1, 1, 2));
+            Equal(4f, CatchUpSpeed.For(3, 1, 4));
+            Equal(1f, CatchUpSpeed.For(1, 0, 2));
+            Equal(3f, CatchUpSpeed.For(3, 0, 4));
         });
         yield return ("Catch-up: at speed 7 a guest 3 to 5 ticks behind now speeds up", () =>
         {
@@ -78,7 +106,7 @@ static class CatchUpSpeedChecks
             var original = Simulate(7, (target, behind, _) => Original(target, behind));
             var updated = Simulate(7, CatchUpSpeed.For);
             Check(original.AverageBehind > 3, $"reference model should drift, got {original.AverageBehind:0.0}");
-            Check(updated.AverageBehind <= CatchUpSpeed.BufferTicks + .5, $"average lag {updated.AverageBehind:0.0}");
+            Check(updated.AverageBehind <= CatchUpSpeed.BufferTicksFor(7) + .5, $"average lag {updated.AverageBehind:0.0}");
             Check(updated.AverageBehind < original.AverageBehind / 2, "lag should at least halve");
         });
         yield return ("Catch-up: speed changes stay rare", () =>
@@ -89,6 +117,12 @@ static class CatchUpSpeedChecks
             Check(updated.SpeedChanges <= updated.Hitches * 8, $"{updated.SpeedChanges} changes for {updated.Hitches} hitches");
             var smooth = Simulate(7, CatchUpSpeed.For, hitchEverySeconds: 0);
             Equal(0, smooth.SpeedChanges);
+            foreach (float target in new float[] { 1, 2, 3 })
+            {
+                var slow = Simulate(target, CatchUpSpeed.For);
+                Check(slow.SpeedChanges <= slow.Hitches * 4, $"speed {target}: {slow.SpeedChanges} changes for {slow.Hitches} hitches");
+                Equal(0, Simulate(target, CatchUpSpeed.For, hitchEverySeconds: 0).SpeedChanges);
+            }
         });
         yield return ("Catch-up: lower speeds behave as before or better", () =>
         {
@@ -97,6 +131,24 @@ static class CatchUpSpeedChecks
                 var original = Simulate(target, (t, behind, _) => Original(t, behind));
                 var updated = Simulate(target, CatchUpSpeed.For);
                 Check(updated.AverageBehind <= original.AverageBehind + .01, $"speed {target}: {updated.AverageBehind:0.00} vs {original.AverageBehind:0.00}");
+            }
+        });
+        yield return ("Catch-up: at speeds 1 to 3 a guest stays closer than with the two-tick buffer", () =>
+        {
+            // In this model a guest in step reads one tick behind (it moves once the host's tick passes it).
+            foreach (float target in new float[] { 1, 2, 3 })
+                foreach (double hitch in new[] { .3, .8, 1.5 })
+                {
+                    var previous = Simulate(target, TwoTickBuffer, hitchSeconds: hitch, hitchEverySeconds: 10);
+                    var updated = Simulate(target, CatchUpSpeed.For, hitchSeconds: hitch, hitchEverySeconds: 10);
+                    Check(updated.AverageBehind <= previous.AverageBehind, $"speed {target}, {hitch} s hitches: {updated.AverageBehind:0.00} vs {previous.AverageBehind:0.00}");
+                }
+            // At speeds 2 and 3 short hitches used to leave the guest near two ticks behind; now it is back in step.
+            foreach (float target in new float[] { 2, 3 })
+            {
+                var previous = Simulate(target, TwoTickBuffer, hitchSeconds: .3, hitchEverySeconds: 10);
+                var updated = Simulate(target, CatchUpSpeed.For, hitchSeconds: .3, hitchEverySeconds: 10);
+                Check(updated.AverageBehind < previous.AverageBehind - .5, $"speed {target}: {updated.AverageBehind:0.00} vs {previous.AverageBehind:0.00}");
             }
         });
     }
@@ -114,7 +166,8 @@ static class CatchUpSpeedChecks
             int hostTick = (int)(time * target / secondsPerTick);
             if (time >= nextHitch) { stalledUntil = time + hitchSeconds; nextHitch += hitchEverySeconds; hitches++; }
             if (time >= stalledUntil) guestTicks = Math.Min(hostTick, guestTicks + frame * speed / secondsPerTick);
-            int behind = hostTick - (int)guestTicks;
+            // A guest held at a whole tick must read as that tick, not one below it after rounding.
+            int behind = hostTick - (int)(guestTicks + 1e-9);
             float next = rule(target, behind, speed);
             if (next != speed) { changes++; speed = next; }
             if (time > totalSeconds / 2) { behindSum += behind; samples++; }

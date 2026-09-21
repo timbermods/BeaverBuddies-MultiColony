@@ -21,13 +21,18 @@ namespace TimberNet
 
         public TCPClientWrapper(string address, int port) 
         {
-            client = new TcpClient();
+            // Every event is a small message that the other side waits for. Without this the system holds a small
+            // write back until the previous one is acknowledged (Nagle), up to about 200 ms with delayed
+            // acknowledgements. Steam links already send without that delay.
+            client = new TcpClient { NoDelay = true };
             this.address = address;
             this.port = port;
         }
 
         public TCPClientWrapper(TcpClient client)
         {
+            // A socket the other side has already dropped can refuse this; accepting must carry on regardless.
+            try { client.NoDelay = true; } catch { }
             this.client = client;
             address = null;
             port = 0;
