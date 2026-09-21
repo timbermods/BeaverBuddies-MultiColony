@@ -103,7 +103,13 @@ namespace BeaverBuddies.Colonies
 
         private readonly ISingletonLoader _singletonLoader;
         // (from, to, good) -> amount; sorted so saving never depends on the order trades happened in.
-        private readonly SortedDictionary<(int, int, string), int> totals = new SortedDictionary<(int, int, string), int>();
+        private readonly SortedDictionary<(int, int, string), int> totals =
+            new SortedDictionary<(int, int, string), int>(Comparer<(int, int, string)>.Create((a, b) =>
+            {
+                int c = a.Item1.CompareTo(b.Item1);
+                if (c == 0) c = a.Item2.CompareTo(b.Item2);
+                return c != 0 ? c : string.CompareOrdinal(a.Item3, b.Item3);
+            }));
 
         public static ColonyTradeLedger Instance => SingletonManager.GetSingleton<ColonyTradeLedger>();
 
@@ -191,11 +197,17 @@ namespace BeaverBuddies.Colonies
             if (gift == null || !gift.IsActive || !crossing.CanExport || !crossingInventory) return true;
             Inventory inventory = crossingInventory.Inventory;
             string goodId = gift.GoodId;
-            // Goods already on their way in count towards the gift.
-            int wanted = gift.Remaining - inventory.ReservedCapacity(goodId);
+            // Goods already being carried in count towards the gift (IncomingStock leaves out what has passed across).
+            int wanted = gift.Remaining - crossingInventory.IncomingStock(goodId);
             if (wanted <= 0) return true;
             if (inventory.UnreservedAmountInStock(goodId) > 0)
+            {
                 crossingInventory.TransferStock(goodId, Math.Min(wanted, inventory.UnreservedAmountInStock(goodId)));
+                // Passing across counts the gift down at once; carry only what is still missing.
+                if (!gift.IsActive || gift.GoodId != goodId) return true;
+                wanted = gift.Remaining - crossingInventory.IncomingStock(goodId);
+                if (wanted <= 0) return true;
+            }
             int carry = Math.Min(wanted, inventory.UnreservedCapacity(goodId));
             CarrierInventoryFinder finder = agent.GetComponent<CarrierInventoryFinder>();
             if (carry > 0 && finder != null && finder.TryCarryFromAnyInventoryLimited(goodId, inventory, carry))

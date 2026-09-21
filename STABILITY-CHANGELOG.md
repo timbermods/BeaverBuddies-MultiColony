@@ -5,6 +5,35 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.3.0-exchange-alpha1
+
+**Colonies as owned districts, trading posts and separate science**, following
+[design/TRADING-EXCHANGE-PLAN.md](design/TRADING-EXCHANGE-PLAN.md). Replaces the land split of the two-colony alphas.
+Not yet played in a game. Every player must install this build.
+
+- **No territory.** Anyone may build anywhere. Each district center carries its owner's colony (saved); buildings,
+  beavers and stock belong to their district. A player changes their own colony, things in no district, and the
+  colony of a player who is not playing this session.
+- **Players are remembered** by Steam ID (or an id kept on their computer): a player gets the same colony every
+  session, whoever hosts. New players take the next free colony (up to four); more join as helpers of the host's.
+  The *Colony the host plays* setting is gone.
+- **Founding** for every player without a colony, once; the new district center must not join another colony's
+  roads. A multi-start map's start N is player N's.
+- **Trading posts:** a District Crossing between two players' districts. A saved ledger of goods passed each way;
+  gifts of goods (whatever the partner's imports, no bounce-back) and of science; a panel with what the partner
+  could use. Crossings need no science and cost 10 logs in colony games.
+- **Separate science and unlocks** (setting, fixed per save): a pool and an unlock set per colony; production, relic
+  rewards, the control tower's upkeep and automation counters use their building's colony; the toolbar and top bar
+  show the local colony's. Bot worker types stay shared.
+- **Road networks:** zipline links are judged by the host alone (the replayed check read per-computer state); roads
+  joined by two simultaneous placements are detected at the same tick everywhere and both players are warned.
+- **Unlocks replay safely:** an unlock no longer affordable is skipped instead of stopping the session (also in
+  shared games); with separate science an unlock the colony already has is not paid twice.
+- **Fixed (also in shared co-op):** replaying a placement no longer runs the game's district-join check, which read
+  what the local player was hovering and could refuse a building on one computer only (a desync).
+- Map areas (tree cutting, planting) are shared; beavers may be sent to another colony by hand but not taken.
+- Saves from the land-split alphas load with their district centers given the owners of their old land.
+
 ## 1.2.0-two-colony-alpha5
 
 **Each player's screen shows their own colony only.** Reported from play: right after founding, player 1's top bar

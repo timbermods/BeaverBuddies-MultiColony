@@ -53,6 +53,7 @@ namespace BeaverBuddies.Colonies
         private readonly InputService _inputService;
         private readonly CameraTargeter _cameraTargeter;
         private readonly DialogBoxShower _dialogBoxShower;
+        private readonly DistrictCenterRegistry _districtCenterRegistry;
         private readonly BlockValidator _blockValidator;
         private readonly ISpecService _specService;
 
@@ -63,7 +64,7 @@ namespace BeaverBuddies.Colonies
             ConstructionFactory constructionFactory, BeaverFactory beaverFactory,
             EntityComponentRegistry entityComponentRegistry, ToolService toolService, InputService inputService,
             CameraTargeter cameraTargeter, DialogBoxShower dialogBoxShower, BlockValidator blockValidator,
-            ISpecService specService)
+            ISpecService specService, DistrictCenterRegistry districtCenterRegistry)
         {
             _colonyModeService = colonyModeService;
             _startingBuildingSpawner = startingBuildingSpawner;
@@ -78,6 +79,7 @@ namespace BeaverBuddies.Colonies
             _dialogBoxShower = dialogBoxShower;
             _blockValidator = blockValidator;
             _specService = specService;
+            _districtCenterRegistry = districtCenterRegistry;
         }
 
         /// <summary>True while this computer's player is using the founding tool (not the ordinary build menu).</summary>
@@ -108,7 +110,7 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>Whether this slot owns a district center (finished or not). Saved state: the same on every computer.</summary>
         public bool SlotOwnsDistrict(int slot) =>
-            _entityComponentRegistry.GetEnabled<DistrictCenter>().Any(dc => DistrictOwner.OwnerOfDistrict(dc) == slot);
+            _districtCenterRegistry.AllDistrictCenters.Any(dc => DistrictOwner.OwnerOfDistrict(dc) == slot);
 
         public bool ProcessInput()
         {

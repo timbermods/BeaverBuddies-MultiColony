@@ -1,204 +1,167 @@
 # Separate colonies (alpha)
 
-Two players, one map, a colony each. On a map with two starting locations, each player gets their own starting
-district, their own beavers and their own land. On any other map, including the game's standard maps, the host
-starts as usual and the second player **founds** their colony wherever they like (see
-[Standard maps](#standard-maps-founding-colony-2)). Neither player can act on the other's colony. The two colonies
-can trade goods through District Crossings built on the border, and each player controls what their colony takes.
+Two (up to four) players on one map, each running their own colony: their own districts, beavers, stock and, if
+the host chooses, their own science and unlocks. It is co-op, not a race: nobody wins, there are no prices, and the
+colonies help each other through **trading posts**.
 
-**State of testing.** This is an alpha and **nobody has played it yet**. The rules, the land division and the
-network stamping are covered by automated checks (see [Testing](#testing)), and the build loads against the
-game's own assemblies. Nothing in this document has been seen in a game: not the border display, the notices,
-the crossing rule, the trade defaults or the migration rule. The two test scripts at the end are how that will
-change. Expect problems, keep backups of your saves, and play on a copy.
+**State of testing.** Alpha. Seen in a game with the land-split alphas (alpha1 to 5): hosting and joining over
+Steam, founding a second colony and building in it. **Nothing of this version's model has been seen in a game
+yet**: district ownership, the trading post and its panel, gifts, separate science and the road-network checks are
+covered by automated checks only. Play on a copy of your save and keep backups.
 
-## Switching it on
+## The rules in one minute
 
-The host decides this when **creating a new game**. Nothing changes for existing saves or for shared-colony games.
+- **Build anywhere.** There is no border and no land of your own.
+- **A colony is its districts.** Every district center belongs to a player. Buildings belong to the district they
+  are in, beavers to the district they live in, goods to the district that stores them.
+- **Roads never join, except through a District Crossing.** The game already refuses a path or building that would
+  join two districts' roads; a crossing is the only link. A crossing between two players' districts is a **trading
+  post**.
+- **You change your own colony.** Settings, priorities, workers, demolition, migration and distribution of another
+  player's districts are refused while that player is playing. While they are away, you may look after their
+  colony too: both colonies keep running.
+- **Shared by everyone:** game speed and pause, working hours, pings, chat, saving, and the map itself: water,
+  droughts, badwater tides, trees and berries. Trees and crops near another colony are contested.
 
-1. In **Mod Settings → BeaverBuddies**, tick **Separate colonies (alpha)**.
-2. Choose **Colony the host plays**: *Colony 1* or *Colony 2*. Every guest plays the other one.
-3. Pick a game. A **new game on a map with two starting locations** (a BeaverBuddies multi-start map) starts both
-   colonies at once. **Any other game** (a standard map, or any existing save) plays as usual until colony 2's player
-   founds their colony, once, whenever they like.
-4. Save it, then host it as usual (**Load Game** → select the save → **Host co-op game**) and have your friend join
-   before you unpause.
+## Starting
 
-Colony 1 is the map's first starting location and colony 2 the second, in the order the map author numbered them.
-The connection panel shows each player's colony beside their name.
+**Host settings** (Mod Settings → BeaverBuddies), read when hosting starts:
 
-**Rehosting.** Seats are not stored in the save; the host's setting chooses them each time. When you rehost, keep
-**Colony the host plays** on the colony you played. When your friend hosts the save instead, they choose the colony
-they were playing.
+| Setting | Default | What it does |
+|---|---|---|
+| **Separate colonies (alpha)** | on | Players run their own colonies. Off: one shared colony, exactly as in the Stability Fork. |
+| **Separate science and unlocks per colony (alpha)** | on | Each colony earns and spends its own science and unlocks its own buildings. Chosen when a separate-colonies game begins and kept for the life of the save. |
 
-## Standard maps: founding colony 2
+**Who plays which colony** is remembered by the save: each player is known by their Steam ID (or, without Steam, by
+an id kept on their computer). The first time a player joins a save they take the next free colony; after that they
+always get the same one, whoever hosts. With every colony taken (four), an extra player joins as a helper of the
+host's colony. The connection panel shows each name with its colony number.
 
-On a map with one starting location, or in any save that is not already a two-colony game, the district centers
-there are colony 1's (the host's). Colony 2 does not exist until its player founds it, once, at any time:
+**A new game on a multi-start map** (BeaverBuddies maps with several starting locations) gives start N to player N:
+the host's first colony is start 1, the next player's start 2, and so on.
 
-1. The host starts the new game as usual, saves, hosts it and brings the friend in. The host may play in the
-   meantime.
-2. When the friend joins, a message offers to **place their district center**. (If they close it, **Ctrl+K** opens
-   the same tool at any time.)
-3. They place it anywhere on the map. It costs nothing, needs no science, and appears **already built**, with the
-   same starting food, water, adults and children the new game gave colony 1 (the game's Normal difficulty for a save
-   that did not record them).
-4. From that moment the land is divided halfway between the two district centers, exactly as on a two-start map,
-   and each player controls their own colony. Everyone sees *Colony 2 has been founded.*
+**Any other game** (a standard map, or any existing save): the district centers already there are the host's
+colony's. Every other player **founds** their colony once:
 
-**Where it may go:** every building colony 1 already has must stay on colony 1's side of the new border and off
-the border strip, and the new district center must stand wholly inside colony 2. The preview turns red with *Too
-close to the other colony's buildings* when that is not so. Founding early, before colony 1 spreads out, leaves
-the most room.
+1. On joining, a message offers to place a district center. (If you cancel, **Ctrl+K** opens the same tool.)
+2. Place it anywhere its entrance is not on another colony's roads. It is free, needs no science, and appears
+   **already built**, yours, with starting beavers, food and water (the new game's, or the Normal difficulty's for a
+   save that did not record them).
+3. Founding in a shared game turns it into a separate-colonies game. The existing districts stay the host's, and
+   their imports are closed, like every new district's (see *Trading*).
 
-**Until colony 2 is founded** the game is one shared colony and both players act on it as in ordinary co-op, with
-one exception: in a new game created with this mode on, colony 2's player can only found it (shared things such as
-speed and chat still work). The land is not divided yet, so there is no border to show. Founding needs the host's
-**Separate colonies (alpha)** setting on (the default).
+## Trading posts
 
-**When it is founded**, colony 1's districts have their imports set to *Disabled* too, so trade starts closed on
-both sides, as on a two-start map.
+Build a **District Crossing** where your roads come close to another colony's: one half on each side, each half
+reached by its own colony's road. In a separate-colonies game a crossing needs **no science and costs 10 logs**, so
+colonies can trade from the start.
 
-Colony 1 is measured from its starting building, recorded when the game placed it. In a save without that record,
-its most populated district center is used.
+- **Each side is run by its own colony.** Your beavers bring goods to your half and take goods from it; the other
+  colony's beavers do the same on theirs. No beaver crosses.
+- **What moves is decided by each colony's own Distribution settings** (the **Distribution** tab, F8, or the button
+  on the crossing's panel), exactly as between two districts in the game:
+  - **Import** (the receiving colony's choice): *Disabled*, *Auto* or *Forced*.
+  - **Export threshold** (the giving colony's choice): goods only leave above this fill level; at the top of the
+    slider nothing leaves.
+- **Every good starts at import *Disabled*** in a separate-colonies game, so nothing moves until the receiving player
+  opens a good. This also applies between your own districts: open imports there too if you want goods to flow.
 
-## Whose land is whose
+**The trading-post panel**, under the crossing's own panel when the crossing joins two colonies, shows:
 
-The border is **one straight line along the map grid**, halfway between the two starting buildings (on a standard
-map, colony 1's starting building and the founded district center). It runs north-south when the starts are further
-apart east-west, and east-west otherwise; height is ignored and a tile exactly halfway is colony 1's. It is straight
-because a District Crossing is three tiles wide and needs a straight piece of border: a slanted border between two
-diagonal starts would have none. A building belongs to the colony
-that owns the tile it stands on, and a district belongs to the colony that owns its District Center's tile.
+- the two colonies, in their colours;
+- **what the other colony could use**: the goods they import, least stocked first, then goods they store but have
+  little of;
+- **Give 10** beside each: your half's workers bring 10 of that good across, whatever their import settings, until 10
+  have passed. They will not send it straight back while the gift is under way;
+- **Sent to / Received from**: totals of what has passed each way through all trading posts between the two colonies;
+- with separate science, **Give 50 / Give 250 science**.
 
-The tiles on each side that touch the other colony's land are the **border strip**. Only a District Crossing may be
-built on the strip, which keeps the two colonies' roads from ever touching. The strip applies at every height:
-platforms, stairs and bridges over it are refused too.
+Either player may remove a crossing (deleting one half removes both, as in the game). Running a half (workers,
+priority) stays with its colony.
 
-Press **K** (rebindable under **Key bindings → BeaverBuddies → Show colony border**) to show the border strip, drawn
-in each colony's colour (colony 1 blue, colony 2 orange). It also shows by itself while any tool is active,
-such as building, planting, cutting or demolishing.
+**Beavers** never migrate between colonies on their own. You may send beavers to another colony by hand (the
+Migration tab): it is how a failing colony is rescued. You cannot take beavers from another colony's district.
 
-## What you can and cannot do
+## Separate science and unlocks
 
-| On your own colony | On the other colony |
-|---|---|
-| Everything, as in normal co-op | Nothing that changes it: placing, demolishing, pausing, priorities, workers, recipes, stockpiles, floodgates, automation, zipline links, migration and distribution settings are all refused |
-| | Looking is fine: you can select their buildings and open their panels |
+With the setting on, when a separate-colonies game begins:
 
-- **Placing buildings:** the preview turns red with the reason when any part would stand on the other colony's
-  land, or when anything other than a District Crossing would stand on the border strip.
-- **Area tools** (tree cutting, planting, clearing resources, demolishing): drag across the border as you like;
-  only the tiles and objects on your own land are marked.
-- **Refused actions** show a short notice ("That belongs to the other colony."). The host checks every action
-  from every player, so a refused action never reaches anyone's game.
-- **Shared by both colonies:** game speed and pause, working hours, science and building unlocks, renaming,
-  pings, chat and saving.
+- **Each colony has its own science.** Inventors, the Numbercruncher and the observatory add to their own colony's
+  science; a relic's reward goes to the colony of the beaver who demolished it; the Iron Teeth control tower uses its
+  own colony's. The top bar shows yours.
+- **Each colony unlocks its own buildings.** Unlocking costs your colony's science and unlocks the building on your
+  toolbar only. Placing a building checks that your colony has it unlocked.
+- A shared game being split: its science and unlocks so far stay with the first colony; new colonies start with
+  none. A new game: every colony starts with the same unlocks.
+- **Bot worker types** stay unlocked for everyone; whoever unlocks one pays for it.
+- You may place a building you have unlocked beside another colony's road: it joins their district and their
+  beavers run it. That is allowed on purpose ("I'll build you a gear workshop").
 
 ## What you see
 
-In a co-op session each player's interface shows **their own colony only**, never both added together:
+In a co-op session each player's interface shows **their own colony only**: the top bar's goods, population,
+housing, workplaces, wellbeing and science; the batch control window's lists (F1 to F10, opening on your biggest
+district); alerts; the notification journal. Selecting another colony's building opens its panels but leaves your
+figures alone. Still whole-map: the *Global* history graphs in F9/F10 and in a good's tooltip, which the game
+records for the whole map.
 
-- **Top bar:** goods, population, housing, workplaces and wellbeing count your colony's districts. Select one of
-  your buildings to see that one district, as in the game. Selecting the other colony's buildings opens their
-  panels but leaves your figures on your colony.
-- **Batch control window (F1 to F10):** opens on your biggest district. With *Global* chosen, the lists (beavers,
-  homes, workplaces, storage, mechanical, attractions, migration) show your colony only.
-- **Alerts** (no food, homeless, unemployed…) and the **notification journal** (births, deaths…) count your colony only.
+## Road networks
 
-Still shared, as they belong to the whole game: science points, and the history graphs when *Global* is chosen in
-the goods and population statistics tabs (F9, F10) and in a good's tooltip, which the game records for the whole
-map. Alone (outside a co-op session) you see everything, as in the game.
+The game refuses to place a road, building or tubeway that would join two districts' roads, so two colonies' roads
+can only meet at a crossing. Two gaps are closed by this mod:
 
-## Building a District Crossing together
+- **Zipline links** are judged once, by the host, with the game's own check.
+- **Two placements that are each fine alone** can join roads once both are built (two players placing at the same
+  moment). Every computer notices at the same moment and warns both players ("Two districts' roads have been joined
+  without a District Crossing"): remove the joining path or building. The game's district bookkeeping cannot handle
+  joined roads, so do this at once.
 
-In Timberborn a District Crossing is two halves placed back to back with one click. In this mode the pair must
-**straddle the border**: one half on your side of the strip, the other half on the other colony's side, directly
-behind yours. Either player can place it. Each half must stand wholly on one side, and the host only accepts the
-half on the other side when your own half really stands behind it, so a lone half can never be pushed onto the
-other colony's land.
+## Water and the map
 
-1. Show the border (**K**). It is straight, so any three free, level tiles along it will do.
-2. Choose the District Crossing and place it so that the two halves meet exactly at the border. The preview is red
-   anywhere else.
-3. Each half joins the district on its own side and is built by that colony's beavers. **Each player needs a path
-   to the entrance of the half on their side**, or that half is never built.
-
-Deleting either half deletes both, as in the game, so either player can remove a crossing.
-
-## Trade
-
-Goods move through a crossing by the game's own distribution rules, set per district and per good in the
-**Distribution** tab of the batch control window (**F8**, or the button on the crossing's panel):
-
-- **Import** (the receiving colony's choice): *Disabled*, *Auto* or *Forced*.
-- **Export threshold** (the giving colony's choice): the game only sends goods above this fill level; at the top
-  of the slider it sends nothing.
-
-In a separate-colonies game **every good starts at import Disabled** in every district, so a new crossing moves
-nothing. To receive a good, its player sets that good to *Auto* or *Forced* in their own district. To stop giving a
-good, its player raises that good's export threshold. Each player can change only their own colony's districts.
-The **Reset** button in the Distribution tab also sets import back to Disabled.
-
-This also applies between two districts of the **same** colony: set imports there as well if you want goods to
-move between your own districts.
-
-## Beavers stay in their colony
-
-Automatic migration never moves beavers between the two colonies, even when a crossing joins them; it still works
-between districts of the same colony. Manual migration to or from the other colony's district is refused.
+Water is one shared simulation: a dam upstream changes what flows to a colony downstream, and droughts and badwater
+tides come to everyone at once. Stored water (tanks) is a good like any other and belongs to its colony. Prefer maps
+with a water source near each start.
 
 ## Testing alone (debug)
 
-With **Always Use Detailed Logging** on in Mod Settings (the mod's debug mode), a host can press **Ctrl+Shift+K** to make their own actions
-count as the other colony's, and again to switch back. It lets one person test both sides of every rule. It works
-only for the host, only in debug mode, and every switch is logged.
+With **Always Use Detailed Logging** on (the mod's debug mode), the host can press **Ctrl+Shift+K** to make their own
+actions count as the next colony's (colony 1 → 2 → 3 → 4 → 1). The toolbar, science and every refusal follow. Every
+switch is logged.
 
 ## Known limits
 
-- Science, unlocks and working hours are shared.
+- Up to four colonies; more players join as helpers of the host's colony.
 - The game ends only when every beaver on the map is gone, not per colony.
-- The top bar's numbers follow the selected district, as in the game.
-- Tree-cutting, planting and demolition marks are shared lists: a lumberjack whose range reaches across the border
-  will cut trees the other player marked on their side.
-- Only two colonies are supported. On a map with more starts, only the first two become colonies; any other start's
-  district belongs to whichever of the two is nearer. Every guest plays the same colony.
-- Beavers do some work by range without anyone acting: a gatherer or lumberjack near the border can work on the
-  other colony's side. The rules only cover what players do.
-- Renaming is shared: either player can rename any building or beaver.
-- The border is a straight north-south or east-west line halfway between the two starts, so starts that are diagonal
-  from each other, or unevenly placed, give an uneven split.
-- Two colonies mean more to simulate. Prefer a small map, and use the speed settings if the guest's frame rate drops.
-- Outside a hosted session (single player) nothing is refused; the land division, trade defaults and migration
-  rule still apply.
+- Beavers working by range (lumberjacks, gatherers) can work on anything they reach, including another colony's
+  marked trees.
+- Renaming is shared: anyone can rename anything.
+- A trading post buffers at most 30 of a good; a gift stalls while the receiving colony has nowhere to put it.
+- Gifts of a good also count vanilla trades of that good through the same crossing.
+- The *Global* history graphs (F9, F10, good tooltips) cover the whole map.
+- Separate science is meant for co-op: in single player, science earned by another start's buildings goes to that
+  colony's pool, which only its player can spend.
+- A guest's planting tools follow the first colony's unlocks (the game builds that list before the guest is seated).
+- A player who leaves the session still counts as playing until the host rehosts.
+- Placing is judged by the placing player's own tool: the check against joining two districts' roads is not repeated
+  in the multiplayer replay, where it read state that differs between computers.
+- Two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest from the
+  connection panel.
 
 ## How it works
 
-- **The host decides.** Every action goes through the host before anyone plays it. The host writes on each action
-  which connection it came from (a guest cannot claim to be someone else), checks it against the colony rules just
-  before playing it, and either plays and forwards it, plays and forwards only the part on the player's own land,
-  or drops it with a line in its log starting `[Colony] Refused`. Guests never judge, so they cannot disagree.
-- **Land is a formula.** Ownership is worked out from the two start positions saved in the game, with whole
-  numbers only, so every computer agrees without extra data.
-- **Simulation rules** (no migration between colonies, trade starting closed) read only what is in the save and
-  run identically on every computer.
-- The mode saves one small entry in the save (whether it is on, and the start positions). A shared-colony game
-  saves nothing new.
+- **The host decides.** Every action goes through the host. The host writes which connection it came from (a guest
+  cannot claim another), seats players by their stable id, writes the actor's colony into the action, checks it
+  against the rules just before playing it, and plays and forwards it, keeps only the actor's part of a list action,
+  or drops it (logged as `[Colony] Refused …`). Guests never judge, so the computers cannot disagree.
+- **Ownership is saved on the district centers**; everything else follows from districts, which every computer
+  simulates identically.
+- **Science** keeps one pool and one unlock set per colony in the save. Simulation code that earns, spends or reads
+  science names the colony of the building doing it; everything else is display.
+- **The ledger** counts goods at the one place they pass from one half of a crossing to the other.
 
 ## Testing
 
-Automated checks (all passing at `1.2.0-two-colony-alpha5`):
-
-- **StabilityTests**, headless: 31 checks for this feature. They cover the host stamping each guest's actions over the
-  real network code (a guest that claims another number is overwritten), grouped actions, seats, land division with
-  2, 3 and 4 starts, the border strip (including that no gap is left on a diagonal border), placement,
-  the crossing rule (including a lone half and a half across the border), area filtering, and the migration
-  pairing rule, and founding (what colony 2's player may do before founding, where founding is allowed, and who
-  may found). Grouped actions are tested in the JSON shape the mod really sends.
-- **RuntimeChecks**, against the compiled mod and the game's assemblies: every one of the 50 action types declares
-  what it touches (a new one that does not fails the check), the list of actions shared by both colonies is
-  printed for review, the sender survives the trip through the network format, a real serialized group of
-  actions is stamped all the way down, and every game method the mode replaces or founding uses still exists.
-
-In-game test scripts are in the release notes of each alpha: a solo host script (one person, debug mode) and a
-two-player script. Their results will be recorded here.
+Automated checks (all passing): **StabilityTests** (headless: the network stamping, player slots, the ownership
+rules, founding, migration pairing) and **RuntimeChecks** against the compiled mod and the game's assemblies: every
+action type declares what it touches, the shared actions are listed for review, and every game method or field the
+mod hooks still exists. In-game test scripts: [ALPHA-TEST-SCRIPTS.md](ALPHA-TEST-SCRIPTS.md).

@@ -57,6 +57,15 @@ namespace BeaverBuddies.Colonies
                 return false;
             }
 
+            // A player the host has not seated yet has no colony to spend science from, give from or found for.
+            if (replayEvent.slot < 0 && ColonyModeService.IsSeparateColonies && (replayEvent is BuildingUnlockedEvent
+                || replayEvent is WorkerTypeUnlockedEvent || replayEvent is GiftScienceEvent || replayEvent is GiftGoodsEvent
+                || replayEvent is BuildingPlacedEvent || replayEvent is FoundColonyEvent))
+            {
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: not seated yet");
+                return false;
+            }
+
             // Founding is judged in every game: it is how a shared game becomes a separate-colonies one.
             if (!ColonyModeService.IsSeparateColonies && !(replayEvent is FoundColonyEvent)) return true;
             ColonyVerdict verdict;

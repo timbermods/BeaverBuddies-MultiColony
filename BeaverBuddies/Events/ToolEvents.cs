@@ -415,12 +415,11 @@ namespace BeaverBuddies.Events
             // into the event). Otherwise the one shared pool and set, as in the game.
             int actorSlot = System.Math.Max(0, slot);
             bool separate = Colonies.ColonyScienceService.IsEnabled;
-            bool unlockedAlready = separate
-                ? Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlocked(building))
-                : unlocking.Unlocked(building);
-            if (unlockedAlready)
+            // Only the per-colony sets are the same on every computer: the game's own set also holds a few buildings
+            // remembered in each player's profile (UnlockableOnceSpec), so in a shared game this is not checked.
+            if (separate && Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlocked(building)))
             {
-                // Two players unlocking the same building at once must not pay twice.
+                // Two players of one colony unlocking the same building at once must not pay twice.
                 Plugin.Log($"Already unlocked for slot {actorSlot}: {buildingName}");
                 return;
             }

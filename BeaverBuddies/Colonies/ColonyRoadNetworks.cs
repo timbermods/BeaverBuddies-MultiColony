@@ -15,8 +15,8 @@ namespace BeaverBuddies.Colonies
 {
     /// <summary>
     /// Keeps road networks apart: two district centers may never share one, so two players' colonies only meet through
-    /// a District Crossing. The game already refuses a building whose roads would join two districts (its placement
-    /// check); this closes the gaps a two-player game opens:
+    /// a District Crossing. The game's placement tool already refuses a building whose roads would join two districts
+    /// (checked in the placing player's own interface); this closes the gaps a two-player game opens:
     ///  - a zipline link is judged by the host alone, before anyone plays it (the game's check reads state that
     ///    differs between computers, so judging it in the replay could connect on one computer and not the other);
     ///  - founding a colony must not put its district center on another district's roads (checked from the
@@ -24,6 +24,27 @@ namespace BeaverBuddies.Colonies
     ///  - if two districts' roads end up joined anyway (two placements each fine alone, finished together), every
     ///    computer notices at the same tick and says so, so the players can remove the link.
     /// </summary>
+    /*
+     * 9/21/2026 (Timberborn 1.1.2.4), DistrictPreviewsValidator.IsValid:
+        if (blockObject.IsPreview && _districtService.IsPreviewDistrictInConflict(blockObject.GetComponent<DistrictCenter>()?.CenterCoordinates))
+            { errorMessage = _loc.T(DistrictsInConflictLocKey); return false; }
+     */
+    // A replayed placement is checked on every computer (BuildingPlacedEvent.IsPlacementValid). This validator reads
+    // the preview road graph, which holds whatever the local player is hovering and is updated once per frame, so it
+    // could refuse the building on one computer and not another. While events replay it passes; the placing player's
+    // own tool already refused a joining road before the click, and ColonyRoadNetworks warns if two joined anyway.
+    [HarmonyLib.HarmonyPatch(typeof(Timberborn.GameDistrictsUI.DistrictPreviewsValidator), nameof(Timberborn.GameDistrictsUI.DistrictPreviewsValidator.IsValid))]
+    static class DistrictPreviewsValidatorReplayPatcher
+    {
+        static bool Prefix(ref bool __result, ref string errorMessage)
+        {
+            if (!ReplayService.IsReplayingEvents) return true;
+            errorMessage = null;
+            __result = true;
+            return false;
+        }
+    }
+
     public class ColonyRoadNetworks : RegisteredSingleton, ILoadableSingleton, ISingletonNavMeshListener
     {
         private readonly IDistrictService _districtService;

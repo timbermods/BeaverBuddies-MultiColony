@@ -111,7 +111,10 @@ namespace BeaverBuddies.Colonies
         {
             if (Enabled) return;
             int shared = _scienceService.SciencePoints;
-            List<string> sharedUnlocked = _buildingUnlockingService._unlockedBuildings.ToList();
+            // Not the buildings the game remembers in each player's own profile (UnlockableOnceSpec): those differ
+            // between computers, and this runs on every computer.
+            List<string> sharedUnlocked = _buildingUnlockingService._unlockedBuildings
+                .Where(name => !IsUnlockableOnce(name)).OrderBy(name => name, StringComparer.Ordinal).ToList();
             Enabled = true;
             points[0] = shared;
             for (int i = 0; i < unlocked.Length; i++)
@@ -120,6 +123,12 @@ namespace BeaverBuddies.Colonies
             }
             Plugin.Log($"[Colony] Separate science switched on: slot 0 keeps {shared} science and {sharedUnlocked.Count} unlocks");
             RefreshToolLocks();
+        }
+
+        private bool IsUnlockableOnce(string templateName)
+        {
+            try { return _buildingService.GetBuildingTemplate(templateName)?.HasSpec<UnlockableOnceSpec>() == true; }
+            catch (Exception) { return false; }
         }
 
         public int PointsOf(int slot) => slot >= 0 && slot < points.Length ? points[slot] : 0;
@@ -168,15 +177,16 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public void RefreshToolLocks()
         {
-            if (!Enabled) return;
             try
             {
                 foreach (ToolButton toolButton in _toolButtonService.ToolButtons)
                 {
                     if (!(toolButton.Tool is BlockObjectTool tool)) continue;
                     BuildingSpec spec = tool.Template?.GetSpec<BuildingSpec>();
-                    if (spec == null || spec.ScienceCost == 0) continue;
-                    bool unlockedHere = IsUnlockedFor(DisplaySlot, spec);
+                    // Buildings the game locks for science, and the District Crossing, which needs none in a
+                    // separate-colonies game (the toolbar locked it while loading, before the mode began).
+                    if (spec == null || (spec.ScienceCost == 0 && !TradingPostCost.IsCrossing(spec))) continue;
+                    bool unlockedHere = _buildingUnlockingService.Unlocked(spec);
                     bool locked = _toolUnlockingService.IsLocked(tool);
                     if (unlockedHere && locked) _toolUnlockingService.Unlock(tool);
                     else if (!unlockedHere && !locked) _toolUnlockingService.LockIfNeeded(tool);
@@ -221,8 +231,8 @@ namespace BeaverBuddies.Colonies
         {
             var service = ColonyScienceService.Instance;
             if (service == null || !service.Enabled) return true;
-            // Earned outside any colony's building (a dev tool): the first colony's.
-            service.Add(ColonyScienceService.Context ?? 0, amount);
+            // Earned outside any colony's building (a dev tool): this player's. Simulation callers name their colony.
+            service.Add(ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot, amount);
             return false;
         }
     }
@@ -234,7 +244,7 @@ namespace BeaverBuddies.Colonies
         {
             var service = ColonyScienceService.Instance;
             if (service == null || !service.Enabled) return true;
-            service.Subtract(ColonyScienceService.Context ?? 0, amount);
+            service.Subtract(ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot, amount);
             return false;
         }
     }

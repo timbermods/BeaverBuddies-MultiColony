@@ -127,6 +127,8 @@ namespace BeaverBuddies.Colonies
             Enabled = true;
             StartingSettings ??= startingSettings;
             if (!wasEnabled && separateScience) ColonyScienceService.Instance?.Enable(newGame);
+            // Display: the District Crossing needs no science from now on, and the toolbar locked it while loading.
+            if (!wasEnabled) ColonyScienceService.Instance?.RefreshToolLocks();
         }
     }
 }

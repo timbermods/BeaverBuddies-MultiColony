@@ -104,6 +104,8 @@ namespace BeaverBuddies.Colonies
         }
 
         private bool helloSent;
+        // The id this computer said hello with: its own seat is found by it, even if Steam started meanwhile.
+        private string sentPlayerId;
 
         public void UpdateSingleton()
         {
@@ -112,7 +114,7 @@ namespace BeaverBuddies.Colonies
             if (helloSent || !(EventIO.Get() is ClientEventIO) || ReplayService.IsReplayingEvents) return;
             if (ReplayEvent.GetReplayServiceIfReady() == null) return;
             helloSent = true;
-            PlayerHelloEvent.Send();
+            sentPlayerId = PlayerHelloEvent.Send();
         }
 
         /// <summary>The slot a connection plays this session, or -1 if it has not said hello.</summary>
@@ -148,7 +150,7 @@ namespace BeaverBuddies.Colonies
                 if (parts.Length == 2 && int.TryParse(parts[0], out int player) && int.TryParse(parts[1], out int slot))
                     session[player] = slot;
             }
-            if (hello.playerId == LocalPlayerIdentity.Id && !(EventIO.Get() is ServerEventIO))
+            if (hello.playerId == (sentPlayerId ?? LocalPlayerIdentity.Id) && !(EventIO.Get() is ServerEventIO))
             {
                 LocalPlayer = hello.player;
                 Plugin.Log($"[Colony] This computer plays slot {SlotOfPlayer(LocalPlayer)}");
@@ -181,15 +183,17 @@ namespace BeaverBuddies.Colonies
 
         public override string ToActionString() => $"Hello from {playerName}";
 
-        /// <summary>A guest, once it can act (see ColonySlotService.UpdateSingleton).</summary>
-        public static void Send()
+        /// <summary>A guest, once it can act (see ColonySlotService.UpdateSingleton). Returns the id it said hello with.</summary>
+        public static string Send()
         {
-            if (!(EventIO.Get() is ClientEventIO)) return;
+            if (!(EventIO.Get() is ClientEventIO)) return null;
+            string id = LocalPlayerIdentity.Id;
             ReplayEvent.DoPrefix(() => new PlayerHelloEvent
             {
-                playerId = LocalPlayerIdentity.Id,
+                playerId = id,
                 playerName = LocalPlayerIdentity.Name,
             });
+            return id;
         }
     }
 }
