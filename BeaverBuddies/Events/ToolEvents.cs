@@ -16,6 +16,7 @@ using Timberborn.EntitySystem;
 using Timberborn.Forestry;
 using Timberborn.PlantingUI;
 using Timberborn.ScienceSystem;
+using Timberborn.TerrainQueryingSystem;
 using Timberborn.TemplateInstantiation;
 using Timberborn.ToolButtonSystem;
 using Timberborn.WorkSystemUI;
@@ -211,22 +212,30 @@ namespace BeaverBuddies.Events
     class PlantingAreaMarkedEvent : ReplayEvent
     {
         // Marking plants only where the actor's colony may work; unmarking only ever removes the actor's own marks
-        // (checked tile by tile when it is played, see ColonyMarks).
+        // (checked tile by tile when it is played, see ColonyMarks). The host trims the list judged here, so it is the
+        // list the replay marks.
         public override ColonyScope GetColonyScope() => prefabName == UNMARK
             ? ColonyScope.Global
-            : ColonyScope.Tiles(inputBlocks, Colonies.ColonyGameWorld.TileKey);
+            : ColonyScope.Tiles(coordinates ?? inputBlocks, Colonies.ColonyGameWorld.TileKey);
 
         public List<Vector3Int> inputBlocks;
         public Ray ray;
         public string prefabName;
+        // The tiles to mark, levelled by the player who marked them. The game levels the dragged area with its terrain
+        // picker, which stops at the layer each player has sliced the view to: played again on another computer, the
+        // same ray could give another height and the marks would differ (a desync). Null in events from before.
+        public List<Vector3Int> coordinates;
 
         public const string UNMARK = "Unmark";
 
         public override void Replay(IReplayContext context)
         {
             var plantingService = context.GetSingleton<PlantingSelectionService>();
+            List<Vector3Int> leveled = coordinates
+                ?? LevelAbove(inputBlocks, plantingService._terrainAreaService._terrainService.OnGround);
             // Separate colonies: every mark made or removed is the actor's colony's (see ColonyMarks).
             if (Colonies.ColonyModeService.IsSeparateColonies) Colonies.ColonyMarks.ActingSlot = System.Math.Max(0, slot);
+            PlantingLeveledCoordinatesPatcher.Recorded = leveled;
             try
             {
                 if (prefabName == UNMARK)
@@ -240,47 +249,74 @@ namespace BeaverBuddies.Events
             }
             finally
             {
+                PlantingLeveledCoordinatesPatcher.Recorded = null;
                 Colonies.ColonyMarks.ActingSlot = null;
             }
         }
 
+        /// <summary>
+        /// An event from before <see cref="coordinates"/>, levelled without the view. The planting tool drags its
+        /// rectangle on the level of the terrain it picked first, and the game marks one level above that, where the
+        /// ground is: so the marker's own levelling gave the tile above each dragged block that stands on ground.
+        /// </summary>
+        internal static List<Vector3Int> LevelAbove(IEnumerable<Vector3Int> inputBlocks, Func<Vector3Int, bool> onGround) =>
+            (inputBlocks ?? Enumerable.Empty<Vector3Int>())
+                .Select(block => new Vector3Int(block.x, block.y, block.z + 1))
+                .Where(onGround)
+                .ToList();
+
         public override string ToActionString()
         {
-            return $"Planting {inputBlocks.Count()} of {prefabName}";
+            return $"Planting {(coordinates ?? inputBlocks)?.Count ?? 0} of {prefabName}";
+        }
+
+        internal static PlantingAreaMarkedEvent Record(PlantingSelectionService service, IEnumerable<Vector3Int> inputBlocks,
+            Ray ray, string prefabName)
+        {
+            var blocks = new List<Vector3Int>(inputBlocks);
+            return new PlantingAreaMarkedEvent()
+            {
+                prefabName = prefabName,
+                ray = ray,
+                inputBlocks = blocks,
+                // Levelled here, with this player's view: the tiles they saw highlighted.
+                coordinates = service._terrainAreaService.InMapLeveledCoordinates(blocks, ray).ToList(),
+            };
         }
     }
 
     [HarmonyPatch(typeof(PlantingSelectionService), nameof(PlantingSelectionService.MarkArea))]
     class PlantingAreaMarkedPatcher
     {
-        static bool Prefix(IEnumerable<Vector3Int> inputBlocks, Ray ray, string templateName)
+        static bool Prefix(PlantingSelectionService __instance, IEnumerable<Vector3Int> inputBlocks, Ray ray, string templateName)
         {
-            return ReplayEvent.DoPrefix(() =>
-            {
-                return new PlantingAreaMarkedEvent()
-                {
-                    prefabName = templateName,
-                    ray = ray,
-                    inputBlocks = new List<Vector3Int>(inputBlocks)
-                };
-            });
+            return ReplayEvent.DoPrefix(() => PlantingAreaMarkedEvent.Record(__instance, inputBlocks, ray, templateName));
         }
     }
 
     [HarmonyPatch(typeof(PlantingSelectionService), nameof(PlantingSelectionService.UnmarkArea))]
     class PlantingAreaUnmarkedPatcher
     {
-        static bool Prefix(IEnumerable<Vector3Int> inputBlocks, Ray ray)
+        static bool Prefix(PlantingSelectionService __instance, IEnumerable<Vector3Int> inputBlocks, Ray ray)
         {
             return ReplayEvent.DoPrefix(() =>
-            {
-                return new PlantingAreaMarkedEvent()
-                {
-                    prefabName = PlantingAreaMarkedEvent.UNMARK,
-                    ray = ray,
-                    inputBlocks = new List<Vector3Int>(inputBlocks)
-                };
-            });
+                PlantingAreaMarkedEvent.Record(__instance, inputBlocks, ray, PlantingAreaMarkedEvent.UNMARK));
+        }
+    }
+
+    // While a planting event is played, the game's own MarkArea / UnmarkArea act on the tiles the event carries instead
+    // of levelling the area again with this computer's view (see PlantingAreaMarkedEvent.coordinates). Everything else
+    // they do (which tiles may be planted, the colony checks on each mark) runs as in the game.
+    [HarmonyPatch(typeof(TerrainAreaService), nameof(TerrainAreaService.InMapLeveledCoordinates))]
+    static class PlantingLeveledCoordinatesPatcher
+    {
+        internal static List<Vector3Int> Recorded;
+
+        static bool Prefix(ref IEnumerable<Vector3Int> __result)
+        {
+            if (Recorded == null) return true;
+            __result = Recorded.ToList();
+            return false;
         }
     }
 

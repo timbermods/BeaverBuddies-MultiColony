@@ -12,7 +12,6 @@ using Timberborn.EntitySystem;
 using Timberborn.MapStateSystem;
 using Timberborn.Rendering;
 using Timberborn.SingletonSystem;
-using Timberborn.TerrainQueryingSystem;
 using UnityEngine;
 
 namespace BeaverBuddies.Latency
@@ -47,7 +46,6 @@ namespace BeaverBuddies.Latency
         private readonly AreaTileDrawerFactory _areaTileDrawerFactory;
         private readonly BuildingService _buildingService;
         private readonly EntityRegistry _entityRegistry;
-        private readonly TerrainAreaService _terrainAreaService;
         private readonly ReplayService _replayService;
         private readonly MapSize _mapSize;
 
@@ -72,13 +70,12 @@ namespace BeaverBuddies.Latency
         public static PendingActions Instance => SingletonManager.GetSingleton<PendingActions>();
 
         public PendingActions(AreaTileDrawerFactory areaTileDrawerFactory, BuildingService buildingService,
-            EntityRegistry entityRegistry, TerrainAreaService terrainAreaService, ReplayService replayService, MapSize mapSize)
+            EntityRegistry entityRegistry, ReplayService replayService, MapSize mapSize)
         {
             _mapSize = mapSize;
             _areaTileDrawerFactory = areaTileDrawerFactory;
             _buildingService = buildingService;
             _entityRegistry = entityRegistry;
-            _terrainAreaService = terrainAreaService;
             _replayService = replayService;
         }
 
@@ -250,10 +247,10 @@ namespace BeaverBuddies.Latency
                         placed.isFlipped ? FlipMode.Flipped : FlipMode.Unflipped);
                     return Ground(_buildingService.GetBuildingTemplate(placed.prefabName)?.GetSpec<BlockObjectSpec>()?.GetBlocks(placement)
                         .Select(block => block.Coordinates));
-                case PlantingAreaMarkedEvent planting when planting.inputBlocks != null:
+                case PlantingAreaMarkedEvent planting when planting.coordinates != null:
                     removal = planting.prefabName == PlantingAreaMarkedEvent.UNMARK;
-                    // Levelled as the planting tool does, so the marks sit where the plants will.
-                    return _terrainAreaService.InMapLeveledCoordinates(planting.inputBlocks, planting.ray).ToList();
+                    // Levelled when it was recorded, so the marks sit where the plants will.
+                    return planting.coordinates.ToList();
                 case TreeCuttingAreaEvent cutting when cutting.coordinates != null:
                     removal = !cutting.wasAdded;
                     return cutting.coordinates.ToList();

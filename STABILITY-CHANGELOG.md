@@ -5,6 +5,27 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha8
+
+**Fixed: planting marks could desync a co-op game when players had sliced the view to different layers.** The
+planting and cancel-planting tools level the dragged area with the game's terrain picker
+(`TerrainAreaService.InMapLeveledCoordinates`), which stops at the layer the local player has sliced the view to
+(`ILevelVisibilityService.MaxVisibleLevel`). The mod played the planting event again on every computer from the dragged
+blocks and the camera ray, so each computer levelled it with its own view: a player whose view was sliced lower got
+the marks at another height than everyone else.
+
+- **The planting event now carries the tiles the marking player levelled**, and played on each computer the game's
+  marking acts on exactly those tiles (its own checks of which tiles may be planted still run). Nothing reads the view.
+- **Older events** (without the tiles) are levelled from the dragged blocks alone: the tile above each block that stands
+  on ground, which is what the marking player's own game gave. Also view-free.
+- **Colony rules judge the recorded tiles**, and the host's trimming of tiles another colony owns trims the list that
+  is marked.
+- A guest's pending planting marks show the recorded tiles.
+- Tree cutting and demolition marks were checked and were already safe: they carry tiles and entities levelled by the
+  marking player.
+- Checks: RuntimeChecks 199 (the game's own levelling over a made-up terrain gives a different height in a sliced
+  view; the fallback matches the game; the replay uses the recorded tiles; colony trimming applies to them).
+
 ## 1.4.0-alpha7
 
 **Fixed: "tick once" desynced a co-op game.** The game's pause key (period by default, not only in dev mode) pauses a

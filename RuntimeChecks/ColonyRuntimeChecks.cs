@@ -221,7 +221,10 @@ internal static class ColonyRuntimeChecks
             // A guest's pending actions, drawn until the host answers.
             ("Timberborn.Rendering.AreaTileDrawer", "Timberborn.Rendering", "UpdateArea"),
             ("Timberborn.Rendering.AreaTileDrawerFactory", "Timberborn.Rendering", "Create"),
+            // Planting marks carry the tiles the marker levelled; played again, the game's levelling is replaced by them.
             ("Timberborn.TerrainQueryingSystem.TerrainAreaService", "Timberborn.TerrainQueryingSystem", "InMapLeveledCoordinates"),
+            ("Timberborn.PlantingUI.PlantingSelectionService", "Timberborn.PlantingUI", "MarkArea"),
+            ("Timberborn.PlantingUI.PlantingSelectionService", "Timberborn.PlantingUI", "UnmarkArea"),
             ("Timberborn.BlockSystem.BlockObjectSpec", "Timberborn.BlockSystem", "GetBlocks"),
             ("Timberborn.Debugging.DevModeManager", "Timberborn.Debugging", "get_Enabled"),
             // Tick once (the pause key while paused) bypasses TickBuckets, so it is refused in co-op.
@@ -239,6 +242,8 @@ internal static class ColonyRuntimeChecks
         foreach (var (typeName, assemblyName, field) in new[]
         {
             ("Timberborn.ScienceSystem.BuildingUnlockingService", "Timberborn.ScienceSystem", "_unlockedBuildings"),
+            ("Timberborn.PlantingUI.PlantingSelectionService", "Timberborn.PlantingUI", "_terrainAreaService"),
+            ("Timberborn.TerrainQueryingSystem.TerrainAreaService", "Timberborn.TerrainQueryingSystem", "_terrainService"),
             ("Timberborn.DistributionSystem.DistrictCrossingInventory", "Timberborn.DistributionSystem", "_linked"),
             ("Timberborn.DistributionSystem.DistrictCrossing", "Timberborn.DistributionSystem", "_linked"),
             ("Timberborn.DistributionSystem.DistrictCrossingWorkplaceBehavior", "Timberborn.DistributionSystem", "_districtCrossing"),
