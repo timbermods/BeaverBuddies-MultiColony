@@ -30,10 +30,10 @@ using UnityEngine;
 namespace BeaverBuddies.Colonies
 {
     /// <summary>
-    /// Founds colony 2 on a map with one start. The game's own starting building starts colony 1 as usual. The player
-    /// of colony 2 then places a district center anywhere colony 1 has not built; it appears finished, with the same
-    /// starting food, water, adults and children the new game gave colony 1, and from then on the land is divided
-    /// between the two district centers exactly as on a map with two starts.
+    /// Founds a colony for a player who has none: on a map with one start the game's starting building is the first
+    /// player's, and every other player places their own district center, once, anywhere that does not join another
+    /// colony's roads. It appears finished, owned by that player, with the new game's starting food, water, adults
+    /// and children. Founding in a shared game turns it into a separate-colonies game.
     ///
     /// The placement is an ordinary replayed action (FoundColonyEvent): the host judges it like any other and every
     /// computer founds the colony at the same tick, so beaver creation and its random numbers line up.
@@ -90,9 +90,25 @@ namespace BeaverBuddies.Colonies
             _inputService.AddInputProcessor(this);
         }
 
-        /// <summary>True when this computer's player is the one who should found colony 2 now.</summary>
-        public static bool LocalPlayerMayFound =>
-            ColonyModeService.FoundingOpen && !EventIO.IsNull && ColonySession.LocalColony == 2;
+        /// <summary>
+        /// True when this computer's player may found a colony now: in a session, seated, with no district center of
+        /// their own, and founding allowed (a separate-colonies game, or the host allows it).
+        /// </summary>
+        public static bool LocalPlayerMayFound
+        {
+            get
+            {
+                var service = SingletonManager.GetSingleton<ColonyFoundingService>();
+                int slot = ColonySession.LocalSlot;
+                return service != null && !EventIO.IsNull && slot >= 0 && !service.SlotOwnsDistrict(slot) && FoundingAllowed;
+            }
+        }
+
+        private static bool FoundingAllowed => ColonyModeService.IsSeparateColonies || ColonySession.HostAllowsFounding;
+
+        /// <summary>Whether this slot owns a district center (finished or not). Saved state: the same on every computer.</summary>
+        public bool SlotOwnsDistrict(int slot) =>
+            _entityComponentRegistry.GetEnabled<DistrictCenter>().Any(dc => DistrictOwner.OwnerOfDistrict(dc) == slot);
 
         public bool ProcessInput()
         {
@@ -103,7 +119,7 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>
-        /// A guest learned its seat: if it plays the colony still to be founded, say so and offer the tool at once.
+        /// A player has just been seated: if they have no colony and may found one, say so and offer the tool at once.
         /// </summary>
         public void OfferFounding()
         {
@@ -123,12 +139,13 @@ namespace BeaverBuddies.Colonies
             }
         }
 
-        /// <summary>The notice for a player who may not found colony 2 right now.</summary>
-        private static string WhyNot()
+        /// <summary>The notice for a player who may not found a colony right now.</summary>
+        private string WhyNot()
         {
-            if (ColonyModeService.ActiveTerritory != null) return "BeaverBuddies.Colony.Founding.NotNeeded";
             if (EventIO.IsNull) return "BeaverBuddies.Colony.Founding.HostFirst";
-            if (!ColonyModeService.FoundingOpen) return "BeaverBuddies.Colony.Founding.HostOff";
+            int slot = ColonySession.LocalSlot;
+            if (slot >= 0 && SlotOwnsDistrict(slot)) return "BeaverBuddies.Colony.Founding.NotNeeded";
+            if (!FoundingAllowed) return "BeaverBuddies.Colony.Founding.HostOff";
             return "BeaverBuddies.Colony.Founding.NotYours";
         }
 
@@ -157,36 +174,7 @@ namespace BeaverBuddies.Colonies
         // ---- judging (host verdict, local check, preview) ----
 
         /// <summary>
-        /// Where colony 1's land is measured from: its starting building, as recorded when the game placed it. For a
-        /// save without that record, its most populated district center (ties to the lowest entity id), read from
-        /// the world at the moment of founding, which is the same on every computer.
-        /// </summary>
-        public ColonyTile? FirstColonyStart(out Vector3Int coordinates)
-        {
-            if (_colonyModeService.FirstColonyStart.HasValue)
-            {
-                coordinates = _colonyModeService.FirstColonyStart.Value;
-                return ColonyGameWorld.TileOf(coordinates);
-            }
-            coordinates = default;
-            DistrictCenter first = _entityComponentRegistry.GetEnabled<DistrictCenter>()
-                .Where(dc => dc.GetComponent<EntityComponent>() != null && dc.GetComponent<BlockObject>() != null)
-                .OrderByDescending(Population)
-                .ThenBy(dc => dc.GetComponent<EntityComponent>().EntityId)
-                .FirstOrDefault();
-            if (first == null) return null;
-            coordinates = first.GetComponent<BlockObject>().Coordinates;
-            return ColonyGameWorld.TileOf(coordinates);
-        }
-
-        private static int Population(DistrictCenter districtCenter)
-        {
-            DistrictPopulation population = districtCenter.GetComponent<DistrictPopulation>();
-            return population == null ? 0 : population.NumberOfAdults + population.NumberOfChildren;
-        }
-
-        /// <summary>
-        /// What colony 2 starts with: the new game's settings when the save recorded them, otherwise the game's default
+        /// What a founded colony starts with: the new game's settings when the save recorded them, otherwise the game's default
         /// difficulty (the same specs on every computer).
         /// </summary>
         private ColonyStartingSettings StartingSettings()
@@ -220,19 +208,13 @@ namespace BeaverBuddies.Colonies
             };
         }
 
-        private IEnumerable<IReadOnlyList<ColonyTile>> ExistingBuildingFootprints()
-        {
-            foreach (Building building in _entityComponentRegistry.GetEnabled<Building>())
-            {
-                BlockObject blockObject = building.GetComponent<BlockObject>();
-                if (blockObject == null || !blockObject.Positioned || blockObject.IsPreview) continue;
-                yield return ColonyGameWorld.FootprintOf(blockObject.PositionedBlocks.GetAllCoordinates());
-            }
-        }
-
-        public IReadOnlyList<ColonyTile> DistrictCenterFootprint(Placement placement) =>
-            ColonyGameWorld.FootprintOf(_startingBuildingSpawner.StartingBuildingTemplateSpec
-                .GetSpec<BlockObjectSpec>().GetBlocks(placement).Select(b => b.Coordinates));
+        /// <summary>
+        /// Whether a district center here would join the roads of an existing district. Founding must not merge two
+        /// colonies' road networks; see ColonyRoadNetworks.
+        /// </summary>
+        private bool TouchesAnotherDistrict(Placement placement) =>
+            ColonyRoadNetworks.Instance?.WouldJoinAnyDistrict(
+                _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>(), placement) ?? false;
 
         /// <param name="checkBlocks">
         /// Also check that the ground is free and allows the building. Previews skip it: the game checks those itself.
@@ -241,30 +223,27 @@ namespace BeaverBuddies.Colonies
         /// The check every computer makes as the founding happens. It reads saved state only; whether the host allows
         /// founding this session was decided when the host judged the request.
         /// </param>
-        public ColonyVerdict Judge(int actorColony, Placement placement, IReadOnlyList<ColonyTile> footprint = null,
-            bool checkBlocks = true, bool atReplay = false)
+        public ColonyVerdict Judge(int actorSlot, Placement placement, bool checkBlocks = true, bool atReplay = false)
         {
-            if (_colonyModeService.Territory != null)
-                return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "colony 2 already exists");
-            if (!atReplay && !ColonyModeService.FoundingOpen)
-                return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the host has not turned on separate colonies");
-            if (checkBlocks && !_blockValidator.BlocksValid(
-                    _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>(), placement))
-                return ColonyVerdict.Refuse(ColonyRefusal.Blocked, $"the ground at {placement.Coordinates} is taken or unsuitable");
-            return ColonyRules.JudgeFounding(actorColony, FirstColonyStart(out _),
-                ColonyGameWorld.TileOf(placement.Coordinates), footprint ?? DistrictCenterFootprint(placement),
-                ExistingBuildingFootprints());
+            bool blocksValid = !checkBlocks || _blockValidator.BlocksValid(
+                _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>(), placement);
+            return ColonyRules.JudgeFounding(
+                actorHasSlot: actorSlot >= 0 && actorSlot < ColonySlotTable.MaxSlots,
+                actorOwnsDistrict: actorSlot >= 0 && SlotOwnsDistrict(actorSlot),
+                foundingAllowed: atReplay || FoundingAllowed,
+                blocksValid: blocksValid,
+                touchesOtherDistrict: TouchesAnotherDistrict(placement));
         }
 
         // ---- founding (replayed on every computer) ----
 
-        public void Found(Placement placement)
+        public void Found(Placement placement, int slot)
         {
-            // Judged again here, at the tick it happens: the host judged it when it arrived, but colony 1 may have
-            // built or blasted there since. The world is the same on every computer now, so is the answer, and an
-            // invalid spot is skipped everywhere instead of failing to place the building.
-            ColonyVerdict verdict = Judge(2, placement, atReplay: true);
-            if (!verdict.IsAllowed || FirstColonyStart(out Vector3Int firstStart) == null)
+            // Judged again here, at the tick it happens: the host judged it when it arrived, but someone may have built
+            // or blasted there since. The world is the same on every computer now, so is the answer, and an invalid
+            // spot is skipped everywhere instead of failing to place the building.
+            ColonyVerdict verdict = Judge(slot, placement, atReplay: true);
+            if (!verdict.IsAllowed)
             {
                 Plugin.LogWarning($"[Colony] Founding at {placement.Coordinates} skipped: {verdict.Refusal}, {verdict.Detail}");
                 Notice("BeaverBuddies.Colony.Founding.Failed");
@@ -272,21 +251,32 @@ namespace BeaverBuddies.Colonies
             }
             ColonyStartingSettings start = StartingSettings();
 
-            // Colony 1's districts were made before the colonies existed, with the game's open imports. Close them,
-            // as a separate-colonies game does for every new district, so trade starts closed on both sides.
-            foreach (DistrictCenter districtCenter in _entityComponentRegistry.GetEnabled<DistrictCenter>().ToList())
+            if (!_colonyModeService.Enabled)
             {
-                DistrictDistributionSetting setting = districtCenter.GetComponent<DistrictDistributionSetting>();
-                if (setting == null) continue;
-                foreach (GoodDistributionSetting good in setting.GoodDistributionSettings.ToList())
-                    good.SetImportOption(ImportOption.Disabled);
+                // A shared game becomes a separate-colonies game. Its districts were made with the game's open imports;
+                // close them, as a separate-colonies game does for every new district, so trade starts closed.
+                foreach (DistrictCenter districtCenter in _entityComponentRegistry.GetEnabled<DistrictCenter>().ToList())
+                {
+                    DistrictDistributionSetting setting = districtCenter.GetComponent<DistrictDistributionSetting>();
+                    if (setting == null) continue;
+                    foreach (GoodDistributionSetting good in setting.GoodDistributionSettings.ToList())
+                        good.SetImportOption(ImportOption.Disabled);
+                }
+                _colonyModeService.Enable(start, $"slot {slot} founded a colony in a shared game");
             }
 
-            // Divide the land first: the new district center then takes the separate-colonies trade defaults.
-            _colonyModeService.CompleteFounding(firstStart, placement.Coordinates, start);
-
             var builder = new EntitySetup.Builder(_startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>().Blueprint);
-            BlockObject blockObject = _constructionFactory.CreateAsFinished(builder, placement);
+            BlockObject blockObject;
+            DistrictOwner.PendingSlot = slot;
+            try
+            {
+                blockObject = _constructionFactory.CreateAsFinished(builder, placement);
+            }
+            finally
+            {
+                DistrictOwner.PendingSlot = null;
+            }
+            blockObject.GetComponent<DistrictOwner>()?.SetSlot(slot);
             Building building = blockObject.GetComponent<Building>();
 
             Inventory inventory = building.GetComponent<SimpleOutputInventory>()?.Inventory;
@@ -300,10 +290,10 @@ namespace BeaverBuddies.Colonies
             Vector3 position = SpawnPosition(building, blockObject);
             SpawnBeavers(position, adults: true, start.Adults, start.AdultAgeMin, start.AdultAgeMax);
             SpawnBeavers(position, adults: false, start.Children, start.ChildAgeMin, start.ChildAgeMax);
-            Plugin.Log($"[Colony] Colony 2 founded at {placement.Coordinates} with {start}");
+            Plugin.Log($"[Colony] Slot {slot} founded a colony at {placement.Coordinates} with {start}");
 
             // Display only, on this computer.
-            if (ColonySession.LocalColony == 2)
+            if (ColonySession.LocalSlot == slot)
             {
                 try { _cameraTargeter.CenterCameraOn(building.GetComponent<SelectableObject>()); }
                 catch (Exception error) { Plugin.LogWarning("[Colony] Could not move the camera: " + error.Message); }
@@ -354,7 +344,7 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    /// <summary>Colony 2's player founds their colony: a finished district center, starting goods and beavers.</summary>
+    /// <summary>A player without a colony founds one: a finished district center, starting goods and beavers.</summary>
     [Serializable]
     public class FoundColonyEvent : ReplayEvent
     {
@@ -381,9 +371,10 @@ namespace BeaverBuddies.Colonies
                 Plugin.LogWarning("[Colony] Cannot found a colony: the founding service is missing");
                 return;
             }
-            service.Found(Placement);
+            // The host wrote the founder's slot into the event before playing it.
+            service.Found(Placement, slot);
         }
 
-        public override string ToActionString() => $"Founding colony 2 at {coordinates}";
+        public override string ToActionString() => $"Founding a colony for slot {slot} at {coordinates}";
     }
 }

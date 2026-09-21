@@ -48,9 +48,11 @@ internal static class ColonyRuntimeChecks
                 .Select(t => t.Name).ToList();
             // Printed so a reviewer sees what either player may do regardless of colony.
             Console.WriteLine("      Shared by both colonies: " + string.Join(", ", shared));
+            // Map areas (planting, tree cutting) are shared on purpose: resources near another colony are contested.
             var expected = new[] { "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent", "EntityRenamedEvent",
-                "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent", "ShowOptionsMenuEvent", "SpeedSetEvent",
-                "TraceLoggedForTickEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
+                "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent", "PlantingAreaMarkedEvent",
+                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent", "TreeCuttingAreaEvent",
+                "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
             if (!shared.SequenceEqual(expected))
                 throw new Exception("The shared list changed; review it and update this check: " + string.Join(", ", shared));
         });

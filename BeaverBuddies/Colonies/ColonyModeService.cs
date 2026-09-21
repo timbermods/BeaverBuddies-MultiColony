@@ -22,17 +22,18 @@ namespace BeaverBuddies.Colonies
     }
 
     /// <summary>
-    /// The saved state of a separate-colonies game: whether the mode is on, where each colony started (in colony
-    /// order), whether colony 2 is still to be founded (a map with one start), and the new game's starting settings
-    /// for that founding. Who owns what follows from the starts (see ColonyTerritory). The values travel to guests
-    /// inside the save the host sends, so every computer has the same ones.
+    /// The saved state of a separate-colonies game: whether it is one, and the new game's starting settings for a
+    /// colony founded later. Who owns what is saved on each district center (DistrictOwner), who plays which colony
+    /// in ColonySlotService. Travels to guests inside the save the host sends, so every computer has the same values.
+    ///
+    /// Saves from the land-split alphas (1.2.0-two-colony-alpha1 to 5) also carry the colonies' start positions; they
+    /// are read once, to give those saves' district centers their owners, and never saved again.
     /// </summary>
     public class ColonyModeService : RegisteredSingleton, ISaveableSingleton, ILoadableSingleton
     {
         private static readonly SingletonKey ColonyModeKey = new SingletonKey("BeaverBuddies.ColonyMode");
         private static readonly PropertyKey<bool> EnabledKey = new PropertyKey<bool>("Enabled");
-        private static readonly ListKey<Vector3Int> StartsKey = new ListKey<Vector3Int>("Starts");
-        private static readonly PropertyKey<bool> AwaitingFoundingKey = new PropertyKey<bool>("AwaitingFounding");
+        private static readonly ListKey<Vector3Int> LegacyStartsKey = new ListKey<Vector3Int>("Starts");
         private static readonly PropertyKey<int> AdultsKey = new PropertyKey<int>("StartingAdults");
         private static readonly PropertyKey<float> AdultAgeMinKey = new PropertyKey<float>("StartingAdultAgeMin");
         private static readonly PropertyKey<float> AdultAgeMaxKey = new PropertyKey<float>("StartingAdultAgeMax");
@@ -41,43 +42,22 @@ namespace BeaverBuddies.Colonies
         private static readonly PropertyKey<float> ChildAgeMaxKey = new PropertyKey<float>("StartingChildAgeMax");
         private static readonly PropertyKey<int> FoodKey = new PropertyKey<int>("StartingFood");
         private static readonly PropertyKey<int> WaterKey = new PropertyKey<int>("StartingWater");
-        private static readonly PropertyKey<Vector3Int> FirstStartKey = new PropertyKey<Vector3Int>("FirstColonyStart");
 
         private readonly ISingletonLoader _singletonLoader;
 
-        private bool enabled;
-        private List<Vector3Int> starts = new List<Vector3Int>();
-
-        /// <summary>The land division when the mode is on and usable, otherwise null. Everything else checks this.</summary>
-        public ColonyTerritory Territory { get; private set; }
-
-        /// <summary>A one-start game whose second colony has not been founded yet.</summary>
-        public bool AwaitingFounding { get; private set; }
+        /// <summary>A separate-colonies game: district centers belong to players and the colony rules apply.</summary>
+        public bool Enabled { get; private set; }
 
         /// <summary>The new game's starting settings, given to a colony founded later. Null if never recorded.</summary>
         public ColonyStartingSettings StartingSettings { get; private set; }
 
-        /// <summary>Where colony 1's starting building stands, recorded while colony 2 is awaited. Null if never recorded.</summary>
-        public Vector3Int? FirstColonyStart { get; private set; }
+        /// <summary>A land-split alpha save's division, read only to give its district centers owners. Else null.</summary>
+        public ColonyTerritory LegacyTerritory { get; private set; }
 
-        /// <summary>The current game's territory, or null in a shared-colony game (and before a game is loaded).</summary>
-        public static ColonyTerritory ActiveTerritory => SingletonManager.GetSingleton<ColonyModeService>()?.Territory;
+        public static ColonyModeService Instance => SingletonManager.GetSingleton<ColonyModeService>();
 
-        /// <summary>True in a one-start game until colony 2 is founded.</summary>
-        public static bool FoundingPending => SingletonManager.GetSingleton<ColonyModeService>()?.AwaitingFounding == true;
-
-        /// <summary>
-        /// True in a separate-colonies game, and in a game created to await colony 2. A shared game in which colony 2
-        /// may still be founded is not one (yet): it plays as one shared colony until then.
-        /// </summary>
-        public static bool IsSeparateColonies => ActiveTerritory != null || FoundingPending;
-
-        /// <summary>
-        /// Colony 2 may be founded now: it does not exist yet, and the save was created for it or the host allows it
-        /// this session. The host's choice only gates who may ask; the founding itself depends on saved state alone.
-        /// </summary>
-        public static bool FoundingOpen =>
-            ColonyModeState.FoundingOpen(ActiveTerritory != null, FoundingPending, ColonySession.HostAllowsFounding);
+        /// <summary>True in a separate-colonies game (and never before a game is loaded).</summary>
+        public static bool IsSeparateColonies => Instance?.Enabled == true;
 
         public ColonyModeService(ISingletonLoader singletonLoader)
         {
@@ -87,10 +67,7 @@ namespace BeaverBuddies.Colonies
         public void Load()
         {
             if (!_singletonLoader.TryGetSingleton(ColonyModeKey, out IObjectLoader loader)) return;
-            enabled = loader.Has(EnabledKey) && loader.Get(EnabledKey);
-            starts = loader.Has(StartsKey) ? loader.Get(StartsKey) : new List<Vector3Int>();
-            AwaitingFounding = loader.Has(AwaitingFoundingKey) && loader.Get(AwaitingFoundingKey);
-            FirstColonyStart = loader.Has(FirstStartKey) ? loader.Get(FirstStartKey) : (Vector3Int?)null;
+            Enabled = loader.Has(EnabledKey) && loader.Get(EnabledKey);
             if (loader.Has(AdultsKey))
             {
                 StartingSettings = new ColonyStartingSettings
@@ -105,18 +82,24 @@ namespace BeaverBuddies.Colonies
                     Water = loader.Get(WaterKey),
                 };
             }
-            Apply("loaded from the save");
+            if (loader.Has(LegacyStartsKey))
+            {
+                var starts = loader.Get(LegacyStartsKey).Select(s => new ColonyTile(s.x, s.y)).ToList();
+                if (starts.Count >= 2)
+                {
+                    LegacyTerritory = new ColonyTerritory(starts);
+                    Plugin.Log($"[Colony] Save from a land-split alpha: district centers get owners from its {starts.Count} starts");
+                }
+            }
+            Plugin.Log(Enabled ? "[Colony] Separate colonies: on in this save" : "[Colony] Separate colonies: off in this save");
         }
 
         public void Save(ISingletonSaver singletonSaver)
         {
             // A shared-colony game saves nothing, so its save is the same as before this mode existed.
-            if (!enabled) return;
+            if (!Enabled) return;
             IObjectSaver saver = singletonSaver.GetSingleton(ColonyModeKey);
-            saver.Set(EnabledKey, enabled);
-            saver.Set(StartsKey, starts);
-            saver.Set(AwaitingFoundingKey, AwaitingFounding);
-            if (FirstColonyStart.HasValue) saver.Set(FirstStartKey, FirstColonyStart.Value);
+            saver.Set(EnabledKey, Enabled);
             if (StartingSettings != null)
             {
                 saver.Set(AdultsKey, StartingSettings.Adults);
@@ -131,72 +114,14 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>
-        /// Turns the mode on for a new game with two or more starts. Called by the multi-start initializer before the
-        /// first starting building is placed, because new district centers read the mode for their trade defaults.
+        /// Turns separate colonies on: for a new game (before its first district center exists, which reads the mode
+        /// for its trade defaults), or when a colony is founded in a shared game.
         /// </summary>
-        public void Activate(IEnumerable<Vector3Int> startCoordinates, ColonyStartingSettings startingSettings)
+        public void Enable(ColonyStartingSettings startingSettings, string how)
         {
-            enabled = true;
-            AwaitingFounding = false;
-            starts = startCoordinates.ToList();
-            StartingSettings = startingSettings;
-            Apply("switched on for this new game");
-        }
-
-        /// <summary>
-        /// Turns the mode on for a new game with one start: the host's colony starts as usual and colony 2 is founded
-        /// later by its player (see ColonyFoundingService). Until then nothing is divided.
-        /// </summary>
-        public void ActivateAwaitingFounding(ColonyStartingSettings startingSettings)
-        {
-            enabled = true;
-            AwaitingFounding = true;
-            starts = new List<Vector3Int>();
-            StartingSettings = startingSettings;
-            Apply("switched on for this new game");
-        }
-
-        /// <summary>
-        /// The game placed (or moved, with its relocate option) colony 1's starting building. Only kept while colony 2
-        /// is awaited: that is the district center colony 1's land is measured from.
-        /// </summary>
-        public void RecordFirstColonyStart(Vector3Int coordinates)
-        {
-            if (!AwaitingFounding) return;
-            FirstColonyStart = coordinates;
-            Plugin.Log($"[Colony] Colony 1 starts at {coordinates}");
-        }
-
-        /// <summary>Colony 2 is founded: the land is divided between the two district centers from now on.</summary>
-        public void CompleteFounding(Vector3Int firstStart, Vector3Int secondStart, ColonyStartingSettings startingSettings)
-        {
-            // Also for a game that was never a separate-colonies game: founding makes it one.
-            enabled = true;
+            if (!Enabled) Plugin.Log($"[Colony] Separate colonies switched on: {how}");
+            Enabled = true;
             StartingSettings ??= startingSettings;
-            AwaitingFounding = false;
-            starts = new List<Vector3Int> { firstStart, secondStart };
-            Apply("completed by founding colony 2");
-        }
-
-        private void Apply(string how)
-        {
-            if (enabled && AwaitingFounding)
-            {
-                Territory = null;
-                Plugin.Log($"[Colony] Separate colonies {how}: one colony, waiting for colony 2 to be founded " +
-                           $"(it will start with {StartingSettings?.ToString() ?? "no recorded starting settings"})");
-                return;
-            }
-            var tiles = starts.Select(s => new ColonyTile(s.x, s.y)).ToList();
-            if (!ColonyModeState.IsUsable(enabled, tiles))
-            {
-                Territory = null;
-                if (enabled)
-                    Plugin.LogError($"[Colony] Separate colonies are on in this save but it has {tiles.Count} start(s); playing it as one shared colony");
-                return;
-            }
-            Territory = new ColonyTerritory(tiles);
-            Plugin.Log($"[Colony] Separate colonies {how}: {tiles.Count} colonies starting at {string.Join(", ", tiles)}");
         }
     }
 }

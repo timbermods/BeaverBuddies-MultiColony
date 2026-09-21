@@ -1,6 +1,5 @@
 using HarmonyLib;
 using System;
-using Timberborn.BlockSystem;
 using Timberborn.DistributionSystem;
 using Timberborn.GameDistricts;
 using Timberborn.GameDistrictsMigration;
@@ -8,20 +7,13 @@ using Timberborn.GameDistrictsMigration;
 namespace BeaverBuddies.Colonies
 {
     // These change the simulation, so they run the same way on every computer and read only saved state: the mode
-    // and start coordinates (ColonyModeService) and entity positions. With the mode off they do nothing.
+    // (ColonyModeService) and each district center's owner (DistrictOwner). With the mode off they do nothing.
 
     static class ColonyDistricts
     {
-        /// <summary>Whether automatic migration may move beavers between these two districts.</summary>
-        public static bool SameColony(ColonyTerritory territory, DistrictCenter a, DistrictCenter b)
-        {
-            BlockObject blockA = a?.GetComponent<BlockObject>();
-            BlockObject blockB = b?.GetComponent<BlockObject>();
-            // Without positions there is nothing to divide by; the game's behaviour stands.
-            if (blockA == null || blockB == null) return true;
-            return ColonyModeState.SameColony(territory,
-                ColonyGameWorld.TileOf(blockA.Coordinates), ColonyGameWorld.TileOf(blockB.Coordinates));
-        }
+        /// <summary>Whether automatic migration may move beavers between these two districts: only within a colony.</summary>
+        public static bool SameColony(DistrictCenter a, DistrictCenter b) =>
+            ColonyModeState.SameOwner(DistrictOwner.OwnerOfDistrict(a), DistrictOwner.OwnerOfDistrict(b));
     }
 
     [ManualMethodOverwrite]
@@ -36,19 +28,19 @@ namespace BeaverBuddies.Colonies
         }
         return populationDistributor2;
      */
-    // Districts joined by a District Crossing are connected, so the game would move beavers between the two
-    // colonies on its own. Same loop, same order; a district of another colony is skipped.
+    // Districts joined by a District Crossing are connected, so the game would move beavers between two players'
+    // colonies on its own. Same loop, same order; a district of another colony is skipped. (Moving beavers by hand
+    // to another colony stays possible: it is how a failing colony is rescued.)
     [HarmonyPatch(typeof(MigrationNeighbours), nameof(MigrationNeighbours.GetHighestSpareNeighbour))]
     static class MigrationNeighboursHighestSparePatcher
     {
         static bool Prefix(MigrationNeighbours __instance, PopulationDistributor populationDistributor, ref PopulationDistributor __result)
         {
-            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
-            if (territory == null) return true;
+            if (!ColonyModeService.IsSeparateColonies) return true;
             PopulationDistributor best = null;
             foreach (DistrictCenter item in __instance._districtConnections.GetDistrictsConnectedWith(populationDistributor.DistrictCenter))
             {
-                if (!ColonyDistricts.SameColony(territory, populationDistributor.DistrictCenter, item)) continue;
+                if (!ColonyDistricts.SameColony(populationDistributor.DistrictCenter, item)) continue;
                 PopulationDistributor other = populationDistributor.GetOtherDistrictPopulationDistributor(item);
                 if (other.CanEmigrate && (best == null || best.Spare < other.Spare))
                     best = other;
@@ -75,12 +67,11 @@ namespace BeaverBuddies.Colonies
     {
         static bool Prefix(MigrationNeighbours __instance, PopulationDistributor populationDistributor, ref PopulationDistributor __result)
         {
-            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
-            if (territory == null) return true;
+            if (!ColonyModeService.IsSeparateColonies) return true;
             PopulationDistributor best = null;
             foreach (DistrictCenter item in __instance._districtConnections.GetDistrictsConnectedWith(populationDistributor.DistrictCenter))
             {
-                if (!ColonyDistricts.SameColony(territory, populationDistributor.DistrictCenter, item)) continue;
+                if (!ColonyDistricts.SameColony(populationDistributor.DistrictCenter, item)) continue;
                 PopulationDistributor other = populationDistributor.GetOtherDistrictPopulationDistributor(item);
                 if (other.CanImmigrate && (best == null || best.Spare > other.Spare))
                     best = other;
@@ -90,23 +81,11 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    // Records where colony 1's starting building went, while colony 2 is awaited, so founding measures colony 1's land
-    // from its start and not from whichever district center it built later. Also sees the game's relocate option,
-    // which deletes the starting building and places it again. New game only; every computer loads the result.
-    [HarmonyPatch(typeof(Timberborn.GameStartup.StartingBuildingSpawner), "PlaceStartingBuilding")]
-    static class StartingBuildingSpawnerPlacePatcher
-    {
-        static void Postfix(Timberborn.Coordinates.Placement placement)
-        {
-            SingletonManager.GetSingleton<ColonyModeService>()?.RecordFirstColonyStart(placement.Coordinates);
-        }
-    }
-
     static class ColonyTradeDefaults
     {
         /// <summary>The import option a good starts with: the game's, or Disabled in a separate-colonies game.</summary>
         public static ImportOption DefaultImportOption(bool forceImport) =>
-            ColonyModeService.ActiveTerritory != null ? ImportOption.Disabled
+            ColonyModeService.IsSeparateColonies ? ImportOption.Disabled
             : forceImport ? ImportOption.Forced : ImportOption.Auto;
     }
 
@@ -129,7 +108,7 @@ namespace BeaverBuddies.Colonies
 
         static void Postfix(GoodDistributionSetting __instance, bool __runOriginal)
         {
-            if (!__runOriginal || ColonyModeService.ActiveTerritory == null) return;
+            if (!__runOriginal || !ColonyModeService.IsSeparateColonies) return;
             if (__instance.ImportOption == ImportOption.Disabled) return;
             __instance.ImportOption = ImportOption.Disabled;
             // Listeners already heard about the game's default; tell them about the one that stands.

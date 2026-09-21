@@ -278,7 +278,7 @@ namespace BeaverBuddies
             if (behavior == UserEventBehavior.QueuePlay)
             {
                 // The host's own action. A guest's is numbered by the host when it arrives (see TimberServer).
-                replayEvent.player = ColonySeats.HostPlayer;
+                replayEvent.player = ColonySession.HostPlayer;
                 eventsToPlay.Enqueue(replayEvent);
             }
             else
@@ -323,8 +323,6 @@ namespace BeaverBuddies
                 replayEvent.ticksSinceLoad = ticksSinceLoad;
                 eventsToReplay.Add(replayEvent);
             }
-
-            if (io is ServerEventIO) ColonyRulesService.BeginHostBatch(eventsToReplay);
 
             int currentTick = ticksSinceLoad;
             ReplayExecution.Run(eventsToReplay, replayEvent =>

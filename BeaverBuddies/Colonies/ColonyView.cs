@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Timberborn.BaseComponentSystem;
 using Timberborn.BatchControl;
-using Timberborn.BlockSystem;
 using Timberborn.CoreUI;
 using Timberborn.EntitySystem;
 using Timberborn.GameDistricts;
@@ -57,34 +56,27 @@ namespace BeaverBuddies.Colonies
         public static ColonyViewService Instance => SingletonManager.GetSingleton<ColonyViewService>();
 
         /// <summary>
-        /// True when this computer shows only its own colony: a separate-colonies game in a co-op session. Alone, one
-        /// person plays every colony and sees them all, as in the game.
+        /// True when this computer shows only its own colony: a separate-colonies game in a co-op session, once this
+        /// player is seated. Alone, one person plays every colony and sees them all, as in the game.
         /// </summary>
-        public static bool Active => ColonyModeService.ActiveTerritory != null && !EventIO.IsNull && Instance != null;
+        public static bool Active =>
+            ColonyModeService.IsSeparateColonies && !EventIO.IsNull && ColonySession.LocalSlot >= 0 && Instance != null;
 
         public static bool IsOwnDistrict(DistrictCenter districtCenter)
         {
-            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
-            BlockObject blockObject = districtCenter ? districtCenter.GetComponent<BlockObject>() : null;
-            if (territory == null || blockObject == null) return true;
-            return territory.OwnerOf(ColonyGameWorld.TileOf(blockObject.Coordinates)) == ColonySession.LocalColony;
+            int? owner = DistrictOwner.OwnerOfDistrict(districtCenter);
+            return owner == null || owner.Value == ColonySession.LocalSlot;
         }
 
         /// <summary>
-        /// Whether a thing belongs to this player's colony: a beaver or bot by its district, anything placed by the
-        /// land it stands on. Something that is neither (a beaver between districts, say) is shown to everyone.
+        /// Whether a thing belongs to this player's colony: through its district (a building's, a beaver's). Something
+        /// in no district is shown to everyone.
         /// </summary>
         public static bool IsOwn(BaseComponent component)
         {
             if (!component) return true;
-            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
-            if (territory == null) return true;
-            Citizen citizen = component.GetComponent<Citizen>();
-            if (citizen != null) return !citizen.AssignedDistrict || IsOwnDistrict(citizen.AssignedDistrict);
-            BlockObject blockObject = component.GetComponent<BlockObject>();
-            if (blockObject != null)
-                return territory.OwnerOf(ColonyGameWorld.TileOf(blockObject.Coordinates)) == ColonySession.LocalColony;
-            return true;
+            int? owner = DistrictOwner.OwnerOf(component);
+            return owner == null || owner.Value == ColonySession.LocalSlot;
         }
 
         public List<DistrictCenter> OwnDistricts() =>

@@ -102,13 +102,6 @@ namespace BeaverBuddies
             new(true, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.SeparateColonies")
                 .SetLocalizedTooltip("BeaverBuddies.Settings.SeparateColonies.Tooltip"));
 
-        public LimitedStringModSetting HostColony { get; } =
-            new(0, new[] {
-                new LimitedStringModSettingValue("1", "BeaverBuddies.Settings.HostColony.1"),
-                new LimitedStringModSettingValue("2", "BeaverBuddies.Settings.HostColony.2")
-            }, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.HostColony")
-                .SetLocalizedTooltip("BeaverBuddies.Settings.HostColony.Tooltip"));
-
         // ---- Connection Panel ----
 
         public LimitedStringModSetting ConnectionPanelDisplay { get; } =
@@ -204,9 +197,6 @@ namespace BeaverBuddies
         /// <summary>New multi-start games get one colony per start, each controlled by one player. Read when the game is created.</summary>
         public static bool SeparateColoniesForNewGames => instance?.SeparateColonies.Value ?? true;
 
-        /// <summary>The colony the host plays in a separate-colonies game (1 or 2). Guests play the other.</summary>
-        public static int HostColonyValue =>
-            BeaverBuddies.Colonies.ColonySeats.Normalize(int.TryParse(instance?.HostColony?.Value, out int colony) ? colony : 1);
 
         public static PanelDisplayMode ConnectionPanelDisplayMode =>
             ParseChoice(instance?.ConnectionPanelDisplay?.Value, PanelDisplayMode.Expanded);

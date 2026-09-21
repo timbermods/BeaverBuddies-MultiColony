@@ -60,8 +60,8 @@ namespace BeaverBuddies.Events
 
     class ManualMigrationEvent : ReplayEvent
     {
-        // Both districts must be yours: this is what keeps beavers from being sent to the other colony.
-        public override ColonyScope GetColonyScope() => ColonyScope.Entities(fromDistrictID, toDistrictID);
+        // The beavers must leave one of your districts; they may go to another colony's (a rescue).
+        public override ColonyScope GetColonyScope() => ColonyScope.Migration(fromDistrictID, toDistrictID);
 
         public string fromDistrictID;
         public string toDistrictID;

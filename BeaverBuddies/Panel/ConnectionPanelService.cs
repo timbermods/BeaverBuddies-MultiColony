@@ -332,7 +332,11 @@ namespace BeaverBuddies.Panel
             {
                 string format = BeaverBuddies.Util.RegisteredLocalizationService.T("BeaverBuddies.Colony.PanelName");
                 foreach (var player in result.Players)
-                    player.Name = string.Format(format, player.Name, BeaverBuddies.Colonies.ColonySession.ColonyOfPlayer(player.Id));
+                {
+                    // Colonies are shown numbered from 1; a player not seated yet has no number.
+                    int slot = BeaverBuddies.Colonies.ColonySession.SlotOfPlayer(player.Id);
+                    if (slot >= 0) player.Name = string.Format(format, player.Name, slot + 1);
+                }
             }
             return result;
         }

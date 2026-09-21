@@ -25,6 +25,11 @@ namespace BeaverBuddies.Events
         /// value is replaced when the host receives it) and sent on with the event. Only separate colonies read it.
         /// </summary>
         public int player;
+        /// <summary>
+        /// The colony slot the actor plays, written by the host just before it plays the event, so every computer's
+        /// replay uses the same one. -1 when not known (outside a hosted session).
+        /// </summary>
+        public int slot = -1;
 
         public string type => GetType().Name;
 

@@ -667,7 +667,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class DemolishButtonClickedEvent : ReplayEvent
     {
-        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+        // A District Crossing may be removed by either player.
+        public override ColonyScope GetColonyScope() => ColonyScope.Demolish(entityID);
 
         public string entityID;
         public bool mark;

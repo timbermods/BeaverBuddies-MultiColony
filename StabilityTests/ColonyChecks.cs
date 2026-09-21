@@ -73,25 +73,7 @@ static class ColonyChecks
             Equal(1, (int)got["events"]!["$values"]![0]![TimberNetBase.PLAYER_KEY]!);
         });
 
-        // ---- 3. seats ----
-
-        yield return ("Colony: the host plays its chosen colony and every guest plays the other", () =>
-        {
-            Equal(1, ColonySeats.ColonyOfPlayer(0, 1));
-            Equal(2, ColonySeats.ColonyOfPlayer(1, 1));
-            Equal(2, ColonySeats.ColonyOfPlayer(0, 2));
-            Equal(1, ColonySeats.ColonyOfPlayer(1, 2));
-            // A third player shares the guest colony.
-            Equal(2, ColonySeats.ColonyOfPlayer(2, 1));
-            Equal(1, ColonySeats.ColonyOfPlayer(5, 2));
-            // An event the host could not attribute controls nothing.
-            Equal(0, ColonySeats.ColonyOfPlayer(-1, 1));
-            Equal(1, ColonySeats.Normalize(0));
-            Equal(2, ColonySeats.Normalize(2));
-            Equal(1, ColonySeats.Normalize(7));
-        });
-
-        // ---- 4. territory ----
+        // ---- land division (only used now to give alpha saves' district centers their owners) ----
 
         yield return ("Colony: each tile belongs to the nearest start, ties to the lower colony, height ignored", () =>
         {
@@ -214,230 +196,155 @@ static class ColonyChecks
             }
         });
 
-        // ---- 6. saved mode state ----
+        // ---- player slots ----
 
-        yield return ("Colony: the mode is off without at least two starts", () =>
+        yield return ("Colony: a new player takes the lowest free slot and keeps it", () =>
         {
-            Check(!ColonyModeState.IsUsable(true, new ColonyTile[0]));
-            Check(!ColonyModeState.IsUsable(true, new[] { new ColonyTile(1, 1) }));
-            Check(!ColonyModeState.IsUsable(false, new[] { new ColonyTile(1, 1), new ColonyTile(9, 9) }));
-            Check(ColonyModeState.IsUsable(true, new[] { new ColonyTile(1, 1), new ColonyTile(9, 9) }));
-            Check(!ColonyModeState.IsUsable(true, null));
+            var table = new ColonySlotTable();
+            Equal<int?>(0, table.Resolve("steam:1", "Host"));
+            Equal<int?>(1, table.Resolve("steam:2", "Friend"));
+            // The same player, even under a new name, keeps their slot.
+            Equal<int?>(1, table.Resolve("steam:2", "Friend2"));
+            Equal("Friend2", table.NameOf(1));
+            Equal<int?>(0, table.SlotOf("steam:1"));
+            Equal<int?>(null, table.SlotOf("steam:3"));
         });
 
-        // ---- 7. entity and district actions ----
-
-        yield return ("Colony: an action on your own building or district is allowed", () =>
+        yield return ("Colony: with every slot taken, a new player is a helper and is not recorded", () =>
         {
-            var w = new FakeWorld().Put("mine", 12, 10).Put("dc1", 10, 10);
-            Check(ColonyRules.Judge(ColonyScope.Entities("mine"), 1, TwoColonies(), w, true).IsAllowed);
-            Check(ColonyRules.Judge(ColonyScope.Entities("dc1", "mine"), 1, TwoColonies(), w, true).IsAllowed);
+            var table = new ColonySlotTable();
+            for (int i = 0; i < ColonySlotTable.MaxSlots; i++) table.Resolve("p" + i, "P" + i);
+            Equal<int?>(null, table.Resolve("extra", "Extra"));
+            Equal(ColonySlotTable.MaxSlots, table.Entries.Count);
+            Equal<int?>(null, table.SlotOf("extra"));
         });
 
-        yield return ("Colony: an action on the other colony's building or district is refused", () =>
+        yield return ("Colony: the slot table survives its text form, whoever hosts", () =>
         {
-            var w = new FakeWorld().Put("theirs", 28, 10).Put("dc1", 10, 10).Put("dc2", 30, 10);
-            var v = ColonyRules.Judge(ColonyScope.Entities("theirs"), 1, TwoColonies(), w, true);
-            Equal(ColonyRefusal.OtherColony, v.Refusal);
-            // Manual migration names both districts: sending beavers to the other colony is refused.
-            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("dc1", "dc2"), 1, TwoColonies(), w, true).Refusal);
-            Check(ColonyRules.Judge(ColonyScope.Entities("dc2"), 2, TwoColonies(), w, true).IsAllowed);
+            var table = new ColonySlotTable();
+            table.Resolve("steam:1", "Host | one");
+            table.Resolve("local:abc", "Friend");
+            var copy = new ColonySlotTable();
+            copy.Set(ColonySlotTable.Decode(ColonySlotTable.Encode(table.Entries)));
+            Equal<int?>(0, copy.SlotOf("steam:1"));
+            Equal<int?>(1, copy.SlotOf("local:abc"));
+            // The friend hosts the same save next time: they are still slot 1, the first host still slot 0.
+            Equal<int?>(1, copy.Resolve("local:abc", "Friend"));
+            Equal<int?>(0, copy.Resolve("steam:1", "Host"));
+            // A slot freed in the table is reused for the next new player.
+            copy.Set(new[] { new ColonySlotEntry("local:abc", 1, "Friend") });
+            Equal<int?>(0, copy.Resolve("new", "New"));
         });
 
-        yield return ("Colony: a missing entity or empty id is left to the event to handle", () =>
+        yield return ("Colony: a damaged slot table keeps only sane, unique entries", () =>
         {
-            var w = new FakeWorld();
-            Check(ColonyRules.Judge(ColonyScope.Entities("gone", null!, ""), 1, TwoColonies(), w, true).IsAllowed);
-        });
-
-        yield return ("Colony: shared actions are always allowed, and a player without a colony may do nothing else", () =>
-        {
-            var w = new FakeWorld().Put("mine", 12, 10);
-            Check(ColonyRules.Judge(ColonyScope.Global, 0, TwoColonies(), w, true).IsAllowed);
-            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("mine"), 0, TwoColonies(), w, true).Refusal);
-        });
-
-        // ---- 8. placement ----
-
-        yield return ("Colony: a building wholly on your own land is allowed", () =>
-        {
-            var w = new FakeWorld().Foot("House", (5, 5), (6, 5), (5, 6), (6, 6));
-            Check(ColonyRules.Judge(ColonyScope.Place(Place("House")), 1, TwoColonies(), w, true).IsAllowed);
-        });
-
-        yield return ("Colony: a building with one tile across the border is refused", () =>
-        {
-            var w = new FakeWorld().Foot("House", (19, 5), (20, 5), (21, 5));
-            Equal(ColonyRefusal.OutsideLand, ColonyRules.Judge(ColonyScope.Place(Place("House")), 1, TwoColonies(), w, true).Refusal);
-            // The same building is also on colony 1's land, so colony 2 cannot place it either.
-            Equal(ColonyRefusal.OutsideLand, ColonyRules.Judge(ColonyScope.Place(Place("House")), 2, TwoColonies(), w, true).Refusal);
-        });
-
-        yield return ("Colony: the strip takes a District Crossing half but nothing else", () =>
-        {
-            var w = new FakeWorld().Foot("Path", (20, 5)).Foot("Crossing", (20, 5)).Crossing("Crossing")
-                .Foot("Crossing2", (21, 5)).Crossing("Crossing2").Foot("DeepCrossing", (19, 5), (20, 5)).Crossing("DeepCrossing");
-            Equal(ColonyRefusal.BorderStrip, ColonyRules.Judge(ColonyScope.Place(Place("Path")), 1, TwoColonies(), w, true).Refusal);
-            Check(ColonyRules.Judge(ColonyScope.Place(Place("Crossing")), 1, TwoColonies(), w, true).IsAllowed);
-            Check(ColonyRules.Judge(ColonyScope.Place(Place("Crossing2")), 2, TwoColonies(), w, true).IsAllowed);
-            // A half deeper than one tile may reach back into its own land.
-            Check(ColonyRules.Judge(ColonyScope.Place(Place("DeepCrossing")), 1, TwoColonies(), w, true).IsAllowed);
-        });
-
-        yield return ("Colony: one click places a crossing pair, and the half across the border must be back to back with yours", () =>
-        {
-            // The game places both halves at once. Colony 1's half is at x = 20; the other half faces it from x = 21.
-            var w = new FakeWorld()
-                .Foot("Near", (20, 5), (20, 6), (20, 7)).Crossing("Near").Back("Near", 1, 0)
-                .Foot("Far", (21, 5), (21, 6), (21, 7)).Crossing("Far").Back("Far", -1, 0)
-                .Foot("FacingAway", (21, 5), (21, 6), (21, 7)).Crossing("FacingAway").Back("FacingAway", 1, 0)
-                .Foot("Deep", (25, 5), (25, 6), (25, 7)).Crossing("Deep").Back("Deep", -1, 0)
-                .Foot("NoBack", (21, 5)).Crossing("NoBack")
-                .Foot("Path", (21, 5)).Back("Path", -1, 0)
-                .Foot("Straddling", (20, 5), (21, 5)).Crossing("Straddling").Back("Straddling", 0, 1)
-                .StandingCrossing((20, 5), (20, 6), (20, 7));
-            Check(ColonyRules.Judge(ColonyScope.Place(Place("Near")), 1, TwoColonies(), w, true).IsAllowed);
-            Check(ColonyRules.Judge(ColonyScope.Place(Place("Far")), 1, TwoColonies(), w, true).IsAllowed);
-            // Colony 2 placing the same pair from its side: its own half ("Far") is fine; the half on colony 1's
-            // side needs colony 2's half behind it, which this world does not have yet.
-            Equal(ColonyRefusal.OutsideLand, ColonyRules.Judge(ColonyScope.Place(Place("Near")), 2, TwoColonies(), w, true).Refusal);
-            Check(ColonyRules.Judge(ColonyScope.Place(Place("Far")), 2, TwoColonies(), w, true).IsAllowed);
-            // For colony 2 the half across the border is "Near", backed by colony 2's half at x = 21.
-            Check(ColonyRules.Judge(ColonyScope.Place(Place("Near")), 2, TwoColonies(),
-                new FakeWorld().Foot("Near", (20, 5), (20, 6), (20, 7)).Crossing("Near").Back("Near", 1, 0).StandingCrossing((21, 5), (21, 6), (21, 7)), true).IsAllowed);
-            // A half on the other side that does not face your border, or stands inside their land, is refused.
-            Equal(ColonyRefusal.OutsideLand, ColonyRules.Judge(ColonyScope.Place(Place("FacingAway")), 1, TwoColonies(), w, true).Refusal);
-            Equal(ColonyRefusal.OutsideLand, ColonyRules.Judge(ColonyScope.Place(Place("Deep")), 1, TwoColonies(), w, true).Refusal);
-            Equal(ColonyRefusal.OutsideLand, ColonyRules.Judge(ColonyScope.Place(Place("NoBack")), 1, TwoColonies(), w, true).Refusal);
-            // A half on the other side with no half of yours behind it (the game placed it alone) is refused.
-            var lone = new FakeWorld().Foot("Far", (21, 5), (21, 6), (21, 7)).Crossing("Far").Back("Far", -1, 0);
-            Equal(ColonyRefusal.OutsideLand, ColonyRules.Judge(ColonyScope.Place(Place("Far")), 1, TwoColonies(), lone, true).Refusal);
-            // A half must stand wholly on one side.
-            Equal(ColonyRefusal.OutsideLand, ColonyRules.Judge(ColonyScope.Place(Place("Straddling")), 1, TwoColonies(), w, true).Refusal);
-            // Only a crossing may reach across: a path with the same geometry is refused.
-            Equal(ColonyRefusal.OutsideLand, ColonyRules.Judge(ColonyScope.Place(Place("Path")), 1, TwoColonies(), w, true).Refusal);
-        });
-
-        yield return ("Colony: a building whose footprint cannot be worked out is refused", () =>
-        {
-            Equal(ColonyRefusal.UnknownFootprint, ColonyRules.Judge(ColonyScope.Place(Place("Unknown")), 1, TwoColonies(), new FakeWorld(), true).Refusal);
-        });
-
-        // ---- 9. area actions ----
-
-        yield return ("Colony: an area across the border is cut down to your own tiles, in order", () =>
-        {
-            var tiles = new List<(int x, int y, int z)> { (18, 1, 3), (21, 1, 3), (19, 1, 4), (25, 2, 3), (20, 2, 3) };
-            var scope = ColonyScope.TileList(tiles, t => new ColonyTile(t.x, t.y));
-            var judged = ColonyRules.Judge(scope, 1, TwoColonies(), new FakeWorld(), false);
-            Check(judged.IsAllowed); Equal(2, judged.Removed);
-            // Judging without rewriting leaves the list alone (a guest's own check).
-            Equal(5, tiles.Count);
-            var v = ColonyRules.Judge(scope, 1, TwoColonies(), new FakeWorld(), true);
-            Check(v.IsAllowed); Equal(2, v.Removed);
-            Check(tiles.SequenceEqual(new List<(int, int, int)> { (18, 1, 3), (19, 1, 4), (20, 2, 3) }));
-        });
-
-        yield return ("Colony: an entity list keeps your own and missing entities, in order", () =>
-        {
-            var w = new FakeWorld().Put("a", 1, 1).Put("b", 29, 1).Put("c", 2, 2);
-            var ids = new List<string> { "b", "a", "gone", "c" };
-            var v = ColonyRules.Judge(ColonyScope.EntityList(ids, id => id), 1, TwoColonies(), w, true);
-            Check(v.IsAllowed); Equal(1, v.Removed);
-            Check(ids.SequenceEqual(new[] { "a", "gone", "c" }));
-        });
-
-        yield return ("Colony: an area wholly on the other colony's land is refused", () =>
-        {
-            var tiles = new List<ColonyTile> { new(25, 1), new(26, 1) };
-            var v = ColonyRules.Judge(ColonyScope.TileList(tiles, t => t), 1, TwoColonies(), new FakeWorld(), true);
-            Equal(ColonyRefusal.NothingOwn, v.Refusal);
-            Equal(2, tiles.Count);
-            var w = new FakeWorld().Put("b", 29, 1);
-            Equal(ColonyRefusal.NothingOwn, ColonyRules.Judge(ColonyScope.EntityList(new List<string> { "b" }, id => id), 1, TwoColonies(), w, true).Refusal);
-            // An empty list is nobody's: the event does nothing either way.
-            Check(ColonyRules.Judge(ColonyScope.TileList(new List<ColonyTile>(), t => t), 1, TwoColonies(), w, true).IsAllowed);
-        });
-
-        // ---- founding colony 2 on a one-start map ----
-
-        yield return ("Colony: colony 2 may be founded in any save until it exists, if the save or the host allows it", () =>
-        {
-            // A save created to await colony 2, whatever the host's setting.
-            Check(ColonyModeState.FoundingOpen(alreadyDivided: false, saveAwaitsFounding: true, hostAllows: false));
-            // Any other save (shared, older, created with the setting off) when the host allows it.
-            Check(ColonyModeState.FoundingOpen(false, false, true));
-            // A shared game whose host keeps separate colonies off stays shared.
-            Check(!ColonyModeState.FoundingOpen(false, false, false));
-            // Once: never when the land is already divided (two-start game, or colony 2 already founded).
-            Check(!ColonyModeState.FoundingOpen(true, false, true));
-            Check(!ColonyModeState.FoundingOpen(true, true, true));
-        });
-
-        yield return ("Colony: before colony 2 is founded, colony 1 acts freely and colony 2 may only share", () =>
-        {
-            Check(ColonyRules.JudgeWhileFounding(ColonyScope.Entities("x"), 1).IsAllowed);
-            Check(ColonyRules.JudgeWhileFounding(ColonyScope.Place(Place("House")), 1).IsAllowed);
-            Check(ColonyRules.JudgeWhileFounding(ColonyScope.Global, 2).IsAllowed);
-            Equal(ColonyRefusal.NotFounded, ColonyRules.JudgeWhileFounding(ColonyScope.Entities("x"), 2).Refusal);
-            Equal(ColonyRefusal.NotFounded, ColonyRules.JudgeWhileFounding(ColonyScope.Place(Place("House")), 2).Refusal);
-            Equal(ColonyRefusal.NotFounded, ColonyRules.JudgeWhileFounding(ColonyScope.TileList(new List<ColonyTile>(), t => t), 2).Refusal);
-        });
-
-        yield return ("Colony: colony 2 is founded where colony 1's buildings all stay on colony 1's side", () =>
-        {
-            var first = new ColonyTile(10, 10);
-            var colonyOneBuildings = new List<IReadOnlyList<ColonyTile>>
+            var table = new ColonySlotTable();
+            table.Set(new[]
             {
-                Tiles((9, 9), (10, 9), (11, 9)), // its district center
-                Tiles((14, 10)),                 // a path towards the east
-            };
-            // Far to the east: the border falls at x = 30, well clear of x = 14.
-            Check(ColonyRules.JudgeFounding(2, first, new ColonyTile(50, 10), Tiles((50, 10), (51, 10), (52, 10)), colonyOneBuildings).IsAllowed);
-            // Close: from x = 18 the border falls between x = 14 and 15, putting the path on the strip.
-            Equal(ColonyRefusal.FoundingTooClose,
-                ColonyRules.JudgeFounding(2, first, new ColonyTile(18, 10), Tiles((18, 10)), colonyOneBuildings).Refusal);
-            // From x = 20 the border falls between x = 15 and 16, so the path at x = 14 is just clear.
-            Check(ColonyRules.JudgeFounding(2, first, new ColonyTile(20, 10), Tiles((20, 10)), colonyOneBuildings).IsAllowed);
-            // Right next to colony 1: its own district center would end up in colony 2.
-            Equal(ColonyRefusal.FoundingTooClose,
-                ColonyRules.JudgeFounding(2, first, new ColonyTile(11, 10), Tiles((11, 10)), colonyOneBuildings).Refusal);
+                new ColonySlotEntry("a", 0, "A"), new ColonySlotEntry("a", 1, "A again"),
+                new ColonySlotEntry("b", 0, "B on a taken slot"), new ColonySlotEntry("c", 9, "C"),
+                new ColonySlotEntry("", 2, "nobody"), new ColonySlotEntry("d", 3, "D"),
+            });
+            Equal(2, table.Entries.Count);
+            Equal<int?>(0, table.SlotOf("a"));
+            Equal<int?>(3, table.SlotOf("d"));
+            Equal(0, ColonySlotTable.Decode("garbage\n|x").Count);
         });
 
-        yield return ("Colony: the new district center must stand wholly inside colony 2, off the strip", () =>
+        // ---- who may change what ----
+
+        yield return ("Colony: your own things, and things in no district, are yours to change", () =>
         {
-            var first = new ColonyTile(10, 10);
-            var none = new List<IReadOnlyList<ColonyTile>>();
-            // Start at x = 30 (border at x = 20/21), but the building reaches back to x = 21, the strip.
-            Equal(ColonyRefusal.FoundingTooClose,
-                ColonyRules.JudgeFounding(2, first, new ColonyTile(30, 10), Tiles((30, 10), (21, 10)), none).Refusal);
-            Check(ColonyRules.JudgeFounding(2, first, new ColonyTile(30, 10), Tiles((30, 10), (29, 10)), none).IsAllowed);
+            var w = new FakeWorld().Own("mine", 1).Own("dc1", 1);
+            Check(ColonyRules.Judge(ColonyScope.Entities("mine", "dc1"), 1, w, Present(0, 1), true).IsAllowed);
+            // A tree, a building cut off from roads: nobody's.
+            Check(ColonyRules.Judge(ColonyScope.Entities("loose"), 1, w, Present(0, 1), true).IsAllowed);
+            // Missing and empty ids are left to the event.
+            Check(ColonyRules.Judge(ColonyScope.Entities("gone", null!, ""), 1, w, Present(0, 1), true).IsAllowed);
         });
 
-        yield return ("Colony: only colony 2's player can found, and only while colony 1 has a district center", () =>
+        yield return ("Colony: another player's things are refused while they play, and editable while they are away", () =>
         {
-            var none = new List<IReadOnlyList<ColonyTile>>();
-            Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(1, new ColonyTile(0, 0), new ColonyTile(50, 0), Tiles((50, 0)), none).Refusal);
-            Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(0, new ColonyTile(0, 0), new ColonyTile(50, 0), Tiles((50, 0)), none).Refusal);
-            Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(2, null, new ColonyTile(50, 0), Tiles((50, 0)), none).Refusal);
-            Equal(ColonyRefusal.UnknownFootprint, ColonyRules.JudgeFounding(2, new ColonyTile(0, 0), new ColonyTile(50, 0), Tiles(), none).Refusal);
-            // Once the land is divided, colony 2 exists: founding again is refused by the ordinary rules.
-            Equal(ColonyRefusal.CannotFound, ColonyRules.Judge(ColonyScope.Found(Place("")), 2, TwoColonies(), new FakeWorld(), true).Refusal);
+            var w = new FakeWorld().Own("theirs", 0);
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("theirs"), 1, w, Present(0, 1), true).Refusal);
+            Check(ColonyRules.Judge(ColonyScope.Entities("theirs"), 1, w, Present(1), true).IsAllowed);
+            // A player not seated yet (slot -1) may change nothing that is owned.
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("theirs"), -1, w, Present(0), true).Refusal);
         });
 
-        // ---- 10. automatic migration between colonies ----
-
-        yield return ("Colony: automatic migration only pairs districts of one colony", () =>
+        yield return ("Colony: anyone may demolish a District Crossing, but not run the other side's half", () =>
         {
-            var t = TwoColonies();
-            Check(ColonyModeState.SameColony(t, new ColonyTile(10, 10), new ColonyTile(15, 3)));
-            Check(!ColonyModeState.SameColony(t, new ColonyTile(10, 10), new ColonyTile(30, 10)));
-            // With the mode off there is no territory, and every pair is allowed as in the game.
-            Check(ColonyModeState.SameColony(null, new ColonyTile(10, 10), new ColonyTile(30, 10)));
+            var w = new FakeWorld().Own("crossingB", 0).Crossing("crossingB").Own("houseB", 0);
+            Check(ColonyRules.Judge(ColonyScope.Demolish("crossingB"), 1, w, Present(0, 1), true).IsAllowed);
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("crossingB"), 1, w, Present(0, 1), true).Refusal);
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Demolish("houseB"), 1, w, Present(0, 1), true).Refusal);
+        });
+
+        yield return ("Colony: beavers may be sent to another colony, but not taken from it", () =>
+        {
+            var w = new FakeWorld().Own("dcA", 0).Own("dcB", 1);
+            Check(ColonyRules.Judge(ColonyScope.Migration("dcB", "dcA"), 1, w, Present(0, 1), true).IsAllowed);
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Migration("dcA", "dcB"), 1, w, Present(0, 1), true).Refusal);
+        });
+
+        yield return ("Colony: building is allowed anywhere, if your colony has it unlocked", () =>
+        {
+            var w = new FakeWorld().Locked(1, "Observatory");
+            Check(ColonyRules.Judge(ColonyScope.Place(Place("House")), 1, w, Present(0, 1), true).IsAllowed);
+            Equal(ColonyRefusal.Locked, ColonyRules.Judge(ColonyScope.Place(Place("Observatory")), 1, w, Present(0, 1), true).Refusal);
+            Check(ColonyRules.Judge(ColonyScope.Place(Place("Observatory")), 0, w, Present(0, 1), true).IsAllowed);
+        });
+
+        yield return ("Colony: map areas are shared", () =>
+        {
+            var tiles = new List<(int, int, int)> { (1, 1, 1), (99, 99, 1) };
+            var scope = ColonyScope.TileList(tiles);
+            Check(ColonyRules.Judge(scope, 1, new FakeWorld(), Present(0, 1), true).IsAllowed);
+            Equal(2, tiles.Count);
+        });
+
+        yield return ("Colony: a list of things is cut down to yours and nobody's, in order", () =>
+        {
+            var w = new FakeWorld().Own("a", 1).Own("b", 0).Own("c", 1);
+            var ids = new List<string> { "b", "a", "loose", "c" };
+            var judged = ColonyRules.Judge(ColonyScope.EntityList(ids, id => id), 1, w, Present(0, 1), false);
+            Check(judged.IsAllowed); Equal(1, judged.Removed); Equal(4, ids.Count);
+            var v = ColonyRules.Judge(ColonyScope.EntityList(ids, id => id), 1, w, Present(0, 1), true);
+            Check(v.IsAllowed); Equal(1, v.Removed);
+            Check(ids.SequenceEqual(new[] { "a", "loose", "c" }));
+            Equal(ColonyRefusal.NothingOwn, ColonyRules.Judge(ColonyScope.EntityList(new List<string> { "b" }, id => id), 1, w, Present(0, 1), true).Refusal);
+            // Demolition lists may include a crossing.
+            var dem = new List<string> { "x" };
+            Check(ColonyRules.Judge(ColonyScope.EntityList(dem, id => id, demolition: true), 1, new FakeWorld().Own("x", 0).Crossing("x"), Present(0, 1), true).IsAllowed);
+        });
+
+        yield return ("Colony: shared actions are always allowed", () =>
+        {
+            Check(ColonyRules.Judge(ColonyScope.Global, -1, new FakeWorld(), Present(0), true).IsAllowed);
+        });
+
+        // ---- founding ----
+
+        yield return ("Colony: a player founds a colony once, where it joins no other colony's roads", () =>
+        {
+            Check(ColonyRules.JudgeFounding(actorHasSlot: true, actorOwnsDistrict: false, foundingAllowed: true, blocksValid: true, touchesOtherDistrict: false).IsAllowed);
+            Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(true, true, true, true, false).Refusal);
+            Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(false, false, true, true, false).Refusal);
+            Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(true, false, false, true, false).Refusal);
+            Equal(ColonyRefusal.Blocked, ColonyRules.JudgeFounding(true, false, true, false, false).Refusal);
+            Equal(ColonyRefusal.FoundingConflict, ColonyRules.JudgeFounding(true, false, true, true, true).Refusal);
+        });
+
+        // ---- automatic migration ----
+
+        yield return ("Colony: automatic migration only pairs districts of one owner", () =>
+        {
+            Check(ColonyModeState.SameOwner(0, 0));
+            Check(!ColonyModeState.SameOwner(0, 1));
+            Check(ColonyModeState.SameOwner(null, 1));
         });
     }
 
-    // A GroupedEvent as the mod's JSON settings write it: type names on, so the list is wrapped.
     static JObject TypedGroup(params JObject[] children) => new JObject
     {
         ["$type"] = "BeaverBuddies.GroupedEvent, BeaverBuddies",
@@ -450,33 +357,22 @@ static class ColonyChecks
         },
     };
 
-    static IReadOnlyList<ColonyTile> Tiles(params (int x, int y)[] tiles) => tiles.Select(t => new ColonyTile(t.x, t.y)).ToList();
-
     static ColonyPlacement Place(string template) => new ColonyPlacement { TemplateName = template };
+
+    static Func<int, bool> Present(params int[] slots) => slot => slots.Contains(slot);
 
     sealed class FakeWorld : IColonyWorld
     {
-        readonly Dictionary<string, ColonyTile> entities = new();
-        readonly Dictionary<string, List<ColonyTile>> footprints = new();
+        readonly Dictionary<string, int> owners = new();
         readonly HashSet<string> crossings = new();
-        readonly Dictionary<string, ColonyTile> backs = new();
-        readonly HashSet<ColonyTile> standing = new();
+        readonly HashSet<(int, string)> locked = new();
 
-        public FakeWorld Put(string id, int x, int y) { entities[id] = new ColonyTile(x, y); return this; }
-        public FakeWorld Foot(string template, params (int x, int y)[] tiles)
-        {
-            footprints[template] = tiles.Select(t => new ColonyTile(t.x, t.y)).ToList();
-            return this;
-        }
-        public FakeWorld Crossing(string template) { crossings.Add(template); return this; }
-        public FakeWorld Back(string template, int dx, int dy) { backs[template] = new ColonyTile(dx, dy); return this; }
-        public FakeWorld StandingCrossing(params (int x, int y)[] tiles) { foreach (var t in tiles) standing.Add(new ColonyTile(t.x, t.y)); return this; }
+        public FakeWorld Own(string id, int slot) { owners[id] = slot; return this; }
+        public FakeWorld Crossing(string id) { crossings.Add(id); return this; }
+        public FakeWorld Locked(int slot, string template) { locked.Add((slot, template)); return this; }
 
-        public ColonyTile? EntityTile(string entityId) => entities.TryGetValue(entityId, out var tile) ? tile : null;
-        public IReadOnlyList<ColonyTile> Footprint(ColonyPlacement placement) =>
-            footprints.TryGetValue(placement.TemplateName, out var tiles) ? tiles : null!;
-        public bool IsCrossing(string templateName) => crossings.Contains(templateName);
-        public bool HasCrossingAt(ColonyTile tile, int z) => standing.Contains(tile);
-        public ColonyTile? BackStep(ColonyPlacement placement) => backs.TryGetValue(placement.TemplateName, out var step) ? step : null;
+        public int? OwnerOf(string entityId) => owners.TryGetValue(entityId, out int slot) ? slot : null;
+        public bool IsCrossing(string entityId) => crossings.Contains(entityId);
+        public bool IsUnlockedFor(int slot, string templateName) => !locked.Contains((slot, templateName));
     }
 }

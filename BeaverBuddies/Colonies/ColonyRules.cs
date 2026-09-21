@@ -5,19 +5,21 @@ namespace BeaverBuddies.Colonies
 {
     public enum ColonyScopeKind
     {
-        /// <summary>Shared by everyone: speed, working hours, unlocks, chat-like events.</summary>
+        /// <summary>Shared by everyone: speed, working hours, chat-like events, map areas.</summary>
         Global,
-        /// <summary>Acts on named entities (buildings, district centers); each must be on the actor's land.</summary>
+        /// <summary>Acts on named entities; each must be the actor's, unowned, or owned by an absent player.</summary>
         Entities,
-        /// <summary>Places a building; every footprint tile must be the actor's, and the strip is for crossings only.</summary>
+        /// <summary>Moves beavers: the district they leave must be the actor's; they may go to anyone's.</summary>
+        Migration,
+        /// <summary>Places a building: allowed anywhere, if the actor's colony has it unlocked.</summary>
         Placement,
-        /// <summary>A list of tiles or entities that is filtered down to the actor's own.</summary>
+        /// <summary>A list of entities cut down to the ones the actor may act on.</summary>
         List,
-        /// <summary>Founds colony 2 on a map with one start; judged by the founding rules, once.</summary>
+        /// <summary>Founds a colony for a player who has none yet.</summary>
         Founding,
     }
 
-    /// <summary>Where a building would go, in the event's own terms. The world turns it into footprint tiles.</summary>
+    /// <summary>Where a building would go, in the event's own terms. The world turns it into what it needs.</summary>
     public sealed class ColonyPlacement
     {
         public string TemplateName;
@@ -32,9 +34,9 @@ namespace BeaverBuddies.Colonies
     {
         int Count { get; }
         /// <summary>Removes every item <paramref name="keep"/> rejects and returns how many were removed.</summary>
-        int Filter(Func<ColonyTarget, bool> keep);
+        int Filter(Func<string, bool> keep);
         /// <summary>Counts the items <paramref name="keep"/> accepts without changing the list.</summary>
-        int CountKept(Func<ColonyTarget, bool> keep);
+        int CountKept(Func<string, bool> keep);
     }
 
     /// <summary>What an event touches, declared by the event itself (see ReplayEvent.GetColonyScope).</summary>
@@ -44,6 +46,11 @@ namespace BeaverBuddies.Colonies
         public IReadOnlyList<string> EntityIds { get; private set; } = Array.Empty<string>();
         public ColonyPlacement Placement { get; private set; }
         public IColonyList List { get; private set; }
+        /// <summary>
+        /// A District Crossing belongs to no one: either player may remove it. Set on demolition actions only;
+        /// running a crossing half (workers, priority) stays with its district's owner.
+        /// </summary>
+        public bool CrossingsNeutral { get; private set; }
 
         public static readonly ColonyScope Global = new ColonyScope { Kind = ColonyScopeKind.Global };
 
@@ -51,57 +58,47 @@ namespace BeaverBuddies.Colonies
         public static ColonyScope Entities(params string[] entityIds) =>
             new ColonyScope { Kind = ColonyScopeKind.Entities, EntityIds = entityIds ?? Array.Empty<string>() };
 
+        /// <summary>Removing things: like <see cref="Entities"/>, but a District Crossing may be removed by anyone.</summary>
+        public static ColonyScope Demolish(params string[] entityIds) =>
+            new ColonyScope { Kind = ColonyScopeKind.Entities, EntityIds = entityIds ?? Array.Empty<string>(), CrossingsNeutral = true };
+
+        /// <summary>Beavers leave <paramref name="fromDistrictId"/> for <paramref name="toDistrictId"/>.</summary>
+        public static ColonyScope Migration(string fromDistrictId, string toDistrictId) =>
+            new ColonyScope { Kind = ColonyScopeKind.Migration, EntityIds = new[] { fromDistrictId, toDistrictId } };
+
         public static ColonyScope Place(ColonyPlacement placement) =>
             new ColonyScope { Kind = ColonyScopeKind.Placement, Placement = placement };
 
         public static ColonyScope Found(ColonyPlacement placement) =>
             new ColonyScope { Kind = ColonyScopeKind.Founding, Placement = placement };
 
-        public static ColonyScope TileList<T>(List<T> items, Func<T, ColonyTile> tileOf) =>
-            new ColonyScope { Kind = ColonyScopeKind.List, List = new ColonyList<T>(items, item => ColonyTarget.At(tileOf(item))) };
+        /// <summary>Map areas (trees to cut, crops to plant) are nobody's: resources near a border are shared.</summary>
+        public static ColonyScope TileList<T>(List<T> items) => Global;
 
-        public static ColonyScope EntityList<T>(List<T> items, Func<T, string> entityIdOf) =>
-            new ColonyScope { Kind = ColonyScopeKind.List, List = new ColonyList<T>(items, item => ColonyTarget.Entity(entityIdOf(item))) };
-    }
-
-    /// <summary>One item of a list scope: a tile, or an entity whose tile the world looks up.</summary>
-    public readonly struct ColonyTarget
-    {
-        public readonly ColonyTile Tile;
-        public readonly string EntityId;
-        public bool IsEntity => EntityId != null;
-
-        private ColonyTarget(ColonyTile tile, string entityId)
-        {
-            Tile = tile;
-            EntityId = entityId;
-        }
-
-        public static ColonyTarget At(ColonyTile tile) => new ColonyTarget(tile, null);
-        public static ColonyTarget Entity(string entityId) => new ColonyTarget(default, entityId ?? "");
+        public static ColonyScope EntityList<T>(List<T> items, Func<T, string> entityIdOf, bool demolition = false) =>
+            new ColonyScope { Kind = ColonyScopeKind.List, List = new ColonyList<T>(items, entityIdOf), CrossingsNeutral = demolition };
     }
 
     internal sealed class ColonyList<T> : IColonyList
     {
         private readonly List<T> items;
-        private readonly Func<T, ColonyTarget> targetOf;
+        private readonly Func<T, string> idOf;
 
-        public ColonyList(List<T> items, Func<T, ColonyTarget> targetOf)
+        public ColonyList(List<T> items, Func<T, string> idOf)
         {
             this.items = items ?? new List<T>();
-            this.targetOf = targetOf;
+            this.idOf = idOf;
         }
 
         public int Count => items.Count;
+        public int Filter(Func<string, bool> keep) => items.RemoveAll(item => !keep(idOf(item)));
 
-        public int Filter(Func<ColonyTarget, bool> keep) => items.RemoveAll(item => !keep(targetOf(item)));
-
-        public int CountKept(Func<ColonyTarget, bool> keep)
+        public int CountKept(Func<string, bool> keep)
         {
             int kept = 0;
             foreach (T item in items)
             {
-                if (keep(targetOf(item))) kept++;
+                if (keep(idOf(item))) kept++;
             }
             return kept;
         }
@@ -110,50 +107,33 @@ namespace BeaverBuddies.Colonies
     /// <summary>The game state the rules read. Implemented against the game in ColonyGameWorld, and by fakes in tests.</summary>
     public interface IColonyWorld
     {
-        /// <summary>The tile of the entity's block object, or null when it does not exist or has no position.</summary>
-        ColonyTile? EntityTile(string entityId);
+        /// <summary>The slot owning the entity (by its district), or null when it has no owner or does not exist.</summary>
+        int? OwnerOf(string entityId);
 
-        /// <summary>Every tile the building would occupy, or null when that cannot be worked out.</summary>
-        IReadOnlyList<ColonyTile> Footprint(ColonyPlacement placement);
+        /// <summary>True for a District Crossing half.</summary>
+        bool IsCrossing(string entityId);
 
-        /// <summary>True for a District Crossing half, the only building allowed on the border strip.</summary>
-        bool IsCrossing(string templateName);
-
-        /// <summary>
-        /// The step from a tile of the building to the tile behind it (where the other half of a crossing stands), or
-        /// null when that cannot be worked out.
-        /// </summary>
-        ColonyTile? BackStep(ColonyPlacement placement);
-
-        /// <summary>
-        /// True when a District Crossing half stands at this tile and height (or was just allowed there), so a half
-        /// placed across the border is really backed by the actor's own half. A world that cannot know (a preview,
-        /// or a player's own check before the pair is placed together) answers true; the host answers for real.
-        /// </summary>
-        bool HasCrossingAt(ColonyTile tile, int z);
+        /// <summary>Whether this slot's colony may build this building (always true without separate science).</summary>
+        bool IsUnlockedFor(int slot, string templateName);
     }
 
     public enum ColonyRefusal
     {
         None,
-        /// <summary>A named building or district belongs to another colony.</summary>
+        /// <summary>A named building or district belongs to another player who is playing now.</summary>
         OtherColony,
-        /// <summary>A building would stand, even partly, on another colony's land.</summary>
-        OutsideLand,
-        /// <summary>A building other than a District Crossing would stand on the border strip.</summary>
-        BorderStrip,
-        /// <summary>Nothing in an area action is on the actor's land.</summary>
+        /// <summary>Nothing in an area action is the actor's to change.</summary>
         NothingOwn,
-        /// <summary>The building's footprint could not be worked out, so it is not allowed.</summary>
-        UnknownFootprint,
-        /// <summary>Colony 2 has not been founded yet; its player can only found it.</summary>
-        NotFounded,
-        /// <summary>The new colony would take land where the first colony already has buildings.</summary>
-        FoundingTooClose,
-        /// <summary>Colony 2 exists already, this player does not play colony 2, or founding is not possible.</summary>
+        /// <summary>The actor's colony has not unlocked this building.</summary>
+        Locked,
+        /// <summary>This player already has a colony, founding is off, or the player has no slot.</summary>
         CannotFound,
         /// <summary>The spot is taken or the ground does not allow the building (checked when founding).</summary>
         Blocked,
+        /// <summary>A new colony's district center would join another colony's roads.</summary>
+        FoundingConflict,
+        /// <summary>Not enough science in the actor's colony.</summary>
+        NotEnoughScience,
     }
 
     public readonly struct ColonyVerdict
@@ -178,162 +158,96 @@ namespace BeaverBuddies.Colonies
     }
 
     /// <summary>
-    /// Decides whether a colony may do an action. Reads only: it never changes the world, and it changes a list
-    /// event only when <c>rewrite</c> is true (the host, just before the event is replayed and broadcast).
+    /// Decides whether a player may do an action. There is no territory: anyone may build anywhere. What belongs to a
+    /// colony is what its districts hold (a district center carries its owner's slot; buildings and beavers belong to
+    /// their district). A player may change only their own colony's things, anything that belongs to no district,
+    /// and the things of a player who is not playing right now (co-op: both colonies keep running).
+    ///
+    /// Reads only: it changes a list event only when <c>rewrite</c> is true (the host, before replaying it).
     /// </summary>
     public static class ColonyRules
     {
-        public static ColonyVerdict Judge(ColonyScope scope, int actorColony, ColonyTerritory territory,
-            IColonyWorld world, bool rewrite)
+        /// <summary>The actor may change something owned by <paramref name="owner"/>.</summary>
+        public static bool MayChange(int actorSlot, int? owner, Func<int, bool> isPresent) =>
+            owner == null || owner.Value == actorSlot || !isPresent(owner.Value);
+
+        public static ColonyVerdict Judge(ColonyScope scope, int actorSlot, IColonyWorld world,
+            Func<int, bool> isPresent, bool rewrite)
         {
-            if (scope == null || territory == null) return ColonyVerdict.Allow;
+            if (scope == null) return ColonyVerdict.Allow;
             switch (scope.Kind)
             {
                 case ColonyScopeKind.Entities:
                     foreach (string id in scope.EntityIds)
                     {
                         if (string.IsNullOrEmpty(id)) continue;
-                        ColonyTile? tile = world.EntityTile(id);
-                        // A missing entity is left to the event, which already handles it.
-                        if (tile == null) continue;
-                        int owner = territory.OwnerOf(tile.Value);
-                        if (owner != actorColony)
-                            return ColonyVerdict.Refuse(ColonyRefusal.OtherColony, $"{id} at {tile.Value} is colony {owner}'s");
+                        if (scope.CrossingsNeutral && world.IsCrossing(id)) continue;
+                        int? owner = world.OwnerOf(id);
+                        if (!MayChange(actorSlot, owner, isPresent))
+                            return ColonyVerdict.Refuse(ColonyRefusal.OtherColony, $"{id} belongs to slot {owner}");
                     }
                     return ColonyVerdict.Allow;
 
+                case ColonyScopeKind.Migration:
+                {
+                    string from = scope.EntityIds.Count > 0 ? scope.EntityIds[0] : null;
+                    // Sending beavers to another colony is allowed (it is how a failing colony is rescued); taking
+                    // them from another player's district is not.
+                    if (string.IsNullOrEmpty(from)) return ColonyVerdict.Allow;
+                    int? owner = world.OwnerOf(from);
+                    return MayChange(actorSlot, owner, isPresent)
+                        ? ColonyVerdict.Allow
+                        : ColonyVerdict.Refuse(ColonyRefusal.OtherColony, $"beavers of slot {owner}'s district {from}");
+                }
+
                 case ColonyScopeKind.Placement:
-                    return JudgePlacement(scope.Placement, actorColony, territory, world);
+                    if (scope.Placement != null && !world.IsUnlockedFor(actorSlot, scope.Placement.TemplateName))
+                        return ColonyVerdict.Refuse(ColonyRefusal.Locked, $"{scope.Placement.TemplateName} is locked for slot {actorSlot}");
+                    return ColonyVerdict.Allow;
 
                 case ColonyScopeKind.List:
-                    return JudgeList(scope.List, actorColony, territory, world, rewrite);
+                    return JudgeList(scope.List, scope.CrossingsNeutral, actorSlot, world, isPresent, rewrite);
 
                 case ColonyScopeKind.Founding:
-                    // With the land already divided, colony 2 exists.
-                    return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "colony 2 is already founded");
+                    // Judged by the founding service, which knows who has a colony already.
+                    return ColonyVerdict.Allow;
 
                 default:
                     return ColonyVerdict.Allow;
             }
         }
 
-        /// <summary>
-        /// A one-start game before colony 2 is founded: the first colony's player acts freely, and colony 2's player
-        /// may only do shared things (founding is judged by <see cref="JudgeFounding"/>).
-        /// </summary>
-        public static ColonyVerdict JudgeWhileFounding(ColonyScope scope, int actorColony)
-        {
-            if (scope == null || scope.Kind == ColonyScopeKind.Global || actorColony == 1) return ColonyVerdict.Allow;
-            return ColonyVerdict.Refuse(ColonyRefusal.NotFounded, $"colony {actorColony} is not founded yet");
-        }
-
-        /// <summary>
-        /// Where colony 2 may be founded. The land is then divided between the first colony's district center
-        /// (<paramref name="firstStart"/>) and the new one (<paramref name="newStart"/>), exactly as for two starts.
-        /// The new district center must stand wholly on colony 2's land off the strip, and every building the first
-        /// colony already has must stay wholly on colony 1's land off the strip, so founding never takes anything away.
-        /// </summary>
-        public static ColonyVerdict JudgeFounding(int actorColony, ColonyTile? firstStart, ColonyTile newStart,
-            IReadOnlyList<ColonyTile> newFootprint, IEnumerable<IReadOnlyList<ColonyTile>> existingBuildings)
-        {
-            if (actorColony != 2)
-                return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, $"colony {actorColony} cannot found colony 2");
-            if (firstStart == null)
-                return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the first colony has no district center");
-            if (newFootprint == null || newFootprint.Count == 0)
-                return ColonyVerdict.Refuse(ColonyRefusal.UnknownFootprint, "no footprint for the new district center");
-            var territory = new ColonyTerritory(new[] { firstStart.Value, newStart });
-            foreach (ColonyTile tile in newFootprint)
-            {
-                if (territory.OwnerOf(tile) != 2 || territory.IsStrip(tile))
-                    return ColonyVerdict.Refuse(ColonyRefusal.FoundingTooClose, $"the new district center at {tile} would not be inside colony 2");
-            }
-            foreach (IReadOnlyList<ColonyTile> building in existingBuildings)
-            {
-                foreach (ColonyTile tile in building)
-                {
-                    if (territory.OwnerOf(tile) != 1 || territory.IsStrip(tile))
-                        return ColonyVerdict.Refuse(ColonyRefusal.FoundingTooClose, $"colony 1's building at {tile} would be on colony 2's side or the border");
-                }
-            }
-            return ColonyVerdict.Allow;
-        }
-
-        private static ColonyVerdict JudgePlacement(ColonyPlacement placement, int actorColony,
-            ColonyTerritory territory, IColonyWorld world)
-        {
-            if (placement == null) return ColonyVerdict.Allow;
-            IReadOnlyList<ColonyTile> footprint = world.Footprint(placement);
-            if (footprint == null || footprint.Count == 0)
-                return ColonyVerdict.Refuse(ColonyRefusal.UnknownFootprint, $"no footprint for {placement.TemplateName}");
-            if (world.IsCrossing(placement.TemplateName))
-                return JudgeCrossing(placement, footprint, actorColony, territory, world);
-            foreach (ColonyTile tile in footprint)
-            {
-                int owner = territory.OwnerOf(tile);
-                if (owner != actorColony)
-                    return ColonyVerdict.Refuse(ColonyRefusal.OutsideLand, $"{placement.TemplateName} tile {tile} is colony {owner}'s");
-            }
-            foreach (ColonyTile tile in footprint)
-            {
-                if (territory.IsStrip(tile))
-                    return ColonyVerdict.Refuse(ColonyRefusal.BorderStrip, $"{placement.TemplateName} tile {tile} is on the border");
-            }
-            return ColonyVerdict.Allow;
-        }
-
-        /// <summary>
-        /// The game places a District Crossing as a pair with one click: two halves back to back. Each half must stand
-        /// wholly on one colony's land. A half on the actor's own land may stand anywhere there, strip included. A
-        /// half on another colony's land must stand on that colony's strip with the actor's own strip directly behind
-        /// every tile, and the actor's own crossing half must really stand there, so the pair straddles the border
-        /// and a lone half can never be pushed onto the other side. That half joins the other colony's district and
-        /// is built by its beavers, like any building on its land.
-        /// </summary>
-        private static ColonyVerdict JudgeCrossing(ColonyPlacement placement, IReadOnlyList<ColonyTile> footprint,
-            int actorColony, ColonyTerritory territory, IColonyWorld world)
-        {
-            int owner = territory.OwnerOf(footprint[0]);
-            foreach (ColonyTile tile in footprint)
-            {
-                if (territory.OwnerOf(tile) != owner)
-                    return ColonyVerdict.Refuse(ColonyRefusal.OutsideLand, $"{placement.TemplateName} would stand on both sides of the border");
-            }
-            if (owner == actorColony) return ColonyVerdict.Allow;
-            // Crossing halves are one tile deep (checked against the game's blueprint in 1.1.2.4), so the tile behind
-            // each tile of the half is one step back.
-            ColonyTile? back = world.BackStep(placement);
-            foreach (ColonyTile tile in footprint)
-            {
-                if (back == null || !territory.IsStrip(tile))
-                    return ColonyVerdict.Refuse(ColonyRefusal.OutsideLand, $"{placement.TemplateName} tile {tile} is colony {owner}'s");
-                var behind = new ColonyTile(tile.X + back.Value.X, tile.Y + back.Value.Y);
-                if (territory.OwnerOf(behind) != actorColony || !territory.IsStrip(behind))
-                    return ColonyVerdict.Refuse(ColonyRefusal.OutsideLand, $"{placement.TemplateName} tile {tile} is colony {owner}'s and not back to back with your border");
-                if (!world.HasCrossingAt(behind, placement.Z))
-                    return ColonyVerdict.Refuse(ColonyRefusal.OutsideLand, $"{placement.TemplateName} tile {tile} is colony {owner}'s and no crossing half of yours stands behind it");
-            }
-            return ColonyVerdict.Allow;
-        }
-
-        private static ColonyVerdict JudgeList(IColonyList list, int actorColony, ColonyTerritory territory,
-            IColonyWorld world, bool rewrite)
+        private static ColonyVerdict JudgeList(IColonyList list, bool crossingsNeutral, int actorSlot, IColonyWorld world,
+            Func<int, bool> isPresent, bool rewrite)
         {
             if (list == null || list.Count == 0) return ColonyVerdict.Allow;
             int total = list.Count;
-            Func<ColonyTarget, bool> keep = target =>
-            {
-                if (!target.IsEntity) return territory.OwnerOf(target.Tile) == actorColony;
-                if (target.EntityId.Length == 0) return true;
-                ColonyTile? tile = world.EntityTile(target.EntityId);
-                // A missing entity is kept: the event skips it itself.
-                return tile == null || territory.OwnerOf(tile.Value) == actorColony;
-            };
+            Func<string, bool> keep = id =>
+                string.IsNullOrEmpty(id)
+                || (crossingsNeutral && world.IsCrossing(id))
+                || MayChange(actorSlot, world.OwnerOf(id), isPresent);
             int kept = list.CountKept(keep);
-            if (kept == 0) return ColonyVerdict.Refuse(ColonyRefusal.NothingOwn, $"none of {total} items are colony {actorColony}'s");
+            if (kept == 0) return ColonyVerdict.Refuse(ColonyRefusal.NothingOwn, $"none of {total} items are slot {actorSlot}'s to change");
             int removed = total - kept;
             if (rewrite && removed > 0) list.Filter(keep);
             return ColonyVerdict.Kept(removed);
+        }
+
+        /// <summary>
+        /// Whether a player may found a colony now. Once per player: only a player whose slot owns no district center
+        /// yet. The save must be a separate-colonies game, or the host must allow it this session (founding turns a
+        /// shared game into one). The spot must be free and the new district center must not join another colony's
+        /// roads.
+        /// </summary>
+        public static ColonyVerdict JudgeFounding(bool actorHasSlot, bool actorOwnsDistrict, bool foundingAllowed,
+            bool blocksValid, bool touchesOtherDistrict)
+        {
+            if (!actorHasSlot) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "a helper plays another player's colony");
+            if (actorOwnsDistrict) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "this player already has a colony");
+            if (!foundingAllowed) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the host has not turned on separate colonies");
+            if (!blocksValid) return ColonyVerdict.Refuse(ColonyRefusal.Blocked, "the spot is taken or unsuitable");
+            if (touchesOtherDistrict) return ColonyVerdict.Refuse(ColonyRefusal.FoundingConflict, "it would join another district's roads");
+            return ColonyVerdict.Allow;
         }
     }
 }

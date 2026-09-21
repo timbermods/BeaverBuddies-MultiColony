@@ -69,7 +69,17 @@ namespace BeaverBuddies.Events
             {
                 builder.AddInitComponent(new DuplicationInit(duplicationSource));
             }
-            placer.Place(builder, placement);
+            // A district center belongs to whoever placed it (in a separate-colonies game; otherwise to slot 0). The
+            // slot was written into the event by the host, so every computer gives it the same owner.
+            Colonies.DistrictOwner.PendingSlot = Colonies.ColonyModeService.IsSeparateColonies ? System.Math.Max(0, slot) : 0;
+            try
+            {
+                placer.Place(builder, placement);
+            }
+            finally
+            {
+                Colonies.DistrictOwner.PendingSlot = null;
+            }
         }
 
         // Note: This may not catch every possible invalid placement (e.g. if terrain height changes or something)
@@ -130,7 +140,7 @@ namespace BeaverBuddies.Events
 
     class BuildingsDeconstructedEvent : ReplayEvent
     {
-        public override ColonyScope GetColonyScope() => ColonyScope.EntityList(entityIDs, id => id);
+        public override ColonyScope GetColonyScope() => ColonyScope.EntityList(entityIDs, id => id, demolition: true);
 
         public List<string> entityIDs = new List<string>();
 
@@ -182,7 +192,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class PlantingAreaMarkedEvent : ReplayEvent
     {
-        public override ColonyScope GetColonyScope() => ColonyScope.TileList(inputBlocks, block => new ColonyTile(block.x, block.y));
+        // Map areas are nobody's: crops and trees near a colony's buildings are shared.
+        public override ColonyScope GetColonyScope() => ColonyScope.TileList(inputBlocks);
 
         public List<Vector3Int> inputBlocks;
         public Ray ray;
@@ -246,7 +257,7 @@ namespace BeaverBuddies.Events
     [Serializable]
     class ClearResourcesMarkedEvent : ReplayEvent
     {
-        public override ColonyScope GetColonyScope() => ColonyScope.EntityList(blocks, id => id.ToString());
+        public override ColonyScope GetColonyScope() => ColonyScope.EntityList(blocks, id => id.ToString(), demolition: markForDemolition);
 
         public List<Guid> blocks;
         public Vector3Int start;
@@ -331,7 +342,7 @@ namespace BeaverBuddies.Events
     [Serializable]
     class TreeCuttingAreaEvent : ReplayEvent
     {
-        public override ColonyScope GetColonyScope() => ColonyScope.TileList(coordinates, tile => new ColonyTile(tile.x, tile.y));
+        public override ColonyScope GetColonyScope() => ColonyScope.TileList(coordinates);
 
         public List<Vector3Int> coordinates;
         public bool wasAdded;

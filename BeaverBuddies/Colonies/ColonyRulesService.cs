@@ -2,8 +2,6 @@ using BeaverBuddies.Events;
 using BeaverBuddies.IO;
 using BeaverBuddies.Util;
 using System;
-using Timberborn.BlockSystem;
-using Timberborn.Buildings;
 using Timberborn.EntitySystem;
 using Timberborn.QuickNotificationSystem;
 using Timberborn.SingletonSystem;
@@ -17,15 +15,12 @@ namespace BeaverBuddies.Colonies
     /// </summary>
     public class ColonyRulesService : RegisteredSingleton, ILoadableSingleton
     {
-        private readonly ColonyGameWorld hostWorld;
-        private readonly ColonyGameWorld localWorld;
+        private readonly ColonyGameWorld world;
         private readonly QuickNotificationService _quickNotificationService;
 
-        public ColonyRulesService(EntityRegistry entityRegistry, BuildingService buildingService, BlockService blockService,
-            QuickNotificationService quickNotificationService)
+        public ColonyRulesService(EntityRegistry entityRegistry, QuickNotificationService quickNotificationService)
         {
-            hostWorld = new ColonyGameWorld(entityRegistry, buildingService, blockService, checkCrossings: true);
-            localWorld = new ColonyGameWorld(entityRegistry, buildingService, blockService, checkCrossings: false);
+            world = new ColonyGameWorld(entityRegistry);
             _quickNotificationService = quickNotificationService;
         }
 
@@ -33,54 +28,33 @@ namespace BeaverBuddies.Colonies
         public void Load() { }
 
         /// <summary>
-        /// Host only, before a set of actions is judged one by one. A District Crossing arrives as two placements,
-        /// and the half across the border is only allowed when the placer's own half stands behind it. The own half
-        /// may come second, so every crossing half that stands wholly on its placer's own land is noted first.
-        /// </summary>
-        public static void BeginHostBatch(System.Collections.Generic.IReadOnlyList<ReplayEvent> replayEvents)
-        {
-            var service = SingletonManager.GetSingleton<ColonyRulesService>();
-            if (service == null) return;
-            service.hostWorld.ForgetCrossings();
-            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
-            if (territory == null) return;
-            foreach (ReplayEvent replayEvent in replayEvents)
-            {
-                try
-                {
-                    ColonyScope scope = replayEvent.GetColonyScope();
-                    if (scope?.Kind != ColonyScopeKind.Placement || scope.Placement == null) continue;
-                    if (!service.hostWorld.IsCrossing(scope.Placement.TemplateName)) continue;
-                    var footprint = service.hostWorld.Footprint(scope.Placement);
-                    if (footprint == null || footprint.Count == 0) continue;
-                    int colony = ColonySession.ColonyOfPlayer(replayEvent.player);
-                    bool own = true;
-                    foreach (ColonyTile tile in footprint) own &= territory.OwnerOf(tile) == colony;
-                    if (own) service.hostWorld.RememberCrossing(scope.Placement);
-                }
-                catch (Exception error)
-                {
-                    // Without the note the half across the border is refused, which is the safe side.
-                    Plugin.LogError($"[Colony] Could not note a crossing half of {replayEvent.type}: {error}");
-                }
-            }
-        }
-
-        /// <summary>
-        /// Host only, just before an event is replayed. False means refuse: do not replay it and do not send it on.
-        /// A list event may be shortened in place to the actor's own tiles or entities.
+        /// Host only, just before an event is replayed. Writes the actor's slot into the event (every computer's
+        /// replay then uses it), seats a player saying hello, and judges the action. False means refuse: do not
+        /// replay it and do not send it on. A list event may be shortened in place to what the actor may change.
         /// </summary>
         public static bool AllowOnHost(ReplayEvent replayEvent)
         {
-            // Founding is judged in every game: it is how a shared game becomes a separate-colonies one.
-            if (!ColonyModeService.IsSeparateColonies && !(replayEvent is FoundColonyEvent)) return true;
             var service = SingletonManager.GetSingleton<ColonyRulesService>();
             if (service == null) return true;
-            int colony = ColonySession.ColonyOfPlayer(replayEvent.player);
+            try
+            {
+                if (replayEvent is PlayerHelloEvent hello)
+                {
+                    ColonySlotService.Instance?.HostSeat(hello);
+                }
+                replayEvent.slot = ColonySession.SlotOfPlayer(replayEvent.player);
+            }
+            catch (Exception error)
+            {
+                Plugin.LogError($"[Colony] Could not seat or stamp {replayEvent.type}: {error}");
+            }
+
+            // Founding is judged in every game: it is how a shared game becomes a separate-colonies one.
+            if (!ColonyModeService.IsSeparateColonies && !(replayEvent is FoundColonyEvent)) return true;
             ColonyVerdict verdict;
             try
             {
-                verdict = service.Judge(replayEvent, colony, service.hostWorld, rewrite: true);
+                verdict = service.Judge(replayEvent, replayEvent.slot, rewrite: true);
             }
             catch (Exception error)
             {
@@ -90,11 +64,11 @@ namespace BeaverBuddies.Colonies
             }
             if (!verdict.IsAllowed)
             {
-                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player} (colony {colony}): {verdict.Refusal}, {verdict.Detail}");
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player} (slot {replayEvent.slot}): {verdict.Refusal}, {verdict.Detail}");
                 return false;
             }
             if (verdict.Removed > 0)
-                Plugin.Log($"[Colony] Kept only colony {colony}'s part of {replayEvent.type} from player {replayEvent.player}: removed {verdict.Removed}");
+                Plugin.Log($"[Colony] Kept only slot {replayEvent.slot}'s part of {replayEvent.type} from player {replayEvent.player}: removed {verdict.Removed}");
             return true;
         }
 
@@ -110,7 +84,7 @@ namespace BeaverBuddies.Colonies
             ColonyVerdict verdict;
             try
             {
-                verdict = service.Judge(replayEvent, ColonySession.LocalColony, service.localWorld, rewrite: false);
+                verdict = service.Judge(replayEvent, ColonySession.LocalSlot, rewrite: false);
             }
             catch (Exception error)
             {
@@ -124,7 +98,7 @@ namespace BeaverBuddies.Colonies
             return true;
         }
 
-        private ColonyVerdict Judge(ReplayEvent replayEvent, int colony, ColonyGameWorld world, bool rewrite)
+        private ColonyVerdict Judge(ReplayEvent replayEvent, int slot, bool rewrite)
         {
             ColonyScope scope;
             try
@@ -135,7 +109,7 @@ namespace BeaverBuddies.Colonies
             {
                 // A scope that cannot be read is treated as nobody's: better one refused action than a free one.
                 Plugin.LogError($"[Colony] Could not read the scope of {replayEvent.type}: {error}");
-                return ColonyVerdict.Refuse(ColonyRefusal.UnknownFootprint, "scope error");
+                return ColonyVerdict.Refuse(ColonyRefusal.OtherColony, "scope error");
             }
             if (scope == null)
             {
@@ -148,30 +122,13 @@ namespace BeaverBuddies.Colonies
             {
                 var founding = SingletonManager.GetSingleton<ColonyFoundingService>();
                 if (founding == null) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "no founding service");
-                return founding.Judge(colony, ColonyGameWorld.ToPlacement(scope.Placement));
+                return founding.Judge(slot, ColonyGameWorld.ToPlacement(scope.Placement));
             }
-            if (ColonyModeService.FoundingPending) return ColonyRules.JudgeWhileFounding(scope, colony);
-            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
-            if (territory == null) return ColonyVerdict.Allow;
-            return ColonyRules.Judge(scope, colony, territory, world, rewrite);
+            return ColonyRules.Judge(scope, slot, world, ColonySession.IsPresent, rewrite);
         }
 
         /// <summary>Shows the refusal in the game's own notification line.</summary>
-        public void Notify(ColonyRefusal refusal)
-        {
-            string key = refusal switch
-            {
-                ColonyRefusal.OutsideLand => "BeaverBuddies.Colony.Refused.OutsideLand",
-                ColonyRefusal.BorderStrip => "BeaverBuddies.Colony.Refused.BorderStrip",
-                ColonyRefusal.NothingOwn => "BeaverBuddies.Colony.Refused.NothingOwn",
-                ColonyRefusal.NotFounded => "BeaverBuddies.Colony.Refused.NotFounded",
-                ColonyRefusal.FoundingTooClose => "BeaverBuddies.Colony.Refused.FoundingTooClose",
-                ColonyRefusal.CannotFound => "BeaverBuddies.Colony.Founding.NotYours",
-                ColonyRefusal.Blocked => "BeaverBuddies.Colony.Refused.Blocked",
-                _ => "BeaverBuddies.Colony.Refused.OtherColony",
-            };
-            ShowNotice(RegisteredLocalizationService.T(key));
-        }
+        public void Notify(ColonyRefusal refusal) => ShowNotice(RefusalMessage(refusal));
 
         public void ShowNotice(string text)
         {
@@ -186,15 +143,16 @@ namespace BeaverBuddies.Colonies
             }
         }
 
-        /// <summary>The message a placement preview shows, in the player's language.</summary>
-        public static string RefusalMessage(ColonyRefusal refusal) => refusal switch
+        /// <summary>The message for a refusal, in the player's language.</summary>
+        public static string RefusalMessage(ColonyRefusal refusal) => RegisteredLocalizationService.T(refusal switch
         {
-            ColonyRefusal.BorderStrip => RegisteredLocalizationService.T("BeaverBuddies.Colony.Refused.BorderStrip"),
-            ColonyRefusal.NotFounded => RegisteredLocalizationService.T("BeaverBuddies.Colony.Refused.NotFounded"),
-            ColonyRefusal.FoundingTooClose => RegisteredLocalizationService.T("BeaverBuddies.Colony.Refused.FoundingTooClose"),
-            ColonyRefusal.CannotFound => RegisteredLocalizationService.T("BeaverBuddies.Colony.Founding.NotYours"),
-            ColonyRefusal.Blocked => RegisteredLocalizationService.T("BeaverBuddies.Colony.Refused.Blocked"),
-            _ => RegisteredLocalizationService.T("BeaverBuddies.Colony.Refused.OutsideLand"),
-        };
+            ColonyRefusal.NothingOwn => "BeaverBuddies.Colony.Refused.NothingOwn",
+            ColonyRefusal.Locked => "BeaverBuddies.Colony.Refused.Locked",
+            ColonyRefusal.CannotFound => "BeaverBuddies.Colony.Founding.NotYours",
+            ColonyRefusal.Blocked => "BeaverBuddies.Colony.Refused.Blocked",
+            ColonyRefusal.FoundingConflict => "BeaverBuddies.Colony.Refused.FoundingConflict",
+            ColonyRefusal.NotEnoughScience => "BeaverBuddies.Colony.Refused.NotEnoughScience",
+            _ => "BeaverBuddies.Colony.Refused.OtherColony",
+        });
     }
 }
