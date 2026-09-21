@@ -33,6 +33,7 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ColonyRules.cs" Link="ColonyRules.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ColonyModeState.cs" Link="ColonyModeState.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ExchangeTerms.cs" Link="ExchangeTerms.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/TradeOfferForm.cs" Link="TradeOfferForm.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ColonyReachGrid.cs" Link="ColonyReachGrid.cs" />
   </ItemGroup>
 </Project>

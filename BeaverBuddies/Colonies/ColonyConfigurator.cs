@@ -24,7 +24,8 @@ namespace BeaverBuddies.Colonies
             }
         }
 
-        // The trading post's panel, under a District Crossing's own.
+        // The trading post's panel, at the bottom of a District Crossing's (whose own district-distribution panels are
+        // hidden at a trading post: TradingPostPanelPatches.cs).
         private class EntityPanelModuleProvider : IProvider<EntityPanelModule>
         {
             private readonly TradingPostFragment _tradingPostFragment;
@@ -68,6 +69,7 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyLandOverlay>().AsSingleton();
             containerDefinition.Bind<TradeOverviewPanel>().AsSingleton();
             containerDefinition.Bind<ColonyDiagnostics>().AsSingleton();
+            containerDefinition.Bind<TradeItems>().AsSingleton();
             containerDefinition.Bind<TradingPostFragment>().AsSingleton();
             containerDefinition.MultiBind<EntityPanelModule>().ToProvider<EntityPanelModuleProvider>().AsSingleton();
             containerDefinition.MultiBind<IBlockObjectValidator>().To<ColonyPlacementValidator>().AsSingleton();

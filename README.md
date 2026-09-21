@@ -97,13 +97,17 @@ Steam): you get the same colony every time, whoever hosts. The connection panel 
 Build a **District Crossing** where your land meets another colony's: one half on each side of the edge, each
 reached by its own colony's road on its own land. You may place it when part of it is on your land (or free land).
 In a separate-colonies game it needs **no science and costs 10 logs**. Each colony's beavers run their own half.
+Between two colonies the crossing is a **Trading Post** and nothing else: its panel is titled so, and the game's
+district-distribution controls (the imported goods beside it, **Manage distribution**) are gone from it.
 
 Goods cross a trading post only through an **exchange** the two colonies agree on:
 
-1. **Make an offer.** Select the crossing. In the **Trading post** section at the bottom of its panel, click what you
-   give and what you ask for to choose from a grid of icons (with each colony's stock), and type the amounts (up to
-   9999). For example: *1000 logs for 250 gears*. **Ask for 0 to give a gift**; give 0 to ask for help. Turn
-   **Repeat** on for a standing deal that starts again each time it completes. Then **Make offer**.
+1. **Make an offer.** Select the trading post. Its panel has a **You give** and a **You get** card. Click the good on a
+   card to pick another from the game's goods grid, with each colony's stock (untick *Only what is in stock* to see
+   every good). Set the amounts with **−** and **+** (10 at a time, Shift for 100; beavers one at a time) or type them
+   (up to 9999). The line under the cards says what you are offering, e.g. *sarawr gets 1000 Logs, and you get 250
+   Gears*. **Set a side to 0** for a gift (or to ask for help). Tick **Repeat until cancelled** for a standing deal that
+   starts again each time it completes. Then **Make offer**.
 2. **The other player accepts** (or declines) on the same panel. They get a notice when you make the offer.
 3. **The beavers do the rest.** Each colony's crossing workers fetch their side's goods from their own storage and
    bring them to the crossing; the other colony's workers haul them away into theirs. Everything **moves in step**:
@@ -124,7 +128,8 @@ player is playing.
   halves, and keep storage room for what you receive, and houses for beavers.
 - **Import and export settings don't apply** at a trading post. They still move goods between your own districts,
   as in the game (with the bigger buffer: every crossing holds 100, in every game).
-- The panel also shows what has passed each way and, with separate science, **Give 50 / 250 science**.
+- The panel also shows each side's progress as a bar, what is waiting at the post, what has passed each way, and,
+  with separate science, **Gift science 50 / 250**.
 - Either player may remove a trading post.
 
 Details: [TWO-COLONIES.md](TWO-COLONIES.md#trading-posts).

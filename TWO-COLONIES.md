@@ -59,15 +59,20 @@ placer's land (or free land); the placer's builders build both halves. In a sepa
 
 **Goods cross a trading post only through an exchange** agreed by the two colonies. Import and export settings (the
 Distribution tab) do not move anything across a trading post; between one colony's own districts they work as in the
-game.
+game. So a crossing between two colonies is only a trading post, on screen too: its panel is titled **Trading Post**
+and describes it as one, and the game's district-distribution panels (the imported goods beside it with **Manage
+distribution**, and the crossing's own stock list) are not shown there.
 
 **An exchange** is "this many of one good for that many of another", for example *1000 logs for 250 gears*:
 
-1. **Offer.** Select either half of the crossing. The **Trading post** section at the bottom of its panel has the
-   offer form: *You give* and *You ask*, each with an item (click it for a grid of icons: science and beavers first,
-   then the goods the colony has, with its stock) and an amount from 0 to 9999. **Repeat** makes it a standing deal.
-   **Make offer.** One side may be 0: asking for 0 is a gift, giving 0 asks for help. The other player gets a notice.
-2. **Answer.** The other colony's player selects the crossing and chooses **Accept** or **Decline**. The offering
+1. **Offer.** Select either half of the trading post. The trading section at the bottom of its panel has a **You
+   give** and a **You get** card, each with an item and an amount from 0 to 9999. Click the item for the game's goods
+   grid beside the panel (science and beavers first, then the goods by the game's groups, each with the colony's
+   stock; *Only what is in stock* is ticked at first). Choosing the other card's item swaps the two. **−** and **+**
+   step the amount by 10 (Shift: 100; beavers by 1). A line under the cards reads the offer back, or says what is wrong
+   with it; **Make offer** waits for a valid one. **Repeat until cancelled** makes it a standing deal. One side may be
+   0: asking for 0 is a gift, giving 0 asks for help. The other player gets a notice.
+2. **Answer.** The other colony's player selects the trading post and chooses **Accept** or **Decline**. The offering
    player may **Withdraw offer** until then. An offer changed in the meantime is never accepted by mistake.
 3. **Delivery.** Each colony's crossing workers fetch their colony's side from its storage and bring it to their
    half; it passes to the other half at once, and the other colony's workers haul it away into their storage. No
@@ -93,11 +98,14 @@ playing.
   holds up further deliveries of that good: staff both halves, and keep storage room for what you receive.
 - Anything of an exchange's good that crosses counts towards it.
 
-**The trading-post panel**, under the crossing's own panel when the crossing joins two colonies, shows the two
-colonies in their colours, the exchange (the offer form, an offer waiting for an answer, or the progress of each
-side), the totals delivered each way between the two colonies (all trading posts), and, with separate science,
-**Give 50 / Give 250 science**. The crossing's own import icons and **Distribution** button belong to the game's
-district-to-district trade, which does not apply at a trading post.
+**The trading-post panel** is built from the game's own panel pieces (the Workplace section's board, the
+description's blue cards, the game's wooden and red buttons, input boxes, progress bars and check boxes, and the
+warehouse's goods grid). It shows who you trade with in their colour, with **All posts** (Ctrl+T); the exchange (the
+offer cards, an offer waiting for an answer, or each side's progress as a bar with its count); what is waiting on the
+half (only when something is); what has passed each way between the two colonies (all trading posts), as icons with
+amounts; and, with separate science, **Gift science 50 / 250**. A player of neither colony sees it read-only. When
+the game's sections above it leave too little room on the screen, its content scrolls instead of running off the
+bottom.
 
 Either colony may remove a trading post (deleting one half removes both, as in the game); a crossing between one
 colony's own districts is that colony's alone. Running a half (workers,

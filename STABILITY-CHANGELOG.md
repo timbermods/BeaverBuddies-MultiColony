@@ -5,6 +5,42 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha9
+
+**A trading post is now only a trading post, with a panel that looks like one of the game's own.** A District
+Crossing between two colonies still showed the game's district-distribution controls (the *Imported goods* box with
+**Manage distribution**, and the crossing's stock list) and described itself as balancing goods between districts,
+though import and export settings move nothing across a trading post. Its trading section was plain text with no
+background, hard to read over the map, and ran off the bottom of the screen.
+
+- **Only a trading post:** at a crossing between two colonies the panel is titled **Trading Post** and describes one;
+  the *Imported goods* box, **Manage distribution** and the stock list are not shown. A crossing between one colony's
+  own districts is unchanged. Display only: what crosses a trading post, and how, is unchanged.
+- **A new trading section**, built from the game's own panel pieces (the Workplace section's board, the description's
+  blue cards, the game's wooden and red buttons, −/+ buttons, input boxes, progress bars and check boxes): *Trading
+  with* the other colony in its colour, and **All posts** (Ctrl+T).
+- **Making an offer:** a **You give** and a **You get** card, each with the good's icon and name, how much the colony
+  has, −/+ (10 at a time, Shift 100, beavers 1) and the amount. A line under the cards reads the offer back, or says in
+  red what is wrong with it; **Make offer** waits for a valid offer. **Repeat until cancelled** is a check box. The
+  form starts on the good each colony has most of.
+- **Choosing a good** opens the warehouse's goods grid beside the panel: science and beavers, then the game's good
+  groups with their icons, each good with the colony's stock (*Only what is in stock* at first). Choosing the other
+  card's good swaps the two. A click elsewhere, or Esc, closes it.
+- **An offer** is a card saying who offers, *You get* and *You give* with icons (and how much you have of what you
+  would give), with **Accept** and **Decline**, or **Withdraw offer**.
+- **An exchange under way** shows each side as the game's progress bar with its count, the round of a repeating
+  exchange, and when your side is waiting; **Cancel exchange** as before.
+- *At this post* lists what waits on the half (only when something does). *Traded with* shows what has passed each
+  way (all posts) as icons with amounts. **Gift science 50 / 250** greys out a gift you cannot afford.
+- **Never cut off:** when the game's sections above it leave too little room on the screen, the trading section
+  scrolls, with the game's scroll bar. The goods grid stays on the screen too.
+- Science and beavers are named *Science* and *Beavers*, like goods; the notice of a new offer says to select the
+  trading post.
+- Checks: StabilityTests 259 (reading amount boxes, the −/+ steps, the form's verdict against what an exchange
+  accepts over 5000 random entries, and an English line for every text the trading post shows); RuntimeChecks 208
+  (the game still has the panel methods and fields the patches use; the panel title is the one read of the entity's
+  name, and the patch reads the trading post's title there instead).
+
 ## 1.4.0-alpha8
 
 **Fixed: planting marks could desync a co-op game when players had sliced the view to different layers.** The

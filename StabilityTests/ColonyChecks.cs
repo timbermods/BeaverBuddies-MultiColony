@@ -640,6 +640,102 @@ static class ColonyChecks
                 Equal(totalB, sentB);
             }
         });
+
+        // ---- the trading post's offer form ----
+
+        yield return ("Colony: an amount box holds a whole number from 0 to 9999, and empty means 0", () =>
+        {
+            foreach (var (text, amount) in new[] { ("", 0), ("  ", 0), (null, 0), ("0", 0), ("100", 100), (" 42 ", 42), ("9999", 9999), ("0050", 50) })
+            {
+                Check(TradeOfferForm.TryReadAmount(text, out int read), $"[{text}] should read");
+                Equal(amount, read);
+            }
+            foreach (string text in new[] { "10000", "-5", "+5", "1,000", "1.5", "12a", "1e3", "٣" })
+                Check(!TradeOfferForm.TryReadAmount(text, out _), $"[{text}] should not read");
+        });
+
+        yield return ("Colony: the offer form says what an offer is, or what is wrong with it", () =>
+        {
+            TradeOfferForm.Verdict Judge(string giveItem, string giveText, string getItem, string getText) =>
+                TradeOfferForm.Judge(giveItem, giveText, getItem, getText, out _, out _);
+            Equal(TradeOfferForm.Verdict.Exchange, Judge("Log", "1000", "Gear", "250"));
+            Equal(TradeOfferForm.Verdict.Gift, Judge("Log", "30", "Gear", "0"));
+            Equal(TradeOfferForm.Verdict.Gift, Judge("Log", "30", "Gear", ""));
+            Equal(TradeOfferForm.Verdict.Request, Judge("Log", "0", "Gear", "25"));
+            Equal(TradeOfferForm.Verdict.NothingEitherWay, Judge("Log", "0", "Gear", ""));
+            Equal(TradeOfferForm.Verdict.SameItem, Judge("Log", "10", "Log", "10"));
+            Equal(TradeOfferForm.Verdict.Gift, Judge("Log", "10", "Log", "0"));
+            Equal(TradeOfferForm.Verdict.BadAmount, Judge("Log", "10000", "Gear", "5"));
+            Equal(TradeOfferForm.Verdict.BadAmount, Judge("Log", "5", "Gear", "lots"));
+            Equal(TradeOfferForm.Verdict.NoItem, Judge(null, "5", "Gear", "5"));
+            Equal(TradeOfferForm.Verdict.Exchange, Judge(ExchangeTerms.Science, "500", ExchangeTerms.Beavers, "2"));
+
+            // Whatever is typed, the form offers exactly what an exchange accepts, with the amounts it read.
+            var random = new Random(20260921);
+            string[] items = { "Log", "Gear", ExchangeTerms.Science, ExchangeTerms.Beavers, null, "" };
+            string[] texts = { "", "0", "1", "10", "250", "9999", "10000", "-1", "x", " 7 " };
+            for (int i = 0; i < 5000; i++)
+            {
+                string giveItem = items[random.Next(items.Length)], getItem = items[random.Next(items.Length)];
+                string giveText = random.Next(4) == 0 ? texts[random.Next(texts.Length)] : random.Next(0, 10001).ToString();
+                string getText = random.Next(4) == 0 ? texts[random.Next(texts.Length)] : random.Next(0, 10001).ToString();
+                var verdict = TradeOfferForm.Judge(giveItem, giveText, getItem, getText, out int give, out int get);
+                bool read = TradeOfferForm.TryReadAmount(giveText, out int g) & TradeOfferForm.TryReadAmount(getText, out int a);
+                bool valid = read && ExchangeTerms.AreValid(giveItem, g, getItem, a);
+                Check(TradeOfferForm.IsOffer(verdict) == valid,
+                    $"{giveText} {giveItem} for {getText} {getItem}: the form says {verdict}, an exchange says {(valid ? "valid" : "not valid")}");
+                if (TradeOfferForm.IsOffer(verdict)) { Equal(g, give); Equal(a, get); }
+            }
+        });
+
+        yield return ("Colony: − and + go to the next whole step, a beaver at a time, and stay within 0 to 9999", () =>
+        {
+            Equal(10, TradeOfferForm.Step("Log", shift: false));
+            Equal(100, TradeOfferForm.Step("Log", shift: true));
+            Equal(10, TradeOfferForm.Step(ExchangeTerms.Science, shift: false));
+            Equal(1, TradeOfferForm.Step(ExchangeTerms.Beavers, shift: false));
+            Equal(10, TradeOfferForm.Step(ExchangeTerms.Beavers, shift: true));
+            Equal(100, TradeOfferForm.Stepped(95, 10, up: true));
+            Equal(90, TradeOfferForm.Stepped(95, 10, up: false));
+            Equal(110, TradeOfferForm.Stepped(100, 10, up: true));
+            Equal(90, TradeOfferForm.Stepped(100, 10, up: false));
+            Equal(100, TradeOfferForm.Stepped(5, 100, up: true));
+            Equal(0, TradeOfferForm.Stepped(5, 100, up: false));
+            Equal(0, TradeOfferForm.Stepped(0, 10, up: false));
+            Equal(1, TradeOfferForm.Stepped(0, 1, up: true));
+            Equal(9999, TradeOfferForm.Stepped(9995, 10, up: true));
+            Equal(9999, TradeOfferForm.Stepped(9999, 100, up: true));
+            Equal(9900, TradeOfferForm.Stepped(9999, 100, up: false));
+            for (int amount = 0; amount <= ExchangeTerms.MaxAmount; amount += 7)
+            {
+                foreach (int step in new[] { 1, 10, 100 })
+                {
+                    int up = TradeOfferForm.Stepped(amount, step, up: true), down = TradeOfferForm.Stepped(amount, step, up: false);
+                    Check(up > amount || amount == ExchangeTerms.MaxAmount, $"+ from {amount} by {step} gave {up}");
+                    Check(down < amount || amount == 0, $"- from {amount} by {step} gave {down}");
+                    Check(up - amount <= step && amount - down <= step, $"{amount} by {step} jumped to {down} or {up}");
+                    Check(up % step == 0 || up == ExchangeTerms.MaxAmount, $"+ from {amount} by {step} is not a whole step: {up}");
+                    Check(down % step == 0, $"- from {amount} by {step} is not a whole step: {down}");
+                }
+            }
+        });
+
+        yield return ("Colony: every text the trading post shows has an English line", () =>
+        {
+            string root = AppContext.BaseDirectory;
+            while (root != null && !File.Exists(Path.Combine(root, "BeaverBuddies.sln"))) root = Path.GetDirectoryName(root);
+            Check(root != null, "could not find the repository root");
+            string mod = Path.Combine(root!, "BeaverBuddies");
+            var lines = new HashSet<string>(File.ReadAllLines(Path.Combine(mod, "Localizations", "enUS_BeaverBuddie.csv"))
+                .Select(line => line.Split(',')[0]));
+            var keys = Directory.GetFiles(Path.Combine(mod, "Colonies"), "*.cs")
+                .SelectMany(file => System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(file), "\"(BeaverBuddies\\.Colony\\.[A-Za-z.]+)\"")
+                    .Select(match => match.Groups[1].Value))
+                .Where(key => !key.EndsWith(".")).Distinct().ToList();
+            Check(keys.Count > 60, "the trading post's texts were not found: " + keys.Count);
+            var missing = keys.Where(key => !lines.Contains(key)).ToList();
+            Check(missing.Count == 0, "no English line for " + string.Join(", ", missing));
+        });
     }
 
     static JObject TypedGroup(params JObject[] children) => new JObject

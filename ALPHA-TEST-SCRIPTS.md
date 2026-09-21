@@ -35,30 +35,38 @@ colony (alpha)** are ticked, and tick **Always Use Detailed Logging** (debug mod
    marks stay.
 7. **A trading post.** Bring a road from each district to the edge where the two lands meet and place a **District
    Crossing** across it, one half on each side (flip to colony 2 to build colony 2's road). It needs no science and costs 10 logs. Each colony's beavers
-   build and staff their own half. Hover a half's inventory: each good holds up to **100**.
-8. **The panel.** Select a half: at the bottom of the crossing's panel, a **Trading post** section shows both
-   colonies, *No exchange here yet*, the offer form (*You give* / *You ask* with an icon and a good, amount boxes,
-   **Make offer**, **Repeat: off**) and the totals each way (screenshot please). Click the good: a grid of icons with
-   counts opens (science and beavers first); pick one. Typing digits in an amount box must not change the game speed
-   or open any window.
+   build and staff their own half.
+8. **The panel.** Select a half. The panel is titled **Trading Post** and describes a trading post; there is no
+   *Imported goods* box beside it (no **Manage distribution**) and no stock list. At the bottom: *Trading with Colony
+   2* in its colour with **All posts**; a **You give** and a **You get** card, each with a good (the one that colony
+   has most of), *You have …* / *Colony 2 has …*, **−**, an amount box and **+**; a line reading the offer back;
+   **Repeat until cancelled**; **Make offer**; and *Traded with Colony 2* (screenshot please: it should look like
+   the game's own sections, readable and not cut off). Click a card's good: a box with the game's goods grid opens
+   beside the panel (science and beavers first, each good with the colony's stock); pick one. Open it again and pick
+   the other card's good: the two swap. Untick *Only what is in stock*: every good shows. Click outside the box, or
+   press Esc: it closes (Esc leaves the panel open). **−** and **+** move the amount by 10, with Shift by 100. Set
+   both amounts to 0: the line turns red and **Make offer** greys out. Typing digits in an amount box must not change
+   the game speed or open any window. With the description shown and all worker slots in use on a small screen, the
+   section scrolls instead of running off the bottom.
 9. **No trade by settings.** In colony 2's district (F8) set logs to import *Forced*: nothing crosses.
-10. **An exchange.** As colony 1, offer **100 logs for 20 of** a good colony 2 has (e.g. planks): *Waiting for Colony 2
-    to answer*. Flip to colony 2 (Ctrl+Shift+K): the panel shows *Colony 1 offers 100 Logs and asks 20 Planks in
-    return*, with **Accept** and **Decline**. Accept. Colony 1's workers carry logs to their half, colony 2's carry
-    planks to theirs, and each side hauls away what arrives. The progress lines rise **in step** (logs at most 10
-    ahead of their share). At the end: *Exchange complete*; the post is free again. Then try a **gift** (ask 0) and
+10. **An exchange.** As colony 1, offer **100 logs for 20 of** a good colony 2 has (e.g. planks): *Your offer,
+    waiting for Colony 2*, with **Withdraw offer**. Flip to colony 2 (Ctrl+Shift+K): the panel shows *Colony 1 offers
+    an exchange*: *You get 100 Logs*, *You give 20 Planks* (with how many colony 2 has), and **Accept** and
+    **Decline**. Accept. Colony 1's workers carry logs to their half, colony 2's carry planks to theirs, and each side
+    hauls away what arrives. The two progress bars fill **in step** (logs at most 10 ahead of their share); *At this
+    post* lists what waits on the half. At the end: *Exchange complete*; the post is free again. Then try a **gift** (ask 0) and
     **Cancel exchange** half way: nothing more crosses; a load already on the way stays on its own half and is carried
     home.
 11. **Science.** Build an inventor in each colony. Each colony's science rises only from its own inventor. As colony
     1, unlock a building: colony 1's science drops, and after flipping to colony 2 that building is still locked on
-    the toolbar. **Give 50 science** to the other colony: yours drops by 50, theirs rises by 50.
+    the toolbar. **Gift science 50** at the trading post: yours drops by 50, theirs rises by 50.
 12. **Kept apart.** In the Migration tab (F7), try to send beavers to the other colony's district: refused. Set
     working hours differently in each colony (flip with Ctrl+Shift+K): each colony's beavers stop at their own hour, and
     the clock's needle follows the colony you are acting as. Near the trading post, mark trees on colony 1's land and
     build a lumberjack flag for each colony close by: only colony 1's lumberjacks cut them. Place a building on colony
     1's land near the post: only colony 1's builders bring its logs.
-13. **More trading.** Offer 20 of a good for 10 of another with **Repeat: on**, accept: after it completes, round 2
-    starts by itself (*Repeating exchange, round 2 (1 done)*). Offer **50 science** for 10 logs, and **1 beaver** for
+13. **More trading.** Offer 20 of a good for 10 of another with **Repeat until cancelled** ticked, accept: after it
+    completes, round 2 starts by itself (*round 2, repeating*). Offer **50 science** for 10 logs, and **1 beaver** for
     30 berries: science moves between the top bars' pools, one adult beaver moves to the other colony. Press
     **Ctrl+T**: every trading post of your colony with its progress and **Go to**, and both colonies with their
     population. Press **Ctrl+L**: the land outlines show and hide.
