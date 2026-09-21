@@ -7,12 +7,12 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 
 ![Timberborn 1.1.2.4](https://img.shields.io/badge/Timberborn-1.1.2.4-2a4034?labelColor=172620&style=flat-square) ![Status: alpha](https://img.shields.io/badge/status-alpha-e0812f?labelColor=172620&style=flat-square) [![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-2a4034?labelColor=172620&style=flat-square)](License.txt)
 
-[Install](#install) · [Start](#start-a-game) · [Playing](#playing-your-colony) · [Trading](#trading-posts) · [Controls](#controls) · [Troubleshooting](#troubleshooting-and-reporting-problems) · [Full rules](TWO-COLONIES.md) · [Changelog](STABILITY-CHANGELOG.md)
+[Install](#install) · [Start](#start-a-game) · [Playing](#playing-your-colony) · [Trading](#trading-posts) · [Handover](#when-a-colony-is-handed-over) · [Controls](#controls) · [Troubleshooting](#troubleshooting-and-reporting-problems) · [Full rules](TWO-COLONIES.md) · [Changelog](STABILITY-CHANGELOG.md)
 
 > [!WARNING]
 > **Alpha.** Hosting, joining over Steam and founding a second colony have been played. This version's model
-> (colonies as owned districts, trading posts, separate science) has **not been played yet**; it is covered by
-> automated checks. Play on a copy of your save, keep backups, and please report what you find
+> (colonies with their own land, trading posts and barter, colony handover) has **not been played yet**; it is
+> covered by automated checks. Play on a copy of your save, keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
 
 MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
@@ -28,10 +28,12 @@ shared-colony co-op (turn **Separate colonies** off).
 1. Download the `BeaverBuddies-MultiColony-….zip` from the [Releases page](https://github.com/timbermods/BeaverBuddies-MultiColony/releases), or use the zip you were sent.
 2. **Close Timberborn.**
 3. In `Documents\Timberborn\Mods`, **delete every other BeaverBuddies folder** (the Stability Fork, the Workshop
-   version, older MultiColony builds). They share one mod ID and conflict. Also unsubscribe from the Workshop
-   BeaverBuddies if you have it.
+   version, older MultiColony builds), and unsubscribe from the Workshop BeaverBuddies if you have it. They change
+   the same parts of the game and cannot run together; if one is still enabled, the main menu tells you which.
 4. Extract the zip and copy the `BeaverBuddies-MultiColony` folder into `Documents\Timberborn\Mods`.
-5. Start Timberborn and enable **BeaverBuddies - MultiColony (alpha)** in the mod list.
+5. Start Timberborn and enable **BeaverBuddies MultiColony (alpha)** in the mod list.
+
+This version has its own mod id, so its Mod Settings start from the defaults once.
 
 To update, replace the folder with the new download. Every player must update together: a player with a different
 build cannot join.
@@ -43,6 +45,8 @@ build cannot join.
 - **Separate colonies (alpha)**: each player runs their own colony.
 - **Separate science and unlocks per colony (alpha)**: each colony earns its own science and unlocks its own
   buildings. Chosen when a separate-colonies game begins, then fixed for the save.
+- **Hand over a colony after its player is away (days)**: 7 by default, 0 for never (see
+  [when a colony is handed over](#when-a-colony-is-handed-over)).
 
 **2. Host: pick a game.** Any save works, new or old, on any map.
 
@@ -57,8 +61,10 @@ build cannot join.
 everyone is in**: nobody can join a game that has already started.
 
 **5. Guest without a colony: found yours.** A message offers to **place your district center** (or press **Ctrl+K**
-later, whenever you are ready). Click anywhere its entrance is not on another colony's roads. It is free, needs no
-science, and appears **already built**, with starting beavers, food and water. You can found once.
+later, whenever you are ready). Other colonies' land shows as coloured outlines: place it **at least 20 tiles from
+their buildings and paths**, so both colonies have room to grow. It is free, needs no science, and appears **already
+built**, with starting beavers, food and water. You found once; you may found again only if your colony is handed
+over.
 
 **Your colony is remembered.** The save knows each player by their Steam ID (or an id kept on your computer without
 Steam): you get the same colony every time, whoever hosts. The connection panel shows each name with its colony.
@@ -67,7 +73,8 @@ Steam): you get the same colony every time, whoever hosts. The connection panel 
 
 - **Your colony is your districts and your land**: every tile within 10 tiles of your buildings and paths that no
   other colony reached first. It grows as you build, and stops where another colony's land begins. Everything you
-  place is yours from the moment you place it.
+  place is yours from the moment you place it. **Every colony's land is outlined in its colour** while you hold a
+  building, planting, cutting or demolishing tool, and any time with **Ctrl+L**.
 - **You build, mark trees and plant on your own land or free land.** Never on another colony's land or right next to
   its roads (the preview turns red and says why). Building towards another colony does not take its land: your land
   ends where theirs begins.
@@ -93,34 +100,58 @@ In a separate-colonies game it needs **no science and costs 10 logs**. Each colo
 
 Goods cross a trading post only through an **exchange** the two colonies agree on:
 
-1. **Make an offer.** Select the crossing. In the **Trading post** section at the bottom of its panel, pick what you
-   give and what you ask for (**<** and **>** choose a good, the box takes an amount up to 9999), then **Make offer**.
-   For example: *1000 logs for 250 gears*. **Ask for 0 to give a gift**; give 0 to ask for help.
+1. **Make an offer.** Select the crossing. In the **Trading post** section at the bottom of its panel, click what you
+   give and what you ask for to choose from a grid of icons (with each colony's stock), and type the amounts (up to
+   9999). For example: *1000 logs for 250 gears*. **Ask for 0 to give a gift**; give 0 to ask for help. Turn
+   **Repeat** on for a standing deal that starts again each time it completes. Then **Make offer**.
 2. **The other player accepts** (or declines) on the same panel. They get a notice when you make the offer.
 3. **The beavers do the rest.** Each colony's crossing workers fetch their side's goods from their own storage and
-   bring them to the crossing; the other colony's workers haul them away into theirs. The goods **move in step**:
+   bring them to the crossing; the other colony's workers haul them away into theirs. Everything **moves in step**:
    neither side gets more than a tenth of its amount (at least 10) ahead of the other. When both amounts have
-   crossed, both players get a notice.
+   crossed, both players get a notice (a repeating exchange simply starts its next round).
+
+**Science and beavers** can be traded too, with the same offer form: science (with separate science) passes from
+pool to pool, 25 at a time, and adult beavers move to the other colony's district, one at a time (the last adult
+always stays).
+
+**All your trading posts at once:** **Ctrl+T** (or **Trade** at the top right) lists every trading post of your
+colony, its exchange and its progress, with a **Go to** button; and every colony, its population and whether its
+player is playing.
 
 - **One exchange at a time** per trading post; build more crossings for more at once. Either player may cancel an
   exchange at any time; what has crossed stays crossed.
 - **Each half holds up to 100** of each good waiting to be hauled away (the game's own crossing holds 30). Staff both
-  halves, and keep storage room for what you receive.
+  halves, and keep storage room for what you receive, and houses for beavers.
 - **Import and export settings don't apply** at a trading post. They still move goods between your own districts,
   as in the game (with the bigger buffer: every crossing holds 100, in every game).
 - The panel also shows what has passed each way and, with separate science, **Give 50 / 250 science**.
-- Either player may remove a crossing.
+- Either player may remove a trading post.
 
 Details: [TWO-COLONIES.md](TWO-COLONIES.md#trading-posts).
+
+## When a colony is handed over
+
+A colony whose player can't run it goes to another player, with its buildings, land, stock and science:
+
+- **No beavers or bots left** for a whole day: to the nearest living colony.
+- **Its player away:** once they have missed the number of in-game days of hosted co-op play set by the host (7 by
+  default; days the host plays alone in single player, and the first day after loading, don't count): to the nearest
+  colony whose player is playing.
+- **By the host**, from the Ctrl+T window: any colony whose player is away, or that has no beavers (for example to
+  a player whose Steam account changed).
+
+The player who lost their colony gets a notice and may **found a new one** with **Ctrl+K**.
 
 ## Controls
 
 | Key | Action |
 |---|---|
-| **Ctrl+K** | Found your colony (a player without one, once) |
+| **Ctrl+K** | Found your colony (a player without one) |
+| **Ctrl+L** | Show every colony's land (it also shows while you hold a building, planting, cutting or demolishing tool) |
+| **Ctrl+T** | Trading posts and colonies |
 | **Ctrl+Shift+K** | *Debug only:* the host acts as the next colony, for testing alone (needs **Always Use Detailed Logging**) |
 
-Both can be changed under **Options → Bindings → BeaverBuddies**. The co-op keys **Ping Location**, **Toggle
+All can be changed under **Options → Bindings → BeaverBuddies**. The co-op keys **Ping Location**, **Toggle
 connection panel** and **Chat: start typing** are unbound until you set them there.
 
 ## Good to know
@@ -132,7 +163,8 @@ connection panel** and **Chat: start typing** are unbound until you set them the
 - **Single player:** without a co-op session nothing is refused and no colony can be founded. Host the game (even
   alone) to play the mode.
 - **Performance:** more colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest
-  from the connection panel.
+  from the connection panel. With **Always Use Detailed Logging** on, the log has one line a day per colony
+  (population, land, exchanges), which helps with reports from long games.
 - **New text is English only.**
 
 ## Co-op basics

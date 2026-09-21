@@ -52,9 +52,10 @@ internal static class ColonyRuntimeChecks
             Console.WriteLine("      Shared by both colonies: " + string.Join(", ", shared));
             // Map areas (planting, tree cutting) are shared on purpose: resources near another colony are contested.
             // Unmarking trees (an empty tree event unmarks) only ever removes the actor's own marks, and working hours
-            // are set for the actor's own colony: both are checked when played, not here.
+            // are set for the actor's own colony: both are checked when played, not here. Presence and handovers are
+            // refused from anyone but the host (ColonyRulesService).
             var expected = new[] { "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
-                "GiftScienceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
+                "ColonyHandoverEvent", "ColonyPresenceEvent", "GiftScienceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
                 "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent",
                 "TreeCuttingAreaEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
             if (!shared.SequenceEqual(expected))

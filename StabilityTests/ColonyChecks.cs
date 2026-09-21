@@ -355,6 +355,7 @@ static class ColonyChecks
             Equal(ColonyRefusal.Blocked, ColonyRules.JudgeFounding(true, false, true, false, false).Refusal);
             Equal(ColonyRefusal.FoundingConflict, ColonyRules.JudgeFounding(true, false, true, true, true).Refusal);
             Equal(ColonyRefusal.OtherColonyArea, ColonyRules.JudgeFounding(true, false, true, true, false, onOtherColonyLand: true).Refusal);
+            Equal(ColonyRefusal.TooCloseToColony, ColonyRules.JudgeFounding(true, false, true, true, false, tooCloseToColony: true).Refusal);
         });
 
         // ---- automatic migration ----
@@ -437,6 +438,67 @@ static class ColonyChecks
             Equal<int?>(null, grid.Owner(15, 50));
         });
 
+        yield return ("Colony: a colony handed over gives its land and reach to the new owner", () =>
+        {
+            var grid = new ColonyReachGrid(100, 100);
+            grid.Apply(0, new[] { (20, 50) }, +1);
+            grid.Apply(1, new[] { (35, 50) }, +1);
+            grid.Apply(2, new[] { (80, 80) }, +1);
+            int before = grid.LandSize(1) + grid.LandSize(2);
+            grid.Transfer(2, 1);
+            // Colony 2's land and reach are colony 1's now; colony 0 keeps the shared tiles it got first.
+            Equal<int?>(1, grid.Owner(80, 80));
+            Check(grid.Reaches(1, 80, 80)); Check(!grid.Reaches(2, 80, 80));
+            Equal(0, grid.LandSize(2));
+            Equal(before, grid.LandSize(1));
+            Equal<int?>(0, grid.Owner(28, 50));
+            // Taking the building down later takes the reach from the new owner.
+            grid.Apply(1, new[] { (80, 80) }, -1);
+            Equal<int?>(null, grid.Owner(80, 80));
+        });
+
+        yield return ("Colony: the land's outline, and room to found a colony", () =>
+        {
+            var grid = new ColonyReachGrid(100, 100);
+            grid.Apply(0, new[] { (50, 50) }, +1);
+            var outline = grid.BorderTiles(0).ToList();
+            Check(outline.Contains((60, 50)) && outline.Contains((40, 50)) && outline.Contains((50, 60)));
+            Check(!outline.Contains((50, 50)), "the middle is not outline");
+            Check(outline.All(t => grid.Owner(t.x, t.y) == 0));
+            // A colony founded under 20 tiles from colony 0's building would have land touching colony 0's at once.
+            Check(grid.OthersReachNear(1, new[] { (69, 50) }), "19 tiles from the building");
+            Check(!grid.OthersReachNear(1, new[] { (71, 50) }), "21 tiles from the building");
+            Check(!grid.OthersReachNear(0, new[] { (55, 50) }), "its own colony does not count");
+        });
+
+        yield return ("Colony: land stays quick at the size of a big game", () =>
+        {
+            // A 256 by 256 map, four colonies of 5000 building tiles each (paths and buildings).
+            var grid = new ColonyReachGrid(256, 256);
+            var random = new Random(4);
+            var buildings = new List<(int slot, (int, int)[] tiles)>();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            for (int slot = 0; slot < 4; slot++)
+            {
+                int cx = 64 + (slot % 2) * 128, cy = 64 + (slot / 2) * 128;
+                for (int i = 0; i < 5000; i++)
+                {
+                    var tile = new[] { (cx + random.Next(-50, 51), cy + random.Next(-50, 51)) };
+                    grid.Apply(slot, tile, +1);
+                    buildings.Add((slot, tile));
+                }
+            }
+            long build = watch.ElapsedMilliseconds;
+            watch.Restart();
+            for (int i = 0; i < 500; i++) grid.Apply(buildings[i].slot, buildings[i].tiles, -1);
+            for (int slot = 0; slot < 4; slot++) grid.BorderTiles(slot).Count();
+            for (int i = 0; i < 1000; i++) grid.MayUse(i % 4, random.Next(256), random.Next(256));
+            long work = watch.ElapsedMilliseconds;
+            Console.WriteLine($"      Land for 20000 building tiles: {build} ms to build; removals, outlines and lookups {work} ms");
+            Check(build < 5000, $"building the land took {build} ms");
+            Check(work < 2000, $"changes and outlines took {work} ms");
+        });
+
         yield return ("Colony: reach follows the buildings standing now, whatever order they came and went in", () =>
         {
             var a = new ColonyReachGrid(60, 60);
@@ -467,6 +529,11 @@ static class ColonyChecks
 
         yield return ("Colony: an exchange's terms name two different goods, amounts up to 9999, not both 0", () =>
         {
+            // Science and beavers are exchange items too; nobody carries them.
+            Check(ExchangeTerms.IsSpecial(ExchangeTerms.Science)); Check(ExchangeTerms.IsSpecial(ExchangeTerms.Beavers));
+            Check(!ExchangeTerms.IsSpecial("Log"));
+            Check(ExchangeTerms.AreValid(ExchangeTerms.Science, 500, "Plank", 100));
+            Check(ExchangeTerms.AreValid("Berries", 200, ExchangeTerms.Beavers, 3));
             Check(ExchangeTerms.AreValid("Log", 1000, "Gear", 250));
             Check(!ExchangeTerms.AreValid("Log", 1000, "Log", 250), "the same good both ways");
             Check(!ExchangeTerms.AreValid("Log", 0, "Gear", 0), "nothing either way");

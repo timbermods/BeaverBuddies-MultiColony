@@ -151,6 +151,19 @@ namespace BeaverBuddies.Colonies
             return slot >= 0 && slot < workerUnlocked.Length && workerUnlocked[slot].Contains(key);
         }
 
+        /// <summary>
+        /// A colony handed over: its science pool goes with it, and the new owner may build whatever either had
+        /// unlocked. The old owner keeps its unlocks (what its player learned stays theirs if they found again).
+        /// </summary>
+        public void Transfer(int from, int to)
+        {
+            if (!Enabled || from == to || from < 0 || to < 0 || from >= points.Length || to >= points.Length) return;
+            points[to] += points[from];
+            points[from] = 0;
+            unlocked[to].UnionWith(unlocked[from]);
+            workerUnlocked[to].UnionWith(workerUnlocked[from]);
+        }
+
         public void UnlockWorkerType(int slot, UnlockableWorkerType workerType)
         {
             if (slot < 0 || slot >= workerUnlocked.Length) slot = 0;

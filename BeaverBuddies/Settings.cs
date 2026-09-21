@@ -106,6 +106,10 @@ namespace BeaverBuddies
             new(true, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.SeparateScience")
                 .SetLocalizedTooltip("BeaverBuddies.Settings.SeparateScience.Tooltip"));
 
+        public ModSetting<int> AbandonedColonyDays { get; } =
+            new(7, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.AbandonedColonyDays")
+                .SetLocalizedTooltip("BeaverBuddies.Settings.AbandonedColonyDays.Tooltip"));
+
         // ---- Connection Panel ----
 
         public LimitedStringModSetting ConnectionPanelDisplay { get; } =
@@ -203,6 +207,9 @@ namespace BeaverBuddies
 
         /// <summary>A new separate-colonies game gives each colony its own science and unlocks. Fixed for the save.</summary>
         public static bool SeparateScienceForNewColonies => instance?.SeparateScience.Value ?? true;
+
+        /// <summary>Host: days a colony's player may be away before the colony is handed to another (0: never).</summary>
+        public static int AbandonedColonyDaysValue => instance?.AbandonedColonyDays.Value ?? 7;
 
 
         public static PanelDisplayMode ConnectionPanelDisplayMode =>

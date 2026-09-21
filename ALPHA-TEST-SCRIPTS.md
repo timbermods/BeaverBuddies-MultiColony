@@ -1,12 +1,13 @@
 # Separate colonies: alpha test scripts
 
-For the trading-exchange build (colonies as owned districts, trading posts, separate science). Please report a
+For the 1.4.0 alpha (colonies with their own land, trading posts and barter, colony handover). Please report a
 result for **every line**: *works*, *fails* (what you saw), or *not tried*. A screenshot helps for anything drawn on
 screen (the trading-post panel, a notice, the connection panel, the toolbar). Send `Player.log` at the end
 (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`). Lines from this mode start with `[Colony]`.
 
 Install: remove every other BeaverBuddies folder from `Documents\Timberborn\Mods` (including the Stability Fork),
-copy in `BeaverBuddies-MultiColony`, enable **BeaverBuddies - MultiColony (alpha)**, restart the game.
+copy in `BeaverBuddies-MultiColony`, enable **BeaverBuddies MultiColony (alpha)**, restart the game. If another
+BeaverBuddies is still enabled, the main menu names it (please check that message appears if you try it).
 
 ## Script A: host alone (about 30 minutes)
 
@@ -20,8 +21,9 @@ colony (alpha)** are ticked, and tick **Always Use Detailed Logging** (debug mod
 3. **Act as colony 2.** Press **Ctrl+Shift+K**: notice *Debug: your actions now count as colony 2.* Select your
    (colony 1's) district center or a building and try pause, priority, workers, rename, demolish: each shows *That
    belongs to another colony.* and nothing changes.
-4. **Found colony 2.** Press **Ctrl+K**: a district-center tool opens. Move it within 10 tiles of colony 1's buildings:
-   red, *That is another colony's land…* Place it somewhere free: a finished
+4. **Found colony 2.** Press **Ctrl+K**: a district-center tool opens, and colony 1's land shows as an outline in its
+   colour. Move it within 10 tiles of colony 1's buildings: red, *That is another colony's land…*; between 10 and 20
+   tiles: red, *Too close to another colony…* Place it more than 20 tiles away: a finished
    district center appears with starting food, water and beavers; notice *A new colony has been founded.*; the log has
    `[Colony] Slot 1 founded a colony at …`. Select one of the new beavers: its district is the new district.
 5. **Each colony's screen.** As colony 2 (still flipped), the top bar shows colony 2's food, population and science
@@ -35,9 +37,10 @@ colony (alpha)** are ticked, and tick **Always Use Detailed Logging** (debug mod
    Crossing** across it, one half on each side (flip to colony 2 to build colony 2's road). It needs no science and costs 10 logs. Each colony's beavers
    build and staff their own half. Hover a half's inventory: each good holds up to **100**.
 8. **The panel.** Select a half: at the bottom of the crossing's panel, a **Trading post** section shows both
-   colonies, *No exchange here yet*, the offer form (*You give* / *You ask*, **<** / **>**, amount boxes, **Make
-   offer**) and the totals each way (screenshot please). Typing digits in an amount box must not change the game
-   speed or open any window.
+   colonies, *No exchange here yet*, the offer form (*You give* / *You ask* with an icon and a good, amount boxes,
+   **Make offer**, **Repeat: off**) and the totals each way (screenshot please). Click the good: a grid of icons with
+   counts opens (science and beavers first); pick one. Typing digits in an amount box must not change the game speed
+   or open any window.
 9. **No trade by settings.** In colony 2's district (F8) set logs to import *Forced*: nothing crosses.
 10. **An exchange.** As colony 1, offer **100 logs for 20 of** a good colony 2 has (e.g. planks): *Waiting for Colony 2
     to answer*. Flip to colony 2 (Ctrl+Shift+K): the panel shows *Colony 1 offers 100 Logs and asks 20 Planks in
@@ -54,11 +57,20 @@ colony (alpha)** are ticked, and tick **Always Use Detailed Logging** (debug mod
     the clock's needle follows the colony you are acting as. Near the trading post, mark trees on colony 1's land and
     build a lumberjack flag for each colony close by: only colony 1's lumberjacks cut them. Place a building on colony
     1's land near the post: only colony 1's builders bring its logs.
-13. **Save, reload, host again:** owners, land, marks, working hours, science pools, unlocks, the totals and an
+13. **More trading.** Offer 20 of a good for 10 of another with **Repeat: on**, accept: after it completes, round 2
+    starts by itself (*Repeating exchange, round 2 (1 done)*). Offer **50 science** for 10 logs, and **1 beaver** for
+    30 berries: science moves between the top bars' pools, one adult beaver moves to the other colony. Press
+    **Ctrl+T**: every trading post of your colony with its progress and **Go to**, and both colonies with their
+    population. Press **Ctrl+L**: the land outlines show and hide.
+14. **Handover.** As colony 1, open **Ctrl+T**: colony 2 (nobody plays it in this session) has **Hand to Colony 1**.
+    Click it: colony 2's buildings, land and stock are colony 1's (select one of them), and after flipping to colony 2
+    (Ctrl+Shift+K) you can press Ctrl+K to found again. A colony with no beavers left is handed over by itself a day
+    later (if you can, let one starve and check).
+15. **Save, reload, host again:** owners, land, marks, working hours, science pools, unlocks, the totals and an
     exchange under way (or an offer waiting) are unchanged.
-14. **Mode off.** Untick **Separate colonies** and start a new game: one shared colony, no refusals, no trading-post
+16. **Mode off.** Untick **Separate colonies** and start a new game: one shared colony, no refusals, no trading-post
     panel, crossings trade by import settings as in the game (holding up to 100), science is one pool.
-15. Send `Player.log`.
+17. Send `Player.log`.
 
 ## Script B: two players (about 45 minutes)
 
@@ -77,5 +89,20 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
    connection panel at the start and at the end.
 7. **Save and Rehost.** Both players get the same colony again. Then **swap hosts**: the friend hosts the same save;
    each player still gets their own colony.
-8. Send both `Player.log` files. If a desync happens, first compare the mod lists at the top of both logs, then look
+8. **Away.** The friend leaves; the host saves, then hosts again without them and plays on. The Ctrl+T window shows
+   *player away (missed N days of hosted play)*. After the number of days in the host's setting (set it to 2 for this test), the friend's
+   colony is handed to the host's. When the friend joins again, they get the notice and can found a new colony.
+9. Send both `Player.log` files. If a desync happens, first compare the mod lists at the top of both logs, then look
    for the `Random state mismatch` line.
+
+## Script C: scale (an evening, three or four players)
+
+Everyone installs the same zip; the host turns on **Always Use Detailed Logging** (the log then has one line a day
+per colony: population, land, exchanges).
+
+1. Three or four players each found a colony on a medium map, and link each pair of neighbours with a trading post.
+2. Play at least two hours at your usual speed, with repeating exchanges running and colonies growing to 100+
+   beavers. Note the tick rate and each player's frame rate from the connection panel every half hour.
+3. A player joins after the game has started (the host saves and hosts again with them). Then **swap hosts**.
+4. A player leaves for the rest of the evening: check their colony is handed over after the set number of days.
+5. Send every `Player.log` and your notes on the tick rate and frame rates.

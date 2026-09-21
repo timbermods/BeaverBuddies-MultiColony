@@ -45,9 +45,9 @@ the host's first colony is start 1, the next player's start 2, and so on.
 colony's. Every other player **founds** their colony once:
 
 1. On joining, a message offers to place a district center. (If you cancel, **Ctrl+K** opens the same tool.)
-2. Place it anywhere off another colony's land (more than 10 tiles from its buildings and paths). It is free,
-   needs no science, and appears **already built**, yours, with starting beavers, food and water (the new game's, or
-   the Normal difficulty's for a save that did not record them).
+2. Place it at least 20 tiles from other colonies' buildings and paths (their land shows as coloured outlines), so
+   both colonies have room to grow. It is free, needs no science, and appears **already built**, yours, with starting
+   beavers, food and water (the new game's, or the Normal difficulty's for a save that did not record them).
 3. Founding in a shared game turns it into a separate-colonies game. The existing districts stay the host's.
 
 ## Trading posts
@@ -64,9 +64,9 @@ game.
 **An exchange** is "this many of one good for that many of another", for example *1000 logs for 250 gears*:
 
 1. **Offer.** Select either half of the crossing. The **Trading post** section at the bottom of its panel has the
-   offer form: *You give* and *You ask*, each with a good (**<** and **>** step through the goods, those your colony,
-   or theirs, has in stock first) and an amount from 0 to 9999. **Make offer.** One side may be 0: asking for 0 is a
-   gift, giving 0 asks for help. The other player gets a notice.
+   offer form: *You give* and *You ask*, each with an item (click it for a grid of icons: science and beavers first,
+   then the goods the colony has, with its stock) and an amount from 0 to 9999. **Repeat** makes it a standing deal.
+   **Make offer.** One side may be 0: asking for 0 is a gift, giving 0 asks for help. The other player gets a notice.
 2. **Answer.** The other colony's player selects the crossing and chooses **Accept** or **Decline**. The offering
    player may **Withdraw offer** until then. An offer changed in the meantime is never accepted by mistake.
 3. **Delivery.** Each colony's crossing workers fetch their colony's side from its storage and bring it to their
@@ -75,7 +75,16 @@ game.
 4. **In step.** Neither side may deliver more than a tenth of its amount (at least 10) ahead of what the other side
    has delivered, so an exchange is never filled one way only. The panel says when your beavers are waiting.
 5. **Done.** When both amounts have crossed, both players get a notice and the trading post is free for the next
-   exchange. **Cancel exchange** ends it early (either player); what has crossed stays crossed.
+   exchange; a repeating exchange starts its next round instead. **Cancel exchange** ends it early (either player);
+   what has crossed stays crossed.
+
+**Science and beavers** are exchange items too. Nobody carries them: science passes from pool to pool (only with
+separate science), 25 at a time, and adult beavers move from the giving half's district to the other, one at a
+time, the last adult always staying. Both keep the same pace as goods.
+
+**Ctrl+T** (or **Trade** at the top right) opens the trading posts and colonies window: each of your trading posts
+with its exchange and progress and a **Go to** button, and each colony with its population and whether its player is
+playing.
 
 **Good to know:**
 
@@ -93,6 +102,26 @@ district-to-district trade, which does not apply at a trading post.
 Either colony may remove a trading post (deleting one half removes both, as in the game); a crossing between one
 colony's own districts is that colony's alone. Running a half (workers,
 priority) stays with its colony.
+
+## When a colony is handed over
+
+A colony whose player can't run it goes to another colony: its district centers, buildings, land, marks, stock and
+science pool. The receiving colony may also build whatever the old one had unlocked; the old player keeps their
+unlocks too.
+
+- **No beavers or bots left** for a whole in-game day: to the nearest living colony (district center to district
+  center). Every computer decides this the same way.
+- **Its player away:** once they have missed the number of in-game days of hosted co-op play the host set (**Hand
+  over a colony after its player is away**, 7 by default, 0 for never) in a row: to the nearest colony whose player
+  is playing. Days the host plays alone in single player, and the first day after loading (players are still
+  joining), don't count; a day the player is in the game starts the count again. The host decides and every
+  computer plays it. Not while debugging alone (with detailed logging on), where the host plays every colony.
+- **By the host**, from the Ctrl+T window: any colony whose player is away (not in this session), or that has no
+  beavers. Useful for a player whose Steam account changed: they join, get a new slot, and the host hands their old
+  colony to it.
+
+The player who lost their colony gets a notice and may **found a new one** (Ctrl+K). A trading post between the two
+colonies becomes a crossing within one colony, and its exchange ends.
 
 ## Separate science and unlocks
 
@@ -158,6 +187,11 @@ Water is one shared simulation: a dam upstream changes what flows to a colony do
 tides come to everyone at once. Stored water (tanks) is a good like any other and belongs to its colony. Prefer maps
 with a water source near each start.
 
+## Seeing the land
+
+Every colony's land is outlined in its colour while a building, planting, cutting, demolishing or founding tool is in
+hand, and at any time with **Ctrl+L**. Where two outlines meet is where a trading post goes.
+
 ## Testing alone (debug)
 
 With **Always Use Detailed Logging** on (the mod's debug mode), the host can press **Ctrl+Shift+K** to make their own
@@ -170,8 +204,8 @@ switch is logged.
 - The game ends only when every beaver on the map is gone, not per colony.
 - A colony's land is measured in a straight line on the map (10 tiles), not by walking; on a cliff edge it may
   reach a little further than its beavers do.
-- Land is first come. A colony that founds right at the edge of another's land blocks its growth that way; talk
-  before you found.
+- Land is first come. Founding keeps 20 tiles from other colonies, but a colony that grows quickly towards another
+  still claims the land between them first.
 - In a save from before this version, buildings take their colony when they next have a district (a path: the
   district whose road it is); an older dam, levee or platform, which has none, counts only by the land it stands on.
 - A half of a trading post holds at most 100 of a good; an exchange stalls while the receiving colony has nowhere to

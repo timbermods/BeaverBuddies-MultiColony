@@ -189,7 +189,7 @@ namespace BeaverBuddies.Colonies
             __result = false;
             DistrictCrossingInventory crossingInventory = __instance._districtCrossingInventory;
             string goodId = ColonyExchangeService.GoodGiven(crossing);
-            if (goodId == null || !crossing.CanExport || !crossingInventory) return false;
+            if (goodId == null || ExchangeTerms.IsSpecial(goodId) || !crossing.CanExport || !crossingInventory) return false;
             // Goods already being carried in count towards the pace (IncomingStock leaves out what has passed across).
             int wanted = ColonyExchangeService.StillToBring(crossing) - crossingInventory.IncomingStock(goodId);
             if (wanted <= 0) return false;

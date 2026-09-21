@@ -45,7 +45,7 @@ namespace BeaverBuddies.Events
             } else if (serverModVersion != Plugin.Version)
             {
                 warningMessage = $"Warning! Server mod version ({serverModVersion}) does not match client mod version ({Plugin.Version}).\n" +
-                    $"Please ensure that you are running the same version of the {Plugin.ID} mod.";
+                    $"Please ensure that you are running the same version of the {Plugin.Name} mod.";
             } else if (isDebugMode != Settings.Debug)
             {
                 // TODO: Should debug mode just come from the server?

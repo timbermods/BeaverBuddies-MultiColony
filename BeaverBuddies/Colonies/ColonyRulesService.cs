@@ -56,6 +56,13 @@ namespace BeaverBuddies.Colonies
                 Plugin.LogError($"[Colony] Could not seat or stamp {replayEvent.type}: {error}");
             }
 
+            // Who is playing, and handing a colony over, are the host's to say.
+            if ((replayEvent is ColonyPresenceEvent || replayEvent is ColonyHandoverEvent) && replayEvent.player != ColonySession.HostPlayer)
+            {
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: only the host sends it");
+                return false;
+            }
+
             // Zipline links, in every game: the game's own check, made here once instead of in every computer's replay.
             if (replayEvent is ZiplineConnectionChangedEvent zipline && ColonyRoadNetworks.Instance != null
                 && !ColonyRoadNetworks.Instance.HostAllowsZipline(zipline, out string why))
@@ -185,6 +192,7 @@ namespace BeaverBuddies.Colonies
             ColonyRefusal.NotEnoughScience => "BeaverBuddies.Colony.Refused.NotEnoughScience",
             ColonyRefusal.OtherColonyArea => "BeaverBuddies.Colony.Refused.OtherColonyArea",
             ColonyRefusal.TouchesOtherColony => "BeaverBuddies.Colony.Refused.TouchesOtherColony",
+            ColonyRefusal.TooCloseToColony => "BeaverBuddies.Colony.Refused.TooCloseToColony",
             _ => "BeaverBuddies.Colony.Refused.OtherColony",
         });
     }

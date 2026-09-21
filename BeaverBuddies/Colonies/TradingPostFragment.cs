@@ -28,6 +28,8 @@ namespace BeaverBuddies.Colonies
         private static readonly Color Ink = new Color(0.91f, 0.88f, 0.81f);
         private static readonly Color Muted = new Color(0.72f, 0.69f, 0.62f);
         private static readonly Color Rule = new Color(0.45f, 0.42f, 0.35f);
+        private static readonly Color CellBackground = new Color(0.05f, 0.05f, 0.04f, 0.85f);
+        private static readonly Color CellEmpty = new Color(0.05f, 0.05f, 0.04f, 0.45f);
 
         private readonly GoodService _goodService;
         private readonly ResourceCountingService _resourceCountingService;
@@ -35,20 +37,26 @@ namespace BeaverBuddies.Colonies
 
         private VisualElement root;
         private Label title, between, exchangeTitle, exchangeText, progressMine, progressTheirs, waiting;
-        private Label giveGoodLabel, getGoodLabel, preview, formHint, totalsTitle, sent, received, scienceTitle, viewOnly;
-        private VisualElement exchangeButtons, form, scienceRow;
-        private Button acceptButton, declineButton, withdrawButton, cancelButton;
+        private Label preview, formHint, totalsTitle, sent, received, scienceTitle, viewOnly;
+        private VisualElement exchangeButtons, form, scienceRow, picker;
+        private Button acceptButton, declineButton, withdrawButton, cancelButton, repeatButton;
+        private Button giveItemButton, getItemButton;
+        private Image giveIcon, getIcon;
         private TextField giveAmountField, getAmountField;
         private DistrictCrossing crossing;
         private float nextRefresh;
 
         // The offer being written: kept while the panel is open on other crossings too.
         private string giveGood, getGood;
+        private bool repeat;
+        // Which side's item grid is open: 0 none, 1 what you give, 2 what you ask for.
+        private int pickerFor;
 
         // The exchange as last shown: Accept and Cancel act on exactly this, never on something that changed since.
         private int shownSerial;
         private string shownGiveGood, shownGetGood;
         private int shownGiveAmount, shownGetAmount;
+        private bool shownRepeat;
 
         public TradingPostFragment(GoodService goodService, ResourceCountingService resourceCountingService,
             VisualElementInitializer visualElementInitializer)
@@ -83,17 +91,24 @@ namespace BeaverBuddies.Colonies
                 exchangeButtons.Add(button);
 
             form = new VisualElement();
-            giveGoodLabel = Text(12);
-            getGoodLabel = Text(12);
             giveAmountField = AmountField("100");
             getAmountField = AmountField("100");
-            form.Add(OfferRow(T("BeaverBuddies.Colony.Trade.YouGive"), giveGoodLabel, giveAmountField, step => StepGood(step, give: true)));
-            form.Add(OfferRow(T("BeaverBuddies.Colony.Trade.YouAsk"), getGoodLabel, getAmountField, step => StepGood(step, give: false)));
+            form.Add(OfferRow(T("BeaverBuddies.Colony.Trade.YouGive"), out giveIcon, out giveItemButton, giveAmountField, () => TogglePicker(1)));
+            form.Add(OfferRow(T("BeaverBuddies.Colony.Trade.YouAsk"), out getIcon, out getItemButton, getAmountField, () => TogglePicker(2)));
+            picker = new VisualElement();
+            picker.style.flexDirection = FlexDirection.Row;
+            picker.style.flexWrap = Wrap.Wrap;
+            picker.style.marginTop = 2;
+            picker.style.marginBottom = 2;
+            picker.style.display = DisplayStyle.None;
+            form.Add(picker);
             preview = Text(12);
             preview.style.marginTop = 2;
             form.Add(preview);
             var proposeRow = Row();
             proposeRow.Add(MakeButton(T("BeaverBuddies.Colony.Trade.Propose"), Propose));
+            repeatButton = MakeButton("", ToggleRepeat);
+            proposeRow.Add(repeatButton);
             form.Add(proposeRow);
             formHint = Text(11, color: Muted);
             formHint.style.marginTop = 2;
@@ -112,8 +127,11 @@ namespace BeaverBuddies.Colonies
                 scienceRow.Add(MakeButton(string.Format(T("BeaverBuddies.Colony.Trade.Give"), gift), () => GiveScience(gift)));
             }
             viewOnly = Text(12, color: Muted);
+            var overviewRow = Row();
+            overviewRow.style.marginTop = 6;
+            overviewRow.Add(MakeButton(T("BeaverBuddies.Colony.Trade.AllPosts"), OpenOverview));
             foreach (VisualElement element in new VisualElement[] { title, between, exchangeTitle, exchangeText, progressMine,
-                progressTheirs, waiting, exchangeButtons, form, totalsTitle, sent, received, scienceTitle, scienceRow, viewOnly })
+                progressTheirs, waiting, exchangeButtons, form, totalsTitle, sent, received, scienceTitle, scienceRow, viewOnly, overviewRow })
                 root.Add(element);
 
             // The game's own setup: buttons that click with any modifier, and text boxes that switch the game's hotkeys
@@ -128,6 +146,7 @@ namespace BeaverBuddies.Colonies
         public void ShowFragment(BaseComponent entity)
         {
             crossing = entity.GetComponent<DistrictCrossing>();
+            ClosePicker();
             nextRefresh = 0;
             Refresh();
         }
@@ -135,6 +154,7 @@ namespace BeaverBuddies.Colonies
         public void ClearFragment()
         {
             crossing = null;
+            ClosePicker();
             if (root != null) root.style.display = DisplayStyle.None;
         }
 
@@ -227,6 +247,7 @@ namespace BeaverBuddies.Colonies
                 shownGiveAmount = ax.Total;
                 shownGetGood = bx.GoodId;
                 shownGetAmount = bx.Total;
+                shownRepeat = ax.Repeat;
             }
 
             Show(progressMine, false);
@@ -237,28 +258,32 @@ namespace BeaverBuddies.Colonies
             Show(withdrawButton, mine && state == ExchangeState.Proposed && ax.ProposedHere);
             Show(cancelButton, mine && state == ExchangeState.Active);
             Show(form, mine && state == ExchangeState.None);
+            if (!(mine && state == ExchangeState.None)) ClosePicker();
 
             if (state == ExchangeState.None || exchanges == null || bx == null)
             {
                 exchangeText.text = T(mine ? "BeaverBuddies.Colony.Trade.NoExchange" : "BeaverBuddies.Colony.Trade.NoExchangeView");
-                if (mine) RefreshForm(a, b, bSlot);
+                if (mine) RefreshForm(a, b, aSlot, bSlot);
                 return;
             }
 
             string aGives = exchanges.Amount(ax.Total, ax.GoodId), bGives = exchanges.Amount(bx.Total, bx.GoodId);
+            string repeating = ax.Repeat ? " " + T("BeaverBuddies.Colony.Trade.Repeating") : "";
             if (state == ExchangeState.Proposed)
             {
                 // Always told from the offering colony's side: what it gives, and what it asks in return.
                 bool offeredHere = ax.ProposedHere;
                 string key = !mine ? "BeaverBuddies.Colony.Trade.OfferView"
                     : offeredHere ? "BeaverBuddies.Colony.Trade.YouOffer" : "BeaverBuddies.Colony.Trade.TheyOffer";
-                exchangeText.text = offeredHere
+                exchangeText.text = (offeredHere
                     ? string.Format(T(key), ColonyName(aSlot), aGives, bGives, ColonyName(bSlot))
-                    : string.Format(T(key), ColonyName(bSlot), bGives, aGives, ColonyName(aSlot));
+                    : string.Format(T(key), ColonyName(bSlot), bGives, aGives, ColonyName(aSlot))) + repeating;
                 return;
             }
 
-            exchangeText.text = T("BeaverBuddies.Colony.Trade.UnderWay");
+            exchangeText.text = ax.Repeat
+                ? string.Format(T("BeaverBuddies.Colony.Trade.UnderWayRepeating"), ax.Rounds + 1, ax.Rounds)
+                : T("BeaverBuddies.Colony.Trade.UnderWay");
             ShowProgress(progressMine, aSlot, ax);
             ShowProgress(progressTheirs, bSlot, bx);
             if (mine && ax.Remaining > 0 && ColonyExchangeService.StillToBring(a) == 0)
@@ -276,16 +301,25 @@ namespace BeaverBuddies.Colonies
             Show(label, true);
         }
 
-        private void RefreshForm(DistrictCrossing mine, DistrictCrossing theirs, int them)
+        private void RefreshForm(DistrictCrossing mine, DistrictCrossing theirs, int me, int them)
         {
-            DistrictCenter myDistrict = TradingPosts.DistrictOf(mine), theirDistrict = TradingPosts.DistrictOf(theirs);
-            if (giveGood == null || !_goodService.HasGood(giveGood)) giveGood = GoodsInOrder(myDistrict).FirstOrDefault();
-            if (getGood == null || !_goodService.HasGood(getGood) || getGood == giveGood)
-                getGood = GoodsInOrder(theirDistrict).FirstOrDefault(g => g != giveGood);
-            giveGoodLabel.text = string.Format(T("BeaverBuddies.Colony.Trade.YouHave"), GoodName(giveGood), Stock(myDistrict, giveGood));
-            getGoodLabel.text = string.Format(T("BeaverBuddies.Colony.Trade.TheyHave"), GoodName(getGood), Stock(theirDistrict, getGood));
+            // A new form starts on goods (what each colony has most readily), never on science or beavers.
+            if (giveGood == null || !IsOffered(giveGood)) giveGood = ItemsInOrder(mine, me).FirstOrDefault(g => !ExchangeTerms.IsSpecial(g));
+            if (getGood == null || !IsOffered(getGood) || getGood == giveGood)
+                getGood = ItemsInOrder(theirs, them).FirstOrDefault(g => g != giveGood && !ExchangeTerms.IsSpecial(g));
+            ShowItem(giveIcon, giveItemButton, giveGood, "BeaverBuddies.Colony.Trade.YouHave", Stock(mine, me, giveGood));
+            ShowItem(getIcon, getItemButton, getGood, "BeaverBuddies.Colony.Trade.TheyHave", Stock(theirs, them, getGood));
+            repeatButton.text = T(repeat ? "BeaverBuddies.Colony.Trade.RepeatOn" : "BeaverBuddies.Colony.Trade.RepeatOff");
             formHint.text = string.Format(T("BeaverBuddies.Colony.Trade.FormHint"), ColonyName(them));
             RefreshPreview();
+        }
+
+        private void ShowItem(Image icon, Button button, string item, string key, int stock)
+        {
+            Sprite sprite = IconOf(item);
+            icon.sprite = sprite;
+            icon.style.display = sprite != null ? DisplayStyle.Flex : DisplayStyle.None;
+            button.text = string.Format(T(key), GoodName(item), stock);
         }
 
         private void RefreshPreview()
@@ -293,7 +327,8 @@ namespace BeaverBuddies.Colonies
             if (preview == null) return;
             ColonyExchangeService exchanges = ColonyExchangeService.Instance;
             if (exchanges != null && TryReadOffer(out int give, out int get))
-                preview.text = string.Format(T("BeaverBuddies.Colony.Trade.Preview"), exchanges.Amount(give, giveGood), exchanges.Amount(get, getGood));
+                preview.text = string.Format(T("BeaverBuddies.Colony.Trade.Preview"), exchanges.Amount(give, giveGood), exchanges.Amount(get, getGood))
+                    + (repeat ? " " + T("BeaverBuddies.Colony.Trade.Repeating") : "");
             else
                 preview.text = T("BeaverBuddies.Colony.Trade.Invalid");
         }
@@ -316,39 +351,130 @@ namespace BeaverBuddies.Colonies
                 && amount <= ExchangeTerms.MaxAmount;
         }
 
-        /// <summary>Goods the district has in stock first, then the rest; each group by name.</summary>
-        private List<string> GoodsInOrder(DistrictCenter district)
+        // ---- choosing what to give and to ask for ----
+
+        private bool IsOffered(string item) =>
+            item == ExchangeTerms.Beavers || (item == ExchangeTerms.Science ? ColonyScienceService.IsEnabled : _goodService.HasGood(item));
+
+        /// <summary>Science (with separate science) and beavers first, then goods the colony has, then the rest; each by name.</summary>
+        private List<string> ItemsInOrder(DistrictCrossing half, int slot)
         {
+            var items = new List<string>();
+            if (ColonyScienceService.IsEnabled) items.Add(ExchangeTerms.Science);
+            items.Add(ExchangeTerms.Beavers);
             var goods = new List<string>();
             foreach (string goodId in _goodService.Goods) goods.Add(goodId);
-            return goods.OrderByDescending(g => Stock(district, g) > 0)
+            items.AddRange(goods.OrderByDescending(g => Stock(half, slot, g) > 0)
                 .ThenBy(g => GoodName(g), StringComparer.CurrentCultureIgnoreCase)
-                .ThenBy(g => g, StringComparer.Ordinal).ToList();
+                .ThenBy(g => g, StringComparer.Ordinal));
+            return items;
         }
 
-        private int Stock(DistrictCenter district, string goodId)
+        /// <summary>How much of an item a colony has at this crossing's district: stock, science, or adult beavers.</summary>
+        private int Stock(DistrictCrossing half, int slot, string item)
         {
-            if (!district || string.IsNullOrEmpty(goodId)) return 0;
-            return _resourceCountingService.GetDistrictResourceCounter(district).GetResourceCount(goodId).AvailableStock;
+            if (string.IsNullOrEmpty(item)) return 0;
+            if (item == ExchangeTerms.Science) return ColonyScienceService.Instance?.PointsOf(slot) ?? 0;
+            DistrictCenter district = TradingPosts.DistrictOf(half);
+            if (!district) return 0;
+            if (item == ExchangeTerms.Beavers) return district.GetComponent<DistrictPopulation>()?.NumberOfAdults ?? 0;
+            return _resourceCountingService.GetDistrictResourceCounter(district).GetResourceCount(item).AvailableStock;
         }
 
-        private void StepGood(int step, bool give)
+        private void TogglePicker(int side)
         {
+            if (pickerFor == side)
+            {
+                ClosePicker();
+                return;
+            }
             DistrictCrossing myHalf = MyHalf();
             if (!myHalf) return;
-            DistrictCenter district = TradingPosts.DistrictOf(give ? myHalf : TradingPosts.Partner(myHalf));
-            List<string> order = GoodsInOrder(district);
-            string other = give ? getGood : giveGood;
-            // Two sides giving the same good make no sense; skip the other side's good.
-            order.Remove(other);
-            if (order.Count == 0) return;
-            int i = order.IndexOf(give ? giveGood : getGood);
-            string next = i < 0 ? order[0] : order[(i + step + order.Count) % order.Count];
-            if (give) giveGood = next;
-            else getGood = next;
-            nextRefresh = 0;
-            Refresh();
+            pickerFor = side;
+            DistrictCrossing half = side == 1 ? myHalf : TradingPosts.Partner(myHalf);
+            int slot = OwnerOf(half);
+            string other = side == 1 ? getGood : giveGood;
+            picker.Clear();
+            foreach (string item in ItemsInOrder(half, slot))
+            {
+                // Two sides giving the same good make no sense.
+                if (item == other) continue;
+                picker.Add(PickerCell(item, Stock(half, slot, item), side));
+            }
+            _visualElementInitializer.InitializeVisualElement(picker);
+            picker.style.display = DisplayStyle.Flex;
         }
+
+        private void ClosePicker()
+        {
+            pickerFor = 0;
+            if (picker == null) return;
+            picker.style.display = DisplayStyle.None;
+            picker.Clear();
+        }
+
+        private VisualElement PickerCell(string item, int stock, int side)
+        {
+            var cell = new Button(() =>
+            {
+                if (side == 1) giveGood = item;
+                else getGood = item;
+                ClosePicker();
+                nextRefresh = 0;
+                Refresh();
+            });
+            cell.tooltip = GoodName(item);
+            cell.style.width = 40;
+            cell.style.height = 44;
+            cell.style.marginLeft = 1; cell.style.marginRight = 1; cell.style.marginTop = 1; cell.style.marginBottom = 1;
+            cell.style.paddingLeft = 1; cell.style.paddingRight = 1; cell.style.paddingTop = 2; cell.style.paddingBottom = 1;
+            cell.style.flexDirection = FlexDirection.Column;
+            cell.style.alignItems = Align.Center;
+            cell.style.backgroundColor = stock > 0 ? CellBackground : CellEmpty;
+            Sprite sprite = IconOf(item);
+            if (sprite != null)
+            {
+                var icon = new Image { sprite = sprite };
+                icon.style.width = 24;
+                icon.style.height = 24;
+                cell.Add(icon);
+            }
+            else
+            {
+                // Science and beavers have no good icon: a short name instead.
+                Label name = Text(10, bold: true);
+                name.text = GoodName(item);
+                name.style.unityTextAlign = TextAnchor.MiddleCenter;
+                name.style.height = 24;
+                cell.Add(name);
+            }
+            Label count = Text(10, color: stock > 0 ? Ink : Muted);
+            count.text = stock.ToString(CultureInfo.CurrentCulture);
+            count.style.unityTextAlign = TextAnchor.MiddleCenter;
+            cell.Add(count);
+            return cell;
+        }
+
+        private Sprite IconOf(string item)
+        {
+            if (string.IsNullOrEmpty(item) || ExchangeTerms.IsSpecial(item)) return null;
+            try { return _goodService.GetGood(item).Icon.Asset; }
+            catch (Exception) { return null; }
+        }
+
+        private void OpenOverview()
+        {
+            if (TradeOverviewPanel.Instance?.Open() != true) Notice(T("BeaverBuddies.Colony.Trade.HostFirst"));
+        }
+
+        private void ToggleRepeat()
+        {
+            repeat = !repeat;
+            repeatButton.text = T(repeat ? "BeaverBuddies.Colony.Trade.RepeatOn" : "BeaverBuddies.Colony.Trade.RepeatOff");
+            RefreshPreview();
+        }
+
+        // ---- actions ----
 
         private void Propose()
         {
@@ -361,7 +487,11 @@ namespace BeaverBuddies.Colonies
             }
             string halfId = ReplayEvent.GetEntityID(myHalf);
             string giving = ExchangeTerms.GoodOf(giveGood, give), asking = ExchangeTerms.GoodOf(getGood, get);
-            Send(() => new ExchangeProposedEvent { crossingID = halfId, giveGood = giving, giveAmount = give, getGood = asking, getAmount = get });
+            bool repeating = repeat;
+            Send(() => new ExchangeProposedEvent
+            {
+                crossingID = halfId, giveGood = giving, giveAmount = give, getGood = asking, getAmount = get, repeat = repeating,
+            });
         }
 
         private void Accept()
@@ -372,7 +502,12 @@ namespace BeaverBuddies.Colonies
             // The terms as this player saw them on the panel: an offer changed in the meantime is not accepted.
             int serial = shownSerial, giveAmount = shownGiveAmount, getAmount = shownGetAmount;
             string giveId = shownGiveGood, getId = shownGetGood;
-            Send(() => new ExchangeAcceptedEvent { crossingID = halfId, serial = serial, giveGood = giveId, giveAmount = giveAmount, getGood = getId, getAmount = getAmount });
+            bool repeating = shownRepeat;
+            Send(() => new ExchangeAcceptedEvent
+            {
+                crossingID = halfId, serial = serial, giveGood = giveId, giveAmount = giveAmount, getGood = getId,
+                getAmount = getAmount, repeat = repeating,
+            });
         }
 
         private void Cancel()
@@ -410,12 +545,8 @@ namespace BeaverBuddies.Colonies
             return string.Join(", ", goods.Take(4).Select(g => $"{g.Value} {GoodName(g.Key)}")) + (goods.Count > 4 ? ", …" : "");
         }
 
-        private string GoodName(string goodId)
-        {
-            if (string.IsNullOrEmpty(goodId)) return "";
-            try { return _goodService.GetGood(goodId).PluralDisplayName.Value; }
-            catch (Exception) { return goodId; }
-        }
+        private string GoodName(string goodId) =>
+            string.IsNullOrEmpty(goodId) ? "" : ColonyExchangeService.Instance?.GoodName(goodId) ?? goodId;
 
         private static string ColonyName(int slot) => ColonyExchangeService.ColonyName(slot);
 
@@ -458,8 +589,8 @@ namespace BeaverBuddies.Colonies
             return button;
         }
 
-        /// <summary>"You give:  &lt; Logs (you have 240) &gt;  [100]".</summary>
-        private static VisualElement OfferRow(string caption, Label good, TextField amount, Action<int> step)
+        /// <summary>"You give:  [icon] Logs (you have 240)  [100]": the item button opens the item grid.</summary>
+        private static VisualElement OfferRow(string caption, out Image icon, out Button item, TextField amount, Action choose)
         {
             var row = Row();
             row.style.flexWrap = Wrap.NoWrap;
@@ -469,20 +600,17 @@ namespace BeaverBuddies.Colonies
             captionLabel.style.width = 58;
             captionLabel.style.flexShrink = 0;
             row.Add(captionLabel);
-            Button back = MakeButton("<", () => step(-1));
-            Button forward = MakeButton(">", () => step(1));
-            foreach (Button button in new[] { back, forward })
-            {
-                button.style.width = 22;
-                button.style.flexShrink = 0;
-                button.style.marginRight = 2;
-            }
-            good.style.flexGrow = 1;
-            good.style.flexShrink = 1;
-            good.style.marginRight = 2;
-            row.Add(back);
-            row.Add(good);
-            row.Add(forward);
+            icon = new Image();
+            icon.style.width = 20;
+            icon.style.height = 20;
+            icon.style.flexShrink = 0;
+            icon.style.marginRight = 2;
+            row.Add(icon);
+            item = MakeButton("", choose);
+            item.style.flexGrow = 1;
+            item.style.flexShrink = 1;
+            item.style.whiteSpace = WhiteSpace.Normal;
+            row.Add(item);
             amount.style.width = 52;
             amount.style.flexShrink = 0;
             amount.style.marginLeft = 2;

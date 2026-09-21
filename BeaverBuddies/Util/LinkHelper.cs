@@ -6,9 +6,9 @@ namespace BeaverBuddies.Util
 {
     public static class LinkHelper
     {
-         public const string GuideURL = "https://github.com/thomaswp/BeaverBuddies/wiki/Installation-and-Running";
-         public const string BugReportURL = "https://github.com/thomaswp/TimberReplay/issues";
-         public const string TroubleshootingUrl = "https://github.com/thomaswp/BeaverBuddies/wiki/Installation-and-Running#troubleshooting";
+         public const string GuideURL = "https://github.com/timbermods/BeaverBuddies-MultiColony#readme";
+         public const string BugReportURL = "https://github.com/timbermods/BeaverBuddies-MultiColony/issues";
+         public const string TroubleshootingUrl = "https://github.com/timbermods/BeaverBuddies-MultiColony#troubleshooting-and-reporting-problems";
 
     }
 }

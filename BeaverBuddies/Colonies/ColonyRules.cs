@@ -156,6 +156,8 @@ namespace BeaverBuddies.Colonies
         OtherColonyArea,
         /// <summary>The building would touch another colony's roads (and so join or block them).</summary>
         TouchesOtherColony,
+        /// <summary>A new colony here would have its land run straight into another's: no room for either to grow.</summary>
+        TooCloseToColony,
     }
 
     public readonly struct ColonyVerdict
@@ -273,10 +275,11 @@ namespace BeaverBuddies.Colonies
         /// Whether a player may found a colony now. Once per player: only a player whose slot owns no district center
         /// yet. The save must be a separate-colonies game, or the host must allow it this session (founding turns a
         /// shared game into one). The spot must be free, and the new district center must not join another colony's
-        /// roads or stand on its land.
+        /// roads, stand on its land, or stand so close that the two colonies' land would meet at once (it must be at
+        /// least 20 tiles from another colony's buildings and paths, so both have room to grow).
         /// </summary>
         public static ColonyVerdict JudgeFounding(bool actorHasSlot, bool actorOwnsDistrict, bool foundingAllowed,
-            bool blocksValid, bool touchesOtherDistrict, bool onOtherColonyLand = false)
+            bool blocksValid, bool touchesOtherDistrict, bool onOtherColonyLand = false, bool tooCloseToColony = false)
         {
             if (!actorHasSlot) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "a helper plays another player's colony");
             if (actorOwnsDistrict) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "this player already has a colony");
@@ -284,6 +287,7 @@ namespace BeaverBuddies.Colonies
             if (!blocksValid) return ColonyVerdict.Refuse(ColonyRefusal.Blocked, "the spot is taken or unsuitable");
             if (touchesOtherDistrict) return ColonyVerdict.Refuse(ColonyRefusal.FoundingConflict, "it would join another district's roads");
             if (onOtherColonyLand) return ColonyVerdict.Refuse(ColonyRefusal.OtherColonyArea, "it would stand on another colony's land");
+            if (tooCloseToColony) return ColonyVerdict.Refuse(ColonyRefusal.TooCloseToColony, "its land would run into another colony's");
             return ColonyVerdict.Allow;
         }
     }

@@ -202,8 +202,38 @@ namespace BeaverBuddies.Colonies
 
         public bool Reaches(int slot, Vector3Int tile) => grid != null && grid.Reaches(slot, tile.x, tile.y);
 
+        public int LandSize(int slot) => grid?.LandSize(slot) ?? 0;
+
+        /// <summary>Buildings counted, and buildings still waiting for a colony (diagnostics).</summary>
+        public (int counted, int unstamped) Counts => (added.Count, unstamped.Count);
+
+        /// <summary>Changes whenever any colony's land may have changed (for displays).</summary>
+        public int Version => grid?.Version ?? 0;
+
         /// <summary>A colony may use its own land and land nobody holds.</summary>
         public bool MayUse(int slot, Vector3Int tile) => grid == null || grid.MayUse(slot, tile.x, tile.y);
+
+        /// <summary>Whether another colony reaches within 10 tiles of these: too close to found a colony.</summary>
+        public bool OthersReachNear(int slot, IEnumerable<Vector3Int> tiles) =>
+            grid != null && grid.OthersReachNear(slot, tiles.Select(t => (t.x, t.y)));
+
+        /// <summary>The outline of a colony's land (display).</summary>
+        public IEnumerable<(int x, int y)> BorderTiles(int slot) => grid?.BorderTiles(slot) ?? Enumerable.Empty<(int, int)>();
+
+        /// <summary>
+        /// A colony handed over: its land and its buildings' reach become <paramref name="to"/>'s. Played on every
+        /// computer, with the buildings' stamps changed alongside (see ColonyHandover).
+        /// </summary>
+        internal void Transfer(int from, int to)
+        {
+            if (grid == null) return;
+            grid.Transfer(from, to);
+            foreach (EntityComponent entity in added.Keys.ToList())
+            {
+                var contribution = added[entity];
+                if (contribution.slot == from) added[entity] = (to, contribution.tiles);
+            }
+        }
 
         /// <summary>Whose land the tile is (the colony that reached it first), or null.</summary>
         public int? Owner(Vector3Int tile) => grid?.Owner(tile.x, tile.y);

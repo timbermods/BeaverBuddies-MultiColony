@@ -11,6 +11,14 @@ namespace BeaverBuddies.Colonies
     public static class ExchangeTerms
     {
         public const int MaxAmount = 9999;
+
+        /// <summary>Science points as an exchange item: moved from pool to pool, with separate science.</summary>
+        public const string Science = "BeaverBuddies.Science";
+        /// <summary>Adult beavers as an exchange item: they move to the other colony's district.</summary>
+        public const string Beavers = "BeaverBuddies.Beavers";
+
+        /// <summary>Science and beavers are not carried by workers: they move by themselves, in step.</summary>
+        public static bool IsSpecial(string item) => item == Science || item == Beavers;
         public const int LeadPercent = 10;
         public const int MinLead = 10;
 

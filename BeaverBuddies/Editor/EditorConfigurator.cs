@@ -14,6 +14,7 @@ namespace BeaverBuddies.Editor
     {
         public void Configure(IContainerDefinition containerDefinition)
         {
+            if (Plugin.Disabled) return;
             SingletonManager.Reset();
             containerDefinition.Bind<StartingLocationNumberService>().AsSingleton();
             MultiStartConfigurator.Configure(containerDefinition);

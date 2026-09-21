@@ -1,0 +1,15 @@
+{
+  "KeyBindingSpec": {
+    "Id": "BeaverBuddies.KeyBind.ToggleColonyLand",
+    "GroupId": "KeyBindingGroup.BeaverBuddies",
+    "LocKey": "BeaverBuddies.KeyBindings.ToggleColonyLand",
+    "Order": 6,
+    "AllowOtherModifiers": false,
+    "DevModeOnly": false
+  },
+  "PrimaryInputBindingSpec": {
+    "Path": "/Keyboard/l",
+    "InputModifiers": "Ctrl",
+    "Unchangeable": false
+  }
+}

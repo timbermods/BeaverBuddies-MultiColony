@@ -235,7 +235,8 @@ namespace BeaverBuddies.Colonies
                 foundingAllowed: atReplay || FoundingAllowed,
                 blocksValid: blocksValid,
                 touchesOtherDistrict: TouchesAnotherDistrict(placement),
-                onOtherColonyLand: OnOtherColonyLand(actorSlot, placement));
+                onOtherColonyLand: OnOtherColonyLand(actorSlot, placement),
+                tooCloseToColony: TooCloseToColony(actorSlot, placement));
         }
 
         /// <summary>
@@ -245,18 +246,30 @@ namespace BeaverBuddies.Colonies
         private bool OnOtherColonyLand(int actorSlot, Placement placement)
         {
             ColonyReach reach = ColonyReach.Instance;
-            if (reach == null) return false;
+            return reach != null && Footprint(placement).Any(tile => !reach.MayUse(actorSlot, tile));
+        }
+
+        /// <summary>
+        /// Whether another colony reaches within 10 tiles of the new district center: the two colonies' land would meet
+        /// at once and neither could grow that way. Read from <see cref="ColonyReach"/>, the same on every computer.
+        /// </summary>
+        private bool TooCloseToColony(int actorSlot, Placement placement)
+        {
+            ColonyReach reach = ColonyReach.Instance;
+            return reach != null && reach.OthersReachNear(actorSlot, Footprint(placement));
+        }
+
+        private List<Vector3Int> Footprint(Placement placement)
+        {
             BlockObjectSpec spec = _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>();
+            var tiles = new List<Vector3Int>();
             for (int x = 0; x < spec.Size.x; x++)
             {
                 for (int y = 0; y < spec.Size.y; y++)
-                {
-                    Vector3Int tile = placement.Orientation.Transform(placement.FlipMode.Transform(new Vector3Int(x, y, 0), spec.Size.x))
-                        + placement.Coordinates;
-                    if (!reach.MayUse(actorSlot, tile)) return true;
-                }
+                    tiles.Add(placement.Orientation.Transform(placement.FlipMode.Transform(new Vector3Int(x, y, 0), spec.Size.x))
+                        + placement.Coordinates);
             }
-            return false;
+            return tiles;
         }
 
         // ---- founding (replayed on every computer) ----

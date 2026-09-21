@@ -24,6 +24,7 @@ namespace BeaverBuddies
 
         public void Configure(IContainerDefinition containerDefinition)
         {
+            if (Plugin.Disabled) return;
             // Reset everything before loading singletons
             SingletonManager.Reset();
 
@@ -74,6 +75,11 @@ namespace BeaverBuddies
     {
         public void Configure(IContainerDefinition containerDefinition)
         {
+            if (Plugin.Disabled)
+            {
+                containerDefinition.Bind<DuplicateModWarning>().AsSingleton();
+                return;
+            }
             // This will be called if the player exits to the main menu,
             // so it's best to reset everything.
             SingletonManager.Reset();
@@ -91,6 +97,7 @@ namespace BeaverBuddies
 
             //new ReportingService().PostDesync("test").ContinueWith(result => Plugin.Log($"Posted: {result.Result}"));
             containerDefinition.Bind<SteamOverlayConnectionService>().AsSingleton();
+            containerDefinition.Bind<DuplicateModWarning>().AsSingleton();
 
             //ReflectionUtils.PrintChildClasses(typeof(MonoBehaviour),
             //    "Start", "Awake", "Update", "FixedUpdate", "LateUpdate", "OnEnable", "OnDisable", "OnDestroy");
@@ -109,8 +116,17 @@ namespace BeaverBuddies
     public class Plugin : IModStarter
     {
         public static readonly string Version = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? Assembly.GetExecutingAssembly().GetName().Version.ToString();
-        public const string Name = "BeaverBuddies";
-        public const string ID = "beaverbuddies";
+        public const string Name = "BeaverBuddies MultiColony";
+        /// <summary>This mod's own id (manifest.json). Mod Settings keeps its settings under it.</summary>
+        public const string ID = "timbermods.BeaverBuddiesMultiColony";
+        /// <summary>The id of the original BeaverBuddies and of the Stability Fork, which cannot run alongside this.</summary>
+        public const string OtherBeaverBuddiesID = "beaverbuddies";
+
+        /// <summary>
+        /// Another BeaverBuddies started first: this one patches nothing and binds nothing but the main menu's warning,
+        /// so the game runs as the other one alone.
+        /// </summary>
+        public static bool Disabled { get; private set; }
 
         private static ILogger logger;
 
@@ -119,6 +135,15 @@ namespace BeaverBuddies
             logger = new UnityLogger();
 
             Log($"{Name} v{Version} is loaded!");
+
+            // Another BeaverBuddies already patched the game: patching it again would break both. The main menu says
+            // why (DuplicateModWarning) and this copy stays out of the way.
+            if (Harmony.HasAnyPatches(OtherBeaverBuddiesID))
+            {
+                LogError("Another BeaverBuddies mod is enabled and already running; BeaverBuddies MultiColony will not start. Disable the other one and restart.");
+                Disabled = true;
+                return;
+            }
 
             // apply all harmony patches automatically.
             Harmony harmony = new Harmony(ID);

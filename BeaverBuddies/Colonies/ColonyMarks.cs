@@ -80,6 +80,13 @@ namespace BeaverBuddies.Colonies
             owner != null ? owner.Value == slot : ColonyReach.Instance?.MayUse(slot, tile) ?? true;
 
         internal void SetPlanting(Vector3Int tile, int slot) => planting[tile] = slot;
+
+        /// <summary>A colony handed over: its marks become the new owner's.</summary>
+        internal void Transfer(int from, int to)
+        {
+            foreach (Vector3Int tile in planting.Where(m => m.Value == from).Select(m => m.Key).ToList()) planting[tile] = to;
+            foreach (Vector3Int tile in cutting.Where(m => m.Value == from).Select(m => m.Key).ToList()) cutting[tile] = to;
+        }
         internal void ClearPlanting(Vector3Int tile) => planting.Remove(tile);
 
         /// <summary>

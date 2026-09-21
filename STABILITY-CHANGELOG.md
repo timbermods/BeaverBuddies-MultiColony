@@ -5,6 +5,38 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha1
+
+**Ready for longer games: land you can see, colonies that don't dead-end, better trading, its own identity.** Not yet
+played in a game. Every player must install this build. Saves from 1.3.0-exchange-alpha1 and alpha2 and the
+two-colony alphas load.
+
+- **The land shows.** Every colony's land is outlined in its colour while a building, planting, cutting, demolishing
+  or founding tool is in hand, and any time with Ctrl+L.
+- **Colonies are handed over instead of dead-ending.** A colony with no beavers or bots left for a whole day goes to
+  the nearest living colony. A colony whose player has missed a number of in-game days of hosted co-op play in a row
+  (new host setting, 7 by default, 0 for never; single-player days and the first day after loading don't count)
+  goes to the nearest colony whose player is playing. The host may hand over, from the new
+  Ctrl+T window, any colony whose player is away or that has no beavers. What moves: district centers, buildings,
+  land, marks, stock and the science pool (the receiver may also build what the old colony had unlocked). The player
+  who lost their colony may found a new one.
+- **Founding keeps its distance:** at least 20 tiles from another colony's buildings and paths, so both have room to
+  grow. The founding preview says so.
+- **Its own identity:** mod id `timbermods.BeaverBuddiesMultiColony`, name *BeaverBuddies MultiColony (alpha)*, links to
+  this project. The `workshop_data.json` that still pointed at the original BeaverBuddies Workshop item is gone: a
+  first Workshop upload makes a new item. If another BeaverBuddies is enabled too, the main menu names it; if it
+  started first, this one stays out of the way instead of patching the game twice. Mod Settings start from their
+  defaults once (they are kept under the new id). A development build now deploys to `Mods\BeaverBuddies-MultiColony`.
+- **Trading:** the offer form picks goods from a grid of icons with each colony's stock; **Repeat** makes a standing
+  deal that starts again each time it completes; **science and adult beavers** can be exchanged too (they move by
+  themselves, in step: science 25 at a time, beavers one at a time, the last adult always staying); the new **trading posts and colonies
+  window** (Ctrl+T, or *Trade* at the top right) lists every trading post of your colony with its progress and a
+  *Go to* button, and every colony with its population and whether its player is playing.
+- **Fixed:** the debug key Ctrl+Shift+K (the host acts as the next colony, for testing alone) did nothing since
+  1.3.0-exchange-alpha1: its handler had gone with the old border display.
+- **For large games:** with detailed logging, one log line a day per colony (population, land, exchanges);
+  headless checks that land for 20,000 building tiles on a 256 by 256 map stays quick; a scale test script (Script C).
+
 ## 1.3.0-exchange-alpha2
 
 **Barter exchanges at trading posts, and colonies kept apart everywhere else.** A trading post now works like one: the
