@@ -7,6 +7,8 @@ using Timberborn.BaseComponentSystem;
 using Timberborn.BuilderPrioritySystem;
 using Timberborn.Buildings;
 using Timberborn.BuildingsUI;
+using Timberborn.ConstructionSites;
+using Timberborn.ConstructionSitesUI;
 using Timberborn.Demolishing;
 using Timberborn.DemolishingUI;
 using Timberborn.Emptying;
@@ -835,6 +837,8 @@ namespace BeaverBuddies.Events
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
 
         public UnlockableWorkerType workerType;
+        // Dev mode's instant unlock (Ctrl-click on the bot toggle): no science is spent.
+        public bool free;
 
         public override void Replay(IReplayContext context)
         {
@@ -847,6 +851,12 @@ namespace BeaverBuddies.Events
             if (already)
             {
                 Plugin.LogWarning($"Tried to unlock {workerType.WorkerType} for {workerType.WorkplaceTemplateName} but it was already unlocked");
+                return;
+            }
+            if (free)
+            {
+                if (Colonies.ColonyScienceService.IsEnabled) Colonies.ColonyScienceService.InSlot(actorSlot, () => service.UnlockIgnoringCost(workerType));
+                else service.UnlockIgnoringCost(workerType);
                 return;
             }
             // With separate science the actor's colony pays, and only it gets the unlock.
@@ -865,7 +875,63 @@ namespace BeaverBuddies.Events
 
         public override string ToActionString()
         {
-            return $"Unlocking {workerType.WorkerType} for {workerType.WorkplaceTemplateName}";
+            return $"Unlocking {workerType.WorkerType} for {workerType.WorkplaceTemplateName}" + (free ? " for free (dev mode)" : "");
+        }
+    }
+
+    // Dev mode's "Finish now" on a construction site. It finished the building on this computer alone; it is now played
+    // on every computer, and only the colony the site belongs to may use it.
+    class ConstructionSiteFinishedNowEvent : ReplayEvent
+    {
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(entityID);
+
+        public string entityID;
+
+        public override void Replay(IReplayContext context)
+        {
+            var site = GetComponent<ConstructionSite>(context, entityID);
+            // Finished (or gone) since the click: nothing left to do, on every computer alike.
+            if (!site || !site.Enabled) return;
+            site.FinishNow();
+        }
+
+        public override string ToActionString()
+        {
+            return $"Finishing construction of {entityID} now (dev mode)";
+        }
+    }
+
+    [HarmonyPatch(typeof(ConstructionSiteDebugFragment), nameof(ConstructionSiteDebugFragment.OnFinishNowClick))]
+    class ConstructionSiteFinishNowPatcher
+    {
+        static bool Prefix(ConstructionSiteDebugFragment __instance)
+        {
+            ConstructionSite site = __instance._constructionSite;
+            if (!site || !site.Enabled) return true;
+            return ReplayEvent.DoEntityPrefix(site, entityID => new ConstructionSiteFinishedNowEvent()
+            {
+                entityID = entityID,
+            });
+        }
+    }
+
+    // Dev mode's instant unlock of bots for a workplace (Ctrl-click on the bot toggle) unlocked them on this computer
+    // alone. It is now an unlock like any other, played on every computer, without the science cost. The callback (the
+    // toggle's own, which sends the worker type change) runs at once, as for a paid unlock.
+    [HarmonyPatch(typeof(WorkplaceUnlockingDialogService), nameof(WorkplaceUnlockingDialogService.UnlockIgnoringScienceCost))]
+    class WorkplaceInstantUnlockPatcher
+    {
+        static bool Prefix(UnlockableWorkerType unlockableWorkerType, Action callback)
+        {
+            if (IO.EventIO.IsNull) return true;
+            bool playHere = ReplayEvent.DoPrefix(() => new WorkerTypeUnlockedEvent()
+            {
+                workerType = unlockableWorkerType,
+                free = true,
+            });
+            if (playHere) return true;
+            callback?.Invoke();
+            return false;
         }
     }
 
@@ -909,6 +975,10 @@ namespace BeaverBuddies.Events
     {
         static bool Prefix(WorkplaceWorkerType __instance, string workerType)
         {
+            // The game also calls this itself, in the tick, when a building or construction site is joined to a district
+            // (it takes the district's default worker type). That happens on every computer at the same moment, so it is
+            // simply played: sent as a player's action, a guest would refuse it for another colony's building.
+            if (DeterminismService.IsTicking) return true;
             return ReplayEvent.DoEntityPrefix(__instance, (entityID) =>
             {
                 return new WorkerTypeSetEvent()

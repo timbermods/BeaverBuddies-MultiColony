@@ -1,4 +1,5 @@
 ﻿using BeaverBuddies.Colonies;
+using BeaverBuddies.IO;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -437,6 +438,8 @@ namespace BeaverBuddies.Events
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
 
         public string buildingName;
+        // Dev mode's instant unlock (Ctrl-click on a locked building): no science is spent.
+        public bool free;
 
         public override void Replay(IReplayContext context)
         {
@@ -455,18 +458,26 @@ namespace BeaverBuddies.Events
                 Plugin.Log($"Already unlocked for slot {actorSlot}: {buildingName}");
                 return;
             }
-            bool affordable = separate
-                ? Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlockable(building))
-                : unlocking.Unlockable(building);
-            if (!affordable)
+            if (free)
             {
-                // Science was spent elsewhere between the click and now. The game would throw here, which would stop
-                // the session; the same answer on every computer is to skip it.
-                Plugin.LogWarning($"Not enough science to unlock {buildingName} for slot {actorSlot} any more; skipped");
-                return;
+                if (separate) Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.UnlockIgnoringCost(building));
+                else unlocking.UnlockIgnoringCost(building);
             }
-            if (separate) Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlock(building));
-            else unlocking.Unlock(building);
+            else
+            {
+                bool affordable = separate
+                    ? Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlockable(building))
+                    : unlocking.Unlockable(building);
+                if (!affordable)
+                {
+                    // Science was spent elsewhere between the click and now. The game would throw here, which would
+                    // stop the session; the same answer on every computer is to skip it.
+                    Plugin.LogWarning($"Not enough science to unlock {buildingName} for slot {actorSlot} any more; skipped");
+                    return;
+                }
+                if (separate) Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlock(building));
+                else unlocking.Unlock(building);
+            }
             // The toolbar below is this computer's: another colony's unlock changes nothing on it.
             if (separate && actorSlot != Colonies.ColonyScienceService.DisplaySlot) return;
 
@@ -497,7 +508,7 @@ namespace BeaverBuddies.Events
 
         public override string ToActionString()
         {
-            return $"Unlocking building: {buildingName}";
+            return free ? $"Unlocking building for free (dev mode): {buildingName}" : $"Unlocking building: {buildingName}";
         }
     }
 
@@ -513,6 +524,26 @@ namespace BeaverBuddies.Events
                     buildingName = buildingSpec.Blueprint.Name,
                 };
             });
+        }
+    }
+
+    // Dev mode's instant unlock (Ctrl-click on a locked building) unlocked it on this computer alone: in a separate-
+    // science game, one colony then had a building on the host that it did not have on the guest. It is now an unlock
+    // like any other, played on every computer, without the science cost. The tool opens at once, as for a paid unlock.
+    [HarmonyPatch(typeof(BuildingToolLocker), nameof(BuildingToolLocker.UnlockIgnoringScienceCost))]
+    class BuildingToolLockerInstantUnlockPatcher
+    {
+        static bool Prefix(BuildingSpec buildingSpec, Action successCallback)
+        {
+            if (EventIO.IsNull) return true;
+            bool playHere = ReplayEvent.DoPrefix(() => new BuildingUnlockedEvent()
+            {
+                buildingName = buildingSpec.Blueprint.Name,
+                free = true,
+            });
+            if (playHere) return true;
+            successCallback?.Invoke();
+            return false;
         }
     }
 

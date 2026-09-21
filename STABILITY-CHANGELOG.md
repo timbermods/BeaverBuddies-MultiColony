@@ -5,6 +5,43 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha4
+
+**Fixed: a desync while building roads to construction sites**, seen on the guest a few ticks after the host placed
+a District Crossing and the paths to it. The game gives a construction site (and a building, for some purposes) its
+district from an "instant" copy of the road map, which it brings up to date at the end of every frame. A tick is spread
+over several frames, a different number on each computer, so a road finishing mid-tick joined a site to its district
+after a different share of the tick on each computer, and a hauler or builder ticking in between could choose
+differently. In a multiplayer game that copy is now brought up to date at the start of each tick, with the regular road
+map, at the same moment on every computer. Previews (what the local player is placing) still update every frame. The
+host's log showed the tell-tale sign: the crossing's half took its district's worker type at a frame, on the host
+only. The other game systems that follow that map now also act at the same moment everywhere:
+- automatic migration between districts;
+- population and resource counters (automation);
+- district connection changes.
+
+While the game is paused, a building placed or removed gets its district when the game resumes.
+
+- **Dev mode in co-op.** Its tools change the game on the computer they are used on. The fix applies to the two that
+  are useful for testing:
+  - the instant unlock (Ctrl-click on a locked building or bot toggle) is now an unlock like any other, played on every
+    computer, without the science cost (before, it unlocked on one computer only: the host's colony had a building
+    unlocked on the host and not on the guest);
+  - a construction site's *Finish now* is played on every computer, and only the site's colony may use it.
+
+  Both only while the host has dev mode on: the host decides whether a game is being tested. The others (deleting any object, the dev panel's other buttons) are still not shared. A notice says so when dev mode
+  is switched on in a co-op game.
+- The game's own worker type change when a building joins a district (it takes the district's default) is played
+  where it happens, in the tick, instead of being sent as a player's action (a guest refused it for another colony's
+  building).
+- **Diagnostics:**
+  - the daily check has a new part, `districts=`: which district each building and construction site is joined to;
+  - when a guest desyncs, the other computers write their report too, so the two can be set side by side;
+  - a report written after the session ended still says whether this computer was the host or a guest;
+  - the report says whether dev mode is on, or was on this game.
+- RuntimeChecks: 9 new checks, 179 in all. They pin the game methods the fixes use, and check that the game's
+  end-of-frame navmesh update still does exactly what the fix moves into the tick, and nothing else.
+
 ## 1.4.0-alpha3
 
 **Fixed: every game crashed while loading** ("ConstructionSitePanelDescriptionUpdater isn't instantiable due to

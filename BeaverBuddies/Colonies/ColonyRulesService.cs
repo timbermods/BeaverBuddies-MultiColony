@@ -3,6 +3,7 @@ using BeaverBuddies.IO;
 using BeaverBuddies.Util;
 using System;
 using Timberborn.Buildings;
+using Timberborn.Debugging;
 using Timberborn.EntitySystem;
 using Timberborn.GameDistricts;
 using Timberborn.Navigation;
@@ -20,12 +21,15 @@ namespace BeaverBuddies.Colonies
     {
         private readonly ColonyGameWorld world;
         private readonly QuickNotificationService _quickNotificationService;
+        private readonly DevModeManager _devModeManager;
 
         public ColonyRulesService(EntityRegistry entityRegistry, QuickNotificationService quickNotificationService,
-            BuildingService buildingService, IDistrictService districtService, DistrictCenterRegistry districtCenterRegistry)
+            BuildingService buildingService, IDistrictService districtService, DistrictCenterRegistry districtCenterRegistry,
+            DevModeManager devModeManager)
         {
             world = new ColonyGameWorld(entityRegistry, buildingService, districtService, districtCenterRegistry);
             _quickNotificationService = quickNotificationService;
+            _devModeManager = devModeManager;
         }
 
         // Loadable only so the game builds it at load: it is found through SingletonManager, not injected.
@@ -60,6 +64,14 @@ namespace BeaverBuddies.Colonies
             if ((replayEvent is ColonyPresenceEvent || replayEvent is ColonyHandoverEvent) && replayEvent.player != ColonySession.HostPlayer)
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: only the host sends it");
+                return false;
+            }
+
+            // Dev mode's shortcuts that every computer plays (a free unlock, Finish now), in every game: only while the
+            // host has dev mode on. The host decides whether the game is being tested; a guest can't cheat alone.
+            if (IsDevShortcut(replayEvent) && !service._devModeManager.Enabled)
+            {
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: the host's dev mode is off");
                 return false;
             }
 
@@ -104,6 +116,11 @@ namespace BeaverBuddies.Colonies
                 Plugin.Log($"[Colony] Kept only slot {replayEvent.slot}'s part of {replayEvent.type} from player {replayEvent.player}: removed {verdict.Removed}");
             return true;
         }
+
+        private static bool IsDevShortcut(ReplayEvent replayEvent) =>
+            (replayEvent is BuildingUnlockedEvent building && building.free)
+            || (replayEvent is WorkerTypeUnlockedEvent workerType && workerType.free)
+            || replayEvent is ConstructionSiteFinishedNowEvent;
 
         /// <summary>
         /// Before a player's own action is recorded. True means refuse it here and say why. A list event that is only

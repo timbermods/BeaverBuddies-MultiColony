@@ -186,6 +186,13 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "IsOnDistrictRoad"),
             ("Timberborn.GameDistrictsUI.DistrictPreviewsValidator", "Timberborn.GameDistrictsUI", "IsValid"),
             ("Timberborn.ScienceSystem.UnlockableOnceSpec", "Timberborn.ScienceSystem", "GetSpec"),
+            // Dev mode's shortcuts that are played on every computer.
+            ("Timberborn.BuildingTools.BuildingToolLocker", "Timberborn.BuildingTools", "UnlockIgnoringScienceCost"),
+            ("Timberborn.WorkSystemUI.WorkplaceUnlockingDialogService", "Timberborn.WorkSystemUI", "UnlockIgnoringScienceCost"),
+            ("Timberborn.WorkSystem.WorkplaceUnlockingService", "Timberborn.WorkSystem", "UnlockIgnoringCost"),
+            ("Timberborn.ConstructionSitesUI.ConstructionSiteDebugFragment", "Timberborn.ConstructionSitesUI", "OnFinishNowClick"),
+            ("Timberborn.ConstructionSites.ConstructionSite", "Timberborn.ConstructionSites", "FinishNow"),
+            ("Timberborn.Debugging.DevModeManager", "Timberborn.Debugging", "get_Enabled"),
         })
         {
             test($"Colony: the game still has {typeName.Split('.').Last()}.{method}", () =>
@@ -215,6 +222,7 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "_districtMap"),
             ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "_districtConflictDetector"),
             ("Timberborn.Population.PopulationService", "Timberborn.Population", "_populationDataCollector"),
+            ("Timberborn.ConstructionSitesUI.ConstructionSiteDebugFragment", "Timberborn.ConstructionSitesUI", "_constructionSite"),
         })
         {
             test($"Colony: the game still has the field {typeName.Split('.').Last()}.{field}", () =>
@@ -262,6 +270,59 @@ internal static class ColonyRuntimeChecks
                 throw new Exception($"got {opcode} {operand}");
             if (result.Count != 2) throw new Exception("instructions were added or lost");
         });
+
+        // In a multiplayer game the "instant" navmesh is brought up to date at the start of each tick instead of at the
+        // end of each frame (Fixes/InstantNavMeshFix.cs), which replaces LateUpdateSingleton. These fail if the game
+        // changes what that method does, or brings the instant navmesh up to date anywhere else.
+        var synchronizer = Assembly.Load("Timberborn.Navigation").GetType("Timberborn.Navigation.NavigationSynchronizer", true)!;
+        test("Colony: the game's end-of-frame navmesh update is still previews, instant changes, then telling listeners", () =>
+        {
+            var calls = MethodsCalled(synchronizer.GetMethod("LateUpdateSingleton", all)!).Select(m => m.Name).ToList();
+            if (!calls.SequenceEqual(new[] { "ProcessPreviewChanges", "ProcessInstantChanges", "NotifyAllNavmeshChanges" }))
+                throw new Exception("it now calls: " + string.Join(", ", calls));
+        });
+        test("Colony: the game brings the instant navmesh up to date only at the end of a frame and on load", () =>
+        {
+            var callers = synchronizer.GetMethods(all).Where(m => MethodsCalled(m).Any(c => c.Name == "ProcessInstantChanges" && c.DeclaringType == synchronizer))
+                .Select(m => m.Name).OrderBy(n => n).ToList();
+            if (!callers.SequenceEqual(new[] { "LateUpdateSingleton", "PostLoad" }))
+                throw new Exception("called from: " + string.Join(", ", callers));
+            var tick = MethodsCalled(synchronizer.GetMethod("Tick", all)!).Select(m => m.Name).ToList();
+            if (!tick.SequenceEqual(new[] { "ProcessRegularChanges", "NotifyAllNavmeshChanges" }))
+                throw new Exception("its Tick now calls: " + string.Join(", ", tick));
+        });
+    }
+
+    /// <summary>The methods a method calls (call, callvirt), decoded from its IL, in order.</summary>
+    static List<MethodBase> MethodsCalled(MethodBase method)
+    {
+        var methods = new List<MethodBase>();
+        byte[] body = method.GetMethodBody()?.GetILAsByteArray();
+        if (body == null) return methods;
+        var opcodes = typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Select(f => (OpCode)f.GetValue(null)!).ToDictionary(o => (ushort)o.Value);
+        int position = 0;
+        while (position < body.Length)
+        {
+            ushort code = body[position++];
+            if (code == 0xfe) code = (ushort)(0xfe00 | body[position++]);
+            OpCode op = opcodes[code];
+            switch (op.OperandType)
+            {
+                case OperandType.InlineNone: break;
+                case OperandType.ShortInlineBrTarget: case OperandType.ShortInlineI: case OperandType.ShortInlineVar: position += 1; break;
+                case OperandType.InlineVar: position += 2; break;
+                case OperandType.InlineI8: case OperandType.InlineR: position += 8; break;
+                case OperandType.InlineSwitch: position += 4 + 4 * BitConverter.ToInt32(body, position); break;
+                case OperandType.InlineMethod:
+                    int token = BitConverter.ToInt32(body, position);
+                    if (op == OpCodes.Call || op == OpCodes.Callvirt) methods.Add(method.Module.ResolveMethod(token)!);
+                    position += 4;
+                    break;
+                default: position += 4; break;
+            }
+        }
+        return methods;
     }
 
     /// <summary>The static fields a method reads (ldsfld), decoded from its IL.</summary>

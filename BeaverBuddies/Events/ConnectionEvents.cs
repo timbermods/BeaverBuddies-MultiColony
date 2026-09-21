@@ -155,6 +155,9 @@ namespace BeaverBuddies.Events
             replayService.SetTargetSpeed(0);
             BeaverBuddies.DesyncDetecter.WaterDiagnostics.WriteOnDesync();
             BeaverBuddies.DesyncDetecter.WalkerDiagnostics.WriteOnDesync();
+            // The other computers write their colony report too, as the desynced player's arrives: the last colony check
+            // in each can then be set side by side. (The desynced computer wrote its own when it stopped.)
+            if (!replayService.IsDesynced) Colonies.ColonyDiagnostics.Instance?.WriteReport("another player desynced");
             ReportingService reportingService = context.GetSingleton<ReportingService>();
             RehostingService rehostingService = context.GetSingleton<RehostingService>();
             GameSaveRepository repository = context.GetSingleton<GameSaveRepository>();

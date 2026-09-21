@@ -198,6 +198,14 @@ With **Always Use Detailed Logging** on (the mod's debug mode), the host can pre
 actions count as the next colony's (colony 1 → 2 → 3 → 4 → 1). The toolbar, science and every refusal follow. Every
 switch is logged.
 
+**Dev mode** (Alt+Shift+Z) in co-op: while the host has dev mode on, two of its tools are played on every computer, for
+the colony of the player using them:
+- its instant unlock (Ctrl-click on a locked building or bot toggle), which costs no science;
+- a construction site's *Finish now*.
+
+Its other tools, such as deleting any object or the dev panel's other buttons, change only the computer they are used
+on, and desync the game. A notice says so when dev mode is switched on in co-op.
+
 ## Known limits
 
 - Up to four colonies; more players join as helpers of the host's colony.
@@ -215,7 +223,10 @@ switch is logged.
 - Separate science is meant for co-op: in single player, science earned by another start's buildings goes to that
   colony's pool, which only its player can spend.
 - A guest's planting tools follow the first colony's unlocks (the game builds that list before the guest is seated).
-- A colony whose player never returns can't be run by anyone else (nobody may change it).
+- Dev mode's tools, apart from its instant unlock and *Finish now*, are not shared: using them desyncs a co-op game.
+- While a co-op game is paused, what was just built or removed updates its district (the district badge and highlight,
+  and which district's builders a new construction site waits for) when the game resumes, at the same moment on every
+  computer.
 - Placing is judged by the placing player's own tool: the check against joining two districts' roads is not repeated
   in the multiplayer replay, where it read state that differs between computers.
 - Two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest from the

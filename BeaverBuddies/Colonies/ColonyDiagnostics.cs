@@ -9,6 +9,7 @@ using System.Text;
 using Timberborn.BaseComponentSystem;
 using Timberborn.BlockSystem;
 using Timberborn.Buildings;
+using Timberborn.Debugging;
 using Timberborn.DistributionSystem;
 using Timberborn.DwellingSystem;
 using Timberborn.EntitySystem;
@@ -89,6 +90,7 @@ namespace BeaverBuddies.Colonies
         private readonly EntityComponentRegistry _entityComponentRegistry;
         private readonly DistrictCenterRegistry _districtCenterRegistry;
         private readonly ModRepository _modRepository;
+        private readonly DevModeManager _devModeManager;
 
         private readonly float[] frames = new float[FrameSamples];
         private int frameCount;
@@ -98,12 +100,16 @@ namespace BeaverBuddies.Colonies
         private int ticks, checkedDay = int.MinValue;
         private readonly Queue<string> fingerprints = new Queue<string>();
         private bool desyncReported;
+        // The session ends as a desync is found, before the report is written: what this computer was, and whether dev
+        // mode was used this game (its tools, bar two, change one computer only).
+        private string lastRole;
+        private bool devModeUsed;
 
         public static ColonyDiagnostics Instance { get; private set; }
 
         public ColonyDiagnostics(InputService inputService, IDayNightCycle dayNightCycle, SpeedManager speedManager,
             EntityRegistry entityRegistry, EntityComponentRegistry entityComponentRegistry,
-            DistrictCenterRegistry districtCenterRegistry, ModRepository modRepository)
+            DistrictCenterRegistry districtCenterRegistry, ModRepository modRepository, DevModeManager devModeManager)
         {
             _inputService = inputService;
             _dayNightCycle = dayNightCycle;
@@ -112,6 +118,7 @@ namespace BeaverBuddies.Colonies
             _entityComponentRegistry = entityComponentRegistry;
             _districtCenterRegistry = districtCenterRegistry;
             _modRepository = modRepository;
+            _devModeManager = devModeManager;
         }
 
         public void PostLoad()
@@ -148,6 +155,9 @@ namespace BeaverBuddies.Colonies
                 ticksThisSecond = 0;
                 secondStart = Time.unscaledTime;
             }
+            EventIO io = EventIO.Get();
+            if (io != null) lastRole = RoleOf(io);
+            if (_devModeManager.Enabled) devModeUsed = true;
             ReplayService replay = SingletonManager.GetSingleton<ReplayService>();
             if (replay != null && replay.IsDesynced && !desyncReported)
             {
@@ -187,7 +197,7 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         private string Fingerprint()
         {
-            long owners = 0, stamps = 0, exchanges = 0;
+            long owners = 0, stamps = 0, exchanges = 0, districts = 0;
             var population = new int[ColonySlotTable.MaxSlots];
             foreach (DistrictCenter districtCenter in _districtCenterRegistry.AllDistrictCenters)
             {
@@ -201,19 +211,27 @@ namespace BeaverBuddies.Colonies
             {
                 ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
                 if (stamp != null) stamps += Hash(entity) * (stamp.Slot + 2);
+                // Which district each building and construction site is joined to (what haulers and builders go by).
+                DistrictBuilding districtBuilding = entity.GetComponent<DistrictBuilding>();
+                if (districtBuilding != null)
+                    districts += Hash(entity) * (3 * Hash(districtBuilding.ConstructionDistrict) + 5 * Hash(districtBuilding.InstantDistrict)
+                        + 7 * Hash(districtBuilding.District) + 1);
                 CrossingExchange exchange = entity.GetComponent<CrossingExchange>();
                 if (exchange != null && exchange.IsOpen)
                     exchanges += Hash(entity) * (1 + (int)exchange.State + 3 * exchange.Sent + 7919 * exchange.Total + 104729 * exchange.Rounds);
             }
             ColonyReach reach = ColonyReach.Instance;
             string land = reach == null ? "-" : string.Join("/", Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(reach.LandSize));
-            return $"owners={(uint)owners:x} stamps={(uint)stamps:x} land={land} people={string.Join("/", population)} "
+            return $"owners={(uint)owners:x} stamps={(uint)stamps:x} districts={(uint)districts:x} land={land} people={string.Join("/", population)} "
                 + $"exchanges={(uint)exchanges:x} marks=[{ColonyMarks.Instance?.Fingerprint()}] science=[{ColonyScienceService.Instance?.Fingerprint()}] "
                 + $"hours=[{ColonyWorkingHours.Instance?.Fingerprint()}] away=[{ColonyLifecycle.Instance?.Fingerprint()}]";
         }
 
+        private static string RoleOf(EventIO io) => io is ServerEventIO ? "host" : io is ClientEventIO ? "guest" : io.GetType().Name;
+
         private static long Hash(BaseComponent component)
         {
+            if (!component) return 0;
             EntityComponent entity = component.GetComponent<EntityComponent>();
             return entity == null ? 0 : entity.EntityId.GetHashCode();
         }
@@ -256,10 +274,11 @@ namespace BeaverBuddies.Colonies
             r.AppendLine($"Version {Plugin.Version} | Timberborn {GameVersions.CurrentVersion} | "
                 + $"written {DateTime.Now:yyyy-MM-dd HH:mm:ss} ({reason})");
             EventIO io = EventIO.Get();
-            string role = io is ServerEventIO ? "host" : io is ClientEventIO ? "guest" : "single player";
+            string role = io != null ? RoleOf(io) : lastRole != null ? lastRole + " (the session has ended)" : "single player";
             ReplayService replay = SingletonManager.GetSingleton<ReplayService>();
             r.AppendLine($"Role: {role} | local colony slot {ColonySession.LocalSlot} | separate colonies {On(ColonyModeService.IsSeparateColonies)}, "
-                + $"separate science {On(ColonyScienceService.IsEnabled)} | detailed logging {On(Settings.Debug)}, away days setting {Settings.AbandonedColonyDaysValue}");
+                + $"separate science {On(ColonyScienceService.IsEnabled)} | detailed logging {On(Settings.Debug)}, away days setting {Settings.AbandonedColonyDaysValue} | "
+                + $"dev mode {On(_devModeManager.Enabled)}" + (devModeUsed && !_devModeManager.Enabled ? " (was on this game)" : ""));
             r.AppendLine($"Game: day {_dayNightCycle.DayNumber}, {_dayNightCycle.HoursPassedToday:0.0} h | ticks since load {ticks}"
                 + (replay != null ? $" (replay {replay.TicksSinceLoad})" : "") + $" | speed {_speedManager.CurrentSpeed} | desynced: {(replay?.IsDesynced == true ? "YES" : "no")}");
             var session = ColonySlotService.Instance?.Session.Select(p => $"player {p.Key} -> slot {p.Value}") ?? Enumerable.Empty<string>();
