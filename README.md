@@ -1,211 +1,233 @@
 # BeaverBuddies MultiColony
 
-**Separate colonies for BeaverBuddies co-op (alpha).** Two players, one map, a colony each: your own district,
-beavers and land, with the other player's colony out of your reach, and goods traded through District Crossings
-on the border. How to switch it on, the rules, and what has and has not been tested: **[TWO-COLONIES.md](TWO-COLONIES.md)**.
+**Two players, one map, a colony each.** A Timberborn co-op mod where each player runs their own colony (their own
+district, beavers, buildings and land) on a shared map, and the two colonies trade goods through District
+Crossings on the border. Works on the game's standard maps and on BeaverBuddies multi-start maps.
 
-This repository continues the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
-from its 1.1.10 release. Everything below describes the co-op features it inherits, which work as before; separate
-colonies are opt-in per new game, and old saves and shared-colony games behave exactly as in 1.1.10.
+![Timberborn 1.1.2.4](https://img.shields.io/badge/Timberborn-1.1.2.4-2a4034?labelColor=172620&style=flat-square) ![Status: alpha](https://img.shields.io/badge/status-alpha-e0812f?labelColor=172620&style=flat-square) [![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-2a4034?labelColor=172620&style=flat-square)](License.txt)
 
-- **Status:** `1.2.0-two-colony-alpha1`. Automated checks pass; **not yet played in a game**.
-- **Install:** download `BeaverBuddies-MultiColony-1.2.0-two-colony-alpha1.zip`, copy the `BeaverBuddies-MultiColony`
-  folder into `Documents\Timberborn\Mods`, and remove any other BeaverBuddies copy first (including the Stability
-  Fork): they share one mod ID. Every player must install the same zip.
+[Install](#install) · [Start a two-colony game](#start-a-two-colony-game) · [Playing](#playing-your-colony) · [Controls](#controls) · [Troubleshooting](#troubleshooting-and-reporting-problems) · [Full rules](TWO-COLONIES.md) · [Changelog](STABILITY-CHANGELOG.md)
 
----
+> [!WARNING]
+> **Alpha: nobody has played this yet.** The rules and the networking are covered by automated checks, but no
+> part of the separate-colonies mode has been seen in a real game. Play on a copy of your save, keep backups, and
+> please report what you find ([how](#troubleshooting-and-reporting-problems)).
 
-## Inherited from the BeaverBuddies Stability Fork
-
-Multiplayer co-op for Timberborn, with **Steam friend invites**, an **in-game connection panel**, and a long list of crash and desync fixes.
-
-[![Latest release](https://img.shields.io/github/v/release/timbermods/BeaverBuddies-Stability-Fork?label=latest&labelColor=172620&color=e0812f&style=flat-square)](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest) ![Timberborn 1.1.2.4](https://img.shields.io/badge/Timberborn-1.1.2.4-2a4034?labelColor=172620&style=flat-square) ![Tested on Windows with the Steam version](https://img.shields.io/badge/tested_on-Windows_%2B_Steam-2a4034?labelColor=172620&style=flat-square) [![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-2a4034?labelColor=172620&style=flat-square)](License.txt)
-
-**[Download](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest)** · [Install](#install) · [Website](https://timbermods.github.io/BeaverBuddies-Stability-Fork/) · [Changelog](STABILITY-CHANGELOG.md) · [Steam invites](STEAM-INVITES.md) · [Connection panel](CONNECTION-PANEL.md) · [More Timberborn mods](https://github.com/timbermods)
-
-This is an independent fork of [thomaswp/BeaverBuddies](https://github.com/thomaswp/BeaverBuddies), the original multiplayer mod. It keeps everything the original does (players build one colony together in real time, each with their own camera and interface, multi-start maps, map pings, hosting and joining from the in-game menus) and builds on top of it. All credit for the multiplayer design belongs to the original project. Please report problems with *this fork* here, not to the original project.
-
-## Highlights
-
-- **Steam invites work.** Invite a Steam friend from Steam's own overlay and they join with a click: no Hamachi, no port forwarding. Confirmed in real playtests with a friend over Steam. Direct IP still works, and you can offer both at once.
-- **A connection panel in the game.** See who is connected, each player's ping, whether you are in sync, the tick rate and more, in a small panel you can collapse or hide, with a chat box below it.
-- **A low ping at a high game speed.** Over Steam, data used to wait for the end of every frame, and at a high game speed a frame is mostly simulation, so the ping climbed with the speed. The mod now lets Steam move data between the ticks of a frame. In a playtest at a true speed 7 the ping stayed under 100 ms, where it had been 200 to 300 ms (details in [CONNECTION-PANEL.md](CONNECTION-PANEL.md)).
-- **The host can ease off for a slow guest.** The host picks a frame rate floor (Off, 20, 30, 45 or 60 fps) in the connection panel; while a guest stays below it the host slows the game a little, and speeds back up by itself. It only changes how fast the host works through ticks, never what happens in them. The current rule has not been played yet.
-- **Controls and the menu come back after a session ends.** After a disconnect, a failed action or a cancelled join, the game no longer keeps ignoring the player (Escape opens the menu again). Confirmed after a disconnect; the other cases are tested only.
-- **See what your teammates are doing.** Colored, translucent cursors, selection outlines, and "Viewing / Editing" labels on buildings, with per-player cursor color, size and transparency.
-- **Fewer crashes and desyncs.** Specific, documented fixes for water, animation, random numbers, saving, demolition and input problems (details [below](#how-this-fork-improves-on-the-original)). This reduces known causes; it is **not** a guarantee that a desync can never happen.
-- **Mismatched builds are caught early.** Joining with a different build is refused before the save is sent, with a message that says what to do, instead of failing halfway through.
-- **Mismatched mods are flagged.** When someone joins, both players are warned if their lists of mods differ, naming the mods that are on only one computer or at different versions, so a mismatched mod is caught in the lobby instead of as a desync later. It is a warning, not a block.
-- **Failures are explained.** A failed connection or multiplayer action ends with a plain-language reason (including Steam's own error code) instead of a silent hang.
-- **Tested.** 282 automated checks, including runs against the game's own assemblies. See [Testing](#testing-and-verification).
+MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
+(1.1.10), which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything
+those do still works: Steam invites, the connection panel and chat, pings, player cursors, and ordinary
+shared-colony co-op. Separate colonies are opt-in per new game, and old saves play exactly as before.
 
 ## Install
 
-**You need:** Timberborn (this release is built and tested against **1.1.2.4**), with the **Harmony** and **Mod Settings** mods enabled. Every player must run the same game version too.
+**You need:** Timberborn **1.1.2.4** (Steam version, Windows is what has been tested) with the **Harmony** and
+**Mod Settings** mods enabled. **Every player** needs the same game version and **the exact same download** of this mod.
 
-1. Download `BeaverBuddies-Stability-Fork-1.1.10.zip` from the [latest release](https://github.com/timbermods/BeaverBuddies-Stability-Fork/releases/latest).
+1. Download the `BeaverBuddies-MultiColony-….zip` from the [Releases page](https://github.com/timbermods/BeaverBuddies-MultiColony/releases), or use the zip you were sent.
 2. **Close Timberborn.**
-3. Extract the zip and copy the `BeaverBuddies-Stability-Fork` folder into `Documents\Timberborn\Mods`. If you installed an earlier download, delete its old `BeaverBuddies-StabilityPreview` folder first: the two share a mod ID and would conflict.
-4. Start Timberborn and enable **BeaverBuddies - Stability Fork** (v1.1.10) in the mod list. **Disable the Workshop BeaverBuddies and any other BeaverBuddies copy**: they share the same mod ID and will conflict.
-5. **Every player must install the exact same download** and restart the game. This is the most common cause of trouble; see [Things to know](#things-to-know-before-you-play).
+3. In `Documents\Timberborn\Mods`, **delete every other BeaverBuddies folder** (the Stability Fork, the Workshop
+   version, older MultiColony builds). They share one mod ID and conflict. Also unsubscribe from the Workshop
+   BeaverBuddies if you have it.
+4. Extract the zip and copy the `BeaverBuddies-MultiColony` folder into `Documents\Timberborn\Mods`.
+5. Start Timberborn and enable **BeaverBuddies - MultiColony (alpha)** in the mod list.
 
-This fork is distributed through GitHub Releases only. The Steam Workshop and mod.io pages linked further down belong to the original project.
+To update, replace the folder with the new download. Both players must update together: a player with a different
+build cannot join.
 
-## Host and join
+## Start a two-colony game
 
-**Host**
-1. Load the save you want to play and choose **Host co-op game**.
-2. Bring your friends in: for Steam choose **Invite Friends**; for direct IP give them your IP address (default port **25565**, which must be forwarded, or use a VPN such as Hamachi).
-3. When your friends appear in the connected-player list, choose **Start Game**.
+The host sets this up once, **when creating a new game**. Separate colonies cannot be switched on for an existing save.
 
-**Join**
-- **Steam:** accept the invite. If Timberborn is closed, Steam launches it and joins for you. With **Allow Friends to Join Directly via Steam** on, a friend can also use **Join Game** from Steam's friends list.
-- **Direct IP:** from the main menu choose **Join co-op game** and enter the host's IP address or domain name.
+**1. Host: settings.** Main menu → **Mod Settings → BeaverBuddies**:
 
-Guests receive a copy of the host's save (kept under **Online Games**). Nobody can join after the host chooses **Start Game**.
+- tick **Separate colonies for new multi-start games (alpha)**;
+- set **Colony the host plays** to **Colony 1** (the guest then plays colony 2).
 
-**If a desync happens:** the host chooses **Save and Rehost**. Steam guests accept a fresh invite; direct-IP guests reconnect.
+**2. Host: start a new game** on any map.
 
-## Steam invites
+- **A standard map** (one starting location): your colony starts as usual. Your friend founds theirs after joining (step 5).
+- **A BeaverBuddies multi-start map** (two or more starting locations): both colonies start at once, one at each of
+  the first two starting locations.
 
-Steam friend invites are a first-class way to play, alongside direct IP.
+**3. Host: save, then host.** Save the game. Open **Load Game**, select that save and choose **Host co-op game**
+(instead of Load). Invite your friend with **Invite Friends** (Steam), or give them your IP address (port **25565**).
 
-- **Requirements:** both players online in Steam, both owning Timberborn, and both running the exact same build.
-- **Settings** (Mod Settings → BeaverBuddies): **Enable Steam Networking** and **Allow Friends to Join Directly via Steam**.
-- **Who can join:** the host opens a friends-only Steam lobby, and only players who joined that lobby are accepted. A stranger who knows your Steam ID cannot connect.
-- **How it works:** connections go straight between players when Steam can find a route and are otherwise relayed through Steam's network. Valve documents that relaying keeps players' IP addresses hidden from each other. The original used Valve's older networking API, which Valve now marks as deprecated; this fork uses the current one.
-- **If Steam has a problem,** hosting over direct IP still works. Hamachi has also been tested to create a virtual LAN to avoid port forwarding and works.
-- **Status:** confirmed working in real playtests between the maintainer and a friend. More details, including how to read the log if something fails, are in [STEAM-INVITES.md](STEAM-INVITES.md).
+**4. Guest: join** by accepting the Steam invite (or **Join co-op game** → the host's IP). Your game receives the
+host's save and loads it. **Do not unpause until everyone is in**: nobody can join a game that has already started.
 
-## The connection panel
+**5. Guest, standard maps only: found your colony.** When you join, a message offers to **place your district
+center**. Choose **Place district center** (or close it and press **Ctrl+K** later), then click anywhere on the map:
 
-A small panel appears in the top-left corner during a multiplayer game.
+- It costs nothing and needs no science. It appears **already built**, with the same starting food, water, adults and
+  children the new game gave the host.
+- It must be far enough from the host's buildings that they all stay on the host's side of the new border. The
+  preview turns red (*Too close to the other colony's buildings*) where it may not go.
+- Until you found it, you can't build or change anything (speed, chat and pings still work). The host can play in
+  the meantime, but the more the host builds, the less room there is. Found early.
 
-<img src="docs/assets/connection-panel.png" width="280" alt="Screenshot of the in-game connection panel as the host sees it: In sync, the host's own row in bold with a dash and one guest at 19 ms, tick rate 11.7 ticks per second, speed 7x, the host pacing lines, a Steam connection and a chat with two colored lines.">
+Everyone sees *Colony 2 has been founded.* The connection panel now shows each name with its colony, e.g.
+*Alex (colony 2)*.
 
-*The panel as the host sees it during a Steam co-op session.*
+**6. Unpause and play.**
 
-| It shows | Meaning |
-| --- | --- |
-| **Players** | Everyone in the session, host first, each as a name and a ping. Your own row is bold and shows a dash instead of a ping. |
-| **Ping** | Round-trip time between you and that player. Normal text: 80 ms or less. Yellow: up to 160 ms. Red: higher, or "No response". "...": not measured yet. |
-| **Sync status** | In sync, Catching up, Waiting for host, Connection unstable, Out of sync, or Disconnected. The dot beside it is green, yellow or red with the status, and is the panel's only dot while it is expanded. |
-| **Tick rate and speed** | Simulation ticks per second right now, and the game speed or Paused. |
-| **Behind host** | Guests only: how many ticks this game is behind the host (0 or 1 is normal). |
-| **Pacing lines** | Host only: **Guest behind**, **Easing off** and **Guest fps**, and the clickable **Ease off below** (Off, 20, 30, 45 or 60 fps), which sets when the host slows the game for a guest whose frame rate is low. |
-| **Connection** | Direct or Steam. |
+## Playing your colony
 
-- **Collapse it** by clicking its title or the small boxed button at the right of the header; it shrinks to one line and remembers your choice.
-- **Hide it or move it** in Mod Settings → BeaverBuddies: **Connection panel** (Expanded / Collapsed / Hidden) and **Connection panel position** (any corner).
-- **Optional key:** bind **Toggle connection panel** under Options → Bindings → BeaverBuddies. It is unbound until you choose a key.
-- **Chat:** below the panel, in the same box, type a message and press Enter. Everyone in the game sees it in the same order, and a player who joins later is sent the whole conversation. Bind **Chat: start typing** in the same place to jump into the box from the keyboard (also unbound until you choose a key). Each line is drawn in the color of that player's cursor: the color they chose, or the one you set for them under **Options → Player cursors**. Chat lasts for the session and is not saved with the game.
+### Your land and the border
 
-Ping is measured by the network layer (a tiny probe once a second, answered on the guest's network thread), so it means the same thing over Steam, Hamachi and direct IP, and it never touches the game simulation. Over Steam it also includes the short wait for each game to serve Steam, which the mod keeps to a few milliseconds while the game is ticking, however fast it runs. Full details: [CONNECTION-PANEL.md](CONNECTION-PANEL.md).
+The map is split in two at the line **halfway between the two colonies' district centers**. Everything on your side
+is yours: you can build there, and your beavers and districts live there. Everything on the other side is your
+friend's.
 
-## How this fork improves on the original
+Along the border runs a **border strip**, the row of tiles on each side touching the other colony. Only a
+**District Crossing** may be built on the strip, so the two colonies' roads never touch. That applies at every
+height too, including platforms, stairs and bridges.
 
-The comparison below is against the original project's `v1.1` branch at the point this fork branched (commit `a13b1f2`, 24 August 2026). Since then the fork has changed 131 files (about 16,200 lines added, tests and documentation included). As of September 2026 the original's `v1.1` branch has not moved since that commit, so this comparison is current.
+**Press K** to show the strip (colony 1 blue, colony 2 orange). It also shows by itself whenever a tool is active,
+such as building, planting, cutting or demolishing.
 
-Each item says how well it is confirmed: **confirmed** means the maintainer verified it in a real multiplayer playtest; **tested** means it is covered by automated regression checks but has not been confirmed in a live session.
+### What you can and can't do
 
-**Connections and Steam**
+| | Your colony | The other colony |
+|---|---|---|
+| Build, demolish, place paths | ✔ | ✖ preview turns red |
+| Pause, priorities, workers, recipes, stockpiles, floodgates, automation, ziplines | ✔ | ✖ *That belongs to the other colony.* |
+| Migration and distribution settings | ✔ | ✖ |
+| Tree cutting, planting, clearing, demolition areas | ✔ | only your side is marked, even if you drag across |
+| Select buildings, open their panels, look around | ✔ | ✔ |
 
-- **Steam networking rebuilt on Valve's current API.** The original used the older, deprecated API, with a fixed 128 KB/s cap on the save transfer. Failures now end with Steam's own reason in plain language, and a Steam problem can no longer stop direct-IP hosting. *Confirmed with a real Steam friend.*
-- **Steam packet handling made robust.** A comment in the original's Steam read routine says it "will fail" if Steam merges several messages into one packet, and it logs "This is probably a bug!" when bytes are left over. The rebuilt transport keeps unread data between reads, checks read ranges and wakes blocked readers when a connection closes. It is tested with messages split mid-event and with a 220 KB event. Each network frame is also written under a lock, so a header and its payload can never be interleaved. *Tested.*
-- **Mismatched builds refused up front.** The original only warned about a version mismatch after the save had loaded. The fork checks the game version and the exact mod build before the save is transferred, with a time limit and a clear message. *Tested.*
-- **A failed multiplayer action stops safely.** Replay stops after a failed action, pending actions are discarded, the session pauses and peers are told, so two games do not quietly drift apart. Connection cleanup bugs were fixed at the same time. *Tested.*
-- **The ping over Steam stays low at a high game speed.** Steam used to be served once per frame, and a ping probe waits for that at four points, so at a high speed (long frames) the ping grew with the frame length on both computers. Steam is now also served between the ticks of a frame; a simulation with the real transport shows 100 ms frames on both sides going from 323 ms to 13 ms. *Confirmed: in a playtest at a true speed 7 the ping stayed under 100 ms, where it had been 200 to 300 ms. The guest's frame length was never measured, so the cause is inferred from the game's code and a host log.*
-- **A session that ends leaves the game working.** A lost connection, a failed action, a cancelled host or join and Steam's overlay closing under a dialog each used to leave the game running but ignoring the player, sometimes with no way to open the menu. The game now ends the session cleanly, says why, and keeps the menu and controls working. *Tested; the maintainer confirmed that the controls work after a disconnect, and the other cases have not been seen in the game.*
-- **The host can ease off for a guest's frame rate.** A guest that keeps up in ticks but draws a few frames a second is now something the host can react to, using the middle of the guest's last five frame rate reports, dropping 10% at a time and remembering the speed that caused trouble. *Tested; an earlier version of the rule was played once (it worked but changed speed too often), the current rule has not been played.*
+**Shared by both:** game speed and pause, working hours, science and unlocks, renaming, pings, chat and saving.
 
-**Desyncs and determinism**
+The host double-checks every action before anyone's game carries it out, so a refused action never happens anywhere.
 
-- **Water no longer depends on frame rate.** The depth-limited water source advanced using render-frame time, so players at different frame rates saw different water. It now uses the simulation tick interval in multiplayer. *Confirmed: resolved a reported "badtide" desync.*
-- **Water sources applied in a consistent order.** With several sources affecting one column, the installed game produced three different results across six registration orders; the fork produces one. This was not established as the cause of the badtide desync. *Tested.*
-- **Stale saving flag fixed.** A flag could stay set after an exit save, making one player skip a moisture calculation, consistent with reported desyncs right at join. *Tested.*
-- **Random-number bookkeeping made safe.** Nested random-number scopes are counted correctly and restored even when an error interrupts them. *Tested.*
-- **Equal-distance demolition jobs chosen deterministically**, by persistent target IDs. *Tested; not yet confirmed in a playtest.*
-- **Entity ID collisions handled explicitly.** A regenerated ID is now applied, and the game fails with a clear error if no unique ID can be found. *Tested.*
-- **Stuck-controls recovery.** Input state is reset after a desync, a failed action, a lost connection and when a multiplayer game loads. *Tested with a mocked device reset.*
+### Trading through a District Crossing
 
-**Crashes**
+1. Press **K** and find a spot where the border strip runs straight for three tiles.
+2. Either player picks the **District Crossing** and places the pair so the two halves meet **exactly at the
+   border**, one half on each colony's strip. Anywhere else the preview is red.
+3. **Each player builds a path from their roads to the entrance of the half on their side.** Each colony's
+   beavers build their own half; a half with no path to it is never built.
+4. Open the **Distribution** tab (**F8**, or the button on the crossing's panel). In a two-colony game **every good
+   starts at import *Disabled***, so nothing crosses yet:
+   - **To receive a good**, set it to *Auto* or *Forced* import in **your** district.
+   - **To stop giving a good**, raise its **export threshold** in your district. At the top of the slider, nothing leaves.
 
-- **Animation crash.** A path cursor that could move backward between ticks, and non-finite visual coordinates, are handled. *Confirmed.*
-- **Demolition-selection crash.** Replaying an area selection that included buildings already demolished used to end the whole session. Missing ones are now skipped. *Tested; not yet confirmed in a live session.*
+Each player can only change their own districts. If you build a second district of your own, set its imports too,
+or goods won't move between your own districts either.
 
-**Awareness and usability**
+Deleting either half of a crossing deletes both, as in the base game.
 
-- **Player activity.** Other players' cursors, selection outlines, and Viewing / Editing labels, plus a **Player cursors** dialog (Options menu) for each player's color, size and transparency. See [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md). *Confirmed.*
-- **Steam invites and the connection panel**, described above. *Confirmed.*
-- **A compact chat and a panel that lines up with the game's own.** The chat has a fixed, short height, the panel is as wide as the game's beaver counters, and it is drawn in front of the game's alerts while you type. *Tested. The layout has been seen in the game in screenshots; that the panel matches the width of the game's counters and is drawn in front of its alerts has not been checked against one.*
-- **A plainer connection panel, and chat in the cursor colors.** While the panel is expanded the dot beside the sync status is its only dot. A player's row is a name and a ping (a guest sees its own ping to the host on the host's row), your own row is bold with a dash, and the collapse button has a box around it so it is not mistaken for that dash. A chat line is drawn in the color of that player's cursor, and lines already written change when you change that color. *Confirmed in real play: a screenshot of a host and a guest shows the rows, the boxed button and two chat lines in the players' colors, and the maintainer played more than an hour over Steam invites in large colonies (300+) with it. Lines changing color after you change a cursor color has not been checked.*
+### Beavers
 
-**Performance.** Fewer allocations from diagnostics, faster handling of the event backlog, one JSON parse per network message instead of two, and routine logging skipped unless needed. In synthetic tests, 4,000 ordered event inserts went from about 439 ms to under 1 ms, and 16 diagnostic captures stopped allocating about 85 MB. These are not frame-rate measurements. *Confirmed to play well in a two-player playtest.*
+Beavers never migrate between the two colonies on their own, even through a crossing, and moving them to the other
+colony by hand is refused. Migration between your own districts works as normal.
 
-**The per-tick pass over every entity.** In co-op this mod visits every entity in a bucket before it ticks, to keep the walkers' animation in step between the players. It used to look up a component on all of them, and fold all of them into two hashes that only the detailed log prints, on every tick. In a two-player recording of a colony with 11,464 entities (361 of them walkers) that pass took about 7 ms of a 30 to 36 ms tick. It now remembers which entities walk and keeps the hashes only while detailed logging is on; the expected saving is roughly 3 to 6 ms per tick (an estimate). It does not change what is simulated. *Tested with synthetic checks (adding and removing entities at random). Confirmed working in real play: the maintainer played more than an hour over Steam invites in large colonies (300+) with it. The effect on frame rate has not been measured.* It does not fix the frame rate that falls over a long session at a high speed: in that recording most of the time was spent outside this mod, in Unity's late-update phase, and what runs there is not known.
+### Rehosting and later sessions
 
-**What the fork does not change.** It does not make desyncs impossible, and it has not been tried on more than two players. Everything the original provides (multi-start maps, pings, the pause-reduction setting, hosting and joining from the menus) is still there.
+- Saves keep the colonies, the border, crossings and trade settings.
+- **Seats are chosen by the host's setting each session.** When you rehost, keep **Colony the host plays** on the
+  colony you've been playing. If your friend hosts next time, they set it to the colony they play.
+- After a desync the host uses **Save and Rehost** as usual; everyone rejoins.
 
-## Things to know before you play
+## Controls
 
-- **Everyone must run the exact same build.** The mod compares the game version and the mod's own files when someone joins. A copy someone compiled themselves can be refused even when the version number matches. If one player is on a different build over Steam, joining can look like it is hanging on "Receiving map...".
-- **Other mods should match; you get a warning when they do not.** When someone joins, both players are shown which mods are on only one computer or at different versions. It is only a warning: mods that only change the interface are usually harmless, but a mod that changes the simulation (a housing mod, for example) will make the games drift apart. Settings are not compared, so settings that affect the simulation (for example **Reduce the number of forced pauses**) should match too.
-- **Join before the host starts.** Nobody can join a game that has already started. After a desync the host uses **Save and Rehost**.
-- **Desyncs can still happen.** This fork reduces known causes, not all of them.
-- **Tested with two players**, on Windows, with the Steam version of Timberborn 1.1.2.4. Other stores, platforms and larger groups have not been tested by this fork. Steam invites need the Steam version of the game.
-- **"Post Bug Report" does not upload in this fork's builds.** The original's automatic upload needs an access token that these builds do not contain. If you hit a problem, keep the `Player.log` files from both players (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn`). **Always Use Detailed Logging** captures more but costs some performance; any diagnostic ZIPs are saved in the `BeaverBuddiesDiagnostics` folder next to the log.
-- **Only one BeaverBuddies at a time.** This fork and the Workshop version use the same mod ID.
-- **New text is English only.** Other languages fall back to English for the strings added by this fork.
-- **Not a Workshop mod.** Update by downloading a new release and replacing the folder; there is no automatic update.
+| Key | Action |
+|---|---|
+| **K** | Show or hide the colony border |
+| **Ctrl+K** | Found your colony (colony 2's player, standard maps, until founded) |
+| **Ctrl+Shift+K** | *Debug only:* the host acts as the other colony, for testing alone (needs **Always Use Detailed Logging**) |
 
-## Testing and verification
+All of these can be changed under **Options → Bindings → BeaverBuddies**. The co-op keys **Ping Location**, **Toggle
+connection panel** and **Chat: start typing** are unbound until you set them there.
 
-The 1.1.10 validation run passed **282 checks**: **210** in `StabilityTests` (network transport, the Steam transport against a simulated Steam network, protocol parity between direct and Steam connections, player activity, ping measurement and how it depends on frame length over a simulated Steam network, the panel and its layout, the guest catch-up rule, the mod list warning, the host's speed limit choice, pacing and frame rate easing, guarded message handlers, ending a session, the chat box, the walker trace and the entity pass's memory of which entities walk), **69** in `RuntimeChecks` (the compiled mod running against the game's own assemblies: random-number scopes, water simulation, demolition, input recovery, the menu after a session ends, desync traces, the mod list), and **3** Python checks (water snapshot comparison and the walker trace comparison). Both Steam and non-Steam builds compile with no warnings.
+## Settings
 
-These checks cannot start Unity or prove full multiplayer determinism, and they need the game installed locally (no proprietary game files are included in this repository). See [StabilityTests/README.md](StabilityTests/README.md) for how to run them. The maintainer's real playtests, described above, are what confirm behavior in the live game.
+In **Mod Settings → BeaverBuddies**. Only the host's settings matter for these:
+
+| Setting | What it does |
+|---|---|
+| **Separate colonies for new multi-start games (alpha)** | New games get a colony per player (on any map, despite the name). Read when a game is created; existing saves are never changed. |
+| **Colony the host plays** | *Colony 1* or *Colony 2*. Guests play the other one. Read when hosting starts. |
+
+Everything else (Steam, the connection panel, speed limits, cursors, detailed logging) works as in the Stability
+Fork; see [Co-op basics](#co-op-basics).
+
+## Good to know
+
+- **Two players.** Only two colonies are supported. A third player can join but shares colony 2. On a map with
+  more than two starts, only the first two become colonies.
+- **Shared science.** Research points and unlocks are shared between both colonies.
+- **The game ends** only when every beaver on the map is gone, not per colony.
+- **Beavers work by range.** A lumberjack or gatherer near the border can work on the other side (for example,
+  cutting trees your friend marked). The rules only cover what players do.
+- **The split is a straight line** between the two district centers, so where colony 2 is founded decides how the
+  map is shared.
+- **Single player:** without a co-op session nothing is refused and no colony can be founded. Host the game (even
+  alone) to play the mode.
+- **Performance:** two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest
+  from the connection panel.
+- **New text is English only.**
+
+## Co-op basics
+
+Inherited from the Stability Fork. The full guides are in [STEAM-INVITES.md](STEAM-INVITES.md), [CONNECTION-PANEL.md](CONNECTION-PANEL.md)
+and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
+
+- **Steam invites:** both players online in Steam and owning Timberborn. Settings **Enable Steam Networking** and
+  **Allow Friends to Join Directly via Steam**. Only friends who join the host's friends-only lobby can connect.
+- **Direct IP:** the host forwards port **25565**, or both use a VPN such as Hamachi.
+- **The connection panel** (top-left) shows each player, their ping, whether you're in sync, the tick rate and a
+  chat box. Collapse it by clicking its title; hide or move it in Mod Settings.
+- **Mismatched mods** are flagged when someone joins. It's a warning, but a mod that changes the simulation will
+  cause desyncs, so match mod lists.
+- **Desyncs** can still happen. The host uses **Save and Rehost**.
+
+## Troubleshooting and reporting problems
+
+- **Can't join / stuck on "Receiving map…":** both players must have the same zip. Reinstall from the same file and restart.
+- **The guest can't do anything on a standard map:** colony 2 hasn't been founded yet. Press **Ctrl+K**.
+- **Every placement is red for the guest:** check the host's **Colony the host plays** is set as you expect. The
+  connection panel shows who plays which colony.
+- **Reporting:** send `Player.log` from both players
+  (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`), plus screenshots for anything on screen.
+  Lines from this mode start with `[Colony]`. Step-by-step test scripts are in [ALPHA-TEST-SCRIPTS.md](ALPHA-TEST-SCRIPTS.md).
+
+Report issues at [github.com/timbermods/BeaverBuddies-MultiColony/issues](https://github.com/timbermods/BeaverBuddies-MultiColony/issues),
+not to the original BeaverBuddies project.
+
+## How it works
+
+- **The host decides.** Every player action goes through the host. The host writes which connection each action
+  came from (a guest can't pretend to be someone else), checks it against the colony rules just before playing it,
+  and then plays and forwards it, keeps only the player's own part of an area action, or drops it (logged as
+  `[Colony] Refused …`). Guests never judge, so the two games can't disagree.
+- **Land is a formula** of the two saved district-center positions, in whole numbers, so every computer agrees.
+- **Founding** is an ordinary multiplayer action: every computer creates the district center and the same beavers
+  at the same moment.
+- The save gets one small extra entry (the mode, the colony positions and the starting settings). Shared-colony
+  games save nothing new.
+
+Design notes and the implementation plan: [design/TWO-COLONY-ALPHA-PLAN.md](design/TWO-COLONY-ALPHA-PLAN.md).
+
+## Building from source
+
+1. Clone this repository and copy `BeaverBuddies/env.props.windows-template` to `BeaverBuddies/env.props`; point it
+   at your Timberborn install and the Workshop copies of Harmony and Mod Settings.
+2. Restore once:
+   `dotnet restore BeaverBuddies/BeaverBuddies.csproj -s https://api.nuget.org/v3/index.json -s https://nuget.bepinex.dev/v3/index.json`
+   (and the same for `StabilityTests` and `RuntimeChecks`).
+3. Build with `--no-restore`, choosing where the mod folder goes:
+   `dotnet build BeaverBuddies/BeaverBuddies.csproj -c "Release Steam" --no-restore -p:BeaverBuddiesModsPath="<folder>\BeaverBuddies\"`
+   (`-c Release` for a build without Steam networking).
+4. Checks: `dotnet run --project StabilityTests --no-build` (239 headless checks, 29 of them for separate colonies),
+   `dotnet run --project RuntimeChecks --no-restore -- <built BeaverBuddies.dll> <Timberborn_Data\Managed> <Harmony folder> <Mod Settings Scripts folder>`
+   (86 checks against the game's own assemblies), and
+   `python -m unittest discover -s RuntimeChecks -p "test_water_snapshots.py"`.
+
+These checks can't start Unity or prove full multiplayer determinism; in-game testing is what confirms behavior.
 
 ## Credits and license
 
-Every change in this fork is listed in [STABILITY-CHANGELOG.md](STABILITY-CHANGELOG.md).
-
-Thank you to the original BeaverBuddies authors and contributors, whose work this fork builds on. Their license (GPL-3.0) and authorship are preserved in [License.txt](License.txt) and the repository history.
-
-*Below the line is the original project's developer README, kept as it was. Its badges, Workshop, mod.io, wiki and Discord links, and the clone address in "How to Build", refer to the original project, not to this fork. To build this fork, clone this repository instead.*
-
----
-
-[![Last commit](https://img.shields.io/github/last-commit/thomaswp/BeaverBuddies?label=Last%20commit&color=lightgray)](https://github.com/thomaswp/BeaverBuddies/commits)
-[![License](https://img.shields.io/github/license/thomaswp/BeaverBuddies?label=License&color=gray)](https://github.com/thomaswp/BeaverBuddies/blob/master/License.txt)
-[![Timberborn 1.0](https://img.shields.io/badge/Timberborn_1.0-compatible-peru)](https://mechanistry.com)
-[![Discord mod thread](https://img.shields.io/badge/Discord-mod_thread-mediumpurple)](https://discord.com/channels/558398674389172225/1203786573142032445)  
-[![Steam Workshop](https://img.shields.io/badge/Steam_Workshop-available-royalblue)](https://steamcommunity.com/sharedfiles/filedetails/?id=3293380223)
-[![mod.io](https://img.shields.io/badge/mod.io-available-limegreen)](https://mod.io/g/timberborn/m/beaverbuddies)
-
-BeaverBuddies is a mod to allow multiplayer co-op in Timberborn.
-
-> [!IMPORTANT]
-> **If you would like to use the BeaverBuddies mod**, please see [the setup instructions in the wiki](https://github.com/thomaswp/BeaverBuddies/wiki)! This README is for developers.
-
-## Contributing
-
-We appreciate your help! To get started working on BeaverBuddies, see [the guide in the wiki](https://github.com/thomaswp/BeaverBuddies/wiki/Contributing).
-
-## How to Build BeaverBuddies
-
-1. Clone this repo `git clone git@github.com:thomaswp/BeaverBuddies`.
-2. Set up DotNet C#.  
-   For Windows, download & install [Visual Studio community edition](https://visualstudio.microsoft.com/vs/community).  
-   For Mac, either run `brew install dotnet` or download & install [DotNet SDK](https://dotnet.microsoft.com/en-us/download).
-3. Build the project.  
-   For Visual Studio, open the solution & hit Ctrl+Shift+B.  
-   For DotNet SDK, go to the BeaverBuddies directory & run `dotnet build`.  
-   You may get a few "directory not found" errors. To fix these, open `BeaverBuddies/BeaverBuddies/env.props` and adjust the environmental variables there to point to your Timberborn installation & the necessary mods.
-
-Building on Linux is similar to on Mac.
-
-## How to Test Your Build
-
-1. Make sure your project has been built with no errors.
-2. Confirm that the mod files were copied to your Timberborn mods folder (e.g. `Documents/Timberborn/Mods/BeaverBuddies`.
-3. Launch Timberborn and select the BeaverBuddies mod on the mod selection screen.  
-   There may be multiple BeaverBuddies mod entries. The one with a "folder" icon next to it is your local build, select it.
+Built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork) and the
+original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies) by thomaswp and contributors, who designed the
+multiplayer this all rests on. Licensed under GPL-3.0 ([License.txt](License.txt)); authorship is preserved in the
+repository history. Every change is listed in [STABILITY-CHANGELOG.md](STABILITY-CHANGELOG.md).

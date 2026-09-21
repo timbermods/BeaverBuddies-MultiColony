@@ -41,6 +41,7 @@ namespace BeaverBuddies.Colonies
         private GameObject root;
         private readonly List<AreaTileDrawer> drawers = new List<AreaTileDrawer>();
         private bool toggledOn;
+        private bool failed;
         private bool shown;
 
         public ColonyBorderOverlay(AreaTileDrawerFactory areaTileDrawerFactory, ITerrainService terrainService,
@@ -56,8 +57,16 @@ namespace BeaverBuddies.Colonies
 
         public void PostLoad()
         {
-            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
-            if (territory == null) return;
+            // A one-start game gets its border only once colony 2 is founded, so the drawers are made when first shown.
+            if (!ColonyModeService.IsSeparateColonies) return;
+            _inputService.AddInputProcessor(this);
+            _eventBus.Register(this);
+        }
+
+        private bool EnsureDrawers(ColonyTerritory territory)
+        {
+            if (root != null) return true;
+            if (failed) return false;
             try
             {
                 root = new GameObject("BeaverBuddies_ColonyBorder");
@@ -68,15 +77,16 @@ namespace BeaverBuddies.Colonies
                     drawers.Add(_areaTileDrawerFactory.Create(ColonyColors[(colony - 1) % ColonyColors.Length], holder));
                 }
                 root.SetActive(false);
+                return true;
             }
             catch (Exception error)
             {
                 // Seeing the border is a help, not a requirement: refusals still explain themselves.
                 Plugin.LogError("[Colony] Could not create the border display: " + error);
+                failed = true;
                 root = null;
+                return false;
             }
-            _inputService.AddInputProcessor(this);
-            _eventBus.Register(this);
         }
 
         [OnEvent]
@@ -102,7 +112,8 @@ namespace BeaverBuddies.Colonies
 
         private void Refresh()
         {
-            if (root == null) return;
+            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
+            if (territory == null || !EnsureDrawers(territory)) return;
             bool visible = toggledOn || (_toolService.ActiveTool != null && !_toolService.IsDefaultToolActive);
             if (visible == shown) return;
             shown = visible;

@@ -1,7 +1,9 @@
 # Separate colonies (alpha)
 
 Two players, one map, a colony each. On a map with two starting locations, each player gets their own starting
-district, their own beavers and their own land. Neither player can act on the other's colony. The two colonies
+district, their own beavers and their own land. On any other map, including the game's standard maps, the host
+starts as usual and the second player **founds** their colony wherever they like (see
+[Standard maps](#standard-maps-founding-colony-2)). Neither player can act on the other's colony. The two colonies
 can trade goods through District Crossings built on the border, and each player controls what their colony takes.
 
 **State of testing.** This is an alpha and **nobody has played it yet**. The rules, the land division and the
@@ -16,9 +18,11 @@ The host decides this when **creating a new game**. Nothing changes for existing
 
 1. In **Mod Settings → BeaverBuddies**, tick **Separate colonies for new multi-start games (alpha)**.
 2. Choose **Colony the host plays**: *Colony 1* or *Colony 2*. Every guest plays the other one.
-3. Start a **new game** on a map with two starting locations (a BeaverBuddies multi-start map). The mode is
-   recorded in the save, together with where each colony started.
-4. Host it as usual (**Host co-op game**) and have your friend join before you unpause.
+3. Start a **new game**. On a map with two starting locations (a BeaverBuddies multi-start map) both colonies
+   start at once. On a map with one start (any standard map) the host's colony starts as usual and colony 2 is
+   founded by its player after joining. The mode is recorded in the save.
+4. Save it, then host it as usual (**Load Game** → select the save → **Host co-op game**) and have your friend join
+   before you unpause.
 
 Colony 1 is the map's first starting location and colony 2 the second, in the order the map author numbered them.
 The connection panel shows each player's colony beside their name.
@@ -27,9 +31,37 @@ The connection panel shows each player's colony beside their name.
 **Colony the host plays** on the colony you played. When your friend hosts the save instead, they choose the colony
 they were playing.
 
+## Standard maps: founding colony 2
+
+On a map with one starting location there is only one district center at the start. It is the host's (colony 1).
+Colony 2 does not exist until its player founds it:
+
+1. The host starts the new game as usual, saves, hosts it and brings the friend in. The host may play in the
+   meantime.
+2. When the friend joins, a message offers to **place their district center**. (If they close it, **Ctrl+K** opens
+   the same tool at any time.)
+3. They place it anywhere on the map. It costs nothing, needs no science, and appears **already built**, with the
+   same starting food, water, adults and children the new game gave colony 1.
+4. From that moment the land is divided halfway between the two district centers, exactly as on a two-start map,
+   and each player controls their own colony. Everyone sees *Colony 2 has been founded.*
+
+**Where it may go:** every building colony 1 already has must stay on colony 1's side of the new border and off
+the border strip, and the new district center must stand wholly inside colony 2. The preview turns red with *Too
+close to the other colony's buildings* when that is not so. Founding early, before colony 1 spreads out, leaves
+the most room.
+
+**Until colony 2 is founded** its player can do nothing but found it (shared things such as speed and chat still
+work); the host plays freely. The land is not divided yet, so there is no border to show.
+
+**When it is founded**, colony 1's districts have their imports set to *Disabled* too, so trade starts closed on
+both sides, as on a two-start map.
+
+Colony 1 is measured from its district center. If colony 1 has built more than one district center by then, the
+one with the lowest internal id is used; found colony 2 early to avoid surprises.
+
 ## Whose land is whose
 
-Every tile belongs to the colony whose starting building is **nearest**, measured on the map and ignoring height.
+Every tile belongs to the colony whose starting building (on a standard map, the founded district center) is **nearest**, measured on the map and ignoring height.
 With two colonies the border is a straight line halfway between the two starts. A building belongs to the colony
 that owns the tile it stands on, and a district belongs to the colony that owns its District Center's tile.
 
@@ -133,17 +165,18 @@ only for the host, only in debug mode, and every switch is logged.
 
 ## Testing
 
-Automated checks (all passing at `1.2.0-two-colony-alpha1`):
+Automated checks (all passing at `1.2.0-two-colony-alpha2`):
 
-- **StabilityTests**, headless: 25 checks for this feature. They cover the host stamping each guest's actions over the
+- **StabilityTests**, headless: 29 checks for this feature. They cover the host stamping each guest's actions over the
   real network code (a guest that claims another number is overwritten), grouped actions, seats, land division with
   2, 3 and 4 starts, the border strip (including that no gap is left on a diagonal border), placement,
   the crossing rule (including a lone half and a half across the border), area filtering, and the migration
-  pairing rule. Grouped actions are tested in the JSON shape the mod really sends.
+  pairing rule, and founding (what colony 2's player may do before founding, where founding is allowed, and who
+  may found). Grouped actions are tested in the JSON shape the mod really sends.
 - **RuntimeChecks**, against the compiled mod and the game's assemblies: every one of the 50 action types declares
   what it touches (a new one that does not fails the check), the list of actions shared by both colonies is
   printed for review, the sender survives the trip through the network format, a real serialized group of
-  actions is stamped all the way down, and every game method the mode replaces still exists.
+  actions is stamped all the way down, and every game method the mode replaces or founding uses still exists.
 
 In-game test scripts are in the release notes of each alpha: a solo host script (one person, debug mode) and a
 two-player script. Their results will be recorded here.

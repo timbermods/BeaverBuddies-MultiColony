@@ -36,6 +36,8 @@ namespace BeaverBuddies.Events
             //context.GetSingleton<ReplayService>().SetServerMapName(mapName);
             LargeColonySpeedLimit.AdoptHostChoice(removeLargeColonySpeedLimit);
             ColonySession.AdoptHostColony(hostColony);
+            // On a one-start map, the player of colony 2 is offered to found it now.
+            SingletonManager.GetSingleton<ColonyFoundingService>()?.OfferFounding();
             string warningMessage = null;
             if (serverGameVersion != GameVersions.CurrentVersion.ToString())
             {

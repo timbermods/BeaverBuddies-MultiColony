@@ -328,7 +328,7 @@ namespace BeaverBuddies.Panel
                 if (!foundYou) result.Players.Add(new PanelPlayer { Id = status.YourPlayerId, Name = me, IsYou = true });
             }
             // Separate colonies: which colony each player controls, beside the name.
-            if (BeaverBuddies.Colonies.ColonyModeService.ActiveTerritory != null)
+            if (BeaverBuddies.Colonies.ColonyModeService.IsSeparateColonies)
             {
                 string format = BeaverBuddies.Util.RegisteredLocalizationService.T("BeaverBuddies.Colony.PanelName");
                 foreach (var player in result.Players)

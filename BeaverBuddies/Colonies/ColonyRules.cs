@@ -13,6 +13,8 @@ namespace BeaverBuddies.Colonies
         Placement,
         /// <summary>A list of tiles or entities that is filtered down to the actor's own.</summary>
         List,
+        /// <summary>Founds colony 2 on a map with one start; judged by the founding rules, once.</summary>
+        Founding,
     }
 
     /// <summary>Where a building would go, in the event's own terms. The world turns it into footprint tiles.</summary>
@@ -51,6 +53,9 @@ namespace BeaverBuddies.Colonies
 
         public static ColonyScope Place(ColonyPlacement placement) =>
             new ColonyScope { Kind = ColonyScopeKind.Placement, Placement = placement };
+
+        public static ColonyScope Found(ColonyPlacement placement) =>
+            new ColonyScope { Kind = ColonyScopeKind.Founding, Placement = placement };
 
         public static ColonyScope TileList<T>(List<T> items, Func<T, ColonyTile> tileOf) =>
             new ColonyScope { Kind = ColonyScopeKind.List, List = new ColonyList<T>(items, item => ColonyTarget.At(tileOf(item))) };
@@ -141,6 +146,14 @@ namespace BeaverBuddies.Colonies
         NothingOwn,
         /// <summary>The building's footprint could not be worked out, so it is not allowed.</summary>
         UnknownFootprint,
+        /// <summary>Colony 2 has not been founded yet; its player can only found it.</summary>
+        NotFounded,
+        /// <summary>The new colony would take land where the first colony already has buildings.</summary>
+        FoundingTooClose,
+        /// <summary>Colony 2 exists already, this player does not play colony 2, or founding is not possible.</summary>
+        CannotFound,
+        /// <summary>The spot is taken or the ground does not allow the building (checked when founding).</summary>
+        Blocked,
     }
 
     public readonly struct ColonyVerdict
@@ -195,9 +208,55 @@ namespace BeaverBuddies.Colonies
                 case ColonyScopeKind.List:
                     return JudgeList(scope.List, actorColony, territory, world, rewrite);
 
+                case ColonyScopeKind.Founding:
+                    // With the land already divided, colony 2 exists.
+                    return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "colony 2 is already founded");
+
                 default:
                     return ColonyVerdict.Allow;
             }
+        }
+
+        /// <summary>
+        /// A one-start game before colony 2 is founded: the first colony's player acts freely, and colony 2's player
+        /// may only do shared things (founding is judged by <see cref="JudgeFounding"/>).
+        /// </summary>
+        public static ColonyVerdict JudgeWhileFounding(ColonyScope scope, int actorColony)
+        {
+            if (scope == null || scope.Kind == ColonyScopeKind.Global || actorColony == 1) return ColonyVerdict.Allow;
+            return ColonyVerdict.Refuse(ColonyRefusal.NotFounded, $"colony {actorColony} is not founded yet");
+        }
+
+        /// <summary>
+        /// Where colony 2 may be founded. The land is then divided between the first colony's district center
+        /// (<paramref name="firstStart"/>) and the new one (<paramref name="newStart"/>), exactly as for two starts.
+        /// The new district center must stand wholly on colony 2's land off the strip, and every building the first
+        /// colony already has must stay wholly on colony 1's land off the strip, so founding never takes anything away.
+        /// </summary>
+        public static ColonyVerdict JudgeFounding(int actorColony, ColonyTile? firstStart, ColonyTile newStart,
+            IReadOnlyList<ColonyTile> newFootprint, IEnumerable<IReadOnlyList<ColonyTile>> existingBuildings)
+        {
+            if (actorColony != 2)
+                return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, $"colony {actorColony} cannot found colony 2");
+            if (firstStart == null)
+                return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the first colony has no district center");
+            if (newFootprint == null || newFootprint.Count == 0)
+                return ColonyVerdict.Refuse(ColonyRefusal.UnknownFootprint, "no footprint for the new district center");
+            var territory = new ColonyTerritory(new[] { firstStart.Value, newStart });
+            foreach (ColonyTile tile in newFootprint)
+            {
+                if (territory.OwnerOf(tile) != 2 || territory.IsStrip(tile))
+                    return ColonyVerdict.Refuse(ColonyRefusal.FoundingTooClose, $"the new district center at {tile} would not be inside colony 2");
+            }
+            foreach (IReadOnlyList<ColonyTile> building in existingBuildings)
+            {
+                foreach (ColonyTile tile in building)
+                {
+                    if (territory.OwnerOf(tile) != 1 || territory.IsStrip(tile))
+                        return ColonyVerdict.Refuse(ColonyRefusal.FoundingTooClose, $"colony 1's building at {tile} would be on colony 2's side or the border");
+                }
+            }
+            return ColonyVerdict.Allow;
         }
 
         private static ColonyVerdict JudgePlacement(ColonyPlacement placement, int actorColony,

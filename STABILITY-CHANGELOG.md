@@ -5,6 +5,24 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.2.0-two-colony-alpha2
+
+Adds **founding on standard maps**, and fixes a critical bug in alpha1. Not yet played in a game. Every player must
+install this build.
+
+- **Fixed (critical, alpha1):** the host's record of who sent an action never reached the actions a guest sends in a
+  batch (the mod writes that list in a wrapped JSON shape), so every guest action was judged as the host's. Both the
+  network layer and the host's unpacking now stamp every action; checks now use the real JSON shape.
+- **Standard maps (one start):** the host's colony starts as usual; colony 2's player founds it by placing a district
+  center anywhere that leaves colony 1's buildings on its own side (offered on joining, and on **Ctrl+K**). It appears
+  finished with the new game's starting food, water, adults and children, and the land is then divided between the
+  two district centers. The founding is re-checked at the moment it happens, on every computer, and skipped with a
+  notice if the spot has changed. Colony 1 is measured from its starting building, recorded when the game places it.
+- **Crossings:** a half on the other colony's side is accepted only when the placer's own half really stands behind
+  it, and each half must stand wholly on one side.
+- **Multi-start maps with more than two starts:** only the first two become colonies.
+- README rewritten as a player's guide.
+
 ## 1.2.0-two-colony-alpha1
 
 An alpha of **separate colonies** ([TWO-COLONIES.md](TWO-COLONIES.md)), on top of 1.1.10, in the new
@@ -25,6 +43,10 @@ check compares the mod build, and each action now carries who sent it.
   side is accepted only when the placer's own half stands behind it.
 - **Trade starts closed:** every good of a new district starts at import Disabled, so goods cross only once the
   receiving player opens a good; the giver limits it with the export threshold.
+- **Standard maps (one start):** the host's colony starts as usual; the second player founds colony 2 by placing
+  a district center anywhere that leaves colony 1's buildings on its own side. It appears finished, with the new
+  game's starting food, water, adults and children, and the land is then divided between the two district centers.
+  Offered on joining, and on **Ctrl+K**.
 - **No automatic migration between colonies**; manual migration to the other colony is refused.
 - **Border display** (key **K**, and whenever a tool is active), the colony beside each name in the connection
   panel, and a debug key for a host testing alone (**Ctrl+Shift+K**, debug mode only).

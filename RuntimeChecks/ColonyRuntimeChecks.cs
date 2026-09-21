@@ -107,12 +107,19 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.GameDistrictsMigration.MigrationNeighbours", "Timberborn.GameDistrictsMigration", "GetLowestSpareNeighbour"),
             ("Timberborn.DistributionSystem.GoodDistributionSetting", "Timberborn.DistributionSystem", "SetDefault"),
             ("Timberborn.GameStartup.StartingBuildingInitializer", "Timberborn.GameStartup", "Initialize"),
+            ("Timberborn.ConstructionSites.ConstructionFactory", "Timberborn.ConstructionSites", "CreateAsFinished"),
+            ("Timberborn.Beavers.BeaverFactory", "Timberborn.Beavers", "CreateAdult"),
+            ("Timberborn.Beavers.BeaverFactory", "Timberborn.Beavers", "CreateChild"),
+            ("Timberborn.BlockObjectTools.BlockObjectToolFactory", "Timberborn.BlockObjectTools", "Create"),
+            ("Timberborn.GameStartup.StartingBuildingSpawner", "Timberborn.GameStartup", "get_StartingBuildingTemplateSpec"),
+            ("Timberborn.GameStartup.StartingBuildingSpawner", "Timberborn.GameStartup", "PlaceStartingBuilding"),
+            ("Timberborn.BlockSystem.BlockValidator", "Timberborn.BlockSystem", "BlocksValid"),
         })
         {
             test($"Colony: the game still has {typeName.Split('.').Last()}.{method}", () =>
             {
                 Type type = Assembly.Load(assemblyName).GetType(typeName, true)!;
-                if (type.GetMethod(method, all) == null) throw new Exception("missing; the colony patch would not apply");
+                if (!type.GetMethods(all).Any(m => m.Name == method)) throw new Exception("missing; the colony patch would not apply");
             });
         }
 

@@ -326,6 +326,59 @@ static class ColonyChecks
             Check(ColonyRules.Judge(ColonyScope.TileList(new List<ColonyTile>(), t => t), 1, TwoColonies(), w, true).IsAllowed);
         });
 
+        // ---- founding colony 2 on a one-start map ----
+
+        yield return ("Colony: before colony 2 is founded, colony 1 acts freely and colony 2 may only share", () =>
+        {
+            Check(ColonyRules.JudgeWhileFounding(ColonyScope.Entities("x"), 1).IsAllowed);
+            Check(ColonyRules.JudgeWhileFounding(ColonyScope.Place(Place("House")), 1).IsAllowed);
+            Check(ColonyRules.JudgeWhileFounding(ColonyScope.Global, 2).IsAllowed);
+            Equal(ColonyRefusal.NotFounded, ColonyRules.JudgeWhileFounding(ColonyScope.Entities("x"), 2).Refusal);
+            Equal(ColonyRefusal.NotFounded, ColonyRules.JudgeWhileFounding(ColonyScope.Place(Place("House")), 2).Refusal);
+            Equal(ColonyRefusal.NotFounded, ColonyRules.JudgeWhileFounding(ColonyScope.TileList(new List<ColonyTile>(), t => t), 2).Refusal);
+        });
+
+        yield return ("Colony: colony 2 is founded where colony 1's buildings all stay on colony 1's side", () =>
+        {
+            var first = new ColonyTile(10, 10);
+            var colonyOneBuildings = new List<IReadOnlyList<ColonyTile>>
+            {
+                Tiles((9, 9), (10, 9), (11, 9)), // its district center
+                Tiles((14, 10)),                 // a path towards the east
+            };
+            // Far to the east: the border falls at x = 30, well clear of x = 14.
+            Check(ColonyRules.JudgeFounding(2, first, new ColonyTile(50, 10), Tiles((50, 10), (51, 10), (52, 10)), colonyOneBuildings).IsAllowed);
+            // Close: from x = 18 the border falls between x = 14 and 15, putting the path on the strip.
+            Equal(ColonyRefusal.FoundingTooClose,
+                ColonyRules.JudgeFounding(2, first, new ColonyTile(18, 10), Tiles((18, 10)), colonyOneBuildings).Refusal);
+            // From x = 20 the border falls between x = 15 and 16, so the path at x = 14 is just clear.
+            Check(ColonyRules.JudgeFounding(2, first, new ColonyTile(20, 10), Tiles((20, 10)), colonyOneBuildings).IsAllowed);
+            // Right next to colony 1: its own district center would end up in colony 2.
+            Equal(ColonyRefusal.FoundingTooClose,
+                ColonyRules.JudgeFounding(2, first, new ColonyTile(11, 10), Tiles((11, 10)), colonyOneBuildings).Refusal);
+        });
+
+        yield return ("Colony: the new district center must stand wholly inside colony 2, off the strip", () =>
+        {
+            var first = new ColonyTile(10, 10);
+            var none = new List<IReadOnlyList<ColonyTile>>();
+            // Start at x = 30 (border at x = 20/21), but the building reaches back to x = 21, the strip.
+            Equal(ColonyRefusal.FoundingTooClose,
+                ColonyRules.JudgeFounding(2, first, new ColonyTile(30, 10), Tiles((30, 10), (21, 10)), none).Refusal);
+            Check(ColonyRules.JudgeFounding(2, first, new ColonyTile(30, 10), Tiles((30, 10), (29, 10)), none).IsAllowed);
+        });
+
+        yield return ("Colony: only colony 2's player can found, and only while colony 1 has a district center", () =>
+        {
+            var none = new List<IReadOnlyList<ColonyTile>>();
+            Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(1, new ColonyTile(0, 0), new ColonyTile(50, 0), Tiles((50, 0)), none).Refusal);
+            Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(0, new ColonyTile(0, 0), new ColonyTile(50, 0), Tiles((50, 0)), none).Refusal);
+            Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(2, null, new ColonyTile(50, 0), Tiles((50, 0)), none).Refusal);
+            Equal(ColonyRefusal.UnknownFootprint, ColonyRules.JudgeFounding(2, new ColonyTile(0, 0), new ColonyTile(50, 0), Tiles(), none).Refusal);
+            // Once the land is divided, colony 2 exists: founding again is refused by the ordinary rules.
+            Equal(ColonyRefusal.CannotFound, ColonyRules.Judge(ColonyScope.Found(Place("")), 2, TwoColonies(), new FakeWorld(), true).Refusal);
+        });
+
         // ---- 10. automatic migration between colonies ----
 
         yield return ("Colony: automatic migration only pairs districts of one colony", () =>
@@ -350,6 +403,8 @@ static class ColonyChecks
             ["$values"] = new JArray(children),
         },
     };
+
+    static IReadOnlyList<ColonyTile> Tiles(params (int x, int y)[] tiles) => tiles.Select(t => new ColonyTile(t.x, t.y)).ToList();
 
     static ColonyPlacement Place(string template) => new ColonyPlacement { TemplateName = template };
 

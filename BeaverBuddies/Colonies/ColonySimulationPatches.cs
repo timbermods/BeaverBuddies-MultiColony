@@ -90,6 +90,18 @@ namespace BeaverBuddies.Colonies
         }
     }
 
+    // Records where colony 1's starting building went, while colony 2 is awaited, so founding measures colony 1's land
+    // from its start and not from whichever district center it built later. Also sees the game's relocate option,
+    // which deletes the starting building and places it again. New game only; every computer loads the result.
+    [HarmonyPatch(typeof(Timberborn.GameStartup.StartingBuildingSpawner), "PlaceStartingBuilding")]
+    static class StartingBuildingSpawnerPlacePatcher
+    {
+        static void Postfix(Timberborn.Coordinates.Placement placement)
+        {
+            SingletonManager.GetSingleton<ColonyModeService>()?.RecordFirstColonyStart(placement.Coordinates);
+        }
+    }
+
     static class ColonyTradeDefaults
     {
         /// <summary>The import option a good starts with: the game's, or Disabled in a separate-colonies game.</summary>

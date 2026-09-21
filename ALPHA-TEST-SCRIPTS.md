@@ -1,6 +1,6 @@
 # Separate colonies: alpha test scripts
 
-Two scripts for `1.2.0-two-colony-alpha1`. Please report a result for **every line**: *works*, *fails* (what you
+Two scripts for `1.2.0-two-colony-alpha2`. Please report a result for **every line**: *works*, *fails* (what you
 saw), or *not tried*. A screenshot helps for anything drawn on screen (the border, a red preview, a notice, the
 connection panel). Send `Player.log` at the end (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`).
 Lines from this mode in the log start with `[Colony]`.
@@ -12,7 +12,7 @@ copy in `BeaverBuddies-MultiColony`, enable **BeaverBuddies - MultiColony (alpha
 
 Setup: in **Mod Settings → BeaverBuddies** tick **Separate colonies for new multi-start games (alpha)**, set
 **Colony the host plays** to *Colony 1*, and tick **Always Use Detailed Logging** (debug mode). Start a **new game**
-on a map with two starting locations. Save, then **Host co-op game** and start without anyone joining.
+on a map with two starting locations. Save, then in **Load Game** select that save and choose **Host co-op game**; start without anyone joining.
 
 1. **Two colonies.** Two starting District Centers, with beavers at each. The log has a line
    `[Colony] Separate colonies switched on for this new game: 2 colonies starting at ...`.
@@ -45,10 +45,35 @@ on a map with two starting locations. Save, then **Host co-op game** and start w
     (shared control, no border, no refusals, imports start at *Auto*).
 11. Send `Player.log`.
 
+## Script C: a standard map (host alone, about 15 minutes)
+
+Setup as Script A (separate colonies on, *Colony 1*, debug on), but start a new game on a **standard map** (one
+starting location). Save, then in **Load Game** select that save and choose **Host co-op game**, without anyone joining.
+
+1. One district center with beavers, as usual. The log has `[Colony] Separate colonies switched on for this new
+   game: one colony, waiting for colony 2 to be founded (it will start with N adults, ...)`.
+2. Build a few paths and a building near your start (as colony 1: no refusals, no border).
+3. Press **Ctrl+Shift+K** (act as colony 2). Try to place a path: refused, *Found your colony first (Ctrl+K).*
+4. Press **Ctrl+K**: a district-center placement tool opens. Point it right next to your buildings: red, *Too close
+   to the other colony's buildings.* Point it far away: valid. Place it.
+5. A **finished** district center appears there with starting food and water and the same number of adults and
+   children colony 1 started with; *Colony 2 has been founded.* The beavers walk around and start working. The log has
+   `[Colony] Colony 2 founded at ...`. Select one of the new beavers: its district must be colony 2's new district, not
+   colony 1's (screenshot please).
+6. Press **K**: the border appears halfway between the two district centers. The Distribution tab shows import
+   *Disabled* for both districts.
+7. Press **Ctrl+K** again: *There is no colony waiting to be founded.* Save, reload, host again: still two colonies
+   (the log says `loaded from the save` with both positions).
+8. Script A lines 2 to 9 now apply to this game as well.
+
 ## Script B: two players (about 45 minutes)
 
 Both install the same zip. The host sets **Colony the host plays** to *Colony 1* and starts a new separate-colonies
-game as in Script A (debug mode not needed). The friend joins over a Steam invite before the host unpauses.
+game as in Script A (debug mode not needed), on a two-start map **or on a standard map**. The friend joins over a
+Steam invite before the host unpauses.
+
+0. **Standard map only:** on joining, the friend sees the offer to place their district center. They place it away
+   from the host's buildings; it appears finished with starting beavers, food and water, on both screens.
 
 1. The connection panel shows each name with its colony, e.g. *Kyler (colony 1)*. Both see the border with **K**.
 2. Each player does Script A lines 2 to 5 against the other player's colony, at the same time.

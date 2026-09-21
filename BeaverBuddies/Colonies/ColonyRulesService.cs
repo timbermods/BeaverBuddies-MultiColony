@@ -38,15 +38,14 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public static bool AllowOnHost(ReplayEvent replayEvent)
         {
-            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
-            if (territory == null) return true;
+            if (!ColonyModeService.IsSeparateColonies) return true;
             var service = SingletonManager.GetSingleton<ColonyRulesService>();
             if (service == null) return true;
             int colony = ColonySession.ColonyOfPlayer(replayEvent.player);
             ColonyVerdict verdict;
             try
             {
-                verdict = service.Judge(replayEvent, colony, territory, service.hostWorld, rewrite: true);
+                verdict = service.Judge(replayEvent, colony, service.hostWorld, rewrite: true);
                 if (verdict.IsAllowed) service.RememberIfCrossing(replayEvent);
             }
             catch (Exception error)
@@ -71,14 +70,13 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public static bool RefuseLocally(ReplayEvent replayEvent)
         {
-            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
-            if (territory == null || EventIO.IsNull) return false;
+            if (!ColonyModeService.IsSeparateColonies || EventIO.IsNull) return false;
             var service = SingletonManager.GetSingleton<ColonyRulesService>();
             if (service == null) return false;
             ColonyVerdict verdict;
             try
             {
-                verdict = service.Judge(replayEvent, ColonySession.LocalColony, territory, service.localWorld, rewrite: false);
+                verdict = service.Judge(replayEvent, ColonySession.LocalColony, service.localWorld, rewrite: false);
             }
             catch (Exception error)
             {
@@ -99,8 +97,7 @@ namespace BeaverBuddies.Colonies
             hostWorld.RememberCrossing(scope.Placement, replayEvent.ticksSinceLoad);
         }
 
-        private ColonyVerdict Judge(ReplayEvent replayEvent, int colony, ColonyTerritory territory, ColonyGameWorld world,
-            bool rewrite)
+        private ColonyVerdict Judge(ReplayEvent replayEvent, int colony, ColonyGameWorld world, bool rewrite)
         {
             ColonyScope scope;
             try
@@ -120,6 +117,15 @@ namespace BeaverBuddies.Colonies
                 Plugin.LogWarning($"[Colony] {replayEvent.type} declares no colony scope; allowing it");
                 return ColonyVerdict.Allow;
             }
+            if (scope.Kind == ColonyScopeKind.Founding)
+            {
+                var founding = SingletonManager.GetSingleton<ColonyFoundingService>();
+                if (founding == null) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "no founding service");
+                return founding.Judge(colony, ColonyGameWorld.ToPlacement(scope.Placement));
+            }
+            if (ColonyModeService.FoundingPending) return ColonyRules.JudgeWhileFounding(scope, colony);
+            ColonyTerritory territory = ColonyModeService.ActiveTerritory;
+            if (territory == null) return ColonyVerdict.Allow;
             return ColonyRules.Judge(scope, colony, territory, world, rewrite);
         }
 
@@ -131,6 +137,10 @@ namespace BeaverBuddies.Colonies
                 ColonyRefusal.OutsideLand => "BeaverBuddies.Colony.Refused.OutsideLand",
                 ColonyRefusal.BorderStrip => "BeaverBuddies.Colony.Refused.BorderStrip",
                 ColonyRefusal.NothingOwn => "BeaverBuddies.Colony.Refused.NothingOwn",
+                ColonyRefusal.NotFounded => "BeaverBuddies.Colony.Refused.NotFounded",
+                ColonyRefusal.FoundingTooClose => "BeaverBuddies.Colony.Refused.FoundingTooClose",
+                ColonyRefusal.CannotFound => "BeaverBuddies.Colony.Founding.NotYours",
+                ColonyRefusal.Blocked => "BeaverBuddies.Colony.Refused.Blocked",
                 _ => "BeaverBuddies.Colony.Refused.OtherColony",
             };
             ShowNotice(RegisteredLocalizationService.T(key));
@@ -153,6 +163,10 @@ namespace BeaverBuddies.Colonies
         public static string RefusalMessage(ColonyRefusal refusal) => refusal switch
         {
             ColonyRefusal.BorderStrip => RegisteredLocalizationService.T("BeaverBuddies.Colony.Refused.BorderStrip"),
+            ColonyRefusal.NotFounded => RegisteredLocalizationService.T("BeaverBuddies.Colony.Refused.NotFounded"),
+            ColonyRefusal.FoundingTooClose => RegisteredLocalizationService.T("BeaverBuddies.Colony.Refused.FoundingTooClose"),
+            ColonyRefusal.CannotFound => RegisteredLocalizationService.T("BeaverBuddies.Colony.Founding.NotYours"),
+            ColonyRefusal.Blocked => RegisteredLocalizationService.T("BeaverBuddies.Colony.Refused.Blocked"),
             _ => RegisteredLocalizationService.T("BeaverBuddies.Colony.Refused.OutsideLand"),
         };
     }
