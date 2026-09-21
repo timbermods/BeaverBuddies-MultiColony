@@ -5,6 +5,19 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha7
+
+**Fixed: "tick once" desynced a co-op game.** The game's pause key (period by default, not only in dev mode) pauses a
+running game, and pressed again while paused advances the game by exactly one tick. That tick runs through
+`Ticker.TickOnce`, which never goes through `TickableBucketService.TickBuckets`, the method the mod drives the game
+by. So the mod's own tick (playing the players' actions, counting ticks) was skipped, and the tick ran on the
+computer of the player who pressed it only, desyncing the game.
+
+- **In a co-op game, tick once is refused**, with a notice saying why: unpause to play on. Pausing with the same key
+  works as before.
+- Single player is unchanged.
+- Checks: RuntimeChecks 189 (the game still has `Ticker.TickOnce` and `SpeedControlPanel.PauseOrTickOnce`).
+
 ## 1.4.0-alpha6
 
 **Fixed: buildings placed before the game was hosted belonged to no colony.** A new co-op game starts in single

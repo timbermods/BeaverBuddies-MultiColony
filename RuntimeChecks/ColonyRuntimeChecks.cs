@@ -224,6 +224,9 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.TerrainQueryingSystem.TerrainAreaService", "Timberborn.TerrainQueryingSystem", "InMapLeveledCoordinates"),
             ("Timberborn.BlockSystem.BlockObjectSpec", "Timberborn.BlockSystem", "GetBlocks"),
             ("Timberborn.Debugging.DevModeManager", "Timberborn.Debugging", "get_Enabled"),
+            // Tick once (the pause key while paused) bypasses TickBuckets, so it is refused in co-op.
+            ("Timberborn.TickSystem.Ticker", "Timberborn.TickSystem", "TickOnce"),
+            ("Timberborn.TimeSystemUI.SpeedControlPanel", "Timberborn.TimeSystemUI", "PauseOrTickOnce"),
         })
         {
             test($"Colony: the game still has {typeName.Split('.').Last()}.{method}", () =>

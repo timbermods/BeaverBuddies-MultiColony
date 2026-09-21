@@ -206,6 +206,9 @@ the colony of the player using them:
 Its other tools, such as deleting any object or the dev panel's other buttons, change only the computer they are used
 on, and desync the game. A notice says so when dev mode is switched on in co-op.
 
+**Tick once** (the pause key pressed while paused) is off in co-op: it would advance only the computer it is
+pressed on, and desync the game. A notice says so; unpause to play on.
+
 ## Known limits
 
 - Up to four colonies; more players join as helpers of the host's colony.
