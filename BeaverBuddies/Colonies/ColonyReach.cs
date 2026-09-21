@@ -76,7 +76,19 @@ namespace BeaverBuddies.Colonies
         private readonly List<(int x, int y, int slot)> savedOwners = new List<(int, int, int)>();
         private int ticks;
 
-        private ColonyReachGrid grid;
+        private ColonyReachGrid map;
+
+        // Made on first use: by then every service has loaded (entities load after them), so the map's size is known.
+        // A map whose size was still unknown is made again, once the size is.
+        private ColonyReachGrid grid
+        {
+            get
+            {
+                Vector3Int size = _blockService.Size;
+                if (map == null || (map.Width == 0 && size.x > 0)) map = new ColonyReachGrid(size.x, size.y);
+                return map;
+            }
+        }
         // What each building added, so removing it takes exactly that away again.
         private readonly Dictionary<EntityComponent, (int slot, List<(int, int)> tiles)> added =
             new Dictionary<EntityComponent, (int, List<(int, int)>)>();
@@ -98,7 +110,6 @@ namespace BeaverBuddies.Colonies
 
         public void Load()
         {
-            grid = new ColonyReachGrid(_blockService.Size.x, _blockService.Size.y);
             _eventBus.Register(this);
             if (!_singletonLoader.TryGetSingleton(ReachKey, out IObjectLoader loader) || !loader.Has(ContestedKey)) return;
             foreach (string entry in loader.Get(ContestedKey))

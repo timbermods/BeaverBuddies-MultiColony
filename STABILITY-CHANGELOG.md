@@ -5,6 +5,19 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha3
+
+**Fixed: every game crashed while loading** ("ConstructionSitePanelDescriptionUpdater isn't instantiable due to
+missing dependency: GoodService"), in every build since 1.3.0-exchange-alpha1. The trading post's panel asked the
+game for its goods service by its class, which the game only hands out by its interface (`IGoodService`), so the game
+could not build its entity panel.
+
+- **New check** (RuntimeChecks): it reads, from the game's own code and Mod Settings', which services each context
+  (main menu, game, map editor) provides, and checks that everything this mod gives the game to build asks only for
+  those. Run against 1.4.0-alpha2 it reports exactly this crash.
+- The land map is made on first use, after every service has loaded, instead of relying on the order services load
+  in.
+
 ## 1.4.0-alpha2
 
 **A diagnostics report.** Press Ctrl+Shift+J (or *Diagnostics report* in the Ctrl+T window): a plain-text report is

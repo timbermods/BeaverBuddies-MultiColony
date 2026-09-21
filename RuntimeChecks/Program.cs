@@ -103,6 +103,7 @@ ReplayEventChecks.Run(assembly, Test);
 TraceChecks.Run(assembly, Test);
 ModListChecks.Run(assembly, Test);
 ColonyRuntimeChecks.Run(assembly, Test);
+BindingChecks.Run(assembly, Path.GetFullPath(args[1]), args.Skip(2).Select(Path.GetFullPath), Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

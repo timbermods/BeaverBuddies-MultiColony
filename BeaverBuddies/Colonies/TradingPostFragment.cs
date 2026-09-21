@@ -31,7 +31,7 @@ namespace BeaverBuddies.Colonies
         private static readonly Color CellBackground = new Color(0.05f, 0.05f, 0.04f, 0.85f);
         private static readonly Color CellEmpty = new Color(0.05f, 0.05f, 0.04f, 0.45f);
 
-        private readonly GoodService _goodService;
+        private readonly IGoodService _goodService;
         private readonly ResourceCountingService _resourceCountingService;
         private readonly VisualElementInitializer _visualElementInitializer;
 
@@ -58,7 +58,7 @@ namespace BeaverBuddies.Colonies
         private int shownGiveAmount, shownGetAmount;
         private bool shownRepeat;
 
-        public TradingPostFragment(GoodService goodService, ResourceCountingService resourceCountingService,
+        public TradingPostFragment(IGoodService goodService, ResourceCountingService resourceCountingService,
             VisualElementInitializer visualElementInitializer)
         {
             _goodService = goodService;
