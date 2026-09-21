@@ -5,6 +5,27 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha2
+
+**A diagnostics report.** Press Ctrl+Shift+J (or *Diagnostics report* in the Ctrl+T window): a plain-text report is
+copied to the clipboard and saved in `BeaverBuddies-Reports` next to `Player.log`. A computer that desyncs writes one
+by itself. It holds:
+
+- **Performance:** frame rate (average, slowest 5%, slowest frame), ticks per second, entity and beaver counts, and
+  the time spent in each busy part of this mod (resource searches, builder job checks, working hours, trading post
+  workers, land bookkeeping, previews, daily checks), measured with two timestamps per call.
+- **Colonies:** each colony's districts and population, homeless beavers and adults without a job, land, buildings
+  (and how many are unfinished), working hours, and the building statuses showing (such as unreachable, no workers,
+  lack of resources); beavers in no district.
+- **Trading posts:** each post's workers per half and its exchange, with what is holding it up (waiting for the other
+  side, no workers, the other half full).
+- **Desync:** once a day every computer takes a one-line check of the colony state (owners, building owners, land,
+  population, exchanges, marks, science, working hours, away days) and logs it. The lines for a day must match on
+  every computer; the first part that differs shows where they stopped agreeing. The report carries the last ten.
+- **Recent log:** the last colony and desync log lines.
+
+Reads only; nothing in it changes the game.
+
 ## 1.4.0-alpha1
 
 **Ready for longer games: land you can see, colonies that don't dead-end, better trading, its own identity.** Not yet

@@ -376,6 +376,19 @@ namespace BeaverBuddies.Colonies
         public void Tick()
         {
             if (!ColonyModeService.IsSeparateColonies || ++ticks % SpecialItemInterval != 0) return;
+            long started = ColonyProfiler.Start();
+            try
+            {
+                MoveSpecialItems();
+            }
+            finally
+            {
+                ColonyProfiler.Stop("Science and beaver exchanges", started);
+            }
+        }
+
+        private void MoveSpecialItems()
+        {
             foreach (DistrictCrossing half in _entityComponentRegistry.GetEnabled<DistrictCrossing>().ToList())
             {
                 string item = GoodGiven(half);

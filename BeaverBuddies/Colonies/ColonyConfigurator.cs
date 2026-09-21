@@ -67,6 +67,7 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyLifecycle>().AsSingleton();
             containerDefinition.Bind<ColonyLandOverlay>().AsSingleton();
             containerDefinition.Bind<TradeOverviewPanel>().AsSingleton();
+            containerDefinition.Bind<ColonyDiagnostics>().AsSingleton();
             containerDefinition.Bind<TradingPostFragment>().AsSingleton();
             containerDefinition.MultiBind<EntityPanelModule>().ToProvider<EntityPanelModuleProvider>().AsSingleton();
             containerDefinition.MultiBind<IBlockObjectValidator>().To<ColonyPlacementValidator>().AsSingleton();

@@ -167,6 +167,10 @@ namespace BeaverBuddies.Colonies
             scroll.Add(coloniesTitle);
             scroll.Add(coloniesList);
             window.Add(scroll);
+            var footer = Row();
+            footer.style.marginTop = 6;
+            footer.Add(MakeButton(T("BeaverBuddies.Colony.Overview.Report"), () => ColonyDiagnostics.Instance?.WriteReport("asked for")));
+            window.Add(footer);
 
             _visualElementInitializer.InitializeVisualElement(window);
             window.style.display = DisplayStyle.None;

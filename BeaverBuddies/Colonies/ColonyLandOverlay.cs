@@ -83,7 +83,9 @@ namespace BeaverBuddies.Colonies
                 if (ColonyReach.Instance.Version == drawnVersion || Time.unscaledTime < nextRedraw) return;
                 nextRedraw = Time.unscaledTime + RedrawInterval;
                 drawnVersion = ColonyReach.Instance.Version;
+                long started = ColonyProfiler.Start();
                 Redraw();
+                ColonyProfiler.Stop("Land outline drawing", started);
             }
             catch (Exception error)
             {

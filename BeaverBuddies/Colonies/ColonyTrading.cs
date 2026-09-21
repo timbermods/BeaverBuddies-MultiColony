@@ -184,6 +184,19 @@ namespace BeaverBuddies.Colonies
     {
         static bool Prefix(DistrictCrossingWorkplaceBehavior __instance, BehaviorAgent agent, ref bool __result)
         {
+            long started = ColonyProfiler.Start();
+            try
+            {
+                return Carry(__instance, agent, ref __result);
+            }
+            finally
+            {
+                ColonyProfiler.Stop("Trading post workers", started);
+            }
+        }
+
+        static bool Carry(DistrictCrossingWorkplaceBehavior __instance, BehaviorAgent agent, ref bool __result)
+        {
             DistrictCrossing crossing = __instance._districtCrossing;
             if (!TradingPosts.IsTradingPost(crossing)) return true;
             __result = false;

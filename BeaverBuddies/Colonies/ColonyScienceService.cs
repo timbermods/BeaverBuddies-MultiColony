@@ -203,6 +203,10 @@ namespace BeaverBuddies.Colonies
 
         public int PointsOf(int slot) => slot >= 0 && slot < points.Length ? points[slot] : 0;
 
+        /// <summary>Diagnostics: each colony's science, and how many buildings and bot worker types it has unlocked.</summary>
+        public string Fingerprint() => !Enabled ? "shared" : string.Join(" ",
+            Enumerable.Range(0, points.Length).Select(i => $"{i}:{points[i]}/{unlocked[i].Count}u/{workerUnlocked[i].Count}w"));
+
         public void Add(int slot, int amount)
         {
             if (slot < 0 || slot >= points.Length) slot = 0;

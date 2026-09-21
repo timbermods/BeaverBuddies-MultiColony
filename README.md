@@ -149,6 +149,7 @@ The player who lost their colony gets a notice and may **found a new one** with 
 | **Ctrl+K** | Found your colony (a player without one) |
 | **Ctrl+L** | Show every colony's land (it also shows while you hold a building, planting, cutting or demolishing tool) |
 | **Ctrl+T** | Trading posts and colonies |
+| **Ctrl+Shift+J** | Write a diagnostics report (also a button in the Ctrl+T window) |
 | **Ctrl+Shift+K** | *Debug only:* the host acts as the next colony, for testing alone (needs **Always Use Detailed Logging**) |
 
 All can be changed under **Options → Bindings → BeaverBuddies**. The co-op keys **Ping Location**, **Toggle
@@ -189,6 +190,13 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   there first. Build on your side. To trade, put a District Crossing across the edge of your two lands.
 - **Everything is refused right after joining:** the host has not seated you yet; wait a moment. If it persists,
   send the logs.
+- **Diagnostics report:** press **Ctrl+Shift+J** (or *Diagnostics report* in the Ctrl+T window) when something
+  looks wrong: slow, stuck beavers, a colony misbehaving. The report is copied to the clipboard, ready to paste into
+  a chat or an issue, and saved in `%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\BeaverBuddies-Reports`.
+  It is also written by itself when a computer desyncs: then send **every player's** latest report. It covers the
+  frame and tick rate and the time spent in this mod's code, each colony's districts, homeless and jobless beavers,
+  building statuses (such as unreachable) and trading posts (with what is holding an exchange up), a daily check of
+  the colony state that must match on every computer, and the last colony log lines.
 - **Reporting:** send `Player.log` from every player
   (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`), plus screenshots for anything on screen.
   Lines from this mode start with `[Colony]`. Step-by-step test scripts are in [ALPHA-TEST-SCRIPTS.md](ALPHA-TEST-SCRIPTS.md).

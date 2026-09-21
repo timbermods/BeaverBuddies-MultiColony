@@ -81,6 +81,36 @@ namespace BeaverBuddies.Colonies
 
         internal void SetPlanting(Vector3Int tile, int slot) => planting[tile] = slot;
 
+        /// <summary>
+        /// Diagnostics: per colony, how many standing planting and cutting marks it has, and a hash of where they are
+        /// (the same on every computer that agrees).
+        /// </summary>
+        public string Fingerprint()
+        {
+            var parts = new List<string>();
+            for (int slot = 0; slot < ColonySlotTable.MaxSlots; slot++)
+            {
+                int plantingCount = 0, cuttingCount = 0;
+                long hash = 0;
+                foreach (var mark in planting)
+                {
+                    if (mark.Value != slot || !_plantingService.IsResourceAt(mark.Key)) continue;
+                    plantingCount++;
+                    hash += Hash(mark.Key);
+                }
+                foreach (var mark in cutting)
+                {
+                    if (mark.Value != slot || !_treeCuttingArea.IsInCuttingArea(mark.Key)) continue;
+                    cuttingCount++;
+                    hash += 31 * Hash(mark.Key);
+                }
+                if (plantingCount + cuttingCount > 0) parts.Add($"{slot}:{plantingCount}p{cuttingCount}c{(uint)hash:x}");
+            }
+            return string.Join(" ", parts);
+        }
+
+        private static long Hash(Vector3Int tile) => ((long)tile.x * 73856093) ^ ((long)tile.y * 19349663) ^ ((long)tile.z * 83492791);
+
         /// <summary>A colony handed over: its marks become the new owner's.</summary>
         internal void Transfer(int from, int to)
         {

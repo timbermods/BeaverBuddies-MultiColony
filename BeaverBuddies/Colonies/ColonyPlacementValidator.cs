@@ -24,6 +24,7 @@ namespace BeaverBuddies.Colonies
             if (!blockObject.IsPreview || ReplayService.IsReplayingEvents || EventIO.IsNull) return true;
             if (!blockObject.Positioned) return true;
             ColonyVerdict verdict;
+            long started = ColonyProfiler.Start();
             try
             {
                 verdict = Judge(blockObject);
@@ -34,6 +35,10 @@ namespace BeaverBuddies.Colonies
                 if (!loggedError) Plugin.LogError("[Colony] Could not check a placement preview: " + error);
                 loggedError = true;
                 return true;
+            }
+            finally
+            {
+                ColonyProfiler.Stop("Placement previews", started);
             }
             if (verdict.IsAllowed) return true;
             errorMessage = ColonyRulesService.RefusalMessage(verdict.Refusal);

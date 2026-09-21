@@ -115,6 +115,10 @@ namespace BeaverBuddies.Colonies
 
         public bool IsDead(int slot) => OwnsDistrict(slot) && PopulationOf(slot) == 0;
 
+        /// <summary>Diagnostics: days each colony's player has missed, and since when a colony has had nobody.</summary>
+        public string Fingerprint() => string.Join(" ",
+            Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(i => $"{i}:{awayDays[i]}a{(deadSince[i] == Unknown ? "" : "d" + deadSince[i])}"));
+
         /// <summary>
         /// The living colony nearest to <paramref name="from"/> (district center to district center), among
         /// <paramref name="candidates"/>; the lowest numbered on a tie. Null when none.
@@ -161,8 +165,10 @@ namespace BeaverBuddies.Colonies
             // Nothing is decided on the first check after a load: populations are still being counted, and players are
             // still joining (a guest is only known once its hello has been played).
             if (firstCheck) return;
+            long started = ColonyProfiler.Start();
             HandOverDeadColonies(day);
             if (EventIO.Get() is ServerEventIO) HostDaily(day);
+            ColonyProfiler.Stop("Daily colony checks", started);
             if (Settings.Debug) LogDiagnostics(day);
         }
 

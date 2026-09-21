@@ -69,6 +69,9 @@ namespace BeaverBuddies.Colonies
 
         private bool HasOwn(int slot) => slot >= 0 && slot < hours.Length && hours[slot] != null;
 
+        /// <summary>Diagnostics: each colony's own hours (- for the game's).</summary>
+        public string Fingerprint() => string.Join(" ", hours.Select((h, i) => $"{i}:{(h.HasValue ? h.Value.ToString() : "-")}"));
+
         /// <summary>When a colony's working day ends, worked out as the game does (the game's own for a colony that never chose).</summary>
         public float EndHours(int slot) =>
             HasOwn(slot) ? _workingHoursManager._startHours + hours[slot].Value / 24f * 24f : _workingHoursManager.EndHours;
@@ -128,10 +131,11 @@ namespace BeaverBuddies.Colonies
         static bool Prefix(WorkerWorkingHours __instance, ref bool __result)
         {
             if (__instance._ignoreWorkingHours) return true;
+            long started = ColonyProfiler.Start();
             int? slot = ColonyWorkingHours.ColonyOf(__instance);
-            if (slot == null) return true;
-            __result = ColonyWorkingHours.Instance.AreWorkingHours(slot.Value);
-            return false;
+            if (slot != null) __result = ColonyWorkingHours.Instance.AreWorkingHours(slot.Value);
+            ColonyProfiler.Stop("Working hours checks", started);
+            return slot == null;
         }
     }
 
@@ -142,10 +146,11 @@ namespace BeaverBuddies.Colonies
         static bool Prefix(WorkplaceWorkingHours __instance, ref bool __result)
         {
             if (__instance._ignoreWorkingHours) return true;
+            long started = ColonyProfiler.Start();
             int? slot = ColonyWorkingHours.ColonyOf(__instance);
-            if (slot == null) return true;
-            __result = ColonyWorkingHours.Instance.AreWorkingHours(slot.Value);
-            return false;
+            if (slot != null) __result = ColonyWorkingHours.Instance.AreWorkingHours(slot.Value);
+            ColonyProfiler.Stop("Working hours checks", started);
+            return slot == null;
         }
     }
 

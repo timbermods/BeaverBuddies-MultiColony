@@ -192,10 +192,12 @@ namespace BeaverBuddies.Colonies
         {
             BlockObject blockObject = entity ? entity.GetComponent<BlockObject>() : null;
             if (blockObject == null || !blockObject.Positioned || added.ContainsKey(entity)) return;
+            long started = ColonyProfiler.Start();
             var tiles = blockObject.PositionedBlocks.GetAllCoordinates()
                 .Select(c => (c.x, c.y)).Distinct().ToList();
             grid.Apply(slot, tiles, +1);
             added[entity] = (slot, tiles);
+            ColonyProfiler.Stop("Land bookkeeping", started);
         }
 
         // ---- questions ----

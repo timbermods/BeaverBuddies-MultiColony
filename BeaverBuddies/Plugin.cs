@@ -164,18 +164,30 @@ namespace BeaverBuddies
 
         public static void Log(string message)
         {
+            Remember(message);
             if (!Settings.VerboseLogging) return;
             logger.LogInfo(GetWithDate(message));
         }
 
         public static void LogWarning(string message)
         {
+            Remember("warning: " + message);
             logger.LogWarning(GetWithDate(message));
         }
 
         public static void LogError(string message)
         {
+            Remember("error: " + message);
             logger.LogError(GetWithDate(message));
+        }
+
+        // The diagnostics report keeps the last colony and desync lines.
+        private static void Remember(string message)
+        {
+            if (message == null) return;
+            if (message.Contains("[Colony]") || message.IndexOf("desync", System.StringComparison.OrdinalIgnoreCase) >= 0
+                || message.Contains("Random state"))
+                BeaverBuddies.Colonies.ColonyDiagnostics.Remember(GetWithDate(message));
         }
 
         public static void LogStackTrace()

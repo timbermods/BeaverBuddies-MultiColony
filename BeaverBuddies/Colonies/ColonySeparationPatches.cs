@@ -79,18 +79,29 @@ namespace BeaverBuddies.Colonies
     }
 
     // Lumberjacks, gatherers, scavengers and farmhouse harvesters all look for their work through these two.
+    // Timed whole (the game's search and the colony filter), since the filter only runs as the game searches.
     [HarmonyPatch(typeof(YielderFinder), nameof(YielderFinder.FindLivingYielderWithoutAccessible))]
     static class ColonyLivingYielderPatcher
     {
-        static void Prefix(Inventory receivingInventory, ref IEnumerable<Yielder> yielders) =>
+        static void Prefix(Inventory receivingInventory, ref IEnumerable<Yielder> yielders, out long __state)
+        {
+            __state = ColonyProfiler.Start();
             ColonySeparation.FilterYielders(receivingInventory, ref yielders);
+        }
+
+        static void Finalizer(long __state) => ColonyProfiler.Stop("Resource searches (lumberjacks, gatherers...)", __state);
     }
 
     [HarmonyPatch(typeof(YielderFinder), nameof(YielderFinder.FindYielderWithAccessible))]
     static class ColonyAccessibleYielderPatcher
     {
-        static void Prefix(Inventory receivingInventory, ref IEnumerable<Yielder> yielders) =>
+        static void Prefix(Inventory receivingInventory, ref IEnumerable<Yielder> yielders, out long __state)
+        {
+            __state = ColonyProfiler.Start();
             ColonySeparation.FilterYielders(receivingInventory, ref yielders);
+        }
+
+        static void Finalizer(long __state) => ColonyProfiler.Stop("Resource searches (lumberjacks, gatherers...)", __state);
     }
 
     // Foresters and farmhouses plant only on their own colony's planting marks.
@@ -123,6 +134,19 @@ namespace BeaverBuddies.Colonies
         static bool Prefix(ConstructionJob __instance, Accessible workplaceAccessible, ref (Behavior, Decision) __result)
         {
             if (!ColonySeparation.Active) return true;
+            long started = ColonyProfiler.Start();
+            try
+            {
+                return Check(__instance, workplaceAccessible, ref __result);
+            }
+            finally
+            {
+                ColonyProfiler.Stop("Builder job checks", started);
+            }
+        }
+
+        static bool Check(ConstructionJob __instance, Accessible workplaceAccessible, ref (Behavior, Decision) __result)
+        {
             int? site = ColonySeparation.SimOwnerOf(__instance);
             int? builder = DistrictOwner.OwnerOfDistrict(workplaceAccessible ? workplaceAccessible.GetComponent<DistrictBuilding>()?.District : null);
             if (site == null || builder == null || site.Value == builder.Value) return true;
