@@ -50,9 +50,9 @@ internal static class ColonyRuntimeChecks
             Console.WriteLine("      Shared by both colonies: " + string.Join(", ", shared));
             // Map areas (planting, tree cutting) are shared on purpose: resources near another colony are contested.
             var expected = new[] { "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent", "EntityRenamedEvent",
-                "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent", "PlantingAreaMarkedEvent",
-                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent", "TreeCuttingAreaEvent",
-                "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
+                "GiftScienceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
+                "PlantingAreaMarkedEvent", "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent",
+                "TreeCuttingAreaEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
             if (!shared.SequenceEqual(expected))
                 throw new Exception("The shared list changed; review it and update this check: " + string.Join(", ", shared));
         });
@@ -130,12 +130,58 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.StatusSystem.StatusAggregator", "Timberborn.StatusSystem", "IsVisible"),
             ("Timberborn.StatusSystem.DynamicStatusAggregator", "Timberborn.StatusSystem", "IsVisible"),
             ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "AddNotification"),
+            // Separate science and unlocks.
+            ("Timberborn.ScienceSystem.ScienceService", "Timberborn.ScienceSystem", "get_SciencePoints"),
+            ("Timberborn.ScienceSystem.ScienceService", "Timberborn.ScienceSystem", "AddPoints"),
+            ("Timberborn.ScienceSystem.ScienceService", "Timberborn.ScienceSystem", "SubtractPoints"),
+            ("Timberborn.ScienceSystem.BuildingUnlockingService", "Timberborn.ScienceSystem", "Unlocked"),
+            ("Timberborn.ScienceSystem.BuildingUnlockingService", "Timberborn.ScienceSystem", "Unlockable"),
+            ("Timberborn.ScienceSystem.BuildingUnlockingService", "Timberborn.ScienceSystem", "UnlockIgnoringCost"),
+            ("Timberborn.ScienceSystem.ScienceNeedingBuilding", "Timberborn.ScienceSystem", "Tick"),
+            ("Timberborn.Workshops.Manufactory", "Timberborn.Workshops", "IncreaseProductionProgress"),
+            ("Timberborn.AutomationBuildings.ScienceCounter", "Timberborn.AutomationBuildings", "Sample"),
+            ("Timberborn.Demolishing.Demolisher", "Timberborn.Demolishing", "Demolish"),
+            ("Timberborn.WorkSystem.WorkplaceUnlockingService", "Timberborn.WorkSystem", "Unlockable"),
+            ("Timberborn.ToolSystem.ToolUnlockingService", "Timberborn.ToolSystem", "LockIfNeeded"),
+            ("Timberborn.ToolSystem.ToolUnlockingService", "Timberborn.ToolSystem", "IsLocked"),
+            // The trading post.
+            ("Timberborn.DistributionSystem.DistrictCrossingInventory", "Timberborn.DistributionSystem", "GiveStock"),
+            ("Timberborn.DistributionSystem.DistrictCrossingInventory", "Timberborn.DistributionSystem", "TransferStock"),
+            ("Timberborn.DistributionSystem.DistrictCrossingWorkplaceBehavior", "Timberborn.DistributionSystem", "TryExport"),
+            ("Timberborn.DistributionSystem.DistrictCrossing", "Timberborn.DistributionSystem", "CanExportGood"),
+            ("Timberborn.Buildings.BuildingSpec", "Timberborn.Buildings", "get_ScienceCost"),
+            ("Timberborn.Buildings.BuildingSpec", "Timberborn.Buildings", "get_BuildingCost"),
+            ("Timberborn.Carrying.CarrierInventoryFinder", "Timberborn.Carrying", "TryCarryFromAnyInventoryLimited"),
+            // Road networks.
+            ("Timberborn.ZiplineSystem.ZiplineTower", "Timberborn.ZiplineSystem", "IsConnectedTo"),
+            ("Timberborn.ZiplineSystem.ZiplineConnectionService", "Timberborn.ZiplineSystem", "CanBeConnected"),
+            ("Timberborn.Navigation.DistrictConflictDetector", "Timberborn.Navigation", "AreDistrictsInConflict"),
+            ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "IsOnDistrictRoad"),
         })
         {
             test($"Colony: the game still has {typeName.Split('.').Last()}.{method}", () =>
             {
                 Type type = Assembly.Load(assemblyName).GetType(typeName, true)!;
                 if (!type.GetMethods(all).Any(m => m.Name == method)) throw new Exception("missing; the colony patch would not apply");
+            });
+        }
+
+        foreach (var (typeName, assemblyName, field) in new[]
+        {
+            ("Timberborn.ScienceSystem.BuildingUnlockingService", "Timberborn.ScienceSystem", "_unlockedBuildings"),
+            ("Timberborn.DistributionSystem.DistrictCrossingInventory", "Timberborn.DistributionSystem", "_linked"),
+            ("Timberborn.DistributionSystem.DistrictCrossing", "Timberborn.DistributionSystem", "_linked"),
+            ("Timberborn.DistributionSystem.DistrictCrossingWorkplaceBehavior", "Timberborn.DistributionSystem", "_districtCrossing"),
+            ("Timberborn.DistributionSystem.DistrictCrossingWorkplaceBehavior", "Timberborn.DistributionSystem", "_districtCrossingInventory"),
+            ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "_districtMap"),
+            ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "_districtConflictDetector"),
+            ("Timberborn.Population.PopulationService", "Timberborn.Population", "_populationDataCollector"),
+        })
+        {
+            test($"Colony: the game still has the field {typeName.Split('.').Last()}.{field}", () =>
+            {
+                Type type = Assembly.Load(assemblyName).GetType(typeName, true)!;
+                if (type.GetField(field, all) == null) throw new Exception("missing; the colony code reading it would fail");
             });
         }
 

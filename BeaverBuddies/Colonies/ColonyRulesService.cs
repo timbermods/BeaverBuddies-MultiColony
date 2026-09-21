@@ -49,6 +49,14 @@ namespace BeaverBuddies.Colonies
                 Plugin.LogError($"[Colony] Could not seat or stamp {replayEvent.type}: {error}");
             }
 
+            // Zipline links, in every game: the game's own check, made here once instead of in every computer's replay.
+            if (replayEvent is ZiplineConnectionChangedEvent zipline && ColonyRoadNetworks.Instance != null
+                && !ColonyRoadNetworks.Instance.HostAllowsZipline(zipline, out string why))
+            {
+                Plugin.Log($"[Colony] Refused a zipline link from player {replayEvent.player}: {why}");
+                return false;
+            }
+
             // Founding is judged in every game: it is how a shared game becomes a separate-colonies one.
             if (!ColonyModeService.IsSeparateColonies && !(replayEvent is FoundColonyEvent)) return true;
             ColonyVerdict verdict;
@@ -93,6 +101,8 @@ namespace BeaverBuddies.Colonies
                 return false;
             }
             if (verdict.IsAllowed) return false;
+            // Unlocking and placing with a locked tool sends the unlock first; the host plays it before the placement.
+            if (verdict.Refusal == ColonyRefusal.Locked) return false;
             Plugin.Log($"[Colony] Not sending {replayEvent.type}: {verdict.Refusal}, {verdict.Detail}");
             service.Notify(verdict.Refusal);
             return true;

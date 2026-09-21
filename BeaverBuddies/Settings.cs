@@ -102,6 +102,10 @@ namespace BeaverBuddies
             new(true, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.SeparateColonies")
                 .SetLocalizedTooltip("BeaverBuddies.Settings.SeparateColonies.Tooltip"));
 
+        public ModSetting<bool> SeparateScience { get; } =
+            new(true, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.SeparateScience")
+                .SetLocalizedTooltip("BeaverBuddies.Settings.SeparateScience.Tooltip"));
+
         // ---- Connection Panel ----
 
         public LimitedStringModSetting ConnectionPanelDisplay { get; } =
@@ -196,6 +200,9 @@ namespace BeaverBuddies
 
         /// <summary>New multi-start games get one colony per start, each controlled by one player. Read when the game is created.</summary>
         public static bool SeparateColoniesForNewGames => instance?.SeparateColonies.Value ?? true;
+
+        /// <summary>A new separate-colonies game gives each colony its own science and unlocks. Fixed for the save.</summary>
+        public static bool SeparateScienceForNewColonies => instance?.SeparateScience.Value ?? true;
 
 
         public static PanelDisplayMode ConnectionPanelDisplayMode =>

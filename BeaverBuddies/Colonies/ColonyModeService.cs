@@ -117,11 +117,16 @@ namespace BeaverBuddies.Colonies
         /// Turns separate colonies on: for a new game (before its first district center exists, which reads the mode
         /// for its trade defaults), or when a colony is founded in a shared game.
         /// </summary>
-        public void Enable(ColonyStartingSettings startingSettings, string how)
+        /// <param name="separateScience">Also give each colony its own science and unlocks (fixed for the save).</param>
+        /// <param name="newGame">A new game: every colony starts with the same unlocks. A shared game being split: the
+        /// science and unlocks so far stay with the first colony.</param>
+        public void Enable(ColonyStartingSettings startingSettings, string how, bool separateScience, bool newGame)
         {
+            bool wasEnabled = Enabled;
             if (!Enabled) Plugin.Log($"[Colony] Separate colonies switched on: {how}");
             Enabled = true;
             StartingSettings ??= startingSettings;
+            if (!wasEnabled && separateScience) ColonyScienceService.Instance?.Enable(newGame);
         }
     }
 }

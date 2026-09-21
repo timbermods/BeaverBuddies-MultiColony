@@ -29,12 +29,14 @@ namespace BeaverBuddies.Events
         public bool removeLargeColonySpeedLimit;
         // Separate colonies: whether the host allows founding colony 2 in this session.
         public bool separateColonies;
+        // Separate colonies: the host's choice of separate science for a colony founded in this session.
+        public bool separateScience;
 
         public override void Replay(IReplayContext context)
         {
             //context.GetSingleton<ReplayService>().SetServerMapName(mapName);
             LargeColonySpeedLimit.AdoptHostChoice(removeLargeColonySpeedLimit);
-            ColonySession.AdoptHostChoice(separateColonies);
+            ColonySession.AdoptHostChoice(separateColonies, separateScience);
             string warningMessage = null;
             if (serverGameVersion != GameVersions.CurrentVersion.ToString())
             {
@@ -67,6 +69,7 @@ namespace BeaverBuddies.Events
                 isDebugMode = Settings.Debug,
                 removeLargeColonySpeedLimit = LargeColonySpeedLimit.BeginHostSession(),
                 separateColonies = ColonySession.HostAllowsFounding,
+                separateScience = ColonySession.HostSeparateScience,
                 //mapName = mapName,
             };
             return message;

@@ -17,6 +17,12 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public static bool HostAllowsFounding { get; private set; }
 
+        /// <summary>
+        /// The host's choice of separate science and unlocks, used when a colony is founded in a shared game (every
+        /// computer founds it, so every computer must use the host's choice). Latched when hosting; told to guests.
+        /// </summary>
+        public static bool HostSeparateScience { get; private set; } = true;
+
         /// <summary>Debug only: how many slots the host's own actions are shifted by, to test other colonies alone.</summary>
         public static int HostSlotShift { get; private set; }
 
@@ -24,14 +30,16 @@ namespace BeaverBuddies.Colonies
         public static void BeginHostSession()
         {
             HostAllowsFounding = Settings.SeparateColoniesForNewGames;
+            HostSeparateScience = Settings.SeparateScienceForNewColonies;
             HostSlotShift = 0;
             Plugin.Log($"[Colony] Hosting; founding a colony {(HostAllowsFounding ? "allowed" : "off")}");
         }
 
         /// <summary>A guest learns the host's choice from the host's first message.</summary>
-        public static void AdoptHostChoice(bool hostAllowsFounding)
+        public static void AdoptHostChoice(bool hostAllowsFounding, bool hostSeparateScience)
         {
             HostAllowsFounding = hostAllowsFounding;
+            HostSeparateScience = hostSeparateScience;
             HostSlotShift = 0;
         }
 
@@ -73,6 +81,7 @@ namespace BeaverBuddies.Colonies
             if (!Settings.Debug || !(EventIO.Get() is ServerEventIO)) return false;
             HostSlotShift = (HostSlotShift + 1) % ColonySlotTable.MaxSlots;
             Plugin.Log($"[Colony] Debug: the host's actions now count as slot {SlotOfPlayer(HostPlayer)}");
+            ColonyScienceService.Instance?.RefreshToolLocks();
             return true;
         }
     }

@@ -843,7 +843,19 @@ namespace BeaverBuddies.Events
                 Plugin.LogWarning($"Tried to unlock {workerType.WorkerType} for {workerType.WorkplaceTemplateName} but it was already unlocked");
                 return;
             }
-            service.Unlock(workerType);
+            // Bot worker types stay unlocked for everyone; with separate science the actor's colony pays.
+            int actorSlot = System.Math.Max(0, slot);
+            bool affordable = Colonies.ColonyScienceService.IsEnabled
+                ? Colonies.ColonyScienceService.InSlot(actorSlot, () => service.Unlockable(workerType))
+                : service.Unlockable(workerType);
+            if (!affordable)
+            {
+                // The game would throw here and stop the session; skip it on every computer instead.
+                Plugin.LogWarning($"Not enough science to unlock {workerType.WorkerType} for {workerType.WorkplaceTemplateName} any more; skipped");
+                return;
+            }
+            if (Colonies.ColonyScienceService.IsEnabled) Colonies.ColonyScienceService.InSlot(actorSlot, () => service.Unlock(workerType));
+            else service.Unlock(workerType);
         }
 
         public override string ToActionString()
@@ -1095,9 +1107,11 @@ namespace BeaverBuddies.Events
             ZiplineConnectionService ziplineConnectionService = context.GetSingleton<ZiplineConnectionService>();
             if (add)
             {
-                if (!ziplineConnectionService.CanBeConnected(currentTower, otherTower))
+                // The host judged the link with the game's own check before playing it (ColonyRoadNetworks). That check
+                // reads state that differs between computers, so it is not repeated here; only saved state is.
+                if (currentTower.IsConnectedTo(otherTower) || !currentTower.HasFreeSlots || !otherTower.HasFreeSlots)
                 {
-                    Plugin.LogError($"Tried to connect {currentTowerEntityID} to {otherTowerEntityID}, but it was not possible");
+                    Plugin.LogWarning($"Tried to connect {currentTowerEntityID} to {otherTowerEntityID}, but it was already connected or full");
                     return;
                 }
                 ziplineConnectionService.Connect(currentTower, otherTower);

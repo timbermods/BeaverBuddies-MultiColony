@@ -100,6 +100,7 @@ namespace BeaverBuddies.Colonies
             session[ColonySession.HostPlayer] = slot;
             LocalPlayer = ColonySession.HostPlayer;
             Plugin.Log($"[Colony] The host plays slot {slot} ({Table.Entries.Count} player(s) known to this save)");
+            ColonyScienceService.Instance?.RefreshToolLocks();
         }
 
         private bool helloSent;
@@ -151,6 +152,7 @@ namespace BeaverBuddies.Colonies
             {
                 LocalPlayer = hello.player;
                 Plugin.Log($"[Colony] This computer plays slot {SlotOfPlayer(LocalPlayer)}");
+                ColonyScienceService.Instance?.RefreshToolLocks();
                 // A player without a colony is offered to found one now.
                 SingletonManager.GetSingleton<ColonyFoundingService>()?.OfferFounding();
             }

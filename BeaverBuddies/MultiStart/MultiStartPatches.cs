@@ -53,7 +53,8 @@ namespace BeaverBuddies.MultiStart
 				// Separate colonies on a one-start map: the game's starting building (below, before any district center
 				// exists) is slot 0's, and every other player founds their own colony later with the same settings.
 				if (Settings.SeparateColoniesForNewGames)
-					GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Enable(ReadStartingSettings(startBuildingService), "new game with one start");
+					GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Enable(ReadStartingSettings(startBuildingService), "new game with one start",
+						Settings.SeparateScienceForNewColonies, newGame: true);
 				return true;
 			}
 
@@ -71,7 +72,8 @@ namespace BeaverBuddies.MultiStart
 			// slot of its PlayerIndex; players without a start found theirs later.
 			bool separateColonies = Settings.SeparateColoniesForNewGames;
 			if (separateColonies)
-				GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Enable(ReadStartingSettings(startBuildingService), "new game with several starts");
+				GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Enable(ReadStartingSettings(startBuildingService), "new game with several starts",
+					Settings.SeparateScienceForNewColonies, newGame: true);
 
 			// Initialize each starting location; not just the first
 			foreach (var startingLocation in startingLocations)

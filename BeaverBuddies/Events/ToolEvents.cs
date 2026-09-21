@@ -410,7 +410,34 @@ namespace BeaverBuddies.Events
         {
             var building = GetBuilding(context, buildingName);
             if (building == null) return;
-            context.GetSingleton<BuildingUnlockingService>().Unlock(building);
+            var unlocking = context.GetSingleton<BuildingUnlockingService>();
+            // With separate science, the unlock and its cost are the actor's colony's (the host wrote the actor's slot
+            // into the event). Otherwise the one shared pool and set, as in the game.
+            int actorSlot = System.Math.Max(0, slot);
+            bool separate = Colonies.ColonyScienceService.IsEnabled;
+            bool unlockedAlready = separate
+                ? Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlocked(building))
+                : unlocking.Unlocked(building);
+            if (unlockedAlready)
+            {
+                // Two players unlocking the same building at once must not pay twice.
+                Plugin.Log($"Already unlocked for slot {actorSlot}: {buildingName}");
+                return;
+            }
+            bool affordable = separate
+                ? Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlockable(building))
+                : unlocking.Unlockable(building);
+            if (!affordable)
+            {
+                // Science was spent elsewhere between the click and now. The game would throw here, which would stop
+                // the session; the same answer on every computer is to skip it.
+                Plugin.LogWarning($"Not enough science to unlock {buildingName} for slot {actorSlot} any more; skipped");
+                return;
+            }
+            if (separate) Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlock(building));
+            else unlocking.Unlock(building);
+            // The toolbar below is this computer's: another colony's unlock changes nothing on it.
+            if (separate && actorSlot != Colonies.ColonyScienceService.DisplaySlot) return;
 
             var toolButtonService = context.GetSingleton<ToolButtonService>();
             var toolUnlockingService = toolButtonService._toolUnlockingService;

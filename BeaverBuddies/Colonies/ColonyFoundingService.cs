@@ -262,7 +262,9 @@ namespace BeaverBuddies.Colonies
                     foreach (GoodDistributionSetting good in setting.GoodDistributionSettings.ToList())
                         good.SetImportOption(ImportOption.Disabled);
                 }
-                _colonyModeService.Enable(start, $"slot {slot} founded a colony in a shared game");
+                // Every computer founds it, so the choice of separate science is the host's (told to every guest).
+                _colonyModeService.Enable(start, $"slot {slot} founded a colony in a shared game",
+                    ColonySession.HostSeparateScience, newGame: false);
             }
 
             var builder = new EntitySetup.Builder(_startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>().Blueprint);
