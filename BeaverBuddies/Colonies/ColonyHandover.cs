@@ -219,11 +219,17 @@ namespace BeaverBuddies.Colonies
         // The host: who is playing today (played everywhere), and whether a colony has been away too long.
         private void HostDaily(int day)
         {
-            List<int> present = PresentSlots();
+            // Testing alone (debug, nobody connected), the host plays every colony (Ctrl+Shift+K): every colony counts
+            // as present, so none is abandoned and none silently runs up missed days for the moment a guest connects.
+            // With a guest connected, detailed logging changes nothing.
+            bool alone = Settings.Debug && ((EventIO.Get() as ServerEventIO)?.NetBase?.ClientCount ?? 0) == 0;
+            List<int> present = alone
+                ? Enumerable.Range(0, ColonySlotTable.MaxSlots).Where(OwnsDistrict).ToList()
+                : PresentSlots();
             ReplayEvent.DoPrefix(() => new ColonyPresenceEvent { day = day, presentSlots = present });
+            // The host's setting, read each day, so it can be changed during a game.
             int limit = Settings.AbandonedColonyDaysValue;
-            // Testing alone (debug), the host plays every colony: none is ever abandoned.
-            if (limit <= 0 || Settings.Debug) return;
+            if (limit <= 0 || alone) return;
             for (int slot = 0; slot < ColonySlotTable.MaxSlots; slot++)
             {
                 if (present.Contains(slot) || !OwnsDistrict(slot) || PopulationOf(slot) == 0 || requested.Contains(slot)) continue;
@@ -239,10 +245,18 @@ namespace BeaverBuddies.Colonies
             }
         }
 
-        /// <summary>Host: the colonies of the players in this session (a player who left still counts until a rehost).</summary>
-        public static List<int> PresentSlots() =>
-            (ColonySlotService.Instance?.Session.Select(p => p.Value) ?? Enumerable.Empty<int>())
+        /// <summary>
+        /// Host: the colonies of the players in this session now: the host's, and every guest's that is still
+        /// connected (one that left is away from that day on).
+        /// </summary>
+        public static List<int> PresentSlots()
+        {
+            List<int> connected = (EventIO.Get() as ServerEventIO)?.NetBase?.ConnectedPlayerIds;
+            return (ColonySlotService.Instance?.Session ?? Enumerable.Empty<KeyValuePair<int, int>>())
+                .Where(p => p.Key == ColonySession.HostPlayer || connected == null || connected.Contains(p.Key))
+                .Select(p => p.Value)
                 .Where(slot => slot >= 0).Distinct().OrderBy(slot => slot).ToList();
+        }
 
         /// <summary>
         /// Played on every computer, once a day of hosted play: these colonies' players are in the game; every other

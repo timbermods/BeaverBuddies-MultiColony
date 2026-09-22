@@ -24,14 +24,16 @@ namespace BeaverBuddies.Colonies
         private readonly BuildingService _buildingService;
         private readonly IDistrictService _districtService;
         private readonly DistrictCenterRegistry _districtCenterRegistry;
+        private readonly IBlockService _blockService;
 
         public ColonyGameWorld(EntityRegistry entityRegistry, BuildingService buildingService,
-            IDistrictService districtService, DistrictCenterRegistry districtCenterRegistry)
+            IDistrictService districtService, DistrictCenterRegistry districtCenterRegistry, IBlockService blockService)
         {
             _entityRegistry = entityRegistry;
             _buildingService = buildingService;
             _districtService = districtService;
             _districtCenterRegistry = districtCenterRegistry;
+            _blockService = blockService;
         }
 
         private EntityComponent Entity(string entityId) =>
@@ -48,8 +50,24 @@ namespace BeaverBuddies.Colonies
             return DistrictOwner.OwnerOf(entity) ?? ColonySeparation.NaturalOwnerOf(entity.GetComponent<BlockObject>());
         }
 
-        /// <summary>A half of a Trading Post between two colonies: either colony may remove it.</summary>
-        public bool IsCrossing(string entityId) => TradingPosts.IsTradingPost(Entity(entityId)?.GetComponent<DistrictCrossing>());
+        /// <summary>
+        /// A half of a Trading Post between two colonies, one of which is <paramref name="slot"/>'s: either partner may
+        /// remove it. A third colony may not, and a half not (yet) trading is an ordinary building of its owner.
+        /// </summary>
+        public bool IsCrossingOf(int slot, string entityId)
+        {
+            DistrictCrossing half = Entity(entityId)?.GetComponent<DistrictCrossing>();
+            if (!TradingPosts.IsTradingPost(half)) return false;
+            return DistrictOwner.OwnerOfDistrict(TradingPosts.DistrictOf(half)) == slot
+                || DistrictOwner.OwnerOfDistrict(TradingPosts.DistrictOf(TradingPosts.Partner(half))) == slot;
+        }
+
+        /// <summary>Whether a template is the Trading Post (whose two halves are judged together, see ColonyRulesService).</summary>
+        public bool IsTradingPostTemplate(string templateName)
+        {
+            try { return TradingPosts.IsTradingPostTemplate(_buildingService.GetBuildingTemplate(templateName)); }
+            catch (Exception) { return false; }
+        }
 
         public bool IsUnlockedFor(int slot, string templateName) =>
             ColonyScienceService.Instance?.IsUnlockedFor(slot, templateName) ?? true;
@@ -116,9 +134,35 @@ namespace BeaverBuddies.Colonies
                         detail = $"would touch slot {owner}'s road at {near}";
                         return ColonyRefusal.TouchesOtherColony;
                     }
+                    owner = OtherColonyBlockAt(slot, near);
+                    if (owner != null)
+                    {
+                        detail = $"would touch slot {owner}'s building or path at {near}";
+                        return ColonyRefusal.TouchesOtherColony;
+                    }
                 }
             }
             return ColonyRefusal.None;
+        }
+
+        /// <summary>
+        /// The colony, other than <paramref name="slot"/>, that placed a building or path standing on this tile, finished
+        /// or not. The district map above only knows finished roads, brought up to date at the tick: another colony's
+        /// path still being built, or one finished just before a pause, was invisible to it, and a path laid beside
+        /// it joined the two colonies' roads once both were done. A Trading Post half is nobody's here (the other
+        /// colony's half stands right behind one's own).
+        /// </summary>
+        private int? OtherColonyBlockAt(int slot, Vector3Int tile)
+        {
+            foreach (BlockObject blockObject in _blockService.GetObjectsAt(tile))
+            {
+                if (!blockObject || blockObject.IsPreview) continue;
+                ColonyStamp stamp = blockObject.GetComponent<ColonyStamp>();
+                if (stamp == null || !stamp.IsStamped || stamp.Slot == slot) continue;
+                if (TradingPosts.IsTradingPostBuilding(blockObject.GetComponent<EntityComponent>())) continue;
+                return stamp.Slot;
+            }
+            return null;
         }
 
         /// <summary>The colony, other than <paramref name="slot"/>, whose district has a road on this tile, or null.</summary>

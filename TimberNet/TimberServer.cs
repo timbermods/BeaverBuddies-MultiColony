@@ -61,6 +61,16 @@ namespace TimberNet
             lock (queuedMessages) return clients.Select(c => c.Name).ToList();
         }
 
+        /// <summary>The player numbers of the guests still connected, as the host numbered them.</summary>
+        public List<int> ConnectedPlayerIds
+        {
+            get
+            {
+                lock (queuedMessages)
+                    return clients.Where(c => c.Connected).Select(c => playerIds.TryGetValue(c, out int id) ? id : -1).Where(id => id >= 0).ToList();
+            }
+        }
+
         public TimberServer(ISocketListener listener, Func<Task<byte[]>> mapProvider, Func<JObject>? initEventProvider)
         {
             this.listener = listener;

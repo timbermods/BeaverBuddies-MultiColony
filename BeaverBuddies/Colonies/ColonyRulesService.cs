@@ -2,6 +2,8 @@ using BeaverBuddies.Events;
 using BeaverBuddies.IO;
 using BeaverBuddies.Util;
 using System;
+using System.Collections.Generic;
+using Timberborn.BlockSystem;
 using Timberborn.Buildings;
 using Timberborn.Debugging;
 using Timberborn.EntitySystem;
@@ -25,9 +27,9 @@ namespace BeaverBuddies.Colonies
 
         public ColonyRulesService(EntityRegistry entityRegistry, QuickNotificationService quickNotificationService,
             BuildingService buildingService, IDistrictService districtService, DistrictCenterRegistry districtCenterRegistry,
-            DevModeManager devModeManager)
+            DevModeManager devModeManager, IBlockService blockService)
         {
-            world = new ColonyGameWorld(entityRegistry, buildingService, districtService, districtCenterRegistry);
+            world = new ColonyGameWorld(entityRegistry, buildingService, districtService, districtCenterRegistry, blockService);
             _quickNotificationService = quickNotificationService;
             _devModeManager = devModeManager;
         }
@@ -59,7 +61,18 @@ namespace BeaverBuddies.Colonies
             }
             catch (Exception error)
             {
+                // Not the sender's own value, which a guest could have written itself.
+                replayEvent.slot = -1;
                 Plugin.LogError($"[Colony] Could not seat or stamp {replayEvent.type}: {error}");
+            }
+
+            // The other half of a Trading Post placed together was refused: this one goes with it (see JudgePairs).
+            if (service.refusedPartners.TryGetValue(replayEvent, out ColonyRefusal partnerRefusal))
+            {
+                service.refusedPartners.Remove(replayEvent);
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: the other half of the Trading Post was refused");
+                refusal = partnerRefusal;
+                return false;
             }
 
             // Who is playing, handing a colony over, and telling a player an action was refused, are the host's to say.
@@ -112,6 +125,14 @@ namespace BeaverBuddies.Colonies
 
             // Founding is judged in every game: it is how a shared game becomes a separate-colonies one.
             if (!ColonyModeService.IsSeparateColonies && !(replayEvent is FoundColonyEvent)) return true;
+            // A building placed as a copy of another colony's takes that building's settings, and with them its
+            // automation links: it would be wired to the other colony's sensor. Placed plain instead.
+            if (replayEvent is BuildingPlacedEvent copy && !string.IsNullOrEmpty(copy.duplicationSourceID)
+                && !ColonyRules.MayChange(replayEvent.slot, service.world.OwnerOf(copy.duplicationSourceID)))
+            {
+                Plugin.Log($"[Colony] Placing {copy.prefabName} for slot {replayEvent.slot} without the settings of {copy.duplicationSourceID}: another colony's building");
+                copy.duplicationSourceID = null;
+            }
             ColonyVerdict verdict;
             try
             {
@@ -133,6 +154,55 @@ namespace BeaverBuddies.Colonies
             if (verdict.Removed > 0)
                 Plugin.Log($"[Colony] Kept only slot {replayEvent.slot}'s part of {replayEvent.type} from player {replayEvent.player}: removed {verdict.Removed}");
             return true;
+        }
+
+        // Host only: the halves of a Trading Post whose other half was refused, with the reason.
+        private readonly Dictionary<ReplayEvent, ColonyRefusal> refusedPartners = new Dictionary<ReplayEvent, ColonyRefusal>();
+
+        /// <summary>
+        /// Host only, before a tick's actions are judged one by one: a Trading Post is two placements, one per half,
+        /// and each is judged on its own. One half could be accepted and the other refused, leaving a lone half that
+        /// can never finish (its construction waits to be linked). Two halves placed together by one player (side by
+        /// side, in the same batch) are judged here first, and if either fails, both are refused with that reason.
+        /// </summary>
+        public static void JudgePairs(List<ReplayEvent> events)
+        {
+            var service = SingletonManager.GetSingleton<ColonyRulesService>();
+            if (service == null || !ColonyModeService.IsSeparateColonies) return;
+            try
+            {
+                var halves = new List<BuildingPlacedEvent>();
+                foreach (ReplayEvent e in events)
+                {
+                    if (e is BuildingPlacedEvent placed && service.world.IsTradingPostTemplate(placed.prefabName)) halves.Add(placed);
+                }
+                var paired = new HashSet<BuildingPlacedEvent>();
+                for (int i = 0; i < halves.Count; i++)
+                {
+                    if (paired.Contains(halves[i])) continue;
+                    for (int j = i + 1; j < halves.Count; j++)
+                    {
+                        BuildingPlacedEvent a = halves[i], b = halves[j];
+                        if (paired.Contains(b) || a.player != b.player || a.coordinates.z != b.coordinates.z) continue;
+                        if (Math.Abs(a.coordinates.x - b.coordinates.x) + Math.Abs(a.coordinates.y - b.coordinates.y) != 1) continue;
+                        paired.Add(a);
+                        paired.Add(b);
+                        int slot = ColonySession.SlotOfPlayer(a.player);
+                        ColonyVerdict first = service.Judge(a, slot, rewrite: false), second = service.Judge(b, slot, rewrite: false);
+                        if (first.IsAllowed && second.IsAllowed) break;
+                        ColonyRefusal why = first.IsAllowed ? second.Refusal : first.Refusal;
+                        service.refusedPartners[a] = why;
+                        service.refusedPartners[b] = why;
+                        Plugin.Log($"[Colony] Both halves of a Trading Post from player {a.player} will be refused: {why}, {(first.IsAllowed ? second : first).Detail}");
+                        break;
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                // Judged one by one, as before.
+                Plugin.LogWarning("[Colony] Could not judge the Trading Post halves together: " + error.Message);
+            }
         }
 
         private static bool IsDevShortcut(ReplayEvent replayEvent) =>

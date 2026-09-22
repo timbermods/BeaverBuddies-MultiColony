@@ -59,7 +59,7 @@ namespace BeaverBuddies.Colonies
         /// <summary>The tiles of a <see cref="ColonyScopeKind.Tiles"/> scope.</summary>
         public IColonyList<ColonyTile> TileList { get; private set; }
         /// <summary>
-        /// A trading post belongs to no one: either colony may remove it. Set on demolition actions only; running a
+        /// A trading post belongs to its two partners: either may remove it. Set on demolition actions only; running a
         /// half (workers, priority) stays with its district's owner, and a crossing between one colony's own districts
         /// is that colony's.
         /// </summary>
@@ -133,8 +133,8 @@ namespace BeaverBuddies.Colonies
         /// <summary>The slot owning the entity (by its district), or null when it has no owner or does not exist.</summary>
         int? OwnerOf(string entityId);
 
-        /// <summary>True for a half of a Trading Post between two colonies.</summary>
-        bool IsCrossing(string entityId);
+        /// <summary>True for a half of a Trading Post between two colonies, one of them <paramref name="slot"/>'s.</summary>
+        bool IsCrossingOf(int slot, string entityId);
 
         /// <summary>Whether this slot's colony may build this building (always true without separate science).</summary>
         bool IsUnlockedFor(int slot, string templateName);
@@ -224,7 +224,7 @@ namespace BeaverBuddies.Colonies
                     foreach (string id in scope.EntityIds)
                     {
                         if (string.IsNullOrEmpty(id)) continue;
-                        if (scope.CrossingsNeutral && world.IsCrossing(id)) continue;
+                        if (scope.CrossingsNeutral && world.IsCrossingOf(actorSlot, id)) continue;
                         int? owner = world.OwnerOf(id);
                         if (!MayChange(actorSlot, owner))
                             return ColonyVerdict.Refuse(ColonyRefusal.OtherColony, $"{id} belongs to slot {owner}");
@@ -271,7 +271,7 @@ namespace BeaverBuddies.Colonies
         {
             Func<string, bool> keep = id =>
                 string.IsNullOrEmpty(id)
-                || (crossingsNeutral && world.IsCrossing(id))
+                || (crossingsNeutral && world.IsCrossingOf(actorSlot, id))
                 || MayChange(actorSlot, world.OwnerOf(id));
             return Keep(list, keep, actorSlot, rewrite);
         }

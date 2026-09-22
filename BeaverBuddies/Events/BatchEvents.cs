@@ -60,7 +60,7 @@ namespace BeaverBuddies.Events
 
     class ManualMigrationEvent : ReplayEvent
     {
-        // The beavers must leave one of your districts; they may go to another colony's (a rescue).
+        // Both districts must be yours: beavers change colony only through a Trading Post (ColonyRules.Migration).
         public override ColonyScope GetColonyScope() => ColonyScope.Migration(fromDistrictID, toDistrictID);
 
         public string fromDistrictID;

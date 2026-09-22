@@ -45,6 +45,23 @@ namespace BeaverBuddies.Colonies
         }
     }
 
+    // The game's district map throws when two district centers share a road network: it assumes its placement tools
+    // never let that happen. In co-op it can (two placements each fine alone, finished together; see the class above),
+    // and the throw came out of the tick's first read of the map, so the tick never finished: the beavers froze and
+    // the warning above, raised by the tick's listener, never showed. Here the map keeps the first district's claim on
+    // the shared roads and the second goes without them, the same on every computer (the districts are visited in
+    // one order everywhere), the tick runs on, and the warning tells the players to break the link.
+    [HarmonyLib.HarmonyPatch(typeof(DistrictMap), "AssignDistrictToRoadMap")]
+    static class DistrictMapConflictPatcher
+    {
+        static Exception Finalizer(Exception __exception, District district)
+        {
+            if (__exception == null || BeaverBuddies.IO.EventIO.IsNull || !(__exception is InvalidOperationException)) return __exception;
+            Plugin.LogWarning($"[Colony] District {district} shares roads with another district; it keeps only the roads the other does not claim: {__exception.Message}");
+            return null;
+        }
+    }
+
     public class ColonyRoadNetworks : RegisteredSingleton, ILoadableSingleton, ISingletonNavMeshListener
     {
         private readonly IDistrictService _districtService;

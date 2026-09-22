@@ -49,7 +49,8 @@ namespace BeaverBuddies.Colonies
         public static int SlotOfPlayer(int player)
         {
             int slot = Slots?.SlotOfPlayer(player) ?? (player == HostPlayer ? 0 : -1);
-            if (player == HostPlayer && slot >= 0 && HostSlotShift != 0)
+            // The shift is a debug aid: it ends with detailed logging, whatever it was set to.
+            if (player == HostPlayer && slot >= 0 && HostSlotShift != 0 && Settings.Debug)
                 slot = (slot + HostSlotShift) % ColonySlotTable.MaxSlots;
             return slot;
         }
@@ -69,12 +70,18 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>
-        /// Debug only, host only: the host's own actions count as the next slot's. Returns false (and changes nothing)
-        /// anywhere else, so a guest can never use it.
+        /// Debug only, host only, alone only: the host's own actions count as the next slot's. Returns false (and
+        /// changes nothing) anywhere else, so a guest can never use it, and a guest never sees the host act as another
+        /// colony.
         /// </summary>
         public static bool TryFlipHostSeat()
         {
-            if (!Settings.Debug || !(EventIO.Get() is ServerEventIO)) return false;
+            if (!Settings.Debug || !(EventIO.Get() is ServerEventIO server)) return false;
+            if ((server.NetBase?.ClientCount ?? 0) > 0)
+            {
+                Plugin.Log("[Colony] Debug: the host's seat is not flipped while guests are connected");
+                return false;
+            }
             HostSlotShift = (HostSlotShift + 1) % ColonySlotTable.MaxSlots;
             Plugin.Log($"[Colony] Debug: the host's actions now count as slot {SlotOfPlayer(HostPlayer)}");
             ColonyScienceService.Instance?.RefreshToolLocks();

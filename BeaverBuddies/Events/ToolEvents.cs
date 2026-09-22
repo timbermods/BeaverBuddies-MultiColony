@@ -633,7 +633,10 @@ namespace BeaverBuddies.Events
                 free = true,
             });
             if (playHere) return true;
-            successCallback?.Invoke();
+            // The host's own opens at once. A guest's tool opens when the unlock comes back from the host (the replay
+            // unlocks the tool); if the host's dev mode is off the host refuses it and says so, instead of the tool
+            // opening on the guest and every placement made with it being refused.
+            if (!(EventIO.Get() is ClientEventIO)) successCallback?.Invoke();
             return false;
         }
     }
@@ -687,8 +690,9 @@ namespace BeaverBuddies.Events
     [Serializable]
     class DuplicationEvent : ReplayEvent
     {
-        // Copying settings from anyone's building is harmless; only the building that changes must be yours.
-        public override ColonyScope GetColonyScope() => ColonyScope.Entities(targetEntityID);
+        // Both must be yours (or nobody's): copying takes the automation links too, which would wire your building to
+        // another colony's sensor.
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(sourceEntityID, targetEntityID);
 
         public string sourceEntityID;
         public string targetEntityID;

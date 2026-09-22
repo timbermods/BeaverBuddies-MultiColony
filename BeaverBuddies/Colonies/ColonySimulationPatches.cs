@@ -30,7 +30,7 @@ namespace BeaverBuddies.Colonies
      */
     // Districts joined by a District Crossing are connected, so the game would move beavers between two players'
     // colonies on its own. Same loop, same order; a district of another colony is skipped. (Moving beavers by hand
-    // to another colony stays possible: it is how a failing colony is rescued.)
+    // to another colony is refused too, by the migration rule: beavers change colony only through a Trading Post.)
     [HarmonyPatch(typeof(MigrationNeighbours), nameof(MigrationNeighbours.GetHighestSpareNeighbour))]
     static class MigrationNeighboursHighestSparePatcher
     {

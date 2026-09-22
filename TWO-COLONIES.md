@@ -26,7 +26,8 @@ the road-network checks are covered by automated checks only. Play on a copy of 
 
 ## Starting
 
-**Host settings** (Mod Settings → BeaverBuddies), read when hosting starts:
+**Host settings** (Mod Settings → BeaverBuddies), read when hosting starts (the days before a hand-over, below, is
+read each day, so it can be changed during a game):
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -131,9 +132,10 @@ with the cycle and day, what you gave and what you got); and what has passed eac
 trading posts), as icons with amounts. When the game's sections above it leave too little room on the screen, its
 content scrolls instead of running off the bottom.
 
-Either colony may remove a Trading Post between them (deleting one half removes both, as in the game); a District
-Crossing, or a Trading Post within one colony, is that colony's alone. Running a half (workers,
-priority) stays with its colony.
+Either of the two colonies trading through a Trading Post may remove it (deleting one half removes both, as in the
+game); no other colony may. A District Crossing, or a Trading Post within one colony, is that colony's alone.
+Running a half (workers, priority) stays with its colony. The two halves are placed as one: if either half may not
+stand where it was put, neither is placed.
 
 ## When a colony is handed over
 
@@ -176,11 +178,12 @@ walk to the same places. So in a separate-colonies game:
 
 | Work | Whose |
 |---|---|
-| Building a construction site, demolishing, picking up recovered goods | Only the colony that owns it (either colony may take down a trading post) |
+| Building a construction site, demolishing | Only the colony that owns it (either partner may take down a trading post between them) |
+| Picking up recovered goods, log piles and other stacks | Only where the colony may work (its land, or land no other colony holds) |
 | Cutting trees | Only trees the colony marked itself |
 | Planting (foresters, farmhouses) | Only on the colony's own planting marks |
 | Harvesting, gathering, scavenging | What grows on the colony's own marks, or wild things on land no other colony holds |
-| Working hours | Each colony's own (the working-hours buttons and the clock show yours) |
+| Working hours | Each colony's own (the working-hours buttons and the clock show yours; the bell rings at the game's own hours, and a handed-over colony's hours stay its own) |
 | Chronometers set to working hours | Their own colony's hours |
 | Bot worker types (separate science) | Each colony's own unlocks |
 | Automation | A building, relay or memory cell may be wired only to its own colony's |
@@ -227,9 +230,11 @@ hand, and at any time with **Ctrl+L**. Where two outlines meet is where a tradin
 
 ## Testing alone (debug)
 
-With **Always Use Detailed Logging** on (the mod's debug mode), the host can press **Ctrl+Shift+K** to make their own
-actions count as the next colony's (colony 1 → 2 → 3 → 4 → 1). The toolbar, science and every refusal follow. Every
-switch is logged.
+With **Always Use Detailed Logging** on (the mod's debug mode) and nobody connected, the host can press
+**Ctrl+Shift+K** to make their own actions count as the next colony's (colony 1 → 2 → 3 → 4 → 1). The toolbar,
+science and every refusal follow. Every switch is logged. It does nothing while a guest is connected, and it ends
+with detailed logging. While the host tests alone this way, every colony counts as present, so none is handed over
+for absence.
 
 **Dev mode** (Alt+Shift+Z) in co-op: while the host has dev mode on, two of its tools are played on every computer, for
 the colony of the player using them:
@@ -255,8 +260,9 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   reach a little further than its beavers do.
 - Land is first come. Founding keeps 20 tiles from other colonies, but a colony that grows quickly towards another
   still claims the land between them first.
+- Demolition marks on ruins and relics on land no colony holds may be set, cleared and worked by any colony.
 - A building nobody placed as an action (built before the game was hosted, or in a save older than the two-colony
-  builds) takes its colony on its own, checked every 16 ticks: its district's, else the owner of the road at its
+  builds) takes its colony on its own, checked at the first tick and every 16 ticks after: its district's, else the owner of the road at its
   entrance (a path: the road it is), else the colony whose land it stands on. One on nobody's land, or across two
   colonies' land, waits until one of these applies.
 - An exchange gives at most 100 of an item a round (the room a half has); more takes rounds. A round waits while the

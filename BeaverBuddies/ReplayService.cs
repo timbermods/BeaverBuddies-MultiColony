@@ -331,6 +331,8 @@ namespace BeaverBuddies
             }
 
             int currentTick = ticksSinceLoad;
+            // The two halves of a Trading Post are judged together before either is played.
+            if (io is ServerEventIO) ColonyRulesService.JudgePairs(eventsToReplay);
             ReplayExecution.Run(eventsToReplay, replayEvent =>
             {
                 if (HasReplayFailure || IsDesynced || EventIO.IsNull) return false;

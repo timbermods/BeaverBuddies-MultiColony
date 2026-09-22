@@ -111,11 +111,14 @@ namespace BeaverBuddies.Colonies
             return UnnamedSimulationSlot;
         }
 
+        private readonly TemplateNameMapper _templateNameMapper;
+
         public ColonyScienceService(ISingletonLoader singletonLoader, ScienceService scienceService,
             BuildingUnlockingService buildingUnlockingService, BuildingService buildingService,
             ToolButtonService toolButtonService, ToolUnlockingService toolUnlockingService,
-            WorkplaceUnlockingService workplaceUnlockingService)
+            WorkplaceUnlockingService workplaceUnlockingService, TemplateNameMapper templateNameMapper)
         {
+            _templateNameMapper = templateNameMapper;
             _workplaceUnlockingService = workplaceUnlockingService;
             _singletonLoader = singletonLoader;
             _scienceService = scienceService;
@@ -136,7 +139,9 @@ namespace BeaverBuddies.Colonies
             }
             for (int i = 0; i < UnlockedKeys.Length; i++)
             {
-                if (loader.Has(UnlockedKeys[i])) unlocked[i].UnionWith(loader.Get(UnlockedKeys[i]));
+                // Through the game's name mapper, as the game reads its own set: a building renamed by a game
+                // update keeps its unlock.
+                if (loader.Has(UnlockedKeys[i])) unlocked[i].UnionWith(loader.Get(UnlockedKeys[i]).Select(CurrentName));
             }
             for (int i = 0; i < WorkerKeys.Length; i++)
             {
@@ -168,6 +173,12 @@ namespace BeaverBuddies.Colonies
 
         private List<string> SharedWorkerTypes() =>
             _workplaceUnlockingService._unlockedWorkerTypes.Select(WorkerKey).OrderBy(key => key, StringComparer.Ordinal).ToList();
+
+        private string CurrentName(string templateName)
+        {
+            try { return _templateNameMapper.TryGetTemplate(templateName, out TemplateSpec spec) ? spec.TemplateName : templateName; }
+            catch (Exception) { return templateName; }
+        }
 
         private static string WorkerKey(UnlockableWorkerType workerType) => workerType.WorkplaceTemplateName + "|" + workerType.WorkerType;
 

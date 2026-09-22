@@ -158,7 +158,10 @@ namespace BeaverBuddies.Colonies
 
         public void Tick()
         {
-            if (unstamped.Count == 0 || ++ticks % UnstampedCheckInterval != 0) return;
+            if (unstamped.Count == 0) return;
+            // At the first tick as well, so a save's unstamped buildings give their colony its land before anyone can
+            // found a colony beside them (founding waits for the first tick).
+            if (++ticks != 1 && ticks % UnstampedCheckInterval != 0) return;
             // A building without a colony takes the owner of its finished district, or else of the district whose road
             // is at its entrance (a construction site has no district until it is finished) or, for a path, whose road
             // it is. Read from the tick-updated district map, in the simulation. Failing those (no road reaches it),

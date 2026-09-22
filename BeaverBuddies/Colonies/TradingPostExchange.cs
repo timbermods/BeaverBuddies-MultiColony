@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using Timberborn.BaseComponentSystem;
 using Timberborn.Beavers;
+using Timberborn.Carrying;
 using Timberborn.DistributionSystem;
 using Timberborn.EntityNaming;
 using Timberborn.EntitySystem;
@@ -474,7 +475,11 @@ namespace BeaverBuddies.Colonies
         {
             DistrictCenter source = TradingPosts.DistrictOf(from), target = TradingPosts.DistrictOf(to);
             if (!source || !target) return;
+            // Only a beaver who can walk to the new district (the game reassigns one who cannot to the nearest district
+            // of any colony, possibly its old one) and carries nothing (what it carries would cross uncounted).
             List<Beaver> movers = source.DistrictPopulation.Adults.Where(_migrationService.IsNotContaminated)
+                .Where(beaver => target.IsGloballyReachableFromCitizen(beaver.GetComponent<Citizen>()))
+                .Where(beaver => !(beaver.GetComponent<GoodCarrier>()?.IsCarrying ?? false))
                 .OrderBy(_migrationService.RefusesWork).ThenBy(_migrationService.IsEmployed).ThenBy(_migrationService.HasHome)
                 .ThenByDescending(_migrationService.GetDayOfBirth)
                 .Take(Math.Min(amount, BeaversToSpare(from))).ToList();

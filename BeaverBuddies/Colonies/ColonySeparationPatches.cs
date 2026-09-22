@@ -8,6 +8,7 @@ using Timberborn.ConstructionSites;
 using Timberborn.Demolishing;
 using Timberborn.DistributionSystem;
 using Timberborn.GameDistricts;
+using Timberborn.GoodStackSystem;
 using Timberborn.InventorySystem;
 using Timberborn.Navigation;
 using Timberborn.Planting;
@@ -168,6 +169,21 @@ namespace BeaverBuddies.Colonies
             int? target = ColonySeparation.SimOwnerOf(__instance)
                 ?? ColonySeparation.NaturalOwnerOf(__instance.GetComponent<BlockObject>());
             if (target != null && target.Value != builder.Value) __result = false;
+        }
+    }
+
+    // Log piles and other good stacks (left by lumberjacks and gatherers) are collected only by the colony that may
+    // work where they lie: the behavior walks the map-wide list.
+    [HarmonyPatch(typeof(GoodStackRetrieverBehavior), "RetrieveGoodStack")]
+    static class ColonyGoodStackPatcher
+    {
+        static bool Prefix(GoodStackRetrieverBehavior __instance, GoodStack goodStack, ref bool __result)
+        {
+            if (!ColonySeparation.Active || !goodStack) return true;
+            int? slot = ColonySeparation.SimOwnerOf(__instance);
+            if (slot == null || ColonySeparation.MayTake(slot.Value, goodStack)) return true;
+            __result = false;
+            return false;
         }
     }
 

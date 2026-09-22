@@ -41,6 +41,7 @@ namespace BeaverBuddies.Latency
             public float Speed;
             public List<Vector3Int> Tiles;
             public bool Removal;
+            public string Type;
         }
 
         private readonly AreaTileDrawerFactory _areaTileDrawerFactory;
@@ -99,7 +100,7 @@ namespace BeaverBuddies.Latency
             replayEvent.requestId = $"{origin}:{++sent}";
             try
             {
-                var entry = new Pending { SentAt = Now, Tick = _replayService.TicksSinceLoad, Speed = _replayService.TargetSpeed };
+                var entry = new Pending { SentAt = Now, Tick = _replayService.TicksSinceLoad, Speed = _replayService.TargetSpeed, Type = replayEvent.type };
                 entry.Tiles = TilesOf(replayEvent, out entry.Removal);
                 pending[replayEvent.requestId] = entry;
                 if (entry.Tiles.Count > 0) dirty = true;
@@ -140,6 +141,7 @@ namespace BeaverBuddies.Latency
                 pending.Remove(requestId);
                 Stats.Refusal();
                 if (entry.Tiles.Count > 0) dirty = true;
+                Undo(entry);
                 // One click can be refused twice in a row (an unlock for lack of science, then the placement it was
                 // for as not unlocked). The first reason is the one that explains it; the notice bar keeps only the
                 // last, so the next second's refusals say nothing more.
@@ -190,6 +192,7 @@ namespace BeaverBuddies.Latency
                     foreach (string expired in pending.Where(p => now - p.Value.SentAt > TimeoutSeconds).Select(p => p.Key).ToList())
                     {
                         if (pending[expired].Tiles.Count > 0) dirty = true;
+                        Undo(pending[expired]);
                         pending.Remove(expired);
                         Stats.NoAnswer();
                     }
@@ -201,6 +204,12 @@ namespace BeaverBuddies.Latency
                 }
             }
             if (dirty) Redraw();
+        }
+
+        // An action that will not be played, whose panel already shows it: the panel goes back to what is.
+        private static void Undo(Pending entry)
+        {
+            if (entry.Type == nameof(WorkingHoursChangedEvent)) ColonyWorkingHours.Instance?.Resync();
         }
 
         private void Redraw()

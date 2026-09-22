@@ -5,6 +5,53 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha12
+
+**The alpha10 review's Appendix A: the bugs that were not desyncs.** Every item of that list that alpha11 had not
+already dealt with.
+
+- **Two colonies' roads joined no longer freeze the game.** The game's district map throws when two district centers
+  share a road network (its tools never let that happen in single player), and in co-op the throw came out of the
+  tick, so the beavers stood still and the *roads joined* warning, raised after the tick, never showed. Now the first
+  district keeps the shared roads, the other goes without them, the tick runs on, and the warning shows so the
+  players can break the link.
+- **Placing beside another colony's unfinished path is refused.** The check only knew finished roads on the
+  tick-updated map: a path the other colony was still building, or one it finished just before a pause, was
+  invisible, and a path laid beside it joined the two colonies' roads once both were done. Another colony's building
+  or path on or beside the footprint, finished or not, now counts (a Trading Post half excepted: the other colony's
+  half stands right behind one's own).
+- **A Trading Post's two halves are accepted or refused together.** Each half was a placement of its own, judged on
+  its own, so one could be accepted and the other refused, leaving a half that could never finish.
+- **Only its two partners may remove a Trading Post**, as the rules said; any colony could.
+- **Hand-over by absence works with detailed logging on.** It was skipped whenever the host had detailed logging on,
+  not only while the host tested alone, and the missed days kept counting meanwhile, so turning logging off handed
+  colonies over at once. Now, with logging on and nobody connected (testing alone, when the host plays every colony
+  with Ctrl+Shift+K), every colony counts as present; with a guest connected, logging changes nothing.
+- **A guest who leaves is away from that day on** (it counted as playing until the host rehosted), and its colony
+  may be handed over by hand from Ctrl+T at once.
+- **Ctrl+Shift+K** does nothing while a guest is connected, and the shift ends with detailed logging.
+- **A guest's free unlock (dev mode) opens the tool when the host answers**, not before: with the host's dev mode
+  off the tool opened on the guest and every placement made with it was refused.
+- **Log piles and other stacks** are collected only where the collecting colony may work; any colony's lumberjacks
+  and gatherers took them.
+- **Traded beavers** are only ones who can walk to the new district (the game reassigned one who could not to the
+  nearest district of any colony, possibly its old one) and who carry nothing (what they carried crossed uncounted).
+- **Copying settings from another colony's building is refused** (copy settings, or placing a copy of it): it took
+  the automation links too, wiring the new building to the other colony's sensor. A copy placed from another
+  colony's building is placed plain.
+- **A refused working-hours change** on a guest no longer stays on its panel; the panel goes back to the colony's
+  hours when the host refuses it (or never answers).
+- **Per-colony unlock sets** load through the game's template name mapper, so a building renamed by a game update
+  keeps its unlock.
+- **A save's unstamped buildings** give their colony its land at the first tick, not the 16th, so a colony founded
+  right after unpausing keeps its distance from them.
+- **An action whose sender could not be seated** is played as nobody's (slot -1), not with the slot the sender wrote.
+- Docs: recovered goods are judged by land (not owner); the days-before-hand-over setting is read each day; the
+  working-hours bell rings at the game's own hours and a hand-over keeps a colony's hours; demolition marks on
+  nobody's land are anyone's. Comments about a "rescue" migration to another colony, which the rules refuse,
+  corrected.
+- Checks: StabilityTests 262 (a Trading Post is removed by either partner and nobody else); RuntimeChecks 226.
+
 ## 1.4.0-alpha11
 
 **The Trading Post, reworked: each side's goods wait on its own half until both are in, then everything crosses at

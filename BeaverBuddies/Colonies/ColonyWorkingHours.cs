@@ -95,6 +95,9 @@ namespace BeaverBuddies.Colonies
             Plugin.Log($"[Colony] Slot {slot} works {hours[slot]} hours a day");
         }
 
+        /// <summary>A guest's change was refused, or never answered: the panel goes back to the colony's hours.</summary>
+        public void Resync() => version++;
+
         // The panel shows the local player's colony: after a change arrives, and when this player's colony changes.
         public void UpdateSingleton()
         {

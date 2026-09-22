@@ -347,6 +347,16 @@ static class ColonyChecks
 
         // ---- founding ----
 
+        yield return ("Colony: a Trading Post is removed by either of its partners, and by nobody else", () =>
+        {
+            var w = new FakeWorld().Crossing("post", 0, 1).Own("post", 0);
+            Check(ColonyRules.Judge(ColonyScope.Demolish("post"), 0, w, true).IsAllowed);
+            Check(ColonyRules.Judge(ColonyScope.Demolish("post"), 1, w, true).IsAllowed, "the partner");
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Demolish("post"), 2, w, true).Refusal);
+            // Running it (workers, priority) stays with its district's owner.
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Entities("post"), 1, w, true).Refusal);
+        });
+
         yield return ("Colony: founding and hand-over wait for the host's first tick, while players can still join", () =>
         {
             // Before the first tick a later joiner is sent the save without them (F1 of the alpha10 review).
@@ -835,19 +845,20 @@ static class ColonyChecks
     sealed class FakeWorld : IColonyWorld
     {
         readonly Dictionary<string, int> owners = new();
-        readonly HashSet<string> crossings = new();
+        readonly Dictionary<string, int[]> crossings = new();
         readonly HashSet<(int, string)> locked = new();
         readonly HashSet<ColonyTile> othersTiles = new();
         readonly Dictionary<string, ColonyRefusal> conflicts = new();
 
         public FakeWorld Own(string id, int slot) { owners[id] = slot; return this; }
-        public FakeWorld Crossing(string id) { crossings.Add(id); return this; }
+        public FakeWorld Crossing(string id, params int[] partners) { crossings[id] = partners; return this; }
         public FakeWorld Locked(int slot, string template) { locked.Add((slot, template)); return this; }
         public FakeWorld OthersTile(ColonyTile tile) { othersTiles.Add(tile); return this; }
         public FakeWorld Conflict(string template, ColonyRefusal refusal) { conflicts[template] = refusal; return this; }
 
         public int? OwnerOf(string entityId) => owners.TryGetValue(entityId, out int slot) ? slot : null;
-        public bool IsCrossing(string entityId) => crossings.Contains(entityId);
+        public bool IsCrossingOf(int slot, string entityId) =>
+            crossings.TryGetValue(entityId, out int[] partners) && (partners.Length == 0 || partners.Contains(slot));
         public bool IsUnlockedFor(int slot, string templateName) => !locked.Contains((slot, templateName));
         public bool MayUseTile(int slot, ColonyTile tile) => !othersTiles.Contains(tile);
         public ColonyRefusal PlacementConflict(int slot, ColonyPlacement placement, out string detail)
