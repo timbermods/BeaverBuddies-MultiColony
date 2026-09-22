@@ -216,8 +216,8 @@ namespace BeaverBuddies.Events
             harmony.Patch(info, prefix: new HarmonyMethod(prefix));
         }
 
-        // This is the method Harmony actually calls
-        // Priority.First, as every recording prefix (see ReplayEvent.DoPrefix): new HarmonyMethod(prefix) reads it.
+        // This is the method Harmony actually calls. It records, so it runs first (see ReplayEvent.DoPrefix);
+        // new HarmonyMethod(prefix) above takes the priority from this attribute.
         [HarmonyPriority(Priority.First)]
         private static bool UniversalPrefix(BaseComponent __instance, MethodBase __originalMethod, object[] __args)
         {

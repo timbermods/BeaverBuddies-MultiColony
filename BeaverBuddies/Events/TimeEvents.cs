@@ -106,7 +106,6 @@ namespace BeaverBuddies.Events
             speedManager.ChangeSpeed();
         }
 
-        // Records the speed itself rather than through ReplayEvent.DoPrefix, and runs first like every recording prefix.
         [HarmonyPriority(Priority.First)]
         static bool Prefix(SpeedManager __instance, ref float speed)
         {

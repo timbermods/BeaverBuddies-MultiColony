@@ -1027,8 +1027,6 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(WorkerTypeToggle), nameof(WorkerTypeToggle.TryToUnlock))]
     class WorkerTypeToggleTryToUnlockPatcher
     {
-        // Always replaces the original, but records from the dialog's callback, so it runs first like every
-        // recording prefix (see ReplayEvent.DoPrefix). HarmonyLib's Priority, not Timberborn.PrioritySystem's.
         [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(WorkerTypeToggle __instance)
         {

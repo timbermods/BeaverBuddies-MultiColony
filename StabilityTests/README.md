@@ -68,17 +68,14 @@ is fed to the real guest and host event IO: the guest stops the session with a r
 and its assembly and plays nothing more of that tick, and the host logs it, keeps the guest's other
 actions, carries on, and sends that guest an `ActionRefusedEvent` for each action it lost.
 
-The mod's Harmony prefixes follow one rule for their priority (from the Stability Fork). A prefix that replaces the
-game's method (returns false to skip it) carries `[HarmonyPriority(Priority.Last)]`, so another mod's prefix on that
-method runs before it on every computer, whatever the load order. A prefix that records a multiplayer action
-(through `ReplayEvent.DoPrefix`, `DoEntityPrefix`, an event's own `DoPrefix` helper, or `ReplayService.RecordEvent`
-itself) carries `[HarmonyPriority(Priority.First)]`, also when it refuses or replaces the method in other cases. When
-the local player acts it records the action and skips the method, which then runs, with every other mod's prefix on
-it, while the action is played on every computer at the same tick. Ahead of it, another mod's prefix would run at the
-click on that computer only, and one that returned false would make Harmony skip the recording prefix, so the action
-would never be sent. MixedStorage's Priority.Last prefixes on `SingleGoodAllower.Allow` and `Disallow` rely on this.
-RuntimeChecks (`RecordingPriorityChecks`) finds the recording prefixes in the compiled mod's instructions and requires
-each to be Priority.First (65 of them in MultiColony).
+RuntimeChecks also checks the order of the mod's prefixes against other mods'. A prefix that replaces the game's
+method runs last (`Priority.Last`). A prefix that records a player's action runs first (`Priority.First`): one that
+ran before it would act at the click on one computer only, and one that skipped the method would stop the action
+being sent. The check finds the recording prefixes in the compiled mod's code (the prefix, or a helper or lambda it
+uses, calls `ReplayEvent.DoPrefix`, `DoEntityPrefix` or `ReplayService.RecordEvent`; 64 in 1.4.0-beta8, the
+automation settings' hand-made patch among them), reads the priority Harmony gives each, and fails if one does not
+run first, or if it finds fewer than 60. It also fails when another patch of the mod is on a method a recording
+prefix patches.
 
 Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
