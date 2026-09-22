@@ -90,6 +90,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(GatherablePrioritizer), nameof(GatherablePrioritizer.PrioritizeGatherable))]
     class GatherablePrioritizerPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(GatherablePrioritizer __instance, GatherableSpec gatherableSpec)
         {
             return ReplayEvent.DoEntityPrefix(__instance, entityID =>
@@ -130,6 +131,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(Manufactory), nameof(Manufactory.SetRecipe))]
     class ManufactorySetRecipePatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(Manufactory __instance, RecipeSpec selectedRecipe)
         {
             return ReplayEvent.DoEntityPrefix(__instance, entityID =>
@@ -172,6 +174,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(PlantablePrioritizer), nameof(PlantablePrioritizer.PrioritizePlantable))]
     class PlantablePrioritizerPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(PlantablePrioritizer __instance, PlantableSpec plantableSpec)
         {
             return ReplayEvent.DoEntityPrefix(__instance, entityID =>
@@ -230,6 +233,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(FarmHouse), nameof(FarmHouse.PrioritizePlanting))]
     class FarmHousePrioritizePlantingPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         public static bool Prefix(FarmHouse __instance)
         {
             return FarmHousePrioritizePlantingChangedEvent.DoPrefix(__instance, true);
@@ -239,6 +243,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(FarmHouse), nameof(FarmHouse.UnprioritizePlanting))]
     class FarmHouseUnprioritizePlantingPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         public static bool Prefix(FarmHouse __instance)
         {
             return FarmHousePrioritizePlantingChangedEvent.DoPrefix(__instance, false);
@@ -269,6 +274,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(SingleGoodAllower), nameof(SingleGoodAllower.Allow))]
     class SingleGoodAllowerAllowPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(SingleGoodAllower __instance, string goodId)
         {
             return ReplayEvent.DoEntityPrefix(__instance, entityID =>
@@ -285,6 +291,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(SingleGoodAllower), nameof(SingleGoodAllower.Disallow))]
     class SingleGoodAllowerDisallowPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(SingleGoodAllower __instance)
         {
             return ReplayEvent.DoEntityPrefix(__instance, entityID =>
@@ -301,6 +308,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(DeleteBuildingFragment), nameof(DeleteBuildingFragment.DeleteBuilding))]
     class DeleteBuildingFragmentPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(DeleteBuildingFragment __instance)
         {
             if (!__instance.SelectedBuildingIsDeletable()) return true;
@@ -340,6 +348,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(PausableBuilding), nameof(PausableBuilding.Pause))]
     class PausableBuildingPausePatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(PausableBuilding __instance)
         {
             // Don't record if already paused
@@ -358,6 +367,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(PausableBuilding), nameof(PausableBuilding.Resume))]
     class PausableBuildingResumePatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(PausableBuilding __instance)
         {
             // Don't record if already unpaused
@@ -411,6 +421,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(BuilderPrioritizable), nameof(BuilderPrioritizable.SetPriority))]
     class BuilderPrioritizableSetPriorityPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(BuilderPrioritizable __instance, Timberborn.PrioritySystem.Priority priority)
         {
             if (__instance.Priority == priority) return true;
@@ -426,6 +437,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(WorkplacePriority), nameof(WorkplacePriority.SetPriority))]
     class WorkplacePrioritySetPriorityPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(WorkplacePriority __instance, Timberborn.PrioritySystem.Priority priority)
         {
             if (__instance.Priority == priority) return true;
@@ -475,6 +487,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(Workplace), nameof(Workplace.IncreaseDesiredWorkers))]
     class WorkplaceIncreaseDesiredWorkersPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(Workplace __instance)
         {
             return WorkplaceDesiredWorkersChangedEvent.DoPrefix(__instance, true);
@@ -484,6 +497,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(Workplace), nameof(Workplace.DecreaseDesiredWorkers))]
     class WorkplaceDecreaseDesiredWorkersPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(Workplace __instance)
         {
             return WorkplaceDesiredWorkersChangedEvent.DoPrefix(__instance, false);
@@ -513,6 +527,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(Floodgate), nameof(Floodgate.SetHeightAndSynchronize))]
     class FloodgateSetHeightPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(Floodgate __instance, float newHeight)
         {
             // Ignore if height is already new height
@@ -554,6 +569,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(Floodgate), nameof(Floodgate.ToggleSynchronization))]
     class FloodgateSynchronizationPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(Floodgate __instance, bool newValue)
         {
             // Ignore if height is already the same
@@ -632,6 +648,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(StockpilePriority), nameof(StockpilePriority.Accept))]
     class SStockpilePriorityActive
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(StockpilePriority __instance)
         {
             return StockpilePriorityChangedEvent.DoPrefix(__instance, StockpilePriorityState.Accept);
@@ -641,6 +658,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(StockpilePriority), nameof(StockpilePriority.Empty))]
     class StockpilePriorityEmpty
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(StockpilePriority __instance)
         {
             return StockpilePriorityChangedEvent.DoPrefix(__instance, StockpilePriorityState.Empty);
@@ -650,6 +668,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(StockpilePriority), nameof(StockpilePriority.Obtain))]
     class StockpilePriorityObtain
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(StockpilePriority __instance)
         {
             return StockpilePriorityChangedEvent.DoPrefix(__instance, StockpilePriorityState.Obtain);
@@ -659,6 +678,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(StockpilePriority), nameof(StockpilePriority.Supply))]
     class StockpilePrioritySupply
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(StockpilePriority __instance)
         {
             return StockpilePriorityChangedEvent.DoPrefix(__instance, StockpilePriorityState.Supply);
@@ -699,6 +719,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(DemolishableFragment), nameof(DemolishableFragment.ChangeDemolishState))]
     class DemolishableFragmentButtonClickedPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(DemolishableFragment __instance)
         {
             return ReplayEvent.DoEntityPrefix(__instance._demolishable, entityID =>
@@ -735,6 +756,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(DynamiteFragment), nameof(DynamiteFragment.DetonateSelectedDynamite), [])]
     class DynamiteFragmentDetonateSelectedDynamitePatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(DynamiteFragment __instance)
         {
             return ReplayEvent.DoEntityPrefix(__instance._dynamite, entityID =>
@@ -770,6 +792,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(DeleteRecoveredGoodStackFragment), nameof(DeleteRecoveredGoodStackFragment.DeleteRecoveredGoodStack))]
     class DeleteRecoveredGoodStackFragmentPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(DeleteRecoveredGoodStackFragment __instance)
         {
             return ReplayEvent.DoEntityPrefix(__instance._recoveredGoodStack, entityID =>
@@ -813,6 +836,7 @@ namespace BeaverBuddies.Events
      */
     class EntityPanelSetEntityNamePatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(EntityNameDialog __instance, string newName, NamedEntity namedEntity)
         {
             // If the name / change is invalid, we don't record it and use the default behavior.
@@ -904,6 +928,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(ConstructionSiteDebugFragment), nameof(ConstructionSiteDebugFragment.OnFinishNowClick))]
     class ConstructionSiteFinishNowPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(ConstructionSiteDebugFragment __instance)
         {
             ConstructionSite site = __instance._constructionSite;
@@ -921,6 +946,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(WorkplaceUnlockingDialogService), nameof(WorkplaceUnlockingDialogService.UnlockIgnoringScienceCost))]
     class WorkplaceInstantUnlockPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(UnlockableWorkerType unlockableWorkerType, Action callback)
         {
             if (IO.EventIO.IsNull) return true;
@@ -938,6 +964,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(WorkplaceUnlockingService), nameof(WorkplaceUnlockingService.Unlock))]
     class WorkplaceUnlockingServiceUnlockPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(WorkplaceUnlockingService __instance, UnlockableWorkerType unlockableWorkerType)
         {
             return ReplayEvent.DoPrefix(() =>
@@ -973,6 +1000,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(WorkplaceWorkerType), nameof(WorkplaceWorkerType.SetWorkerType))]
     class WorkplaceWorkerTypeSetWorkerTypePatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(WorkplaceWorkerType __instance, string workerType)
         {
             // The game also calls this itself, in the tick, when a building or construction site is joined to a district
@@ -999,6 +1027,9 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(WorkerTypeToggle), nameof(WorkerTypeToggle.TryToUnlock))]
     class WorkerTypeToggleTryToUnlockPatcher
     {
+        // Always replaces the original, but records from the dialog's callback, so it runs first like every
+        // recording prefix (see ReplayEvent.DoPrefix). HarmonyLib's Priority, not Timberborn.PrioritySystem's.
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         static bool Prefix(WorkerTypeToggle __instance)
         {
             // Do the method as normal, but instead of calling back SetBotWorkerType, we raise
@@ -1054,6 +1085,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(HaulPrioritizable), nameof(HaulPrioritizable.Prioritized), MethodType.Setter)]
     class HaulPrioritizablePrioritizedPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         public static bool Prefix(HaulPrioritizable __instance, bool value)
         {
             if (value == __instance.Prioritized) return true;
@@ -1092,6 +1124,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(Forester), nameof(Forester.SetReplantDeadTrees))]
     class ForesterSetReplantDeadTreesPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         public static bool Prefix(Forester __instance, bool replantDeadTrees)
         {
             if (__instance.ReplantDeadTrees == replantDeadTrees) return true;
@@ -1148,6 +1181,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(WaterMoverToggle), "SetWaterMovement")]
     class WaterMoverToggleSetWaterMovementPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         public static bool Prefix(WaterMoverToggle __instance, bool moveCleanWater, bool moveContaminatedWater)
         {
             if (__instance._waterMover == null) return true;
@@ -1207,6 +1241,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(ZiplineConnectionAddingTool), nameof(ZiplineConnectionAddingTool.Connect))]
     class ZiplineConnectionAddingToolConnectPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         public static bool Prefix(ZiplineConnectionAddingTool __instance, ZiplineTower ziplineTower)
         {
             return ReplayEvent.DoPrefix(() =>
@@ -1224,6 +1259,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(ZiplineConnectionButtonFactory), nameof(ZiplineConnectionButtonFactory.RemoveConnection))]
     class ZiplineConnectionButtonFactoryRemoveConnectionPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         public static bool Prefix(ZiplineTower owner, ZiplineTower otherZiplineTower)
         {
             return ReplayEvent.DoPrefix(() =>
@@ -1259,6 +1295,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(WonderFragment), nameof(WonderFragment.ActivateWonder))]
     class WonderFragmentActivateWonderPatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         public static bool Prefix(WonderFragment __instance)
         {
             return ReplayEvent.DoEntityPrefix(__instance._wonder, entityID =>
@@ -1305,6 +1342,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(DistrictCenterFragment), nameof(DistrictCenterFragment.SetBeaverWorkerType))]
     class DistrictCenterFragmentSetBeaverWorkerTypePatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         public static bool Prefix(DistrictCenterFragment __instance)
         {
             return DefaultWorkerTypeChangedEvent.DoPrefix(__instance, WorkerTypeHelper.BeaverWorkerType);
@@ -1314,6 +1352,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(DistrictCenterFragment), nameof(DistrictCenterFragment.SetBotWorkerType))]
     class DistrictCenterFragmentSetBotWorkerTypePatcher
     {
+        [HarmonyPriority(HarmonyLib.Priority.First)]
         public static bool Prefix(DistrictCenterFragment __instance)
         {
             return DefaultWorkerTypeChangedEvent.DoPrefix(__instance, WorkerTypeHelper.BotWorkerType);

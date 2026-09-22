@@ -350,6 +350,18 @@ namespace TimberNet
 
         protected void SendDataWithLength(ISocketStream stream, byte[] data)
         {
+            SendDataWithLength(stream, data, paced: false);
+        }
+
+        /// <summary>
+        /// Writes one frame. <paramref name="paced"/> spreads its chunks out to the stream's MaxBytesPerSecond by
+        /// sleeping between them. Only the save sent to a joining guest is paced: it is written on that guest's own
+        /// join thread. Every other frame is written by whichever thread sends it, often the game thread (a tick's
+        /// events), which must never sleep here: a gameplay frame over one chunk used to stall the host's game
+        /// thread about 31 ms per extra 32 KB over a direct connection.
+        /// </summary>
+        protected void SendDataWithLength(ISocketStream stream, byte[] data, bool paced)
+        {
             // A frame includes both its header and every payload chunk. Join
             // workers and the game thread can otherwise interleave their writes.
             lock (stream)
@@ -367,11 +379,11 @@ namespace TimberNet
                 Buffer.BlockCopy(length, 0, head, 0, 4);
                 Buffer.BlockCopy(data, 0, head, 4, first);
                 stream.Write(head, 0, head.Length);
-                // How long to sleep between chunks (may be 0)
-                int sleepMS = stream.MaxChunkSize * 1000 / stream.MaxBytesPerSecond;
+                // Only the paced save sleeps between chunks (see above); a gameplay frame goes out at once.
+                int sleepMS = paced ? stream.MaxChunkSize * 1000 / stream.MaxBytesPerSecond : 0;
                 for (int i = first; i < data.Length; i += chunkSize)
                 {
-                    Thread.Sleep(sleepMS);
+                    if (sleepMS > 0) Thread.Sleep(sleepMS);
                     int count = Math.Min(chunkSize, data.Length - i);
                     stream.Write(data, i, count);
                 }

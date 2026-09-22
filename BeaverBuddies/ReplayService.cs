@@ -79,6 +79,9 @@ namespace BeaverBuddies
         /// <summary>The host's colony digest at the start of this tick, and how many changes it counted (see ColonyDigest).</summary>
         public ulong? digest;
         public int? changes;
+        // The host's TEBPatcher hashes when this tick started, compared by every guest (see DesyncCheck).
+        public int? entityOrderHash;
+        public int? walkerPositionHash;
 
         public override void Replay(IReplayContext context)
         {
@@ -90,12 +93,13 @@ namespace BeaverBuddies
                 ColonyDigest.NoteAgreed();
                 return;
             }
-            Plugin.LogWarning($"[Colony] Colony state differs from the host's at tick {ticksSinceLoad}: " +
-                $"host digest {digest.Value:x16} after {changes} changes, here {ColonyDigest.Describe()}");
+            string line = $"[Colony] Colony state differs from the host's at tick {ticksSinceLoad}: " +
+                $"host digest {digest.Value:x16} after {changes} changes, here {ColonyDigest.Describe()}";
+            Plugin.LogWarning(line);
             // This computer logs its colony changes since the last check that agreed as it stops (ClientDesyncedEvent),
             // and the host logs its own from the same change as word of it arrives: in the host's list, change #changes
             // is the one that left the host's digest.
-            context.GetSingleton<ReplayService>()?.HandleDesync(colonyHostChanges: changes);
+            context.GetSingleton<ReplayService>()?.HandleDesync(line, colonyHostChanges: changes);
         }
     }
 
@@ -126,6 +130,7 @@ namespace BeaverBuddies
             {
                 __ticksSinceLoad = value;
                 TimeTimePatcher.SetTicksSinceLoaded(value);
+                TEBPatcher.StartTick(value);
                 DesyncDetecterService.StartTick(value);
             }
         }
@@ -391,19 +396,21 @@ namespace BeaverBuddies
                 // If this event was played (e.g. on the server) and recorded a 
                 // random state, make sure we're in the same state.
                 // Keep this check independent of detailed logging preferences.
-                if (replayEvent.randomS0Before != null)
+                string mismatch = FindMismatchWithHost(replayEvent, out bool stops);
+                if (mismatch != null && stops)
                 {
-                    int s0 = UnityEngine.Random.state.s0;
-                    int randomS0Before = (int)replayEvent.randomS0Before;
-                    if (s0 != randomS0Before)
-                    {
-                        Plugin.LogWarning($"Random state mismatch: {s0:X8} != {randomS0Before:X8}");
-                        HandleDesync();
-                        return false;
-                    }
+                    Plugin.LogWarning(mismatch);
+                    HandleDesync(mismatch);
+                    return false;
+                }
+                // Entities or walkers differ while the random state agrees: logged once, the game goes on.
+                if (mismatch != null && TEBPatcher.FirstTickDifference())
+                {
+                    Plugin.LogWarning(mismatch + ". Logged only, the game goes on: the random state still matches the host's. " +
+                        "If a desync follows, this line says when the games first differed.");
                 }
                 // Only broadcast successful events from an active session.
-                replayEvent.randomS0Before = UnityEngine.Random.state.s0;
+                RecordRandomState(replayEvent);
                 replayEvent.Replay(this);
                 // A player who joins from now on would load the save without this and never be sent it (the host
                 // serves the bytes it started from, and a joiner gets only what is played after it connects). So the
@@ -558,19 +565,25 @@ namespace BeaverBuddies
             }
         }
 
-        /// <summary>
-        /// This computer has gone out of step. <paramref name="colonyHostChanges"/>: when the colony check caught it, how
-        /// many colony changes the host had counted there.
-        /// </summary>
-        public void HandleDesync(int? colonyHostChanges = null)
+        /// <summary>This computer has gone out of step.</summary>
+        /// <param name="reason">
+        /// What the always-on check found (see DesyncCheck), or the colony check's line. Without detailed logging there
+        /// is no trace, so this is sent as the trace instead: the host's log and any report then say what differed, not
+        /// only this guest's log.
+        /// </param>
+        /// <param name="colonyHostChanges">When the colony check caught it, how many colony changes the host had counted there.</param>
+        public void HandleDesync(string reason = null, int? colonyHostChanges = null)
         {
             if (IsDesynced) return;
 
+            string trace = DesyncDetecterService.GetLastDesyncTrace();
+            if (string.IsNullOrEmpty(trace) && reason != null) trace = reason;
             bool colonies = ColonyModeService.IsSeparateColonies;
             ClientDesyncedEvent e = new ClientDesyncedEvent()
             {
-                desyncID = DesyncDetecterService.GetLastDesyncID(),
-                desyncTrace = DesyncDetecterService.GetLastDesyncTrace(),
+                // The same ID as DesyncDetecterService.GetLastDesyncID when the trace is that one.
+                desyncID = ReportingService.GetStringHash(trace),
+                desyncTrace = trace,
                 // Where every computer's list of colony changes starts: after the last count this one agreed on.
                 colonyChangesAgreed = colonies ? ColonyDigest.Agreed : (int?)null,
                 colonyChangesHost = colonies ? colonyHostChanges : null,
@@ -607,10 +620,51 @@ namespace BeaverBuddies
             if (!replayEvent.randomS0Before.HasValue &&
                 (EventIO.ShouldPlayPatchedEvents || replayEvent is HeartbeatEvent))
             {
-                replayEvent.randomS0Before = UnityEngine.Random.state.s0;
+                RecordRandomState(replayEvent);
                 //Plugin.Log($"Recording event s0: {replayEvent.randomS0Before}");
             }
+            // The heartbeat starts each tick, so it also says what the host's entities looked like when the
+            // previous tick finished. Each guest compares that at the start of the same tick.
+            if (replayEvent is HeartbeatEvent heartbeat && !heartbeat.entityOrderHash.HasValue)
+            {
+                heartbeat.entityOrderHash = TEBPatcher.EntityUpdateHash;
+                heartbeat.walkerPositionHash = TEBPatcher.PositionHash;
+            }
             eventsToSend.Enqueue(replayEvent);
+        }
+
+        private static void RecordRandomState(ReplayEvent replayEvent)
+        {
+            UnityEngine.Random.State state = UnityEngine.Random.state;
+            replayEvent.randomS0Before = state.s0;
+            replayEvent.randomStateHashBefore = DesyncCheck.RandomStateHash(state.s0, state.s1, state.s2, state.s3);
+        }
+
+        /// <summary>
+        /// The always-on desync check (see DesyncCheck): null when this game is where the host's was when it
+        /// played this event, otherwise what differs. <paramref name="stops"/> is true when the random state differs,
+        /// which stops the session; an entity or walker difference alone is only logged.
+        /// </summary>
+        private static string FindMismatchWithHost(ReplayEvent replayEvent, out bool stops)
+        {
+            stops = false;
+            HeartbeatEvent heartbeat = replayEvent as HeartbeatEvent;
+            // What a guest sends reaches the host with nothing to compare, and the host checks nothing.
+            if (replayEvent.randomS0Before == null && replayEvent.randomStateHashBefore == null &&
+                heartbeat?.entityOrderHash == null && heartbeat?.walkerPositionHash == null)
+            {
+                return null;
+            }
+            UnityEngine.Random.State random = UnityEngine.Random.state;
+            var local = new GameState
+            {
+                S0 = random.s0, S1 = random.s1, S2 = random.s2, S3 = random.s3,
+                EntityOrder = TEBPatcher.EntityUpdateHash,
+                WalkerPositions = TEBPatcher.PositionHash,
+            };
+            stops = DesyncCheck.RandomMismatch(replayEvent.randomS0Before, replayEvent.randomStateHashBefore, local) != null;
+            return DesyncCheck.Mismatch(replayEvent.randomS0Before, replayEvent.randomStateHashBefore,
+                heartbeat?.entityOrderHash, heartbeat?.walkerPositionHash, local);
         }
 
         private void SendEvents()
@@ -847,6 +901,13 @@ namespace BeaverBuddies
 
             ticksSinceLoad++;
             if (io is ClientEventIO) Latency.PendingActions.Instance?.TickStarted(ticksSinceLoad);
+            // Joining closes as the first tick starts, before anything of it is sent: a guest admitted after its events
+            // went out would load the tick-0 save and never be sent them. (TimberServer re-checks under the lock every
+            // broadcast takes, so a guest is either queued before this tick's events or refused.)
+            if (io is ServerEventIO starting && ticksSinceLoad == 1)
+            {
+                starting.StopAcceptingClients();
+            }
 
             if (io.ShouldSendHeartbeat)
             {
@@ -885,11 +946,6 @@ namespace BeaverBuddies
 
             // Update speed and pause if needed for the new tick.
             UpdateSpeed();
-
-            if (io is ServerEventIO && ticksSinceLoad == 1)
-            {
-                ((ServerEventIO)io).StopAcceptingClients();
-            }
         }
 
         public void FinishFullTickIfNeededAndThen(Action action)

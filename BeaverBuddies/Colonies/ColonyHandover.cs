@@ -457,8 +457,10 @@ namespace BeaverBuddies.Colonies
                 return;
             }
             if (check == here) return;
-            Plugin.LogWarning($"[Colony] Colony state differs from the host's on day {day}: host [{check}] here [{here}]");
-            SingletonManager.GetSingleton<ReplayService>()?.HandleDesync();
+            string line = $"[Colony] Colony state differs from the host's on day {day}: host [{check}] here [{here}]";
+            Plugin.LogWarning(line);
+            // The line travels as the desync's trace, so the host's log and a report say what differed.
+            SingletonManager.GetSingleton<ReplayService>()?.HandleDesync(line);
         }
 
         public override string ToActionString() => $"Colonies playing on day {day}: {string.Join(", ", presentSlots ?? new List<int>())}";

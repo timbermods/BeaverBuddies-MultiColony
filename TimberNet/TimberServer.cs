@@ -155,7 +155,14 @@ namespace TimberNet
                             }
 
                             if (CompatibilityIdentity != null) RunCompatibilityHandshake(client, true);
-                            if (IsStopped || !IsAcceptingClients) { client.Close(); return; }
+                            if (IsStopped) { client.Close(); return; }
+                            // Joining closed while the build check ran: say why, where the guest expects the save.
+                            if (!IsAcceptingClients)
+                            {
+                                SendErrorMessage(client);
+                                client.Close();
+                                return;
+                            }
                             await SendMap(client);
                             SendState(client);
                             if (initEventProvider != null)
@@ -189,22 +196,25 @@ namespace TimberNet
             {
                 if (IsStopped) { client.Close(); throw new IOException("Session closed while joining."); }
                 // Checked again here, under the lock every broadcast takes: joining closed while this client's
-                // handshake ran (the host acted, see ReplayService), and it would miss what was just played.
-                if (!IsAcceptingClients)
+                // handshake ran (the host acted, see ReplayService), and it would miss what was just played. Once
+                // closed it never reopens.
+                if (IsAcceptingClients)
                 {
-                    SendErrorMessage(client);
-                    client.Close();
-                    throw new IOException("Joining closed while the map was being prepared.");
+                    queuedMessages.TryAdd(client, new ConcurrentQueue<Outgoing>());
+                    clients.Add(client);
+                    // The host is player 0; the host, not the guest, chooses each guest's id.
+                    int player = Interlocked.Increment(ref lastPlayerId);
+                    playerIds[client] = player;
+                    string? verified = (client as IVerifiedIdentity)?.VerifiedPlayerId;
+                    if (!string.IsNullOrEmpty(verified)) verifiedIds[player] = verified!;
+                    trackers[client] = new RttTracker(RttTracker.NowMs);
+                    return;
                 }
-                queuedMessages.TryAdd(client, new ConcurrentQueue<Outgoing>());
-                clients.Add(client);
-                // The host is player 0; the host, not the guest, chooses each guest's id.
-                int player = Interlocked.Increment(ref lastPlayerId);
-                playerIds[client] = player;
-                string? verified = (client as IVerifiedIdentity)?.VerifiedPlayerId;
-                if (!string.IsNullOrEmpty(verified)) verifiedIds[player] = verified!;
-                trackers[client] = new RttTracker(RttTracker.NowMs);
             }
+            // Refused outside the lock, so a slow guest cannot hold up what the host sends everyone else.
+            SendErrorMessage(client);
+            client.Close();
+            throw new IOException("Joining closed while the map was being prepared.");
         }
 
         private void RemoveActivity(ISocketStream client)
@@ -419,7 +429,8 @@ namespace TimberNet
             StartQueuing(client);
 
             Log($"Sending map with length {mapBytes.Length}");
-            SendDataWithLength(client, mapBytes);
+            // The one paced frame: this runs on the joining guest's own thread, never the game thread.
+            SendDataWithLength(client, mapBytes, paced: true);
 
             Log($"Sent map with length {mapBytes.Length} and Hash: {GetHashCode(mapBytes).ToString("X8")}");
         }
@@ -502,7 +513,14 @@ namespace TimberNet
             try
             {
                 lock (queuedMessages)
-                    foreach (var client in clients.ToArray()) SendSessionFault(client, reason);
+                    foreach (var client in clients.ToArray())
+                    {
+                        // A guest still receiving the save gets no reason, only the close below. Its join thread holds
+                        // its stream for the whole paced save (about 1 MB/s over a direct connection), and this runs on
+                        // the host's game thread (ReplayService.AbortReplay), which would wait for the rest of the save.
+                        if (queuedMessages.ContainsKey(client)) continue;
+                        SendSessionFault(client, reason);
+                    }
             }
             finally { Close(); }
         }

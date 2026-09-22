@@ -39,4 +39,7 @@ lines 15 to 19 (joined roads, a refused Trading Post half, gates, automation, th
   only its colony's entries after a reload, and that a desync's `Colony changes here` lists line up;
 - beta9's four fixes (Script B lines 8a, 8o and 8p): a guest without a mod the host uses leaves while the host plays
   on; the host refuses only a guest's unreadable action, not its tick; another colony's *died tragically* alert stays
-  out of your alert panel; a desync's two lists start at the same change number.
+  out of your alert panel; a desync's two lists start at the same change number;
+- beta10's port of the Stability Fork 1.1.12 (Script B lines 8q, 8r and 8s): that the fuller desync check raises no
+  false alarm in a healthy game at speed 3 and 7, that a guest's Reconnect after a desync joins the way it joined,
+  and that the period key on a waiting computer pauses everyone.

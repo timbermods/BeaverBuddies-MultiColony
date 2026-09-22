@@ -19,6 +19,7 @@ namespace BeaverBuddies.Fixes
     [HarmonyPatch(typeof(BuildingPlacer), nameof(BuildingPlacer.ShouldBePlacedFinished))]
     static class PlaceFinishedKeyCoopPatcher
     {
+        [HarmonyPriority(Priority.Last)]
         static bool Prefix(BuildingSpec buildingSpec, ref bool __result)
         {
             if (EventIO.IsNull) return true;
@@ -38,6 +39,7 @@ namespace BeaverBuddies.Fixes
     [HarmonyPatch(typeof(BuildingGoodsRecoveryService), nameof(BuildingGoodsRecoveryService.OnBuildingDeconstructed))]
     static class DontRecoverGoodsKeyCoopPatcher
     {
+        [HarmonyPriority(Priority.Last)]
         static bool Prefix(BuildingGoodsRecoveryService __instance, BuildingDeconstructedEvent buildingDeconstructedEvent)
         {
             if (EventIO.IsNull) return true;

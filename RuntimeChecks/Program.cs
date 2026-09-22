@@ -110,6 +110,9 @@ PerformanceRuntimeChecks.Run(assembly, Test);
 PlacementRandomChecks.Run(assembly, Test);
 TradingPostBuildingChecks.Run(assembly, Path.GetDirectoryName(modPath)!, Path.GetFullPath(args[1]), Test);
 BindingChecks.Run(assembly, Path.GetFullPath(args[1]), args.Skip(2).Select(Path.GetFullPath), Test);
+RecordingPriorityChecks.Run(assembly, Test);
+DesyncCheckChecks.Run(assembly, Test);
+DesyncDialogChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

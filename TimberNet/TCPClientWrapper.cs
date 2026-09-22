@@ -21,24 +21,39 @@ namespace TimberNet
 
         public TCPClientWrapper(string address, int port) 
         {
-            // Every event is a small message that the other side waits for. Without this the system holds a small
-            // write back until the previous one is acknowledged (Nagle), up to about 200 ms with delayed
-            // acknowledgements. Steam links already send without that delay.
-            client = new TcpClient { NoDelay = true };
+            client = new TcpClient();
+            TurnOffNagle(client);
             this.address = address;
             this.port = port;
         }
 
         public TCPClientWrapper(TcpClient client)
         {
-            // A socket the other side has already dropped can refuse this; accepting must carry on regardless.
-            try { client.NoDelay = true; } catch { }
             this.client = client;
+            // A socket the other side has already dropped can refuse this; accepting carries on regardless.
+            TurnOffNagle(client);
             address = null;
             port = 0;
         }
 
         public bool Connected => client.Connected;
+
+        /// <summary>True when each frame is sent as soon as it is written (TCP_NODELAY).</summary>
+        public bool NoDelay => client.NoDelay;
+
+        // A tick's events and the ping probes are small frames that should leave at once. With Nagle's algorithm on
+        // (the default), a small write waits until everything sent before it is acknowledged, which the receiver
+        // may delay by up to about 200 ms. Steam's path already sends without it (ReliableNoNagle). Set on the
+        // socket this wrapper connects (before it connects; the connection keeps it) and on every accepted one.
+        private static void TurnOffNagle(TcpClient client)
+        {
+            try
+            {
+                client.NoDelay = true;
+            }
+            // Only a matter of latency: never a reason to refuse a connection.
+            catch (Exception e) when (e is SocketException || e is ObjectDisposedException) { }
+        }
 
 
         public Task ConnectAsync()

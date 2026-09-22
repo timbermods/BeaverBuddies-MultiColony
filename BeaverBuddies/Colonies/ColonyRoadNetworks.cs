@@ -30,14 +30,17 @@ namespace BeaverBuddies.Colonies
             { errorMessage = _loc.T(DistrictsInConflictLocKey); return false; }
      */
     // In a session a replayed placement is checked once, by the host as it plays it, and the guests take its answer
-    // (BuildingPlacedEvent.MayPlace; a replay from a file checks for itself). This validator
+    // (BuildingPlacedEvent.MayPlace). This validator
     // reads the preview road graph, which holds whatever the host's player is hovering and is updated once per frame:
     // a path the host is dragging that would join two districts would make the host refuse every building replayed
     // meanwhile, for everyone. While events replay it passes; the placing player's own tool already refused a joining
     // road before the click, and ColonyRoadNetworks warns if two joined anyway.
+    [ManualMethodOverwrite]
     [HarmonyLib.HarmonyPatch(typeof(Timberborn.GameDistrictsUI.DistrictPreviewsValidator), nameof(Timberborn.GameDistrictsUI.DistrictPreviewsValidator.IsValid))]
     static class DistrictPreviewsValidatorReplayPatcher
     {
+        // Priority.Last, the rule for a prefix that replaces the game's method: another mod's prefix runs first.
+        [HarmonyLib.HarmonyPriority(HarmonyLib.Priority.Last)]
         static bool Prefix(ref bool __result, ref string errorMessage)
         {
             if (!ReplayService.IsReplayingEvents) return true;

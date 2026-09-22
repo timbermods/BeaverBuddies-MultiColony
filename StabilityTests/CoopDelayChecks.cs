@@ -30,7 +30,8 @@ static class CoopDelayChecks
     {
         var stream = new RecordingStream();
         var net = new TimberClient(stream);
-        typeof(TimberNetBase).GetMethod("SendDataWithLength", BindingFlags.Instance | BindingFlags.NonPublic)!
+        typeof(TimberNetBase).GetMethod("SendDataWithLength", BindingFlags.Instance | BindingFlags.NonPublic, null,
+                new[] { typeof(ISocketStream), typeof(byte[]) }, null)!
             .Invoke(net, new object[] { stream, data });
         return stream.Writes;
     }

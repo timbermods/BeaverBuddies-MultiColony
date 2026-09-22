@@ -109,7 +109,8 @@ internal static class FrameTypeChecks
             string root = Write(new FrameSentinel(), Fresh());
             before = FrameSentinel.Created;
             if (Refusal(root) == null || FrameSentinel.Created != before) throw new Exception("A frame that is a sentinel was read");
-            // The debugging replay file is read through JsonSettings.Deserialize, with no expected type at all.
+            // JsonSettings.Deserialize reads with no expected type at all (the debugging replay file that used it is gone, but
+            // anything that reads a frame this way must still be bound by the binder).
             before = FrameSentinel.Created;
             try { jsonType.GetMethod("Deserialize").MakeGenericMethod(eventType).Invoke(null, new object[] { json }); }
             catch (TargetInvocationException) { }

@@ -101,7 +101,7 @@ namespace BeaverBuddies.Events
         private bool MayPlace(IReplayContext context, Placement placement, BuildingSpec spec)
         {
             // A guest takes the host's answer, which the host writes as it plays the event, before sending it on. A
-            // replay from a file, and a guest given an event without one, check for themselves as before.
+            // guest given an event without one checks for itself as before.
             if (placed.HasValue && EventIO.Get() is ClientEventIO) return placed.Value;
             // A district center gets the block check only (below): its preview copy interferes with the nav mesh. It
             // used to get no check at all, so two placed on the same tiles in one tick threw and stopped the session.
@@ -177,6 +177,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(BuildingPlacer), nameof(BuildingPlacer.Place))]
     class PlacePatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(EntitySetup.Builder entitySetupBuilder, Placement placement)
         {
             return ReplayEvent.DoPrefix(() =>
@@ -228,6 +229,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(BlockObjectDeletionTool<BuildingSpec>), nameof(BlockObjectDeletionTool<BuildingSpec>.DeleteBlockObjects))]
     class BuildingDeconstructionPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(BlockObjectDeletionTool<BuildingSpec> __instance)
         {
             bool result = ReplayEvent.DoPrefix(() =>
@@ -336,6 +338,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(PlantingSelectionService), nameof(PlantingSelectionService.MarkArea))]
     class PlantingAreaMarkedPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(PlantingSelectionService __instance, IEnumerable<Vector3Int> inputBlocks, Ray ray, string templateName)
         {
             return ReplayEvent.DoPrefix(() => PlantingAreaMarkedEvent.Record(__instance, inputBlocks, ray, templateName));
@@ -345,6 +348,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(PlantingSelectionService), nameof(PlantingSelectionService.UnmarkArea))]
     class PlantingAreaUnmarkedPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(PlantingSelectionService __instance, IEnumerable<Vector3Int> inputBlocks, Ray ray)
         {
             return ReplayEvent.DoPrefix(() =>
@@ -453,6 +457,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(DemolishableSelectionTool), nameof(DemolishableSelectionTool.ActionCallback))]
     class DemolishableSelectionServiceMarkPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(IEnumerable<BlockObject> blockObjects, Vector3Int start, Vector3Int end, bool selectionStarted, bool selectingArea)
         {
             return ClearResourcesMarkedEvent.DoPrefix(blockObjects, start, end, true);
@@ -462,6 +467,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(DemolishableUnselectionTool), nameof(DemolishableUnselectionTool.ActionCallback))]
     class DemolishableSelectionServiceUnmarkPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(IEnumerable<BlockObject> blockObjects, Vector3Int start, Vector3Int end, bool selectionStarted, bool selectingArea)
         {
             return ClearResourcesMarkedEvent.DoPrefix(blockObjects, start, end, false);
@@ -509,6 +515,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(TreeCuttingArea), nameof(TreeCuttingArea.AddCoordinates))]
     class TreeCuttingAreaAddedPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(IEnumerable<Vector3Int> coordinates)
         {
             return ReplayEvent.DoPrefix(() =>
@@ -525,6 +532,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(TreeCuttingArea), nameof(TreeCuttingArea.RemoveCoordinates))]
     class TreeCuttingAreaRemovedPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(IEnumerable<Vector3Int> coordinates)
         {
             return ReplayEvent.DoPrefix(() =>
@@ -627,6 +635,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(BuildingUnlockingService), nameof(BuildingUnlockingService.Unlock))]
     class BuildingUnlockingServiceUnlockPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(BuildingSpec buildingSpec)
         {
             return ReplayEvent.DoPrefix(() =>
@@ -645,6 +654,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(BuildingToolLocker), nameof(BuildingToolLocker.UnlockIgnoringScienceCost))]
     class BuildingToolLockerInstantUnlockPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(BuildingSpec buildingSpec, Action successCallback)
         {
             if (EventIO.IsNull) return true;
@@ -692,6 +702,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(WorkingHoursPanel), nameof(WorkingHoursPanel.OnHoursChanged))]
     class WorkingHoursPanelOnHoursChangedPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(WorkingHoursPanel __instance)
         {
             bool value = ReplayEvent.DoPrefix(() =>
@@ -752,6 +763,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(Duplicator), nameof(Duplicator.Duplicate))]
     class DuplicatorDuplicatePatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(BaseComponent sourceEntity, BaseComponent targetEntity)
         {
             return ReplayEvent.DoPrefix(() =>
