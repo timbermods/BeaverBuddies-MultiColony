@@ -33,6 +33,9 @@ namespace BeaverBuddies.Colonies
     {
         public static bool Active => ColonyModeService.IsSeparateColonies;
 
+        internal static readonly ColonyProfiler.Spot ResourceSearches = ColonyProfiler.Declare("Resource searches (lumberjacks, gatherers...)");
+        internal static readonly ColonyProfiler.Spot BuilderChecks = ColonyProfiler.Declare("Builder job checks");
+
         /// <summary>
         /// The colony of a worker, workplace or site, from simulation state only: a beaver by its district, a building
         /// by its finished district, else the colony that placed it.
@@ -80,17 +83,21 @@ namespace BeaverBuddies.Colonies
     }
 
     // Lumberjacks, gatherers, scavengers and farmhouse harvesters all look for their work through these two.
-    // Timed whole (the game's search and the colony filter), since the filter only runs as the game searches.
+    // Timed whole (the game's search and the colony filter), since the filter only runs as the game searches; with
+    // separate colonies off there is nothing to filter and nothing is timed (__state stays 0).
     [HarmonyPatch(typeof(YielderFinder), nameof(YielderFinder.FindLivingYielderWithoutAccessible))]
     static class ColonyLivingYielderPatcher
     {
         static void Prefix(Inventory receivingInventory, ref IEnumerable<Yielder> yielders, out long __state)
         {
-            __state = ColonyProfiler.Start();
-            ColonySeparation.FilterYielders(receivingInventory, ref yielders);
+            __state = ColonySeparation.Active ? ColonyProfiler.Start() : 0;
+            if (__state != 0) ColonySeparation.FilterYielders(receivingInventory, ref yielders);
         }
 
-        static void Finalizer(long __state) => ColonyProfiler.Stop("Resource searches (lumberjacks, gatherers...)", __state);
+        static void Finalizer(long __state)
+        {
+            if (__state != 0) ColonyProfiler.Stop(ColonySeparation.ResourceSearches, __state);
+        }
     }
 
     [HarmonyPatch(typeof(YielderFinder), nameof(YielderFinder.FindYielderWithAccessible))]
@@ -98,11 +105,14 @@ namespace BeaverBuddies.Colonies
     {
         static void Prefix(Inventory receivingInventory, ref IEnumerable<Yielder> yielders, out long __state)
         {
-            __state = ColonyProfiler.Start();
-            ColonySeparation.FilterYielders(receivingInventory, ref yielders);
+            __state = ColonySeparation.Active ? ColonyProfiler.Start() : 0;
+            if (__state != 0) ColonySeparation.FilterYielders(receivingInventory, ref yielders);
         }
 
-        static void Finalizer(long __state) => ColonyProfiler.Stop("Resource searches (lumberjacks, gatherers...)", __state);
+        static void Finalizer(long __state)
+        {
+            if (__state != 0) ColonyProfiler.Stop(ColonySeparation.ResourceSearches, __state);
+        }
     }
 
     // Foresters and farmhouses plant only on their own colony's planting marks.
@@ -142,7 +152,7 @@ namespace BeaverBuddies.Colonies
             }
             finally
             {
-                ColonyProfiler.Stop("Builder job checks", started);
+                ColonyProfiler.Stop(ColonySeparation.BuilderChecks, started);
             }
         }
 

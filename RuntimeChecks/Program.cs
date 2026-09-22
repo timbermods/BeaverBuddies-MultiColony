@@ -104,6 +104,7 @@ PlantingLevelChecks.Run(assembly, Test);
 TraceChecks.Run(assembly, Test);
 ModListChecks.Run(assembly, Test);
 ColonyRuntimeChecks.Run(assembly, Test);
+PerformanceRuntimeChecks.Run(assembly, Test);
 TradingPostBuildingChecks.Run(assembly, Path.GetDirectoryName(modPath)!, Path.GetFullPath(args[1]), Test);
 BindingChecks.Run(assembly, Path.GetFullPath(args[1]), args.Skip(2).Select(Path.GetFullPath), Test);
 Console.WriteLine($"{total-failures}/{total} passed");

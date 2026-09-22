@@ -106,40 +106,58 @@ namespace BeaverBuddies.Colonies
             out string detail)
         {
             detail = null;
-            var tiles = new List<Vector3Int>(footprint);
             ColonyReach reach = ColonyReach.Instance;
             if (reach == null) return ColonyRefusal.None;
+            // The preview asks every frame, for every block of what is being placed: the footprint is read as given
+            // (the callers pass a list), and no copies of it are made.
+            IReadOnlyList<Vector3Int> tiles = footprint as IReadOnlyList<Vector3Int> ?? footprint.ToList();
             if (crossing)
             {
-                if (tiles.Count == 0 || tiles.Any(tile => reach.MayUse(slot, tile))) return ColonyRefusal.None;
+                if (tiles.Count == 0) return ColonyRefusal.None;
+                for (int i = 0; i < tiles.Count; i++)
+                {
+                    if (reach.MayUse(slot, tiles[i])) return ColonyRefusal.None;
+                }
                 detail = $"at {tiles[0]} is on slot {reach.Owner(tiles[0])}'s land";
                 return ColonyRefusal.OtherColonyArea;
             }
-            foreach (Vector3Int tile in tiles)
+            for (int i = 0; i < tiles.Count; i++)
             {
-                if (!reach.MayUse(slot, tile))
+                if (!reach.MayUse(slot, tiles[i]))
                 {
-                    detail = $"at {tile} is on slot {reach.Owner(tile)}'s land";
+                    detail = $"at {tiles[i]} is on slot {reach.Owner(tiles[i])}'s land";
                     return ColonyRefusal.OtherColonyArea;
                 }
             }
-            if (doorstep != null) tiles.Add(doorstep.Value);
-            foreach (Vector3Int tile in tiles)
+            for (int i = 0; i < tiles.Count; i++)
             {
-                foreach (Vector3Int near in new[] { tile, tile + Vector3Int.right, tile + Vector3Int.left, tile + Vector3Int.up, tile + Vector3Int.down })
+                ColonyRefusal touching = Touches(slot, tiles[i], out detail);
+                if (touching != ColonyRefusal.None) return touching;
+            }
+            return doorstep != null ? Touches(slot, doorstep.Value, out detail) : ColonyRefusal.None;
+        }
+
+        // The tile itself and its four neighbours.
+        private static readonly Vector3Int[] Around = { Vector3Int.zero, Vector3Int.right, Vector3Int.left, Vector3Int.up, Vector3Int.down };
+
+        /// <summary>Another colony's road, building or path on this tile or beside it.</summary>
+        private ColonyRefusal Touches(int slot, Vector3Int tile, out string detail)
+        {
+            detail = null;
+            for (int i = 0; i < Around.Length; i++)
+            {
+                Vector3Int near = tile + Around[i];
+                int? owner = OtherColonyRoadAt(slot, near);
+                if (owner != null)
                 {
-                    int? owner = OtherColonyRoadAt(slot, near);
-                    if (owner != null)
-                    {
-                        detail = $"would touch slot {owner}'s road at {near}";
-                        return ColonyRefusal.TouchesOtherColony;
-                    }
-                    owner = OtherColonyBlockAt(slot, near);
-                    if (owner != null)
-                    {
-                        detail = $"would touch slot {owner}'s building or path at {near}";
-                        return ColonyRefusal.TouchesOtherColony;
-                    }
+                    detail = $"would touch slot {owner}'s road at {near}";
+                    return ColonyRefusal.TouchesOtherColony;
+                }
+                owner = OtherColonyBlockAt(slot, near);
+                if (owner != null)
+                {
+                    detail = $"would touch slot {owner}'s building or path at {near}";
+                    return ColonyRefusal.TouchesOtherColony;
                 }
             }
             return ColonyRefusal.None;

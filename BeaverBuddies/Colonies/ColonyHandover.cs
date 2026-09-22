@@ -155,6 +155,8 @@ namespace BeaverBuddies.Colonies
 
         // ---- once a day ----
 
+        private static readonly ColonyProfiler.Spot DailyChecks = ColonyProfiler.Declare("Daily colony checks");
+
         public void Tick()
         {
             if (!ColonyModeService.IsSeparateColonies) return;
@@ -168,7 +170,7 @@ namespace BeaverBuddies.Colonies
             long started = ColonyProfiler.Start();
             HandOverDeadColonies(day);
             if (EventIO.Get() is ServerEventIO) HostDaily(day);
-            ColonyProfiler.Stop("Daily colony checks", started);
+            ColonyProfiler.Stop(DailyChecks, started);
             if (Settings.Debug) LogDiagnostics(day);
         }
 

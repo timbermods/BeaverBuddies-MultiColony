@@ -6,13 +6,13 @@ screen (the trading-post panel, a notice, the connection panel, the toolbar). Se
 (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`). Lines from this mode start with `[Colony]`.
 
 Install: remove every other BeaverBuddies folder from `Documents\Timberborn\Mods` (including the Stability Fork),
-copy in `BeaverBuddies-MultiColony`, enable **BeaverBuddies MultiColony (alpha)**, restart the game. If another
+copy in `BeaverBuddies-MultiColony`, enable **BeaverBuddies MultiColony (beta)**, restart the game. If another
 BeaverBuddies is still enabled, the main menu names it (please check that message appears if you try it).
 
 ## Script A: host alone (about 30 minutes)
 
-Setup: in **Mod Settings → BeaverBuddies** check **Separate colonies (alpha)** and **Separate science and unlocks per
-colony (alpha)** are ticked, and tick **Always Use Detailed Logging** (debug mode). Start a **new game** on a
+Setup: in **Mod Settings → BeaverBuddies** check **Separate colonies (beta)** and **Separate science and unlocks per
+colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode). Start a **new game** on a
 **standard map**. Save, then **Load Game** → select the save → **Host co-op game**; start without anyone joining.
 
 1. **Seats.** The log has `[Colony] Separate colonies switched on: new game with one start` (while creating the game)
@@ -156,6 +156,13 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 8d. **Gates, two players (alpha14).** One player opens a gate on their own roads while the other hovers a path
     preview across it: it opens on both screens within a tick. A gate that would join the two colonies' roads stays
     shut with the conflict mark on both.
+8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
+    and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
+    at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*
+    should be rare, and under *Colony code since load* the *Working hours checks* line's average should be a few µs.
+    The other player's cursor still follows their mouse, shows *Editing:* on a building they change, and disappears
+    about three seconds after they quit. Note the guest's frame rate from the connection panel, as in line 6, to
+    compare with alpha22.
 9. **Dev mode and Ctrl.** The host turns dev mode on (Alt+Shift+Z). Ctrl-click a locked building to unlock it, then
    place it with Ctrl still held; while the guest places paths, the host holds Ctrl+L; while the host holds Ctrl, a
    building finishes demolition. Every building must look the same on both screens (a construction site, not a

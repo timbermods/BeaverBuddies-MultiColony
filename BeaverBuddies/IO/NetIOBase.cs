@@ -64,9 +64,9 @@ namespace BeaverBuddies.IO
             if (NetBase == null) return;
             foreach (ReplayEvent e in events)
             {
-                // TODO: It is silly to convert to JObject here, but not sure if there's
-                // a better way to do it.
-                NetBase.DoUserInitiatedEvent(JObject.Parse(JsonSettings.Serialize(e)));
+                // Written out once, as text: the network hashes and compresses that text and never parses it. It used
+                // to be parsed into a JObject and written out again (twice more on a host, for the hash and the wire).
+                NetBase.DoUserInitiatedEvent(JsonSettings.Serialize(e), e.type, e.ticksSinceLoad);
             }
         }
 

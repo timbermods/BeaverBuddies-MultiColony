@@ -193,10 +193,16 @@ namespace BeaverBuddies.Panel
                 {
                     view.Chat.Tick();
                     view.Chat.Sync(log);
+                    // Asked of the panel once per frame (it is a walk of the focused element's parents).
+                    bool focused = view.Chat.IsFocused;
                     // A click on the game itself, not on any interface, gives the keyboard back to the game.
-                    if (view.Chat.IsFocused && input.MainMouseButtonDown && !input.MouseOverUI) view.Chat.ReleaseFocus();
+                    if (focused && input.MainMouseButtonDown && !input.MouseOverUI)
+                    {
+                        view.Chat.ReleaseFocus();
+                        focused = false;
+                    }
                     // While the cursor is in the box, the panel is drawn in front of the game's alerts.
-                    view.SetLifted(view.Chat.IsFocused);
+                    view.SetLifted(focused);
                     countedSequence = log.LastSequence; unread = 0;
                 }
                 else

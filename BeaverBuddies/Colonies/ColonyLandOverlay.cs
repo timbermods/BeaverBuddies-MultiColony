@@ -60,6 +60,8 @@ namespace BeaverBuddies.Colonies
             return false;
         }
 
+        private static readonly ColonyProfiler.Spot OutlineDrawing = ColonyProfiler.Declare("Land outline drawing");
+
         public void UpdateSingleton()
         {
             try
@@ -85,7 +87,7 @@ namespace BeaverBuddies.Colonies
                 drawnVersion = ColonyReach.Instance.Version;
                 long started = ColonyProfiler.Start();
                 Redraw();
-                ColonyProfiler.Stop("Land outline drawing", started);
+                ColonyProfiler.Stop(OutlineDrawing, started);
             }
             catch (Exception error)
             {

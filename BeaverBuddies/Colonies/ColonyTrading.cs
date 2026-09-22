@@ -218,8 +218,12 @@ namespace BeaverBuddies.Colonies
     [HarmonyPatch(typeof(DistrictCrossingWorkplaceBehavior), nameof(DistrictCrossingWorkplaceBehavior.TryExport))]
     static class TradingPostCarryPatcher
     {
+        private static readonly ColonyProfiler.Spot Workers = ColonyProfiler.Declare("Trading post workers");
+
         static bool Prefix(DistrictCrossingWorkplaceBehavior __instance, BehaviorAgent agent, ref bool __result)
         {
+            // A District Crossing within one colony: the game's own, and not timed.
+            if (!TradingPosts.TradesOnlyByExchange(__instance._districtCrossing)) return true;
             long started = ColonyProfiler.Start();
             try
             {
@@ -227,14 +231,13 @@ namespace BeaverBuddies.Colonies
             }
             finally
             {
-                ColonyProfiler.Stop("Trading post workers", started);
+                ColonyProfiler.Stop(Workers, started);
             }
         }
 
         static bool Carry(DistrictCrossingWorkplaceBehavior __instance, BehaviorAgent agent, ref bool __result)
         {
             DistrictCrossing crossing = __instance._districtCrossing;
-            if (!TradingPosts.TradesOnlyByExchange(crossing)) return true;
             __result = false;
             DistrictCrossingInventory crossingInventory = __instance._districtCrossingInventory;
             string goodId = ColonyExchangeService.GoodGiven(crossing);

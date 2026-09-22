@@ -29,45 +29,6 @@ using UnityEngine;
 namespace BeaverBuddies.Colonies
 {
     /// <summary>
-    /// Times the colony code's busy spots: two timestamps per measured call, main thread. Read by the report.
-    /// </summary>
-    public static class ColonyProfiler
-    {
-        private static readonly Dictionary<string, long[]> totals = new Dictionary<string, long[]>();
-        private static readonly object gate = new object();
-
-        public static long Start() => Stopwatch.GetTimestamp();
-
-        public static void Stop(string name, long start)
-        {
-            long elapsed = Stopwatch.GetTimestamp() - start;
-            lock (gate)
-            {
-                if (!totals.TryGetValue(name, out long[] entry)) totals[name] = entry = new long[3];
-                entry[0]++;
-                entry[1] += elapsed;
-                if (elapsed > entry[2]) entry[2] = elapsed;
-            }
-        }
-
-        /// <summary>Name, calls, total ms, largest single call in ms; most time first.</summary>
-        public static List<(string name, long calls, double totalMs, double maxMs)> Snapshot()
-        {
-            double toMs = 1000.0 / Stopwatch.Frequency;
-            lock (gate)
-            {
-                return totals.Select(t => (t.Key, t.Value[0], t.Value[1] * toMs, t.Value[2] * toMs))
-                    .OrderByDescending(t => t.Item3).ToList();
-            }
-        }
-
-        public static void Reset()
-        {
-            lock (gate) totals.Clear();
-        }
-    }
-
-    /// <summary>
     /// A diagnostics report for performance, desync and colony problems, written on request (Ctrl+Shift+J, or the
     /// button in the Ctrl+T window) and by itself when this computer desyncs. It is saved next to Player.log, in
     /// BeaverBuddies-Reports, and copied to the clipboard, ready to paste into a bug report.

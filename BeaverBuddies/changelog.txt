@@ -1,6 +1,10 @@
-v1.4.0-alpha22 (BeaverBuddies MultiColony)
-* The Trading Post's ledger names both sides: "You gave 100 Logs, Sarah gave 25 Gears", the partner in their colour.
+v1.4.0-beta1 (BeaverBuddies MultiColony)
+* A performance pass with the guest (player 2) in mind: events are hashed and compressed once and never written out twice; Steam is served before the game's frame; cursor frames go out only when something changed; the profiler, working-hours, placement-preview and top-bar patches no longer take a lock or allocate on every call. Nothing simulated changed.
+* The mod list and the two settings now say (beta).
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
+v1.4.0-alpha22
+* The Trading Post's ledger names both sides: "You gave 100 Logs, Sarah gave 25 Gears", the partner in their colour.
 
 v1.4.0-alpha21
 * Documentation only: this in-game changelog and the Doc folder describe MultiColony. Nothing in the game changed since alpha14.

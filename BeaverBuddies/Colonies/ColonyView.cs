@@ -79,8 +79,29 @@ namespace BeaverBuddies.Colonies
             return owner == null || owner.Value == ColonySession.LocalSlot;
         }
 
-        public List<DistrictCenter> OwnDistricts() =>
-            _districtCenterRegistry.FinishedDistrictCenters.Where(IsOwnDistrict).ToList();
+        // The top bar asks once per good it shows, and the population panel and wellbeing again: one list, filled at
+        // most once per frame (a district's owner and this player's seat change rarely, and never within a frame).
+        private readonly List<DistrictCenter> ownDistricts = new List<DistrictCenter>();
+        private int ownDistrictsFrame = -1, ownDistrictsSlot = int.MinValue;
+
+        /// <summary>This player's finished districts. The same list each time within a frame: read it, never keep it.</summary>
+        public List<DistrictCenter> OwnDistricts()
+        {
+            int frame = UnityEngine.Time.frameCount;
+            int slot = ColonySession.LocalSlot;
+            if (frame != ownDistrictsFrame || slot != ownDistrictsSlot)
+            {
+                ownDistrictsFrame = frame;
+                ownDistrictsSlot = slot;
+                ownDistricts.Clear();
+                foreach (DistrictCenter districtCenter in _districtCenterRegistry.FinishedDistrictCenters)
+                {
+                    int? owner = DistrictOwner.OwnerOfDistrict(districtCenter);
+                    if (owner == null || owner.Value == slot) ownDistricts.Add(districtCenter);
+                }
+            }
+            return ownDistricts;
+        }
 
         /// <summary>This player's biggest district: where the batch control window opens.</summary>
         public DistrictCenter MainDistrict() =>

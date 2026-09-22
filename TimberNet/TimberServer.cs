@@ -18,8 +18,16 @@ namespace TimberNet
     {
 
         private readonly List<ISocketStream> clients = new List<ISocketStream>();
-        private readonly ConcurrentDictionary<ISocketStream, ConcurrentQueue<JObject>> queuedMessages =
-            new ConcurrentDictionary<ISocketStream, ConcurrentQueue<JObject>>();
+        // An event as it goes on the wire, once for every guest: compressed, with its type and tick for the log.
+        private readonly struct Outgoing
+        {
+            public readonly byte[] Wire;
+            public readonly string Type;
+            public readonly int Tick;
+            public Outgoing(byte[] wire, string type, int tick) { Wire = wire; Type = type; Tick = tick; }
+        }
+        private readonly ConcurrentDictionary<ISocketStream, ConcurrentQueue<Outgoing>> queuedMessages =
+            new ConcurrentDictionary<ISocketStream, ConcurrentQueue<Outgoing>>();
 
         // Player activity is presentation-only and deliberately kept out of queuedMessages' lock,
         // so a slow gameplay send can never stall a guest's receive thread.
@@ -179,7 +187,7 @@ namespace TimberNet
                     client.Close();
                     throw new IOException("Joining closed while the map was being prepared.");
                 }
-                queuedMessages.TryAdd(client, new ConcurrentQueue<JObject>());
+                queuedMessages.TryAdd(client, new ConcurrentQueue<Outgoing>());
                 clients.Add(client);
                 // The host is player 0; the host, not the guest, chooses each guest's id.
                 playerIds[client] = Interlocked.Increment(ref lastPlayerId);
@@ -360,13 +368,12 @@ namespace TimberNet
             // Log("finishing queuing");
             lock(queuedMessages)
             {
-                if (queuedMessages.TryGetValue(client, out ConcurrentQueue<JObject> queue))
+                if (queuedMessages.TryGetValue(client, out ConcurrentQueue<Outgoing> queue))
                 {
                     // Log($"Found {queue.Count} messages");
-                    while (queue.TryDequeue(out JObject message))
+                    while (queue.TryDequeue(out Outgoing message))
                     {
-                        // Log(message.ToString());
-                        SendEvent(client, message);
+                        SendBytes(client, message.Wire, message.Type, message.Tick);
                     }
                     queuedMessages.TryRemove(client, out _);
                     if (!IsStopped) OpenActivityLane(client);
@@ -417,16 +424,26 @@ namespace TimberNet
 
         void DoUserInitiatedEvent(JObject message, bool sendNow)
         {
-            base.DoUserInitiatedEvent(message);
-            SendEventToClients(message, sendNow);
+            string type = (string?)message[TYPE_KEY] ?? "?";
+            int tick = message[TICKS_KEY]?.Type == JTokenType.Integer ? (int)message[TICKS_KEY]! : -1;
+            Send(message.ToString(Newtonsoft.Json.Formatting.None), type, tick, sendNow);
         }
 
-        public override void DoUserInitiatedEvent(JObject message)
+        public override void DoUserInitiatedEvent(string json, string type, int tick)
         {
-            DoUserInitiatedEvent(message, false);
+            Send(json, type, tick, false);
         }
 
-        private void SendEventToClients(JObject message, bool sendNow)
+        // Encoded, hashed and compressed once, whatever the number of guests: each is sent the same bytes. Before,
+        // every event was written out as text and compressed again for each guest, and once more for the hash.
+        private void Send(string json, string type, int tick, bool sendNow)
+        {
+            byte[] utf8 = Encoding.UTF8.GetBytes(json);
+            NoteInitiatedEvent(utf8, type);
+            SendEventToClients(new Outgoing(CompressionUtils.Compress(utf8), type, tick), sendNow);
+        }
+
+        private void SendEventToClients(Outgoing message, bool sendNow)
         {
             lock (queuedMessages)
             {
@@ -444,7 +461,7 @@ namespace TimberNet
                 {
                     if (sendNow)
                     {
-                        SendEvent(client, message);
+                        SendBytes(client, message.Wire, message.Type, message.Tick);
                     }
                     else
                     {
@@ -454,17 +471,17 @@ namespace TimberNet
             }
         }
 
-        private void QueueOrSentToClient(ISocketStream client, JObject message)
+        private void QueueOrSentToClient(ISocketStream client, Outgoing message)
         {
             if (!client.Connected) return;
 
-            if (queuedMessages.TryGetValue(client, out ConcurrentQueue<JObject> queue))
+            if (queuedMessages.TryGetValue(client, out ConcurrentQueue<Outgoing> queue))
             {
                 queue.Enqueue(message);
             }
             else
             {
-                SendEvent(client, message);
+                SendBytes(client, message.Wire, message.Type, message.Tick);
             }
         }
 

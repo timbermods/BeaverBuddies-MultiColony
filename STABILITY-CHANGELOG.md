@@ -5,6 +5,84 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta1
+
+**A performance review of alpha22 with the guest (player 2) in mind, and what it changed.** The lockstep design was
+read end to end for what a guest pays that the host does not, and the mod's own patches for what they cost every
+computer per frame, per tick and per action (two sweeps: the colony code in the simulation, and the per-frame
+interface and activity code). Nothing here changes what is simulated: every change is bookkeeping, caching or the
+order of checks, and every computer still plays the same actions on the same ticks with the same results. The mod
+list and the two settings now say **(beta)**.
+
+What a guest pays for lockstep, and what changed:
+- **Every event a guest received was written out as text again on the game thread, only to hash it.** The hash (the
+  network's running check that both sides saw the same events) is now taken from the message's bytes on the receive
+  thread, as it arrives, and the game thread only combines it. The host, for its part, wrote each event out as text
+  three times (once to parse it, once to hash it, once per guest to compress it): it now encodes, hashes and
+  compresses each event once and sends every guest the same bytes. A guest's own actions leave as the text they were
+  serialized to, without the parse-and-write-out round trip they made before.
+- **Steam is served before the game's own frame update.** The game's ticker and the Steam pump both ran in Unity's
+  Update phase, in no fixed order. Pumped after the ticker, a heartbeat that arrived while the last frame was drawn
+  reached the guest's tick loop one frame later than it could have. A guest at the start of a tick waits for that
+  heartbeat, the ticks it could not run are lost to drift, and the drift is made up by catch-up speed (two changes of
+  the game's time scale): at a high speed this could be a frame of standing still per tick. The pump now runs first
+  (`DefaultExecutionOrder`).
+- **Cursor frames go out only when something changed.** Every player sent its cursor, selection and editing state ten
+  times a second, each with a raycast into the scene and a few strings, whether or not the mouse had moved, and kept
+  sending a "hidden" frame while its window was in the background. A frame now goes out when it differs from the
+  last, and once a second regardless (the others forget a player three seconds after their last frame); the raycast
+  is skipped while the mouse and the camera stand still. Receiving a message no longer allocates the decompressor's
+  default 80 KB buffer per message, and an empty mailbox hands out nothing.
+
+What every computer paid in the mod's own patches:
+- **The profiler took a global lock and hashed a name on every timed call**, on the busiest paths there are: every
+  beaver's and every workplace's working-hours check, every tick, plus every job search and every preview block every
+  frame. Spots are now declared once and timed with two timestamps and three additions. A headless check measures
+  the two ways side by side (2,000,000 calls: 102 ms before, 70 ms now, single-threaded on the build machine; the old
+  way also serialized every caller on one lock).
+- **The working-hours checks asked three service lookups and the profiler before finding they had nothing to do**
+  (a shared-colony game, or a bot). They read one static flag first now; with separate colonies on, the owner lookup
+  and the timing only.
+- **`IsSeparateColonies` and separate science's `IsEnabled` are static reads**, not lookups of a service, on every
+  path that asks (the job searches, the science context around every producing workshop's tick, the status and
+  batch-control filters, the panels). They follow the running game and are cleared when it is left.
+- **Placement previews allocate nothing per tile.** While a building or path is being placed, the colony rules check
+  every preview block every frame; the check copied the footprint twice and made a five-element array per tile. It
+  reads the footprint as given and walks a fixed neighbour table now, and in a shared-colony game nothing is looked
+  up or timed at all.
+- **Resource searches** (lumberjacks, gatherers, scavengers, harvesters) are filtered and timed only with separate
+  colonies on; a Trading Post worker's export decision is timed only at a Trading Post.
+- **Land bookkeeping:** "is this building still waiting for a colony?" was a walk down the list of waiting buildings
+  for every entity that came into being (a save's load is every building): a set lookup now. Every land question
+  asked the game for the map's size twice; the grid is kept once made.
+- **The top bar's per-good count, the population panel and wellbeing** each rebuilt the list of this player's
+  districts (a query and a list per call, per good shown): one list, filled at most once per frame.
+- **The connection panel** parsed its display-mode and corner settings (an `Enum.IsDefined` and a box) twice per
+  frame: parsed only when the text changes. It also put every panel in its corner into words twice a second for a
+  log line that is written once per change.
+- Smaller: the chat box is asked once per frame whether it has the cursor; the cursor overlay looks the camera up
+  once, keeps each player's labels and measures text without allocating; the activity parser keeps its key arrays.
+
+Reviewed, left as they are (and why):
+- **The guest's wait at each tick boundary, and the catch-up speed.** A guest cannot start a tick before the host's
+  word for it arrives, and the ticks it loses waiting are made up at a higher speed: that is the lockstep design, and
+  CatchUpSpeed (alpha5) trades a little smoothness for a shorter round trip on purpose. Changing it is a design
+  decision for after the beta has been played; the diagnostics report (Ctrl+Shift+J) counts and times those waits.
+- **Reading each received event into an object** stays on the game thread (the converters touch game types); it is
+  well under a millisecond for anything but a huge area mark.
+- **The per-action log line** stays: it is the trail every bug report relies on.
+- **Gzip on every message** stays, as the wire format; a small frame costs tens of microseconds each way.
+- **Ending a frame's ticking at every new entity** (so the entity starts before the next bucket, the same everywhere)
+  is a determinism requirement.
+- The chat colour refresh, the trade overview's per-frame availability check, the tool disabler's spec lookup per
+  button and the trading window's 2 Hz refresh are each too small to be worth a change.
+- Checks: StabilityTests 268 (an event sent as text hashes as one sent parsed; a guest's hash is taken from the bytes
+  it received and matches the host's once every event is read; a profiler spot needs no lookup or lock and the
+  report sees every call, timed against the old way; an empty activity mailbox costs nothing; a frame that changed
+  nothing is the same frame); RuntimeChecks 232 (the two static flags are reset with the game; Steam is pumped before
+  the game's own scripts; the game sends events as text, never parsed and written out again).
+- Not played in a game: nothing since alpha11 has been. Script B line 8e is this release's.
+
 ## 1.4.0-alpha22
 
 **The Trading Post's ledger names both sides.** Each row read *gave [icon] 100 · got [icon] 25*; it now reads

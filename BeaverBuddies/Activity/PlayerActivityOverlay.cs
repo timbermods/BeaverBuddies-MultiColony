@@ -17,15 +17,24 @@ namespace BeaverBuddies.Activity
 
         Texture2D cursor;
         GUIStyle label;
+        // Drawn every frame: the camera is looked up once per camera object, and text is measured with one content.
+        Transform cameraTransform;
+        Camera camera;
+        static readonly GUIContent measured = new GUIContent();
 
         void OnDestroy() { if (cursor != null) Destroy(cursor); }
 
         public void OnGUI()
         {
             if (Event.current.type != EventType.Repaint || Service == null || !Settings.PlayerActivityEnabled) return;
+            if (Service.RemotePlayerCount == 0) return;
             var transform = CameraService?.Transform;
             if (transform == null) return;
-            var camera = transform.GetComponent<Camera>();
+            if (!ReferenceEquals(transform, cameraTransform) || camera == null)
+            {
+                cameraTransform = transform;
+                camera = transform.GetComponent<Camera>();
+            }
             if (camera == null || !camera.isActiveAndEnabled) return;
             if (label == null) label = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, richText = false };
             if (cursor == null) cursor = CreateCursor();
@@ -33,7 +42,7 @@ namespace BeaverBuddies.Activity
             try
             {
                 int index = 0;
-                foreach (var player in Service.RemotePlayers)
+                foreach (var player in Service.RemotePlayerValues)
                 {
                     if (player.State == null) continue;
                     var style = Service.StyleOf(player);
@@ -53,8 +62,8 @@ namespace BeaverBuddies.Activity
                     var target = isEditing ? editing : selected;
                     if (target && !target.Deleted && Project(camera, target.Transform.position + Vector3.up, out var location))
                     {
-                        string action = isEditing ? "Editing: " : target.HasComponent<Building>() ? "Viewing: " : "Selected: ";
-                        DrawLabel(location + new Vector2(14, -24 - 20 * index), action + player.Label, color, textAlpha);
+                        string text = isEditing ? player.EditingLabel : target.HasComponent<Building>() ? player.ViewingLabel : player.SelectedLabel;
+                        DrawLabel(location + new Vector2(14, -24 - 20 * index), text ?? player.Label, color, textAlpha);
                     }
                     index++;
                 }
@@ -72,7 +81,8 @@ namespace BeaverBuddies.Activity
         void DrawLabel(Vector2 point, string text, Color color, float alpha)
         {
             GUI.color = Color.white;
-            float width = Mathf.Min(420, label.CalcSize(new GUIContent(text)).x + 8);
+            measured.text = text;
+            float width = Mathf.Min(420, label.CalcSize(measured).x + 8);
             var rect = new Rect(Mathf.Clamp(point.x, 0, Mathf.Max(0, Screen.width - width)), Mathf.Clamp(point.y, 0, Mathf.Max(0, Screen.height - 22)), width, 22);
             label.normal.textColor = new Color(0, 0, 0, alpha);
             GUI.Label(new Rect(rect.x + 1, rect.y + 1, rect.width, rect.height), text, label);

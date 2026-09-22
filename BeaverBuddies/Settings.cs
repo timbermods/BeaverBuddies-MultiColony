@@ -212,11 +212,38 @@ namespace BeaverBuddies
         public static int AbandonedColonyDaysValue => instance?.AbandonedColonyDays.Value ?? 7;
 
 
-        public static PanelDisplayMode ConnectionPanelDisplayMode =>
-            ParseChoice(instance?.ConnectionPanelDisplay?.Value, PanelDisplayMode.Expanded);
+        // Both are read every frame by the connection panel: parsed again only when the stored text changes.
+        private static string displayModeText, cornerText;
+        private static PanelDisplayMode displayMode = PanelDisplayMode.Expanded;
+        private static PanelCorner corner = PanelCorner.TopLeft;
 
-        public static PanelCorner ConnectionPanelCornerValue =>
-            ParseChoice(instance?.ConnectionPanelCorner?.Value, PanelCorner.TopLeft);
+        public static PanelDisplayMode ConnectionPanelDisplayMode
+        {
+            get
+            {
+                string text = instance?.ConnectionPanelDisplay?.Value;
+                if (!ReferenceEquals(text, displayModeText))
+                {
+                    displayModeText = text;
+                    displayMode = ParseChoice(text, PanelDisplayMode.Expanded);
+                }
+                return displayMode;
+            }
+        }
+
+        public static PanelCorner ConnectionPanelCornerValue
+        {
+            get
+            {
+                string text = instance?.ConnectionPanelCorner?.Value;
+                if (!ReferenceEquals(text, cornerText))
+                {
+                    cornerText = text;
+                    corner = ParseChoice(text, PanelCorner.TopLeft);
+                }
+                return corner;
+            }
+        }
 
         /// <summary>The frame rate below which a host eases off for a guest. 0 is off. Only the host's value matters.</summary>
         public static int GuestFpsFloorValue =>

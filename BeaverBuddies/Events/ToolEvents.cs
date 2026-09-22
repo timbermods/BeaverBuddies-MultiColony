@@ -116,6 +116,8 @@ namespace BeaverBuddies.Events
         // objects at every replayed placement (Unity destroys it with the scene, and it is made again).
         private static GameObject checkParent;
 
+        private static readonly Colonies.ColonyProfiler.Spot PlacementChecks = Colonies.ColonyProfiler.Declare("Placement checks in replays");
+
         private static bool IsPlacementValid(IReplayContext context, Placement placement, BuildingSpec spec, bool blocksOnly = false)
         {
             long started = Colonies.ColonyProfiler.Start();
@@ -125,7 +127,7 @@ namespace BeaverBuddies.Events
             }
             finally
             {
-                Colonies.ColonyProfiler.Stop("Placement checks in replays", started);
+                Colonies.ColonyProfiler.Stop(PlacementChecks, started);
             }
         }
 

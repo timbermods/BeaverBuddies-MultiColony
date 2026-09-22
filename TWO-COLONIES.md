@@ -1,13 +1,13 @@
-# Separate colonies (alpha)
+# Separate colonies (beta)
 
 Two (up to four) players on one map, each running their own colony: their own districts, land, beavers, stock,
 working hours and, if the host chooses, their own science and unlocks. It is co-op, not a race: nobody wins, and the
 colonies meet only at **trading posts**, where they barter.
 
-**State of testing.** Alpha. Seen in a game with the land-split alphas (alpha1 to 5): hosting and joining over
+**State of testing.** Beta. Seen in a game with the land-split alphas (alpha1 to 5): hosting and joining over
 Steam, founding a second colony and building in it. **Nothing of this version's model has been seen in a game
 yet**: ownership, land, per-colony marks and work, trading-post exchanges and their panel, separate science, the
-road-network checks and the desync review's fixes (alpha11 to alpha20) are covered by automated checks only. Since
+road-network checks and the desync review's fixes (alpha11 to beta1) are covered by automated checks only. Since
 alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
 in that check would stop a healthy game too; the log line says which. Play on a copy of your save and keep backups.
 
@@ -33,8 +33,8 @@ read each day, so it can be changed during a game):
 
 | Setting | Default | What it does |
 |---|---|---|
-| **Separate colonies (alpha)** | on | Players run their own colonies. Off: one shared colony, as in the Stability Fork (except that every District Crossing holds 100 of a good). |
-| **Separate science and unlocks per colony (alpha)** | on | Each colony earns and spends its own science and unlocks its own buildings. Chosen when a separate-colonies game begins and kept for the life of the save. |
+| **Separate colonies (beta)** | on | Players run their own colonies. Off: one shared colony, as in the Stability Fork (except that every District Crossing holds 100 of a good). |
+| **Separate science and unlocks per colony (beta)** | on | Each colony earns and spends its own science and unlocks its own buildings. Chosen when a separate-colonies game begins and kept for the life of the save. |
 
 **Who plays which colony** is remembered by the save: each player is known by their Steam ID (or, without Steam, by
 an id kept on their computer). The first time a player joins a save they take the next free colony; after that they

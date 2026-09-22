@@ -27,11 +27,11 @@ namespace TimberNet
             this.client = client;
         }
 
-        public override void DoUserInitiatedEvent(JObject message)
+        public override void DoUserInitiatedEvent(string json, string type, int tick)
         {
             // Don't actually do the event (i.e. add it to the hash)
             // Wait for the server to confirm w/ adjusted Tick
-            SendEvent(client, message);
+            SendBytes(client, MessageToBuffer(json), type, tick);
         }
 
         // Long enough for a relayed connection to be established, but bounded.

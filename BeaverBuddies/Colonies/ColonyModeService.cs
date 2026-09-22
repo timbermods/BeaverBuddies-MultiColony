@@ -31,7 +31,7 @@ namespace BeaverBuddies.Colonies
     /// Saves from the land-split alphas (1.2.0-two-colony-alpha1 to 5) also carry the colonies' start positions; they
     /// are read once, to give those saves' district centers their owners, and never saved again.
     /// </summary>
-    public class ColonyModeService : RegisteredSingleton, ISaveableSingleton, ILoadableSingleton
+    public class ColonyModeService : RegisteredSingleton, ISaveableSingleton, ILoadableSingleton, IResettableSingleton
     {
         private static readonly SingletonKey ColonyModeKey = new SingletonKey("BeaverBuddies.ColonyMode");
         private static readonly PropertyKey<bool> EnabledKey = new PropertyKey<bool>("Enabled");
@@ -47,8 +47,23 @@ namespace BeaverBuddies.Colonies
 
         private readonly ISingletonLoader _singletonLoader;
 
+        // Asked from patches on the game's busiest paths (every beaver's working hours, every job search, every
+        // preview block every frame), so it is a static read, not a lookup of this service. It follows the running
+        // game's service: set as its save loads or the mode is switched on, cleared when a game is left
+        // (SingletonManager.Reset) and when the next game makes its service.
+        private static bool separateNow;
+        private bool enabled;
+
         /// <summary>A separate-colonies game: district centers belong to players and the colony rules apply.</summary>
-        public bool Enabled { get; private set; }
+        public bool Enabled
+        {
+            get => enabled;
+            private set
+            {
+                enabled = value;
+                separateNow = value;
+            }
+        }
 
         /// <summary>The new game's starting settings, given to a colony founded later. Null if never recorded.</summary>
         public ColonyStartingSettings StartingSettings { get; private set; }
@@ -59,11 +74,17 @@ namespace BeaverBuddies.Colonies
         public static ColonyModeService Instance => SingletonManager.GetSingleton<ColonyModeService>();
 
         /// <summary>True in a separate-colonies game (and never before a game is loaded).</summary>
-        public static bool IsSeparateColonies => Instance?.Enabled == true;
+        public static bool IsSeparateColonies => separateNow;
 
         public ColonyModeService(ISingletonLoader singletonLoader)
         {
             _singletonLoader = singletonLoader;
+            separateNow = false;
+        }
+
+        public void Reset()
+        {
+            separateNow = false;
         }
 
         public void Load()

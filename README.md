@@ -5,14 +5,14 @@ districts, land, beavers, stock, science and working hours) on a shared map. The
 posts**: a building placed where their roads come together, through which they barter goods. Co-op, not a race.
 Works on the game's standard maps and on BeaverBuddies multi-start maps.
 
-![Timberborn 1.1.2.4](https://img.shields.io/badge/Timberborn-1.1.2.4-2a4034?labelColor=172620&style=flat-square) ![Status: alpha](https://img.shields.io/badge/status-alpha-e0812f?labelColor=172620&style=flat-square) [![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-2a4034?labelColor=172620&style=flat-square)](License.txt)
+![Timberborn 1.1.2.4](https://img.shields.io/badge/Timberborn-1.1.2.4-2a4034?labelColor=172620&style=flat-square) ![Status: beta](https://img.shields.io/badge/status-beta-e0812f?labelColor=172620&style=flat-square) [![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-2a4034?labelColor=172620&style=flat-square)](License.txt)
 
 [Install](#install) · [Start](#start-a-game) · [Playing](#playing-your-colony) · [Trading](#trading-posts) · [Handover](#when-a-colony-is-handed-over) · [Controls](#controls) · [Troubleshooting](#troubleshooting-and-reporting-problems) · [Full rules](TWO-COLONIES.md) · [Changelog](STABILITY-CHANGELOG.md)
 
 > [!WARNING]
-> **Alpha.** Hosting, joining over Steam and founding a second colony have been played. This version's model
+> **Beta.** Hosting, joining over Steam and founding a second colony have been played. This version's model
 > (colonies with their own land, trading posts and barter, colony handover) and the desync review's fixes (alpha11
-> to alpha20) have **not been played yet**; they are covered by automated checks. Since alpha13 a guest whose colony
+> to beta1) have **not been played yet**; they are covered by automated checks. Since alpha13 a guest whose colony
 > state differs from the host's stops at once, the tick it happens, so a bug in that check would also stop a healthy
 > game: the log line says which it was. Play on a copy of your save, keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
@@ -33,7 +33,7 @@ shared-colony co-op (turn **Separate colonies** off).
    version, older MultiColony builds), and unsubscribe from the Workshop BeaverBuddies if you have it. They change
    the same parts of the game and cannot run together; if one is still enabled, the main menu tells you which.
 4. Extract the zip and copy the `BeaverBuddies-MultiColony` folder into `Documents\Timberborn\Mods`.
-5. Start Timberborn and enable **BeaverBuddies MultiColony (alpha)** in the mod list.
+5. Start Timberborn and enable **BeaverBuddies MultiColony (beta)** in the mod list.
 
 This version has its own mod id, so its Mod Settings start from the defaults once.
 
@@ -44,8 +44,8 @@ build cannot join.
 
 **1. Host: settings.** Main menu → **Mod Settings → BeaverBuddies** (both on by default):
 
-- **Separate colonies (alpha)**: each player runs their own colony.
-- **Separate science and unlocks per colony (alpha)**: each colony earns its own science and unlocks its own
+- **Separate colonies (beta)**: each player runs their own colony.
+- **Separate science and unlocks per colony (beta)**: each colony earns its own science and unlocks its own
   buildings. Chosen when a separate-colonies game begins, then fixed for the save.
 - **Hand over a colony after its player is away (days)**: 7 by default, 0 for never (see
   [when a colony is handed over](#when-a-colony-is-handed-over)).
@@ -220,7 +220,7 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 - **"The Host has already changed the game … can no longer be joined":** the host placed or marked something while
   waiting paused. The host saves and rehosts; everyone joins before the host touches anything.
 - **Ctrl+K says the game has not started yet:** wait until the host unpauses once.
-- **Ctrl+K says the host has turned off Separate colonies:** the host ticks **Separate colonies (alpha)** and rehosts.
+- **Ctrl+K says the host has turned off Separate colonies:** the host ticks **Separate colonies (beta)** and rehosts.
 - **A desync dialog with `Colony state differs` in the log:** the every-tick colony check (alpha13) disagreed. It
   may be a bug in the check itself; send both players' `Player.log`: the line has both numbers and how many changes
   each side counted.

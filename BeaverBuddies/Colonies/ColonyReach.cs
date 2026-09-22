@@ -88,13 +88,15 @@ namespace BeaverBuddies.Colonies
         private ColonyReachGrid map;
 
         // Made on first use: by then every service has loaded (entities load after them), so the map's size is known.
-        // A map whose size was still unknown is made again, once the size is.
+        // A map whose size was still unknown is made again, once the size is. Once made, it is returned without
+        // asking the game for the map's size again (every land question came through here, twice).
         private ColonyReachGrid grid
         {
             get
             {
+                if (map != null && map.Width > 0) return map;
                 Vector3Int size = _blockService.Size;
-                if (map == null || (map.Width == 0 && size.x > 0)) map = new ColonyReachGrid(size.x, size.y);
+                if (map == null || size.x > 0) map = new ColonyReachGrid(size.x, size.y);
                 return map;
             }
         }
@@ -102,8 +104,13 @@ namespace BeaverBuddies.Colonies
         private readonly Dictionary<EntityComponent, (int slot, List<(int, int)> tiles)> added =
             new Dictionary<EntityComponent, (int, List<(int, int)>)>();
         // Buildings with no colony yet (older saves, buildings the game made, buildings placed before hosting): stamped
-        // once they have a district, a district's road at their entrance, or else one colony's land under them.
+        // once they have a district, a district's road at their entrance, or else one colony's land under them. The
+        // list keeps the order they came in (the order they are stamped in decides whose land a shared tile is, and
+        // must be the same on every computer); the set answers "is it waiting?" without a walk down the list.
         private readonly List<ColonyStamp> unstamped = new List<ColonyStamp>();
+        private readonly HashSet<ColonyStamp> unstampedSet = new HashSet<ColonyStamp>();
+
+        private static readonly ColonyProfiler.Spot Bookkeeping = ColonyProfiler.Declare("Land bookkeeping");
 
         public static ColonyReach Instance => SingletonManager.GetSingleton<ColonyReach>();
 
@@ -159,7 +166,7 @@ namespace BeaverBuddies.Colonies
                 grid.Apply(contribution.slot, contribution.tiles, -1);
             }
             ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
-            if (stamp != null) unstamped.Remove(stamp);
+            if (stamp != null && unstampedSet.Remove(stamp)) unstamped.Remove(stamp);
         }
 
         public void Tick()
@@ -178,12 +185,14 @@ namespace BeaverBuddies.Colonies
                 if (!stamp)
                 {
                     unstamped.RemoveAt(i);
+                    unstampedSet.Remove(stamp);
                     continue;
                 }
                 int? owner = DistrictOwner.OwnerOfDistrict(stamp.GetComponent<DistrictBuilding>()?.District)
                     ?? RoadOwner(stamp) ?? LandOwner(stamp);
                 if (owner == null) continue;
                 unstamped.RemoveAt(i);
+                unstampedSet.Remove(stamp);
                 stamp.Stamp(owner.Value);
                 Add(stamp.GetComponent<EntityComponent>(), owner.Value);
             }
@@ -222,7 +231,7 @@ namespace BeaverBuddies.Colonies
         {
             if (entity == null || added.ContainsKey(entity)) return;
             ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
-            if (stamp == null || unstamped.Contains(stamp)) return;
+            if (stamp == null || unstampedSet.Contains(stamp)) return;
             BlockObject blockObject = entity.GetComponent<BlockObject>();
             if (blockObject == null || blockObject.IsPreview || !blockObject.Positioned) return;
             if (TradingPosts.IsTradingPostBuilding(entity)) return;
@@ -231,7 +240,11 @@ namespace BeaverBuddies.Colonies
             DistrictOwner districtOwner = entity.GetComponent<DistrictOwner>();
             if (!stamp.IsStamped && districtOwner != null) stamp.Stamp(districtOwner.Slot);
             if (stamp.IsStamped) Add(entity, stamp.Slot);
-            else unstamped.Add(stamp);
+            else
+            {
+                unstamped.Add(stamp);
+                unstampedSet.Add(stamp);
+            }
         }
 
         private void Add(EntityComponent entity, int slot)
@@ -243,7 +256,7 @@ namespace BeaverBuddies.Colonies
                 .Select(c => (c.x, c.y)).Distinct().ToList();
             grid.Apply(slot, tiles, +1);
             added[entity] = (slot, tiles);
-            ColonyProfiler.Stop("Land bookkeeping", started);
+            ColonyProfiler.Stop(Bookkeeping, started);
         }
 
         // ---- questions ----

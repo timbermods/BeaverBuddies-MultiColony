@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -47,6 +48,11 @@ namespace TimberNet
         public event MapReceived? OnMapReceived;
 
         private readonly ConcurrentQueue<JObject> receivedEventQueue = new ConcurrentQueue<JObject>();
+        // A guest hashes every event it receives, as the host hashed it when it sent it: the same bytes. The hash is
+        // taken from the message's bytes on the receive thread, as it arrives, and kept here until the game thread
+        // reads the event, so the game thread no longer writes each event out as text again only to hash it.
+        private readonly ConditionalWeakTable<JObject, ReceivedHash> receivedHashes = new ConditionalWeakTable<JObject, ReceivedHash>();
+        private sealed class ReceivedHash { public int Value; }
         private readonly ConcurrentQueue<string> logQueue = new ConcurrentQueue<string>();
         private readonly ConcurrentQueue<string> errorQueue = new ConcurrentQueue<string>();
         private readonly ConcurrentQueue<(string? Peer, string Advisory)> peerAdvisories = new ConcurrentQueue<(string?, string)>();
@@ -272,7 +278,28 @@ namespace TimberNet
          */
         public virtual void DoUserInitiatedEvent(JObject message)
         {
-            AddEventToHash(message);
+            // The type and tick only name the event in the detailed log: a frame without them (a test's malformed
+            // frame) is still sent, as it was.
+            string type = (string?)message[TYPE_KEY] ?? "?";
+            int tick = message[TICKS_KEY]?.Type == JTokenType.Integer ? (int)message[TICKS_KEY]! : -1;
+            DoUserInitiatedEvent(message.ToString(Newtonsoft.Json.Formatting.None), type, tick);
+        }
+
+        /// <summary>
+        /// An event this player initiated, as the compact JSON the game serialized it to, with its type and tick, so
+        /// that nothing here parses it or writes it out again: its bytes are hashed once and (by a host) compressed
+        /// once, and every guest is sent those same bytes.
+        /// </summary>
+        public virtual void DoUserInitiatedEvent(string json, string type, int tick)
+        {
+            NoteInitiatedEvent(Encoding.UTF8.GetBytes(json), type);
+        }
+
+        /// <summary>What every initiated event does first: it joins this player's running hash, and is logged in detail.</summary>
+        protected void NoteInitiatedEvent(byte[] utf8, string type)
+        {
+            AddToHash(utf8);
+            if (ShouldLogDetails) Log($"Event: {type}");
         }
 
         /**
@@ -289,9 +316,15 @@ namespace TimberNet
             {
                 Hash = message["hash"]!.ToObject<int>();
             }
+            else if (receivedHashes.TryGetValue(message, out ReceivedHash? received))
+            {
+                // Hashed from its bytes as it arrived (see ReceiveMessages).
+                receivedHashes.Remove(message);
+                Hash = CombineHash(Hash, received.Value);
+            }
             else
             {
-                AddToHash(message.ToString());
+                AddToHash(message.ToString(Newtonsoft.Json.Formatting.None));
             }
             if (ShouldLogDetails) Log($"Event: {GetType(message)}");
         }
@@ -337,11 +370,21 @@ namespace TimberNet
         protected void SendEvent(ISocketStream client, JObject message)
         {
             if (ShouldLogDetails) Log($"Sending: {GetType(message)} for tick {GetTick(message)}");
-            byte[] buffer = MessageToBuffer(message);
+            SendWire(client, MessageToBuffer(message));
+        }
 
+        /// <summary>Sends an event already compressed for the wire (a host sends every guest the same bytes).</summary>
+        protected void SendBytes(ISocketStream client, byte[] wire, string type, int tick)
+        {
+            if (ShouldLogDetails) Log($"Sending: {type} for tick {tick}");
+            SendWire(client, wire);
+        }
+
+        private void SendWire(ISocketStream client, byte[] wire)
+        {
             try
             {
-                SendDataWithLength(client, buffer);
+                SendDataWithLength(client, wire);
             } catch (Exception e)
             {
                 HandleConnectionFailure(client, $"Error sending event: {e.Message}");
@@ -445,7 +488,8 @@ namespace TimberNet
                 // TODO: How should this fail and not hang if map stops sending?
                 byte[] buffer = client.ReadUntilComplete(messageLength);
 
-                string message = BufferToStringMessage(buffer);
+                byte[] text = CompressionUtils.DecompressToBytes(buffer);
+                string message = Encoding.UTF8.GetString(text);
                 var control = JObject.Parse(message);
                 if ((string?)control[TYPE_KEY] == PlayerActivity.MessageType)
                 {
@@ -476,6 +520,8 @@ namespace TimberNet
                 }
                 //Log($"Queuing message of length {messageLength} bytes");
                 StampReceivedEvent(client, control);
+                // A guest hashes what it receives as the host hashed what it sent: these bytes (see AddEventToHash).
+                if (isClient) receivedHashes.Add(control, new ReceivedHash { Value = GetHashCode(text) });
                 receivedEventQueue.Enqueue(control);
                 messageCount++;
             }
@@ -517,7 +563,7 @@ namespace TimberNet
             AddToHash(Encoding.UTF8.GetBytes(str));
         }
 
-        private void AddToHash(byte[] bytes)
+        protected void AddToHash(byte[] bytes)
         {
             Hash = CombineHash(Hash, GetHashCode(bytes));
         }

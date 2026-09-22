@@ -128,6 +128,27 @@ namespace BeaverBuddies.Colonies
             ColonyModeService.IsSeparateColonies && Instance != null ? ColonySeparation.SimOwnerOf(component) : null;
     }
 
+    // The two checks below are the most often called code in the mod: every beaver and every workplace asks every
+    // tick. In a shared-colony game they cost one static read; with separate colonies, the owner lookup and two
+    // timestamps (they used to look the service up three times and take the profiler's lock before deciding anything).
+    static class ColonyHoursChecks
+    {
+        internal static readonly ColonyProfiler.Spot Spot = ColonyProfiler.Declare("Working hours checks");
+
+        /// <summary>The colony's answer, or null to let the game's own stand.</summary>
+        internal static bool? Answer(Timberborn.BaseComponentSystem.BaseComponent keeper)
+        {
+            if (!ColonyModeService.IsSeparateColonies) return null;
+            ColonyWorkingHours hours = ColonyWorkingHours.Instance;
+            if (hours == null) return null;
+            long started = ColonyProfiler.Start();
+            int? slot = ColonySeparation.SimOwnerOf(keeper);
+            bool? answer = slot == null ? (bool?)null : hours.AreWorkingHours(slot.Value);
+            ColonyProfiler.Stop(Spot, started);
+            return answer;
+        }
+    }
+
     // A beaver keeps its colony's hours (bots ignore working hours, as in the game).
     [HarmonyPatch(typeof(WorkerWorkingHours), nameof(WorkerWorkingHours.AreWorkingHours), MethodType.Getter)]
     static class ColonyWorkerWorkingHoursPatcher
@@ -135,11 +156,10 @@ namespace BeaverBuddies.Colonies
         static bool Prefix(WorkerWorkingHours __instance, ref bool __result)
         {
             if (__instance._ignoreWorkingHours) return true;
-            long started = ColonyProfiler.Start();
-            int? slot = ColonyWorkingHours.ColonyOf(__instance);
-            if (slot != null) __result = ColonyWorkingHours.Instance.AreWorkingHours(slot.Value);
-            ColonyProfiler.Stop("Working hours checks", started);
-            return slot == null;
+            bool? answer = ColonyHoursChecks.Answer(__instance);
+            if (answer == null) return true;
+            __result = answer.Value;
+            return false;
         }
     }
 
@@ -150,11 +170,10 @@ namespace BeaverBuddies.Colonies
         static bool Prefix(WorkplaceWorkingHours __instance, ref bool __result)
         {
             if (__instance._ignoreWorkingHours) return true;
-            long started = ColonyProfiler.Start();
-            int? slot = ColonyWorkingHours.ColonyOf(__instance);
-            if (slot != null) __result = ColonyWorkingHours.Instance.AreWorkingHours(slot.Value);
-            ColonyProfiler.Stop("Working hours checks", started);
-            return slot == null;
+            bool? answer = ColonyHoursChecks.Answer(__instance);
+            if (answer == null) return true;
+            __result = answer.Value;
+            return false;
         }
     }
 

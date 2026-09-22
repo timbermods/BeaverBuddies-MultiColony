@@ -16,7 +16,7 @@ This is the text for the mod's own Workshop page, and how to publish it. Nothing
 
 ## Title
 
-BeaverBuddies MultiColony (alpha): co-op with a colony each
+BeaverBuddies MultiColony (beta): co-op with a colony each
 
 ## Description
 
@@ -41,7 +41,7 @@ the tick it happens instead of much later.
 
 Up to four colonies. Built on BeaverBuddies by thomaswp and contributors, and on the BeaverBuddies Stability Fork.
 
-**Alpha:** please play on a copy of your save and report problems (with every player's Player.log) at
+**Beta:** please play on a copy of your save and report problems (with every player's Player.log) at
 https://github.com/timbermods/BeaverBuddies-MultiColony/issues
 
 **Do not enable another BeaverBuddies at the same time:** they cannot run together (the main menu tells you if one

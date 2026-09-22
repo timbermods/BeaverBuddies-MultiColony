@@ -353,6 +353,8 @@ namespace BeaverBuddies.Colonies
 
         // ---- rounds crossing (in the tick, every computer) ----
 
+        private static readonly ColonyProfiler.Spot Exchanges = ColonyProfiler.Declare("Trading post exchanges");
+
         public void Tick()
         {
             if (!ColonyModeService.IsSeparateColonies || ++ticks % CrossingInterval != 0) return;
@@ -363,7 +365,7 @@ namespace BeaverBuddies.Colonies
             }
             finally
             {
-                ColonyProfiler.Stop("Trading post exchanges", started);
+                ColonyProfiler.Stop(Exchanges, started);
             }
         }
 

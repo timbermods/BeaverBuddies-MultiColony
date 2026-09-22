@@ -144,22 +144,28 @@ namespace BeaverBuddies.Panel
             if (parent == null) return null;
             float? population = null;
             var above = new List<float>();
-            string seen = "";
             int mine = parent.IndexOf(Root);
             for (int i = 0; i < parent.childCount; i++)
             {
                 VisualElement sibling = parent[i];
                 if (sibling == Root || sibling.resolvedStyle.display == DisplayStyle.None) continue;
                 float width = sibling.layout.width;
-                seen += (seen.Length > 0 ? ", " : "") + sibling.name + " " + width.ToString("0.#", CultureInfo.InvariantCulture);
                 if (population == null && (sibling.name == "Counters" || sibling.ClassListContains("population-panel"))) population = width;
                 if (i < mine) above.Insert(0, width);
             }
             float? chosen = PanelLayout.ChooseWidth(population, above);
-            // Written once per change, so a session's log shows what the panel followed if it ever looks wrong.
+            // Written once per change, so a session's log shows what the panel followed if it ever looks wrong. The
+            // list of panels is only put into words then (this is measured twice a second).
             if (chosen != null && (loggedWidth == null || Mathf.Abs(loggedWidth.Value - chosen.Value) > 1))
             {
                 loggedWidth = chosen;
+                string seen = "";
+                for (int i = 0; i < parent.childCount; i++)
+                {
+                    VisualElement sibling = parent[i];
+                    if (sibling == Root || sibling.resolvedStyle.display == DisplayStyle.None) continue;
+                    seen += (seen.Length > 0 ? ", " : "") + sibling.name + " " + sibling.layout.width.ToString("0.#", CultureInfo.InvariantCulture);
+                }
                 Plugin.Log("Connection panel width follows the panel above it: " + chosen.Value.ToString("0.#", CultureInfo.InvariantCulture) + " (panels in this corner: " + seen + ")");
             }
             return chosen;

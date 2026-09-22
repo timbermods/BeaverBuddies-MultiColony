@@ -15,6 +15,8 @@ namespace BeaverBuddies.Colonies
     /// </summary>
     public class ColonyPlacementValidator : IBlockObjectValidator
     {
+        private static readonly ColonyProfiler.Spot Previews = ColonyProfiler.Declare("Placement previews");
+
         private bool loggedError;
 
         public bool IsValid(BlockObject blockObject, out string errorMessage)
@@ -22,11 +24,19 @@ namespace BeaverBuddies.Colonies
             errorMessage = null;
             if (!blockObject.IsPreview || ReplayService.IsReplayingEvents || EventIO.IsNull) return true;
             if (!blockObject.Positioned) return true;
+            // Asked every frame for every block of what the player is placing (a dragged path is many). The founding
+            // tool has its own check; everything else is only a question with separate colonies on, and nothing is
+            // looked up or timed before that is known.
+            ColonyFoundingService founding = SingletonManager.GetSingleton<ColonyFoundingService>();
+            bool foundingTool = founding != null && founding.FoundingToolActive;
+            if (!foundingTool && !ColonyModeService.IsSeparateColonies) return true;
             ColonyVerdict verdict;
             long started = ColonyProfiler.Start();
             try
             {
-                verdict = Judge(blockObject);
+                verdict = foundingTool
+                    ? founding.Judge(ColonySession.LocalSlot, blockObject.Placement, checkBlocks: false)
+                    : Judge(blockObject);
             }
             catch (System.Exception error)
             {
@@ -37,7 +47,7 @@ namespace BeaverBuddies.Colonies
             }
             finally
             {
-                ColonyProfiler.Stop("Placement previews", started);
+                ColonyProfiler.Stop(Previews, started);
             }
             if (verdict.IsAllowed) return true;
             errorMessage = ColonyRulesService.RefusalMessage(verdict.Refusal);
@@ -46,12 +56,9 @@ namespace BeaverBuddies.Colonies
 
         private static ColonyVerdict Judge(BlockObject blockObject)
         {
-            var founding = SingletonManager.GetSingleton<ColonyFoundingService>();
-            if (founding != null && founding.FoundingToolActive)
-                return founding.Judge(ColonySession.LocalSlot, blockObject.Placement, checkBlocks: false);
             int slot = ColonySession.LocalSlot;
             var world = SingletonManager.GetSingleton<ColonyRulesService>()?.World;
-            if (!ColonyModeService.IsSeparateColonies || slot < 0 || world == null) return ColonyVerdict.Allow;
+            if (slot < 0 || world == null) return ColonyVerdict.Allow;
             Vector3Int? doorstep = blockObject.HasEntrance ? blockObject.PositionedEntrance.DoorstepCoordinates : (Vector3Int?)null;
             ColonyRefusal refusal = world.TilesConflict(slot, blockObject.PositionedBlocks.GetAllCoordinates().ToList(), doorstep,
                 crossing: TradingPosts.IsTradingPostBuilding(blockObject), out string detail);

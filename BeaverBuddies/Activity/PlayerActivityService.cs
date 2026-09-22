@@ -31,6 +31,8 @@ namespace BeaverBuddies.Activity
         public EntityComponent Selected, Editing;
         public Color HighlightColor;
         public readonly Highlighter Highlighter = new Highlighter();
+        /// <summary>The label with what the player is doing in front of it, made once per label (drawn every frame).</summary>
+        public string EditingLabel, ViewingLabel, SelectedLabel;
 
         string cachedHex;
         Color cachedColor;
@@ -92,7 +94,30 @@ namespace BeaverBuddies.Activity
         float nextSend, editingUntil;
         string editingId = "";
 
+        // What was last sent, so nothing goes out while nothing changed (ten frames a second, each a raycast and a
+        // few strings, went out before whether the player had moved or not). One still goes out every second: the
+        // others forget a player a few seconds after their last frame (PlayerActivity.LifetimeSeconds).
+        const float KeepAliveSeconds = 1f;
+        PlayerActivity lastSent;
+        float lastSentAt = -100;
+        // The last cursor ray and what it hit: while the mouse and the camera stand still the ray is the same, and so
+        // is the spot, without asking the scene again (once a second it is asked anyway, in case the ground changed).
+        Ray lastRay;
+        Vector3 lastHit;
+        bool lastVisible, haveLastRay;
+        float lastRaycastAt = -100;
+        // The strings a frame carries, made again only when what they say changes.
+        Color pingColor;
+        string pingHex = "";
+        Guid selectedGuid;
+        string selectedText = "";
+
         public IEnumerable<RemoteActivity> RemotePlayers => remote.Values;
+
+        /// <summary>The same players, for the overlay, which draws them every frame: no boxed enumerator.</summary>
+        public Dictionary<int, RemoteActivity>.ValueCollection RemotePlayerValues => remote.Values;
+
+        public int RemotePlayerCount => remote.Count;
 
         /// <summary>Incremented whenever the set of connected players or their style keys change.</summary>
         public int PlayersVersion { get; private set; }
@@ -178,7 +203,7 @@ namespace BeaverBuddies.Activity
             if (!ReferenceEquals(current, net))
             {
                 net?.ClearActivity();
-                ClearRemote(); net = current; editingId = ""; nextSend = 0;
+                ClearRemote(); net = current; editingId = ""; nextSend = 0; lastSent = null;
             }
             bool hide = !Settings.PlayerActivityEnabled || !ReplayService.IsLoaded || ReplayService.HasReplayFailure;
             if (net == null || net.IsStopped || hide)
@@ -202,34 +227,68 @@ namespace BeaverBuddies.Activity
             if (now < nextSend) return;
             // No catch-up bursts at low FPS; wall-clock rate is independent of the simulation speed.
             nextSend = now + .1f;
-            net.SendActivity(Capture(now));
+            PlayerActivity captured = Capture(now);
+            if (now - lastSentAt < KeepAliveSeconds && captured.SameAs(lastSent)) return;
+            lastSent = captured;
+            lastSentAt = now;
+            net.SendActivity(captured);
         }
 
-        PlayerActivity HiddenState() => new PlayerActivity(0, Settings.PingDisplayName,
-            ColorUtility.ToHtmlStringRGB(Settings.PingColorValue), false, 0, 0, 0);
+        string PingHex()
+        {
+            Color color = Settings.PingColorValue;
+            if (color != pingColor || pingHex.Length == 0)
+            {
+                pingColor = color;
+                pingHex = ColorUtility.ToHtmlStringRGB(color);
+            }
+            return pingHex;
+        }
+
+        PlayerActivity HiddenState() => new PlayerActivity(0, Settings.PingDisplayName, PingHex(), false, 0, 0, 0);
 
         PlayerActivity Capture(float now)
         {
             if (!Application.isFocused) return HiddenState();
             var selected = selection.SelectedObject;
             var entity = selected ? selected.GetComponent<EntityComponent>() : null;
-            string selectedId = entity && !entity.Deleted ? entity.EntityId.ToString() : "";
+            string selectedId = "";
+            if (entity && !entity.Deleted)
+            {
+                if (entity.EntityId != selectedGuid || selectedText.Length == 0)
+                {
+                    selectedGuid = entity.EntityId;
+                    selectedText = selectedGuid.ToString();
+                }
+                selectedId = selectedText;
+            }
             Vector3 position = Vector3.zero;
             Vector2 mouse = input.MousePosition;
             bool visible = !input.MouseOverUI && mouse.x >= 0 && mouse.y >= 0 && mouse.x < Screen.width && mouse.y < Screen.height;
             if (visible)
             {
                 Ray ray = camera.ScreenPointToRayInWorldSpace(mouse);
-                if (raycaster.TryHitSelectableObjectIncludeTerrainStump(ray, out _, out var hit)) position = hit.point;
+                if (haveLastRay && now - lastRaycastAt < KeepAliveSeconds && ray.origin == lastRay.origin && ray.direction == lastRay.direction)
+                {
+                    // The same ray as last time (the mouse and the camera stood still): the same spot.
+                    visible = lastVisible;
+                    position = lastHit;
+                }
                 else
                 {
-                    var ground = terrain.PickTerrainCoordinates(camera.ScreenPointToRayInGridSpace(mouse));
-                    if (ground.HasValue) position = CoordinateSystem.GridToWorld(ground.Value.Intersection);
-                    else visible = false;
+                    if (raycaster.TryHitSelectableObjectIncludeTerrainStump(ray, out _, out var hit)) position = hit.point;
+                    else
+                    {
+                        var ground = terrain.PickTerrainCoordinates(camera.ScreenPointToRayInGridSpace(mouse));
+                        if (ground.HasValue) position = CoordinateSystem.GridToWorld(ground.Value.Intersection);
+                        else visible = false;
+                    }
+                    lastRay = ray; haveLastRay = true; lastRaycastAt = now;
+                    lastVisible = visible; lastHit = position;
                 }
             }
             if (now >= editingUntil) editingId = "";
-            return new PlayerActivity(0, Settings.PingDisplayName, ColorUtility.ToHtmlStringRGB(Settings.PingColorValue),
+            return new PlayerActivity(0, Settings.PingDisplayName, PingHex(),
                 visible, position.x, position.y, position.z, selectedId, editingId);
         }
 
@@ -268,7 +327,14 @@ namespace BeaverBuddies.Activity
                 ColorUtility.TryParseHtmlString("#" + state.Color, out var advertised);
                 player.State = state;
                 player.AdvertisedColor = advertised;
-                player.Label = state.Name + (state.PlayerId == 0 ? " (Host)" : " (P" + state.PlayerId + ")");
+                if (player.Label == null || keysDirty)
+                {
+                    // The name is part of the style key, so keysDirty is set whenever it changes (above).
+                    player.Label = state.Name + (state.PlayerId == 0 ? " (Host)" : " (P" + state.PlayerId + ")");
+                    player.EditingLabel = "Editing: " + player.Label;
+                    player.ViewingLabel = "Viewing: " + player.Label;
+                    player.SelectedLabel = "Selected: " + player.Label;
+                }
                 if (keysDirty) RefreshStyleKeys();
                 Color color = ColorOf(player);
                 var selected = Resolve(state.Selection);

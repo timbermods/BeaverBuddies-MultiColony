@@ -32,7 +32,7 @@ namespace BeaverBuddies.Colonies
     /// set around the call, below); everything else is display and reads the local player's pool. Bot worker types
     /// ("bots may work here") are unlocked per colony too: a workplace asks for its own colony's.
     /// </summary>
-    public class ColonyScienceService : RegisteredSingleton, ISaveableSingleton, ILoadableSingleton, IPostLoadableSingleton
+    public class ColonyScienceService : RegisteredSingleton, ISaveableSingleton, ILoadableSingleton, IPostLoadableSingleton, IResettableSingleton
     {
         private static readonly SingletonKey ScienceKey = new SingletonKey("BeaverBuddies.ColonyScience");
         private static readonly PropertyKey<bool> EnabledKey = new PropertyKey<bool>("Enabled");
@@ -62,7 +62,20 @@ namespace BeaverBuddies.Colonies
             Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(_ => new SortedSet<string>(StringComparer.Ordinal)).ToArray();
         private bool workerSetsLoaded;
 
-        public bool Enabled { get; private set; }
+        // Read around every producing workshop's tick and every bot worker-type check: a static read, following the
+        // running game's service (see ColonyModeService.IsSeparateColonies for the same arrangement).
+        private static bool enabledNow;
+        private bool enabled;
+
+        public bool Enabled
+        {
+            get => enabled;
+            private set
+            {
+                enabled = value;
+                enabledNow = value;
+            }
+        }
 
         /// <summary>
         /// The per-colony bot worker types exist: loaded, or made when separate science began. A save from before
@@ -73,7 +86,12 @@ namespace BeaverBuddies.Colonies
 
         public static ColonyScienceService Instance => SingletonManager.GetSingleton<ColonyScienceService>();
 
-        public static bool IsEnabled => Instance?.Enabled == true;
+        public static bool IsEnabled => enabledNow;
+
+        public void Reset()
+        {
+            enabledNow = false;
+        }
 
         /// <summary>
         /// The slot the science being earned, spent or read right now belongs to. Set around simulation code and around
@@ -118,6 +136,7 @@ namespace BeaverBuddies.Colonies
             ToolButtonService toolButtonService, ToolUnlockingService toolUnlockingService,
             WorkplaceUnlockingService workplaceUnlockingService, TemplateNameMapper templateNameMapper)
         {
+            enabledNow = false;
             _templateNameMapper = templateNameMapper;
             _workplaceUnlockingService = workplaceUnlockingService;
             _singletonLoader = singletonLoader;

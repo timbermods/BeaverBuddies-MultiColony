@@ -35,6 +35,15 @@ namespace TimberNet
 
         public PlayerActivity WithPlayerId(int id) => new PlayerActivity(id, Name, Color, CursorVisible, X, Y, Z, Selection, Editing);
 
+        /// <summary>The same state as another: nothing another player's screen would draw differently.</summary>
+        public bool SameAs(PlayerActivity? other) =>
+            other != null && PlayerId == other.PlayerId && CursorVisible == other.CursorVisible
+            && X == other.X && Y == other.Y && Z == other.Z
+            && Name == other.Name && Color == other.Color && Selection == other.Selection && Editing == other.Editing;
+
+        static readonly string[] TextKeys = { "name", "color", "selection", "editing" };
+        static readonly string[] PositionKeys = { "x", "y", "z" };
+
         public JObject ToJson() => new JObject
         {
             ["type"] = MessageType, ["player"] = PlayerId, ["name"] = Name, ["color"] = Color,
@@ -58,7 +67,7 @@ namespace TimberNet
                 if (message["player"]?.Type != JTokenType.Integer || message["cursor"]?.Type != JTokenType.Boolean) return false;
                 int id = (int)message["player"]!;
                 if (id < 0) return false;
-                foreach (string key in new[] { "name", "color", "selection", "editing" })
+                foreach (string key in TextKeys)
                     if (message[key]?.Type != JTokenType.String || ((string)message[key]!).Length > 64) return false;
                 string name = (string)message["name"]!, color = (string)message["color"]!;
                 if (color.Length != 6 || color.Any(c => !Uri.IsHexDigit(c))) return false;
@@ -67,7 +76,7 @@ namespace TimberNet
                 if (editing.Length != 0 && !Guid.TryParseExact(editing, "D", out _)) return false;
                 float[] position = new float[3];
                 int index = 0;
-                foreach (string key in new[] { "x", "y", "z" })
+                foreach (string key in PositionKeys)
                 {
                     if (message[key]?.Type != JTokenType.Float && message[key]?.Type != JTokenType.Integer) return false;
                     float value = (float)message[key]!;
@@ -100,9 +109,15 @@ namespace TimberNet
         {
             lock (gate)
             {
-                var result = latest.Values.Where(v => now - v.Time <= PlayerActivity.LifetimeSeconds).Select(v => v.State).ToArray();
+                // Asked every frame, and nearly always empty: nothing is made for nothing.
+                if (latest.Count == 0) return Array.Empty<PlayerActivity>();
+                var result = new List<PlayerActivity>(latest.Count);
+                foreach (var entry in latest.Values)
+                {
+                    if (now - entry.Time <= PlayerActivity.LifetimeSeconds) result.Add(entry.State);
+                }
                 latest.Clear();
-                return result;
+                return result.ToArray();
             }
         }
         public void Clear() { lock (gate) latest.Clear(); }

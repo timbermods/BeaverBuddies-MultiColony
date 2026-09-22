@@ -130,7 +130,13 @@ namespace BeaverBuddies.Steam
         }
     }
 
-    /// <summary>Calls the Steam networking pump once per frame.</summary>
+    /// <summary>
+    /// Calls the Steam networking pump once per frame, before the game's own scripts: the game's ticker runs in the
+    /// same phase, and a guest at the start of a tick can only use the host's word for it once the pump has handed it
+    /// to the receive thread. Pumped after the ticker, a message that arrived during the last frame's drawing waited
+    /// a whole frame more: one frame of the guest standing still per tick at a high speed.
+    /// </summary>
+    [DefaultExecutionOrder(-1000)]
     internal sealed class SteamNetPump : MonoBehaviour
     {
         void Update() => SteamNet.Pump();
