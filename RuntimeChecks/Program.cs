@@ -103,6 +103,7 @@ ReplayEventChecks.Run(assembly, Test);
 PlantingLevelChecks.Run(assembly, Test);
 TraceChecks.Run(assembly, Test);
 ModListChecks.Run(assembly, Test);
+FrameTypeChecks.Run(assembly, Test);
 ColonyRuntimeChecks.Run(assembly, Test);
 PerformanceRuntimeChecks.Run(assembly, Test);
 TradingPostBuildingChecks.Run(assembly, Path.GetDirectoryName(modPath)!, Path.GetFullPath(args[1]), Test);
