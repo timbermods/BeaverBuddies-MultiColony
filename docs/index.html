@@ -24,6 +24,7 @@
     </a>
     <nav class="nav" aria-label="Main">
       <a href="index.html" aria-current="page">Overview</a>
+      <a href="#new">New in beta2</a>
       <a href="#features">Features</a>
       <a href="#trading">Trading</a>
       <a href="install.html">Install</a>
@@ -40,13 +41,13 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-alpha21</span> &middot; beta</span></div>
+      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta2</span> &middot; beta</span></div>
       <h1>One map.<br>A colony each.</h1>
       <p class="lede">Play Timberborn with friends without sharing a colony. Each player runs their own districts, land, beavers, stock and science on one shared map, and the colonies meet only at <b>trading posts</b>, where they barter. Co-op, not a race: nobody wins, and everyone can help.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.4.0-alpha21</span></span>
+          <span>Download <span data-release="version">1.4.0-beta2</span></span>
         </a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
         <a class="btn btn-secondary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules</a>
@@ -133,7 +134,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.4.0-alpha21</span></b><span>Latest pre-release</span></li>
+      <li><b><span data-release="version">1.4.0-beta2</span></b><span>Latest pre-release</span></li>
       <li><b>Up to 4 colonies</b><span>More players help the host's</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built against</span></li>
       <li><b>Steam invites</b><span>No port forwarding</span></li>
@@ -141,6 +142,55 @@
     </ul>
   </div>
 </div>
+
+<!-- ============ new in beta2 ============ -->
+<section class="tint" id="new">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">New in 1.4.0-beta2</div>
+      <h2>Nine things that make a colony each easier to live with</h2>
+      <p>Each sits on what the mod already had, and none changes the game unless a player uses it. All of it is in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta2">beta2 release notes</a>.</p>
+    </div>
+    <div class="grid grid-3">
+      <article class="card">
+        <h3 style="margin-top:0">Food and water at a glance</h3>
+        <p>Every colony's row in the trading window (<kbd>Ctrl</kbd>+<kbd>T</kbd>) shows its food and water with the days they last at yesterday's use, red under a day. You see when a gift would help before you offer one.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">Ask a friend to look after your colony</h3>
+        <p>Away for the evening? <i>Let Sarah look after it</i>: she presses <i>Run this colony</i>, plays it as if it were hers, and switches back. While she is in the game, your colony is not handed over for your absence.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">Go to a player, and Home</h3>
+        <p>Click a name in the connection panel and your camera goes to that player's cursor. <kbd>Home</kbd> brings you back to your own colony.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">A warning before a hand-over</h3>
+        <p>The window says <i>missed 6 of 7 days</i>, and the day the count reaches the host's limit everyone in the game is told: unless the absent player is back tomorrow, the colony goes to a neighbour.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">Offer again, and counter-offers</h3>
+        <p>A Trading Post remembers its last exchange: one click offers it again, and a click on a ledger row loads that round's terms. Declining leaves the offer's terms in your form, so a counter-offer is a changed number.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">A wishlist per colony</h3>
+        <p>Say up to three things your colony is looking for. Other players see them beside your colony, under the header of a post you share, and in yellow in the goods grid when they choose what to give you.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">Keep at least</h3>
+        <p>A reserve on a standing deal: your side is brought only while your colony would still have that much after the round. Each side sets its own, and can change it while the exchange runs.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">The host is asked before joining closes</h3>
+        <p>While players can still join, the host's first change opens a dialog: start the game, or keep waiting. A guest's change meanwhile is refused with a notice, and the connection panel says <i>Joining: open</i>.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">Still unplayed</h3>
+        <p>515 automated checks cover all of it (14 and 1 new), and none of it has been seen in a running game yet. The test scripts' lines A22a to A22e and B8f to B8i are the ones to try first.</p>
+      </article>
+    </div>
+  </div>
+</section>
 
 <!-- ============ how a game goes ============ -->
 <section id="how-to-play">
@@ -157,7 +207,7 @@
       </li>
       <li>
         <h3>The host invites, then waits</h3>
-        <p>Load a save, <b>Host co-op game</b>, <b>Invite Friends</b> in Steam's overlay. When everyone is in, <b>Start Game</b> and unpause. Build nothing before that: joining closes at the first change.</p>
+        <p>Load a save, <b>Host co-op game</b>, <b>Invite Friends</b> in Steam's overlay. When everyone is in, <b>Start Game</b> and unpause. Build nothing before that: if you do, the game asks whether to start now, which closes joining.</p>
       </li>
       <li>
         <h3>Found your colony</h3>
@@ -361,7 +411,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-alpha21</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta2</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>
