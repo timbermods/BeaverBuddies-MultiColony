@@ -67,14 +67,15 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>
-        /// Whether a thing belongs to this player's colony: through its district (a building's, a beaver's). Something
-        /// in no district is shown to everyone.
+        /// Whether a thing belongs to this player's colony: through its district (a building's, a beaver's), else by the
+        /// colony it was last in (ColonyJournal: a dead beaver, which the game has taken out of its district, or one cut
+        /// off from it). Something in no district, with no colony recorded, is shown to everyone.
         /// </summary>
         public static bool IsOwn(BaseComponent component)
         {
             if (!component) return true;
             int? owner = DistrictOwner.OwnerOf(component);
-            return owner == null || owner.Value == ColonySession.LocalSlot;
+            return JournalFilter.IsOwn(ColonySession.LocalSlot, owner, owner == null ? ColonyJournal.Instance?.RecordedOwnerOf(component) : null);
         }
 
         // The top bar asks once per good it shows, and the population panel and wellbeing again: one list, filled at
@@ -306,6 +307,31 @@ namespace BeaverBuddies.Colonies
         static void Postfix(StatusInstance statusInstance, ref bool __result)
         {
             if (__result && ColonyViewService.Active && !ColonyViewService.IsOwn(statusInstance.StatusSubject)) __result = false;
+        }
+    }
+
+    // A notifying status (a tragic death) makes its alert row blink as it comes on, whoever's it is: the other colony's
+    // death would blink this player's row while one of their own lies there. The event it posts is only for the alert
+    // panel (RuntimeChecks: nothing else in the game listens), so skipping it for the other colony changes nothing
+    // simulated.
+    [HarmonyPatch(typeof(NotifyingStatusMonitor), nameof(NotifyingStatusMonitor.OnStatusToggled))]
+    static class ColonyViewNotifyingStatusPatcher
+    {
+        static bool Prefix(StatusInstance statusInstance)
+        {
+            // Every status of every building and beaver comes through here as it changes; the game only acts on a
+            // notifying one, so only that one is judged.
+            if (!statusInstance.IsNotifying || !ColonyViewService.Active) return true;
+            // This runs in the tick, as the status comes on: it must never throw.
+            try
+            {
+                return ColonyViewService.IsOwn(statusInstance.StatusSubject);
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Colony] Could not decide whose an alert is, so it is shown: " + error.Message);
+                return true;
+            }
         }
     }
 

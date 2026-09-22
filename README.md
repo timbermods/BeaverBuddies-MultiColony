@@ -262,8 +262,9 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 - **A guest's actions** go to the host and back before they happen. While they travel, the tiles of what you placed
   or marked are tinted (red for a removal); if the host refuses the action, a notice says why.
 - **Mismatched mods** are flagged when someone joins. It's a warning, but a mod that changes the simulation will
-  cause desyncs, so match mod lists. A guest without a mod whose actions the host sends (MixedStorage, say) stops the
-  session at the first such action, with a message naming the mod. This mod's own files are checked, not warned
+  cause desyncs, so match mod lists. A guest without a mod whose actions the host sends (MixedStorage, say) leaves the
+  game at the first such action, with a message naming the mod; the host and the other players play on. An action a
+  guest sends that the host cannot read is refused, and the guest's other actions of that moment still happen. This mod's own files are checked, not warned
   about: a different zip, or a missing or edited `Buildings` or `TemplateCollections` folder, is refused at the join.
 - **Desyncs** can still happen. In a separate-colonies game, colony state (owners, marks, science, exchanges, land)
   is compared with the host's every tick, and in full once a day, so one is caught when it happens. The host uses

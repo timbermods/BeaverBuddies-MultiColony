@@ -106,6 +106,10 @@ namespace BeaverBuddies.IO
         // The tags (requestId) of guest actions in frames that could not be read, in the order they arrived.
         private readonly List<string> unreadableRequestIds = new List<string>();
 
+        // A guest sends a tick's actions as one group: one action this game cannot read (from a mod only that guest has)
+        // loses only itself, not the tick's other actions. What the host keeps is played and sent on like any group.
+        protected override bool KeepsReadableActions => true;
+
         // A guest's action only happens once the host has read it, played it and sent it back, so one the host cannot
         // read is lost for every player alike and nobody goes out of step. Ending the session for it would let any
         // guest end it. The guest is told its actions were refused (TakeUnreadableRequestIds), so it clears its marks

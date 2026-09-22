@@ -504,14 +504,17 @@ static class ColonyChecks
             Equal(0L, ColonyDigest.Of(null));
         });
 
-        yield return ("Colony: the colony digest keeps its last 256 changes in order, from load, only those it counted, allocating nothing", () =>
+        yield return ("Colony: the colony digest keeps its last 16384 changes in order, from load, only those it counted, allocating nothing", () =>
         {
             ColonyDigest.Gate = () => true;
             ColonyDigest.Reset();
             Equal(0, ColonyDigest.Recent().Length);
-            for (int i = 1; i <= 300; i++) ColonyDigest.Note(i % 2 == 0 ? "stamp" : "land", i, -i, i * 10L, long.MaxValue - i);
+            int size = ColonyDigest.RecentSize, total = size + 44;
+            // One tick can count thousands of changes (a mark notes one per tile): 256 was too few.
+            Equal(16384, size);
+            for (int i = 1; i <= total; i++) ColonyDigest.Note(i % 2 == 0 ? "stamp" : "land", i, -i, i * 10L, long.MaxValue - i);
             var recent = ColonyDigest.Recent();
-            Equal(256, ColonyDigest.RecentSize); Equal(256, recent.Length); Equal(300, ColonyDigest.Changes);
+            Equal(size, recent.Length); Equal(total, ColonyDigest.Changes);
             for (int k = 0; k < recent.Length; k++)
             {
                 int i = 45 + k;
@@ -519,8 +522,8 @@ static class ColonyChecks
                 Equal((long)i, recent[k].A); Equal((long)-i, recent[k].B); Equal(i * 10L, recent[k].C); Equal(long.MaxValue - i, recent[k].D);
             }
             // The newest carries the digest it left, the one a heartbeat would carry now.
-            Equal(ColonyDigest.Value, recent[255].After);
-            Check(recent[254].After != recent[255].After, "each change carries the digest after it");
+            Equal(ColonyDigest.Value, recent[size - 1].After);
+            Check(recent[size - 2].After != recent[size - 1].After, "each change carries the digest after it");
             // Printed oldest first, a change a line, to set two players' logs side by side. The same text whatever the
             // computer's culture: Swedish writes a negative number with U+2212, not '-'.
             string text;
@@ -528,12 +531,23 @@ static class ColonyChecks
             try
             {
                 System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("sv-SE");
-                text = ColonyDigest.DescribeRecent();
+                text = ColonyDigest.DescribeSince(0);
             }
             finally { System.Globalization.CultureInfo.CurrentCulture = culture; }
             Check(text.Contains($"#45 land 45 -45 450 {long.MaxValue - 45} -> {recent[0].After:x16}"), "the oldest change kept is printed");
-            Check(text.IndexOf("#45 ") < text.IndexOf("#300 "), "oldest first");
-            Check(!text.Contains("#44 "), "a change pushed out is not printed");
+            Check(text.IndexOf("#45 ") < text.IndexOf($"#{total} "), "oldest first");
+            Check(!text.Contains(" #44 land") && !text.Contains(" #44 stamp"), "a change pushed out is printed");
+            // It says the changes it no longer has, instead of starting silently after them.
+            Check(text.Contains($"(#1 to #44 are no longer kept: more than {size} changes were counted since)"), "the missing changes are not named: " + text.Substring(0, 300));
+            // From a count inside the wrapped ring: the next change on, to the newest.
+            var tail = ColonyDigest.Since(10000);
+            Equal(total - 10000, tail.Length); Equal(10001, tail[0].Number); Equal(total, tail[tail.Length - 1].Number);
+            Equal(recent[10000 - 45 + 1].After, tail[0].After);
+            // From a count the ring has already dropped: all it keeps, and it names what is missing.
+            Equal(size, ColonyDigest.Since(10).Length); Equal(45, ColonyDigest.Since(10)[0].Number);
+            Check(ColonyDigest.DescribeSince(10).Contains("(#11 to #44 are no longer kept"), "the changes missing after an old count are not named");
+            // From the newest, or past it: nothing.
+            Equal(0, ColonyDigest.Since(total).Length); Equal(0, ColonyDigest.Since(total + 5).Length);
             // A change costs no allocation once it is full. The best of five passes counts, so that the runtime's own
             // work landing on this thread by chance (the loop compiled again mid-way) cannot fail it.
             long least = long.MaxValue;
@@ -547,7 +561,7 @@ static class ColonyChecks
             // A load clears it.
             ColonyDigest.Reset();
             Equal(0, ColonyDigest.Recent().Length);
-            Check(!ColonyDigest.DescribeRecent().Contains("#"), "nothing printed after a reset");
+            Check(ColonyDigest.DescribeSince(0).EndsWith("\n  (none)"), "a change is printed after a reset");
             // Outside the simulation nothing is kept either.
             ColonyDigest.Note("stamp", 1, 1);
             ColonyDigest.Gate = () => false;
@@ -559,6 +573,37 @@ static class ColonyChecks
             Equal("stamp", recent[0].What); Equal(1, recent[0].Number);
             Equal("land", recent[1].What); Equal(2, recent[1].Number);
             ColonyDigest.Reset();
+        });
+
+        yield return ("Colony: a desync's list starts after the last count the colony checks agreed on, the same on every computer", () =>
+        {
+            ColonyDigest.Gate = () => true;
+            ColonyDigest.Reset();
+            Equal(0, ColonyDigest.Agreed);
+            for (int i = 1; i <= 40; i++) ColonyDigest.Note("stamp", i);
+            // The host's heartbeat matched: all 40 were made alike.
+            ColonyDigest.NoteAgreed();
+            Equal(40, ColonyDigest.Agreed);
+            // One tick's big mark: far more than the old 256 changes, and the one that differs is the first of them.
+            for (int i = 1; i <= 3000; i++) ColonyDigest.Note("cut", i, 1);
+            var since = ColonyDigest.Since(ColonyDigest.Agreed);
+            Equal(3000, since.Length); Equal(41, since[0].Number); Equal(3040, since[2999].Number);
+            string guest = ColonyDigest.DescribeSince(ColonyDigest.Agreed, hostChanges: 3041);
+            Check(guest.Contains("the changes after #40, the last count the colony checks agreed on (the host's check that differed: #3041)"), guest.Substring(0, 200));
+            Check(guest.Contains("\n  #41 cut 1 1 0 0 -> "), "the first change that could differ is not listed");
+            Check(!guest.Contains("\n  #40 "), "a change both agreed on is listed");
+            Check(!guest.Contains("no longer kept"), "the list says changes are missing");
+            // The host logs later, from the count the desynced guest sent, and marks where its own check came.
+            for (int i = 1; i <= 5; i++) ColonyDigest.Note("land", i);
+            string host = ColonyDigest.DescribeSince(40, hostChanges: 3041);
+            Check(host.Contains("\n  #3041 land 1 0 0 0 -> ") && host.Contains("#3041 land 1 0 0 0 -> " + ColonyDigest.Since(3040)[0].After.ToString("x16") + "\n  (the host's check that differed came here)"),
+                "the host's check is not marked after its change");
+            Check(host.IndexOf("#41 ") < host.IndexOf("#3045 "), "oldest first");
+            // Nothing after the agreed count: nothing to list.
+            Check(ColonyDigest.DescribeSince(ColonyDigest.Changes).EndsWith("\n  (none)"), "an empty list is not said to be empty");
+            // The host compares nothing: its Agreed stays 0 and a list from it is everything kept.
+            ColonyDigest.Reset();
+            Equal(0, ColonyDigest.Agreed);
         });
 
         yield return ("Colony: a Trading Post is removed by either of its partners, and by nobody else", () =>
@@ -1133,6 +1178,19 @@ static class ColonyChecks
             // Alone, or before this player is seated, the journal is the game's.
             Check(JournalFilter.ShouldShow(false, 0, false, true, 1, 1));
             Check(JournalFilter.ShouldShow(false, -1, false, false, null, null));
+        });
+
+        yield return ("Colony: an alert goes by the colony a thing is in, else the colony it was last in, else is everyone's", () =>
+        {
+            // A living beaver or a building: its colony now.
+            Check(JournalFilter.IsOwn(0, 0, null)); Check(!JournalFilter.IsOwn(0, 1, null));
+            // What it is in now wins over what was recorded (a beaver moved through a Trading Post).
+            Check(JournalFilter.IsOwn(1, 1, 0)); Check(!JournalFilter.IsOwn(0, 1, 0));
+            // A dead beaver lies in no district: the colony it died in decides whose "died tragically" alert it is.
+            Check(!JournalFilter.IsOwn(0, null, 1), "the other colony's death alert is shown");
+            Check(JournalFilter.IsOwn(1, null, 1), "a colony's own death alert is hidden from it");
+            // In no district and never recorded: everyone's, as before.
+            Check(JournalFilter.IsOwn(0, null, null)); Check(JournalFilter.IsOwn(1, null, null));
         });
 
         yield return ("Colony: an entry about something gone whose colony nobody recorded is hidden while each sees their own", () =>

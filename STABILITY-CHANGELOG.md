@@ -5,6 +5,45 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta9
+
+**The four things beta8 left.**
+- **A guest that cannot read the host's action leaves on its own.** In beta8 a guest that got an action it could
+  not read (one from a mod only the host has) stopped with `AbortSession`, which sends the host a session fault: the
+  host and every other guest stopped too, and each was told the action "may have changed only part of the game
+  state" and to reload a known-good save, though nothing had been played. The guest now only closes its connection
+  (`ClientEventIO.LeftOverUnreadableAction`, `ReplayService.AbortReplay(reason, leaveQuietly)`), as if it had quit:
+  the host sees it leave and plays on with the others, whose games are whole. Its dialog says that nothing of the
+  action was played, no save is harmed, and how to join again (install the mod the message names, or the host stops
+  using it; then the host saves and rehosts). A failed action, and a fault from another player, stop everyone as
+  before.
+- **The host refuses a guest's unreadable action, not its whole tick.** A guest sends a tick's actions as one group,
+  and beta8's host dropped the group when one action in it could not be read. A host now reads such a group an action
+  at a time (`NetIOBase.ReadableActionsOf`, host only: `KeepsReadableActions`): the readable ones are kept in their
+  order and read again through the type binder as one group, and each lost one (an unreadable action, an empty entry,
+  a group inside the group) is logged and refused to that guest on its own (`ActionRefusedEvent`). A frame whose
+  fault is the group's own, or that has no readable action, is refused whole, as before. What the host keeps is what
+  every computer plays, so nobody goes out of step. A guest still keeps nothing of a frame from the host it cannot
+  read.
+- **Another colony's death alert stays out of your alert panel.** The game puts the *died tragically* alert on the
+  beaver's own entity, which it has taken out of its district by then, and a thing in no district counted as
+  everyone's. `ColonyViewService.IsOwn` now falls back to the colony the journal recorded as the beaver died or left
+  its district (`ColonyJournal.RecordedOwnerOf`, the rule `JournalFilter.IsOwn`), so the alert counts, the batch
+  control window's lists and the journal agree; a beaver cut off from its district goes by its last colony there too.
+  As such an alert comes on it also made every player's alert row blink: a prefix on
+  `NotifyingStatusMonitor.OnStatusToggled` skips that for another colony's subject. The event it posts is only for the
+  alert panel (RuntimeChecks checks that nothing else in the game names it), so nothing simulated changes.
+- **A desync's lists start where the colony checks last agreed.** beta8 logged each computer's last 256 changes,
+  and one tick can count thousands (a mark notes one per tile), so the change that differed could already be gone,
+  and the host, logging later, listed different numbers. A guest now notes how many changes it had counted at every
+  heartbeat whose digest matched (`ColonyDigest.Agreed`, reset at load), the desync event carries that count and the
+  host's count at the check that differed (`ClientDesyncedEvent.colonyChangesAgreed`, `colonyChangesHost`), and
+  every computer logs its changes from the next one on (`ColonyDigest.DescribeSince`), with a line where the host's
+  check came. The ring keeps the last 16384 changes (about 900 KB, made once, still nothing allocated per change);
+  if more than that were counted since the agreed count, the list says which changes it no longer has.
+- Checks: StabilityTests 322 (2 new: the alert rule, the agreed window), RuntimeChecks 270 (2 new: a host keeping a
+  group's readable actions in order, and the death alert's entity, blink event and patch). Not played.
+
 ## 1.4.0-beta8
 
 **Seven reviewed pull requests** (timbermods/BeaverBuddies-MultiColony#2 to #8), each reviewed again before merging;

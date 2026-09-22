@@ -25,6 +25,17 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>
+        /// Whether a thing is this player's to see, in the alerts and the batch control window: by the colony it is in
+        /// now, else by the colony recorded for it (a dead beaver, whose alert shows while its body lies there, or a
+        /// beaver cut off from its district). A thing in no colony, with none recorded, is everyone's.
+        /// </summary>
+        public static bool IsOwn(int localSlot, int? liveOwner, int? recordedOwner)
+        {
+            int? owner = liveOwner ?? recordedOwner;
+            return owner == null || owner.Value == localSlot;
+        }
+
+        /// <summary>
         /// Which recorded subjects can be forgotten when the record grows: those out of the journal (kept) that are gone.
         /// A living beaver keeps its last colony, for the day it dies in no district (cut off, or its district deleted).
         /// </summary>

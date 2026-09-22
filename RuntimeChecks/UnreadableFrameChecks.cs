@@ -71,26 +71,36 @@ internal static class UnreadableFrameChecks
 
         const int Tick = 3;
         object Readable() => Frame(Group(Tick, Heartbeat("guest:read")));
-        // Unreadable frames, with pieces of text the reason for dropping each must contain, and the tags of the guest
-        // actions in it, which a host tells that guest were refused.
-        var unreadable = new List<(string Kind, Func<object> Make, string[] Named, string[] Tags)>
+        // Unreadable frames, with pieces of text the reason for dropping each must contain, the tags of the guest actions
+        // in it that a host loses and tells that guest were refused, and how many of its actions a host still keeps: a
+        // host reads a group it cannot read as a whole an action at a time, and loses only the actions it cannot read.
+        var unreadable = new List<(string Kind, Func<object> Make, string[] Named, string[] Tags, int Kept)>
         {
             ("a type the binder refuses", () => Frame(Group(Tick, Heartbeat("guest:1"), Automation("guest:2", new FrameSentinel()))),
-                new[] { nameof(FrameSentinel), "RuntimeChecks" }, new[] { "guest:1", "guest:2" }),
+                new[] { nameof(FrameSentinel), "RuntimeChecks" }, new[] { "guest:2" }, 1),
             ("an action from a mod this game does not have", () => Frame(Renamed(Group(Tick, Heartbeat("guest:3")),
                     heartbeatType.FullName + ", " + heartbeatType.Assembly.GetName().Name, "MissingMod.Actions.MissingEvent, MissingMod.Actions")),
-                new[] { "MissingMod.Actions.MissingEvent", "MissingMod.Actions" }, new[] { "guest:3" }),
+                new[] { "MissingMod.Actions.MissingEvent", "MissingMod.Actions" }, new[] { "guest:3" }, 0),
             ("a frame with no type", () => Frame($"{{\"ticksSinceLoad\": {Tick}, \"requestId\": \"guest:4\"}}"),
-                Array.Empty<string>(), new[] { "guest:4" }),
-            // Both are read fine, but no action in them can be played: replaying them would fail and stop the session,
-            // and on a host an empty entry would throw out of the tick before anything was played.
+                Array.Empty<string>(), new[] { "guest:4" }, 0),
+            // Both are read fine, but not every action in them can be played: replaying them would fail and stop the
+            // session, and on a host an empty entry would throw out of the tick before anything was played.
             ("a group holding an empty entry", () => Frame(Group(Tick, Heartbeat("guest:5"), null)),
-                new[] { "group of actions" }, new[] { "guest:5" }),
+                new[] { "group of actions" }, Array.Empty<string>(), 1),
             ("a group inside a group", () => Frame(Group(Tick, Heartbeat("guest:6"), GroupOf(Tick, Heartbeat("guest:inner")))),
-                new[] { "group of actions" }, new[] { "guest:6" }),
+                new[] { "group of actions" }, new[] { "guest:inner" }, 1),
             ("an action with a value of the wrong kind", () => Frame(Replaced(Group(Tick, Heartbeat("guest:7")), "\"digest\":null", "\"digest\":\"x\"")),
-                new[] { "digest" }, new[] { "guest:7" }),
+                new[] { "digest" }, new[] { "guest:7" }, 0),
+            // A group whose own list cannot be read, holding an unreadable action too: once that action is left out the
+            // rest still cannot be read, so the host keeps nothing of it and refuses every action in it.
+            ("a group of a refused list, holding an unreadable action", () => Frame(Replaced(Group(Tick, Heartbeat("guest:11"), Automation("guest:12", new FrameSentinel())),
+                    eventType.FullName + ", " + eventType.Assembly.GetName().Name + "]]", typeof(FrameSentinel).FullName + ", " + typeof(FrameSentinel).Assembly.GetName().Name + "]]")),
+                new[] { nameof(FrameSentinel) }, new[] { "guest:11", "guest:12" }, 0),
+            // One action a host cannot read loses only itself: the tick's other actions, before and after it, are played.
+            ("one unreadable action among readable ones", () => Frame(Group(Tick, Heartbeat("guest:8"), Automation("guest:9", new FrameSentinel()), Heartbeat("guest:10"))),
+                new[] { nameof(FrameSentinel) }, new[] { "guest:9" }, 2),
         };
+        int keptByHost = unreadable.Sum(bad => bad.Kept);
 
         // The real event IO around a real TimberClient or TimberServer that has received these frames. Nothing is
         // connected: the frames are put where the receive thread would have put them.
@@ -118,6 +128,39 @@ internal static class UnreadableFrameChecks
             try { return ((IEnumerable)io.GetType().GetMethod("ReadEvents").Invoke(io, new object[] { Tick })).Cast<object>().ToList(); }
             catch (TargetInvocationException e) { throw new Exception("ReadEvents threw: " + e.InnerException?.Message, e.InnerException); }
         }
+        // The methods a method calls (call, callvirt), from its IL.
+        List<MethodBase> Calls(MethodBase method)
+        {
+            var found = new List<MethodBase>();
+            byte[] body = method.GetMethodBody()?.GetILAsByteArray();
+            if (body == null) return found;
+            var opcodes = typeof(System.Reflection.Emit.OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Select(f => (System.Reflection.Emit.OpCode)f.GetValue(null)!).ToDictionary(o => (ushort)o.Value);
+            int position = 0;
+            while (position < body.Length)
+            {
+                ushort code = body[position++];
+                if (code == 0xfe) code = (ushort)(0xfe00 | body[position++]);
+                var op = opcodes[code];
+                switch (op.OperandType)
+                {
+                    case System.Reflection.Emit.OperandType.InlineNone: break;
+                    case System.Reflection.Emit.OperandType.ShortInlineBrTarget: case System.Reflection.Emit.OperandType.ShortInlineI:
+                    case System.Reflection.Emit.OperandType.ShortInlineVar: position += 1; break;
+                    case System.Reflection.Emit.OperandType.InlineVar: position += 2; break;
+                    case System.Reflection.Emit.OperandType.InlineI8: case System.Reflection.Emit.OperandType.InlineR: position += 8; break;
+                    case System.Reflection.Emit.OperandType.InlineSwitch: position += 4 + 4 * BitConverter.ToInt32(body, position); break;
+                    case System.Reflection.Emit.OperandType.InlineMethod:
+                        if (op == System.Reflection.Emit.OpCodes.Call || op == System.Reflection.Emit.OpCodes.Callvirt)
+                            found.Add(method.Module.ResolveMethod(BitConverter.ToInt32(body, position))!);
+                        position += 4;
+                        break;
+                    default: position += 4; break;
+                }
+            }
+            return found;
+        }
+
         List<string> RefusedTags(object serverIO)
         {
             MethodInfo take = serverIOType.GetMethod("TakeUnreadableRequestIds")
@@ -153,6 +196,34 @@ internal static class UnreadableFrameChecks
                     if (!faults[0].Contains(name)) throw new Exception($"With {bad.Kind}, the reason does not name {name}: {faults[0]}");
                 if (!log.Any(line => line.StartsWith("LogError"))) throw new Exception($"With {bad.Kind}, no error was logged");
             }
+            // It leaves as if it had quit (ReplayService.AbortReplay, leaveQuietly): the host and the others play on, since
+            // nothing went wrong for them. A guest that read everything has not left.
+            PropertyInfo left = clientIOType.GetProperty("LeftOverUnreadableAction")
+                ?? throw new Exception("A guest does not say it left over an action it could not read");
+            Logged(() =>
+            {
+                var (readIO, _, _) = Received(true, Readable());
+                Read(readIO);
+                if ((bool)left.GetValue(readIO)!) throw new Exception("A guest that read every frame says it left over one");
+                var (badIO, _, _) = Received(true, unreadable[0].Make());
+                Read(badIO);
+                if (!(bool)left.GetValue(badIO)!) throw new Exception("A guest that could not read a frame does not say it left over it");
+            });
+            // The guest's fault handler passes that on, and a quiet leave closes the connection: only a real failure sends
+            // the host the fault that stops everyone (AbortSession).
+            const BindingFlags declared = all | BindingFlags.DeclaredOnly;
+            var handlers = new[] { clientIOType }.Concat(clientIOType.GetNestedTypes(all))
+                .SelectMany(t => t.GetMethods(declared))
+                .Where(m => Calls(m).Any(c => c.Name == "AbortReplay"))
+                .ToList();
+            if (handlers.Count != 1 || !Calls(handlers[0]).Any(c => c.Name == "get_LeftOverUnreadableAction")
+                || Calls(handlers[0]).Single(c => c.Name == "AbortReplay").GetParameters().Length != 2)
+                throw new Exception("The guest's fault handler no longer says whether it left over an unreadable action");
+            var abort = mod.GetType("BeaverBuddies.ReplayService", true).GetMethod("AbortReplay", all, new[] { typeof(string), typeof(bool) })
+                ?? throw new Exception("ReplayService.AbortReplay(string, bool) is gone");
+            var abortCalls = Calls(abort).Select(c => c.Name).ToList();
+            if (!abortCalls.Contains("Close") || abortCalls.Count(n => n == "AbortSession") != 2)
+                throw new Exception("AbortReplay no longer closes quietly for a guest that left: " + string.Join(", ", abortCalls));
         });
 
         test("A host ignores a guest's frame it cannot read, keeps the rest and logs which type", () =>
@@ -174,12 +245,36 @@ internal static class UnreadableFrameChecks
             // session here would let any guest end it.
             if (faults.Count != 0) throw new Exception("The host raised a session fault: " + faults[0]);
             if ((bool)netBase.GetProperty("IsStopped").GetValue(netObject)) throw new Exception("The host's session was stopped");
-            if (events.Count != 2) throw new Exception($"{events.Count} actions were read; the 2 readable ones should be");
+            // The two readable frames, and each unreadable group with what could be kept of it.
+            int groups = 2 + unreadable.Count(bad => bad.Kept > 0);
+            if (events.Count != groups) throw new Exception($"{events.Count} frames were read; {groups} should be");
+            int actions = events.Sum(e => e.GetType() == groupedType ? ((IList)groupedType.GetField("events").GetValue(e)!).Count : 1);
+            if (actions != 2 + keptByHost) throw new Exception($"{actions} actions were kept; {2 + keptByHost} should be");
             string warnings = string.Join("\n", log.Where(line => line.StartsWith("LogWarning")));
             foreach (string name in unreadable.SelectMany(bad => bad.Named))
                 if (!warnings.Contains(name)) throw new Exception($"The log does not name {name}:\n{warnings}");
+            // One warning for each unreadable frame, or for each action lost from a group that was kept.
             int fromGuest = log.Count(line => line.StartsWith("LogWarning") && line.Contains("Ignored an action from player 2 "));
             if (fromGuest != unreadable.Count) throw new Exception($"{fromGuest} of {unreadable.Count} warnings say which guest sent the frame:\n{warnings}");
+        });
+
+        test("A host keeps a guest's readable actions of a tick, in their order, when one of them cannot be read", () =>
+        {
+            var bad = unreadable.Single(b => b.Kind == "one unreadable action among readable ones");
+            object frame = bad.Make();
+            netBase.GetMethod("StampPlayer").Invoke(null, new[] { frame, (object)2 });
+            List<object> events = null;
+            Logged(() => events = Read(Received(false, frame).IO));
+            if (events.Count != 1 || events[0].GetType() != groupedType) throw new Exception("The kept actions are not one group");
+            var kept = ((IList)groupedType.GetField("events").GetValue(events[0])!).Cast<object>().ToList();
+            string[] tags = kept.Select(e => (string)eventType.GetField("requestId").GetValue(e)!).ToArray();
+            if (!tags.SequenceEqual(new[] { "guest:8", "guest:10" })) throw new Exception($"Kept [{string.Join(", ", tags)}]");
+            // Each is still the sender's, and the group is still that tick's.
+            if ((int)eventType.GetField("ticksSinceLoad").GetValue(events[0])! != Tick) throw new Exception("The kept group lost its tick");
+            foreach (object e in kept)
+            {
+                if ((int)eventType.GetField("player").GetValue(e)! != 2) throw new Exception("A kept action lost its sender");
+            }
         });
 
         test("A host keeps the tags of a guest's actions it could not read, to tell that guest they were refused", () =>
@@ -229,7 +324,7 @@ internal static class UnreadableFrameChecks
                 }
                 finally { installed.SetValue(null, previous); }
             });
-            if (played.Count != 2) throw new Exception($"{played.Count} actions are to be played; the 2 readable ones should be");
+            if (played.Count != 2 + keptByHost) throw new Exception($"{played.Count} actions are to be played; {2 + keptByHost} should be");
             string[] expected = unreadable.SelectMany(bad => bad.Tags).ToArray();
             var refused = sent.Where(e => e.GetType() == refusedType).ToList();
             string[] tags = refused.Select(e => (string)refusedType.GetField("refusedRequestId").GetValue(e)).ToArray();

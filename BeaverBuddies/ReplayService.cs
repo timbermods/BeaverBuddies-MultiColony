@@ -82,13 +82,20 @@ namespace BeaverBuddies
 
         public override void Replay(IReplayContext context)
         {
-            // A guest: the same point in the same tick as the host wrote it. Nothing else to do.
-            if (digest == null || !(EventIO.Get() is ClientEventIO) || digest.Value == ColonyDigest.Value) return;
+            // A guest: the same point in the same tick as the host wrote it.
+            if (digest == null || !(EventIO.Get() is ClientEventIO)) return;
+            if (digest.Value == ColonyDigest.Value)
+            {
+                // Every change so far was made alike: a later difference comes after this count.
+                ColonyDigest.NoteAgreed();
+                return;
+            }
             Plugin.LogWarning($"[Colony] Colony state differs from the host's at tick {ticksSinceLoad}: " +
                 $"host digest {digest.Value:x16} after {changes} changes, here {ColonyDigest.Describe()}");
-            // This computer logs its last colony changes as it stops (ClientDesyncedEvent), and the host logs its own as
-            // word of it arrives: in the host's list, change #changes is the one that left this digest.
-            context.GetSingleton<ReplayService>()?.HandleDesync();
+            // This computer logs its colony changes since the last check that agreed as it stops (ClientDesyncedEvent),
+            // and the host logs its own from the same change as word of it arrives: in the host's list, change #changes
+            // is the one that left the host's digest.
+            context.GetSingleton<ReplayService>()?.HandleDesync(colonyHostChanges: changes);
         }
     }
 
@@ -478,7 +485,21 @@ namespace BeaverBuddies
             });
         }
 
-        public void AbortReplay(string reason)
+        public void AbortReplay(string reason) => AbortReplay(reason, leaveQuietly: false);
+
+        private const string FailedActionAdvice = "Multiplayer has stopped because this action may have changed only part of the game state. "
+            + "Return to the main menu and reload a known-good save before rehosting. Do not overwrite your good save with this session.";
+        private const string LeftQuietlyAdvice = "Nothing of that action was played here, so no save is harmed, but this game can no longer "
+            + "keep up with the host's: you have left the game, and the host and the other players play on. To play together again, "
+            + "install the mod named above (or the host stops using it), then the host saves and hosts again, and you join.";
+
+        /// <summary>
+        /// Stops multiplayer here: an action failed partway, or another player said one did. With
+        /// <paramref name="leaveQuietly"/>, a guest that could not read an action from the host: nothing of it was
+        /// played here and nothing went wrong anywhere else, so this guest only leaves (the others are not told to stop)
+        /// and is told how to join again.
+        /// </summary>
+        public void AbortReplay(string reason, bool leaveQuietly)
         {
             if (HasReplayFailure) return;
             HasReplayFailure = true;
@@ -490,7 +511,8 @@ namespace BeaverBuddies
             try
             {
                 if (io is ServerEventIO server) server.NetBase?.AbortSession(reason);
-                else if (io is ClientEventIO client) client.NetBase?.AbortSession(reason);
+                else if (io is ClientEventIO client && leaveQuietly) client.NetBase?.Close();
+                else if (io is ClientEventIO other) other.NetBase?.AbortSession(reason);
             }
             catch (Exception error) { Plugin.LogError(error.ToString()); }
             finally
@@ -501,7 +523,7 @@ namespace BeaverBuddies
             // Like a desync: input held when the dialog appears must not carry over once it is closed.
             GetSingleton<BeaverBuddies.Fixes.MultiplayerInputRecovery>()?.RequestReset();
             GetSingleton<DialogBoxShower>().Create()
-                .SetMessage(reason + "\n\nMultiplayer has stopped because this action may have changed only part of the game state. Return to the main menu and reload a known-good save before rehosting. Do not overwrite your good save with this session.")
+                .SetMessage(reason + "\n\n" + (leaveQuietly ? LeftQuietlyAdvice : FailedActionAdvice))
                 .SetDefaultCancelButton().Show();
         }
 
@@ -536,14 +558,22 @@ namespace BeaverBuddies
             }
         }
 
-        public void HandleDesync()
+        /// <summary>
+        /// This computer has gone out of step. <paramref name="colonyHostChanges"/>: when the colony check caught it, how
+        /// many colony changes the host had counted there.
+        /// </summary>
+        public void HandleDesync(int? colonyHostChanges = null)
         {
             if (IsDesynced) return;
 
+            bool colonies = ColonyModeService.IsSeparateColonies;
             ClientDesyncedEvent e = new ClientDesyncedEvent()
             {
                 desyncID = DesyncDetecterService.GetLastDesyncID(),
                 desyncTrace = DesyncDetecterService.GetLastDesyncTrace(),
+                // Where every computer's list of colony changes starts: after the last count this one agreed on.
+                colonyChangesAgreed = colonies ? ColonyDigest.Agreed : (int?)null,
+                colonyChangesHost = colonies ? colonyHostChanges : null,
             };
             // Set IsDesynced to true so event play instead of sending
             // to the host, allowing the Client to continue play.

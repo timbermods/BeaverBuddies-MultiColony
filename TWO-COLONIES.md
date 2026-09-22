@@ -271,7 +271,9 @@ everyone.
 
 In a co-op session each player's interface shows **their own colony only**: the top bar's goods, population,
 housing, workplaces, wellbeing and science; the batch control window's lists (F1 to F10, opening on your biggest
-district); alerts; the notification journal. Selecting another colony's building opens its panels but leaves your
+district); alerts; the notification journal. A thing in no district goes by the colony it was last in, as the
+journal does (below): another colony's beaver that died tragically is not in your alerts, and its death does not
+make your alert row blink. Selecting another colony's building opens its panels but leaves your
 figures alone. Still whole-map: the *Global* history graphs in F9/F10 and in a good's tooltip, which the game
 records for the whole map.
 
@@ -367,12 +369,13 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - In a separate-colonies game, every tick the host's heartbeat carries a running digest of every colony state change (owners, marks, science,
   exchanges, the ledger, land, presence, hand-overs, working hours), and each guest compares it with its own at the
   same point: a difference stops that guest with the desync dialog that tick, with both digests and the number of
-  changes each side counted in the log. As any player desyncs, every computer also logs its last 256 colony changes
-  (`Colony changes here as …`, each with its number and the digest it left). Line two players' lists up by change
-  number (`#n`): the first number whose line differs is the change their computers did not make alike. The host logs
-  its list only when word of the desync arrives, a tick or more later, and one large mark can count hundreds of
-  changes (one per tile), so the host's list may already start after the change count the guest reported; then it
-  has moved on too far to show the diverging change. Once a day the host also sends its full colony
+  changes each side counted in the log. As any player desyncs, every computer also logs its colony changes since the
+  last count the colony checks agreed on (`Colony changes here as …`, each with its number and the digest it left):
+  a guest notes that count at every heartbeat whose digest matches, and sends it with the desync. Line two players'
+  lists up by change number (`#n`): both start at the same number, and the first number whose line differs is the
+  change their computers did not make alike; a line marks where the host's check that differed came. The last 16384
+  changes are kept, so a tick with a large mark (one change per tile) still fits; if more than that were counted
+  since, the list says which changes it no longer has. Once a day the host also sends its full colony
   check with the day's presence, and a guest that differs stops too. Colony code draws no random numbers, so without
   these a difference showed only once it changed a beaver's random draw, or never.
 - Two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest from the
@@ -406,8 +409,9 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   `TemplateCollections`) as well as the game and mod versions.
 - **Every colony state change** (owners, marks, science and unlocks, exchanges and their ledger, land, traded
   beavers, presence, hand-overs, working hours) made inside a tick or a replayed action folds into a running digest.
-  The host sends it with every heartbeat; a guest whose own differs stops that tick. The last 256 changes are kept
-  (`ColonyDigest.Recent`) and logged by every computer as a player desyncs; nothing kept is hashed or sent. A shared
+  The host sends it with every heartbeat; a guest whose own differs stops that tick. The last 16384 changes are
+  kept, and every computer logs those after the last count the desynced guest agreed on
+  (`ClientDesyncedEvent.colonyChangesAgreed`, `ColonyDigest.DescribeSince`); nothing kept is hashed or sent. A shared
   game has none.
 - **Ownership is saved**: on the district centers, on every building (the colony that placed it, from its first
   moment as a construction site) and on map marks. Land is worked out from the buildings standing, the same on every

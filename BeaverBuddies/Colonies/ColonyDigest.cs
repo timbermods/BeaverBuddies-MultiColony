@@ -14,10 +14,12 @@ namespace BeaverBuddies.Colonies
     /// loading and display never touch it. It is order-sensitive on purpose: two computers that made the same changes
     /// in a different order have already diverged. The mixing is plain .NET so the headless checks can run it.
     ///
-    /// The last <see cref="RecentSize"/> changes are kept as well, each with its number and the digest it left, and
-    /// every computer logs them when a player desyncs (ClientDesyncedEvent): lined up by number, the first line that
-    /// differs between two players' logs is the change they did not make alike. The host logs a tick or more after the
-    /// guest, so its list can already have moved past the guest's change count (one mark notes a change per tile).
+    /// The last <see cref="RecentSize"/> changes are kept as well, each with its number and the digest it left. A guest
+    /// notes how many changes it had counted when the host's digest last matched its own (<see cref="Agreed"/>); the
+    /// change that differed comes after that. When a player desyncs (ClientDesyncedEvent, which carries that count),
+    /// every computer logs its changes from the next one on: lined up by number, the first line that differs between
+    /// two players' logs is the change they did not make alike. One tick can count thousands of changes (a mark notes
+    /// one per tile), hence the size; the log says so if the first change that could differ is no longer kept.
     /// Nothing kept is hashed or sent.
     /// </summary>
     public static class ColonyDigest
@@ -33,8 +35,14 @@ namespace BeaverBuddies.Colonies
         /// <summary>How many changes were counted since the last reset (to tell "one missing" from "different").</summary>
         public static int Changes { get; private set; }
 
-        /// <summary>How many of the last changes are kept for the log.</summary>
-        public const int RecentSize = 256;
+        /// <summary>How many of the last changes are kept for the log (about 900 KB, made once).</summary>
+        public const int RecentSize = 16384;
+
+        /// <summary>
+        /// A guest: how many changes it had counted when the host's digest last matched its own (0 from load). The host
+        /// compares nothing and keeps 0.
+        /// </summary>
+        public static int Agreed { get; private set; }
 
         /// <summary>A change as it was counted: its number (Changes just after it), what Note was given, and the digest after it.</summary>
         public struct Change
@@ -54,6 +62,7 @@ namespace BeaverBuddies.Colonies
         {
             Value = Seed;
             Changes = 0;
+            Agreed = 0;
             Array.Clear(recent, 0, RecentSize);
             recentNext = 0;
             recentCount = 0;
@@ -76,26 +85,47 @@ namespace BeaverBuddies.Colonies
             if (recentCount < RecentSize) recentCount++;
         }
 
+        /// <summary>A guest whose digest matched the host's: every change counted so far was made alike.</summary>
+        public static void NoteAgreed() => Agreed = Changes;
+
         /// <summary>The changes kept, oldest first (a copy).</summary>
-        public static Change[] Recent()
+        public static Change[] Recent() => Since(0);
+
+        /// <summary>The changes kept that come after change number <paramref name="after"/>, oldest first (a copy).</summary>
+        public static Change[] Since(int after)
         {
-            var changes = new Change[recentCount];
             int first = recentCount < RecentSize ? 0 : recentNext;
-            for (int i = 0; i < recentCount; i++) changes[i] = recent[(first + i) % RecentSize];
+            // The kept changes are numbered one after another, the oldest Changes - recentCount + 1.
+            int skip = Math.Min(recentCount, Math.Max(0, after - (Changes - recentCount)));
+            var changes = new Change[recentCount - skip];
+            for (int i = 0; i < changes.Length; i++) changes[i] = recent[(first + skip + i) % RecentSize];
             return changes;
         }
 
         /// <summary>
-        /// The changes kept, a line each, oldest first: "#number what a b c d -> digest after". Written the same on
-        /// every computer (no culture), so two players' lines can be compared as text.
+        /// The changes kept after change number <paramref name="agreed"/> (the last count the colony checks agreed on),
+        /// a line each, oldest first: "#number what a b c d -> digest after". <paramref name="hostChanges"/>, when
+        /// known, is how many the host had counted at the check that differed: a line marks where that was. Written the
+        /// same on every computer (no culture), so two players' lines can be compared as text.
         /// </summary>
-        public static string DescribeRecent()
+        public static string DescribeSince(int agreed, int? hostChanges = null)
         {
-            Change[] changes = Recent();
-            var text = new StringBuilder($"digest {Describe()}; the last {changes.Length} changes counted, oldest first:");
+            Change[] changes = Since(agreed);
+            var text = new StringBuilder(FormattableString.Invariant(
+                $"digest {Describe()}; the changes after #{agreed}, the last count the colony checks agreed on"));
+            if (hostChanges != null) text.Append(FormattableString.Invariant($" (the host's check that differed: #{hostChanges})"));
+            text.Append(", oldest first:");
+            int oldest = Changes - recentCount + 1;
+            if (Changes > agreed && oldest > agreed + 1)
+                text.Append(FormattableString.Invariant(
+                    $"\n  (#{agreed + 1} to #{oldest - 1} are no longer kept: more than {RecentSize} changes were counted since)"));
+            if (changes.Length == 0) text.Append("\n  (none)");
             foreach (Change change in changes)
+            {
                 text.Append(FormattableString.Invariant(
                     $"\n  #{change.Number} {change.What} {change.A} {change.B} {change.C} {change.D} -> {change.After:x16}"));
+                if (change.Number == hostChanges) text.Append("\n  (the host's check that differed came here)");
+            }
             return text.ToString();
         }
 

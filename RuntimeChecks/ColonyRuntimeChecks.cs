@@ -737,16 +737,72 @@ internal static class ColonyRuntimeChecks
             if (found.Count > 0) throw new Exception("calls " + string.Join(", ", found));
         });
 
-        // MC6: every computer that plays a ClientDesyncedEvent logs its last colony changes, in a separate-colonies game
-        // only (a shared game keeps none), and before anything else the event does, so nothing below can stop it.
-        test("Colony: a desync logs the last colony changes first, only with separate colonies", () =>
+        // MC6: every computer that plays a ClientDesyncedEvent logs its colony changes since the count the desynced one
+        // last agreed on, in a separate-colonies game only (a shared game keeps none), and before anything else the event
+        // does, so nothing below can stop it. The count travels in the event, and a guest notes it at every heartbeat
+        // whose digest matches.
+        test("Colony: a desync logs the colony changes since the last agreed count first, only with separate colonies", () =>
         {
             var desynced = mod.GetType("BeaverBuddies.Events.ClientDesyncedEvent", true)!;
             var calls = MethodsCalled(desynced.GetMethod("Replay", all)!).Select(m => m.DeclaringType!.Name + "." + m.Name).ToList();
-            int asks = calls.IndexOf("ColonyModeService.get_IsSeparateColonies"), described = calls.IndexOf("ColonyDigest.DescribeRecent");
+            int asks = calls.IndexOf("ColonyModeService.get_IsSeparateColonies"), described = calls.IndexOf("ColonyDigest.DescribeSince");
             int logged = calls.IndexOf("Plugin.LogWarning"), reset = calls.IndexOf("MultiplayerInputRecovery.RequestReset");
             if (asks < 0 || described < 0 || logged < 0 || reset < 0 || !(asks < described && described < logged && logged < reset))
                 throw new Exception("it now calls: " + string.Join(", ", calls));
+            foreach (string field in new[] { "colonyChangesAgreed", "colonyChangesHost" })
+                if (desynced.GetField(field)?.FieldType != typeof(int?)) throw new Exception($"ClientDesyncedEvent.{field} is not an int? field");
+            var heartbeat = mod.GetType("BeaverBuddies.HeartbeatEvent", true)!;
+            if (!MethodsCalled(heartbeat.GetMethod("Replay", all)!).Any(m => m.DeclaringType!.Name == "ColonyDigest" && m.Name == "NoteAgreed"))
+                throw new Exception("a heartbeat whose digest matches no longer notes the agreed count");
+            var replayService = mod.GetType("BeaverBuddies.ReplayService", true)!;
+            if (!MethodsCalled(replayService.GetMethod("HandleDesync", all)!).Any(m => m.DeclaringType!.Name == "ColonyDigest" && m.Name == "get_Agreed"))
+                throw new Exception("the desync event no longer carries the agreed count");
+        });
+
+        // The other colony's "died tragically" alert: the game puts it on the beaver's own entity (DeadStatus), which by
+        // then is in no district, so the alert filter goes by the colony the journal recorded as it died. As it comes on
+        // it also makes the alert row blink (NotifyingStatusMonitor posts NotifyingStatusChangedEvent); that is skipped
+        // for the other colony, which is safe only while nothing but the alert panel listens to that event.
+        test("Colony: another colony's death alert is judged by the colony it died in, and its blink is the alert panel's only", () =>
+        {
+            var mortal = Assembly.Load("Timberborn.MortalSystem");
+            var deadStatus = mortal.GetType("Timberborn.MortalSystem.DeadStatus", true)!;
+            var init = MethodsCalled(deadStatus.GetMethod("InitializeEntity", all)!).Select(m => m.DeclaringType!.Name + "." + m.Name).ToList();
+            if (!init.Contains("BaseComponent.GetComponent") || !init.Contains("StatusSubject.RegisterDynamicStatus"))
+                throw new Exception("DeadStatus no longer registers its alert on its own entity's StatusSubject: " + string.Join(", ", init));
+            var statusSystem = Assembly.Load("Timberborn.StatusSystem");
+            var monitor = statusSystem.GetType("Timberborn.StatusSystem.NotifyingStatusMonitor", true)!;
+            var instance = statusSystem.GetType("Timberborn.StatusSystem.StatusInstance", true)!;
+            var toggled = monitor.GetMethod("OnStatusToggled", all) ?? throw new Exception("NotifyingStatusMonitor.OnStatusToggled is gone");
+            if (!toggled.GetParameters().Select(p => p.ParameterType).SequenceEqual(new[] { typeof(object), instance }))
+                throw new Exception("NotifyingStatusMonitor.OnStatusToggled now takes " + string.Join(", ", toggled.GetParameters().Select(p => p.ParameterType.Name)));
+            if (!MethodsCalled(toggled).Any(m => m.Name == "Post")) throw new Exception("OnStatusToggled no longer posts the event");
+            // Every game assembly that names the event: the one that posts it and the alert panel's.
+            string managed = Path.GetDirectoryName(statusSystem.Location)!;
+            byte[] name = System.Text.Encoding.ASCII.GetBytes("NotifyingStatusChangedEvent");
+            var naming = Directory.GetFiles(managed, "Timberborn.*.dll")
+                .Where(file => File.ReadAllBytes(file).AsSpan().IndexOf(name) >= 0)
+                .Select(Path.GetFileNameWithoutExtension).OrderBy(n => n).ToList();
+            if (!naming.SequenceEqual(new[] { "Timberborn.StatusSystem", "Timberborn.StatusSystemUI" }))
+                throw new Exception("NotifyingStatusChangedEvent is now named in " + string.Join(", ", naming));
+            var changed = statusSystem.GetType("Timberborn.StatusSystem.NotifyingStatusChangedEvent", true)!;
+            var handlers = LoadableTypes(Assembly.Load("Timberborn.StatusSystemUI"))
+                .SelectMany(t => t.GetMethods(all | BindingFlags.DeclaredOnly))
+                .Where(m => m.GetParameters().Any(p => p.ParameterType == changed))
+                .Select(m => m.DeclaringType!.Name + "." + m.Name).ToList();
+            if (!handlers.SequenceEqual(new[] { "DynamicStatusAlertFragment.OnPinnedStatusChanged" }))
+                throw new Exception("NotifyingStatusChangedEvent is now handled by " + string.Join(", ", handlers));
+            // The patch and the rule: IsOwn falls back to the recorded colony and decides by JournalFilter.IsOwn.
+            var patcher = mod.GetType("BeaverBuddies.Colonies.ColonyViewNotifyingStatusPatcher", true)!;
+            var target = patcher.GetCustomAttributesData().Single(a => a.AttributeType.FullName == "HarmonyLib.HarmonyPatch");
+            if ((Type)target.ConstructorArguments[0].Value! != monitor || (string)target.ConstructorArguments[1].Value! != "OnStatusToggled")
+                throw new Exception("the blink patch no longer targets NotifyingStatusMonitor.OnStatusToggled");
+            var view = mod.GetType("BeaverBuddies.Colonies.ColonyViewService", true)!;
+            if (!MethodsCalled(patcher.GetMethod("Prefix", all)!).Any(m => m.DeclaringType == view && m.Name == "IsOwn"))
+                throw new Exception("the blink patch no longer asks ColonyViewService.IsOwn");
+            var isOwn = MethodsCalled(view.GetMethod("IsOwn", all)!).Select(m => m.DeclaringType!.Name + "." + m.Name).ToList();
+            if (!isOwn.Contains("ColonyJournal.RecordedOwnerOf") || !isOwn.Contains("JournalFilter.IsOwn"))
+                throw new Exception("IsOwn no longer falls back to the recorded colony: " + string.Join(", ", isOwn));
         });
     }
 

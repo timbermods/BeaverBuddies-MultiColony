@@ -36,4 +36,7 @@ lines 15 to 19 (joined roads, a refused Trading Post half, gates, automation, th
 - beta8's merged pull requests (Script B lines 1a, 8a and 8o): that a Steam guest and a direct IP
   guest are both seated with no `Refused PlayerHelloEvent` line, that nothing a normal game sends is refused as an
   unreadable frame (a `could not be read` line would mean the binder is missing a type), that each journal lists
-  only its colony's entries after a reload, and that a desync's `Colony changes here` lists line up.
+  only its colony's entries after a reload, and that a desync's `Colony changes here` lists line up;
+- beta9's four fixes (Script B lines 8a, 8o and 8p): a guest without a mod the host uses leaves while the host plays
+  on; the host refuses only a guest's unreadable action, not its tick; another colony's *died tragically* alert stays
+  out of your alert panel; a desync's two lists start at the same change number.

@@ -89,6 +89,13 @@ namespace BeaverBuddies.Events
 
         public string desyncID;
         public string desyncTrace;
+        /// <summary>
+        /// Separate colonies: how many colony changes the desynced computer had counted at the last colony check that
+        /// agreed (ColonyDigest.Agreed), and, when the colony check caught it, how many the host had at the one that
+        /// differed. Every computer logs its changes from the one after the first.
+        /// </summary>
+        public int? colonyChangesAgreed;
+        public int? colonyChangesHost;
 
         private void ConfirmConsent(IReplayContext context, Action confirmCallback)
         {
@@ -157,16 +164,18 @@ namespace BeaverBuddies.Events
         public override void Replay(IReplayContext context)
         {
             ReplayService replayService = context.GetSingleton<ReplayService>();
-            // Every computer logs its last colony changes: the desynced one as it stops (HandleDesync plays this at once,
-            // a heartbeat's digest that differs included), the others as its word arrives. The first line that differs
-            // between two players' logs is the change they did not make alike. First, so nothing below can stop it, and
-            // caught, so it cannot stop anything below.
+            // Every computer logs its colony changes since the last count the desynced one agreed on: the desynced one as
+            // it stops (HandleDesync plays this at once, a heartbeat's digest that differs included), the others as its
+            // word arrives. The first line that differs between two players' logs is the change they did not make alike.
+            // First, so nothing below can stop it, and caught, so it cannot stop anything below.
             if (Colonies.ColonyModeService.IsSeparateColonies)
             {
                 try
                 {
+                    // A desync event without the count (none is sent in a shared game) lists the last 256 changes.
+                    int agreed = colonyChangesAgreed ?? System.Math.Max(0, Colonies.ColonyDigest.Changes - 256);
                     Plugin.LogWarning($"[Colony] Colony changes here as {(replayService.IsDesynced ? "this computer" : "another player")} "
-                        + $"desynced (tick {replayService.TicksSinceLoad}): {Colonies.ColonyDigest.DescribeRecent()}");
+                        + $"desynced (tick {replayService.TicksSinceLoad}): {Colonies.ColonyDigest.DescribeSince(agreed, colonyChangesHost)}");
                 }
                 catch (Exception e) { Plugin.LogError("[Colony] Could not log the last colony changes: " + e); }
             }

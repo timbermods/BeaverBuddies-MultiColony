@@ -2,6 +2,7 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Timberborn.BaseComponentSystem;
 using Timberborn.Characters;
 using Timberborn.EntitySystem;
 using Timberborn.GameDistricts;
@@ -161,6 +162,13 @@ namespace BeaverBuddies.Colonies
         }
 
         private int? Recorded(Guid subject) => owners.TryGetValue(subject, out int slot) ? slot : (int?)null;
+
+        /// <summary>The colony recorded for a thing (the colony a beaver was last in), or null. The caller checks it still exists.</summary>
+        public int? RecordedOwnerOf(BaseComponent component)
+        {
+            EntityComponent entity = component?.GetComponent<EntityComponent>();
+            return entity != null ? Recorded(entity.EntityId) : null;
+        }
 
         public void UpdateSingleton()
         {

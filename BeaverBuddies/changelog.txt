@@ -1,3 +1,10 @@
+v1.4.0-beta9 (BeaverBuddies MultiColony)
+* A guest that gets an action it cannot read (from a mod only the host has) now leaves the game on its own, with a message saying nothing was played and how to join again. The host and the other players play on; before, everyone was stopped and told to reload a save.
+* The host refuses only the action of a guest it cannot read, not everything else that guest did in the same moment.
+* Another colony's beaver that died tragically is no longer in your alert panel, and its death no longer makes your alert row blink.
+* A desync's list of colony changes starts, on every computer, after the last count the colony checks agreed on, and keeps up to 16384 changes: two players' lists line up from their first line.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta8 (BeaverBuddies MultiColony)
 * Over Steam the host checks a guest's Steam ID against its connection before seating it in a colony: a guest can no longer take another player's colony by saying their id. Direct IP joins are still taken at their word.
 * A multiplayer frame can only create the mod's actions and what they carry. A guest that gets an action it cannot read (say, from a mod only the host has) stops with a message naming it, instead of drifting out of step; the host refuses a guest's unreadable action and tells that guest.

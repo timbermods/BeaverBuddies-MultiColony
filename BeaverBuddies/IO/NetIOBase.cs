@@ -43,6 +43,20 @@ namespace BeaverBuddies.IO
         /// </summary>
         private static ReplayEvent ToEvent(JObject obj, out string problem)
         {
+            ReplayEvent replayEvent = TryRead(obj, out problem);
+            if (replayEvent == null) LogUnreadable("The frame that could not be read: ", obj);
+            return replayEvent;
+        }
+
+        // Its start only: a dragged area's frame can be long, and a guest can send one such frame after another.
+        private static void LogUnreadable(string what, JToken token)
+        {
+            string text = token?.ToString(Formatting.None) ?? "(nothing)";
+            Plugin.Log(what + (text.Length > MaxLoggedFrame ? text.Substring(0, MaxLoggedFrame) + $"... ({text.Length} characters)" : text));
+        }
+
+        private static ReplayEvent TryRead(JObject obj, out string problem)
+        {
             //Plugin.Log($"Recieving {obj}");
             try
             {
@@ -62,11 +76,54 @@ namespace BeaverBuddies.IO
             {
                 problem = Describe(ex);
             }
-            // Its start only: a dragged area's frame can be long, and a guest can send one such frame after another.
-            string text = obj.ToString(Formatting.None);
-            Plugin.Log("The frame that could not be read: "
-                + (text.Length > MaxLoggedFrame ? text.Substring(0, MaxLoggedFrame) + $"... ({text.Length} characters)" : text));
             return null;
+        }
+
+        /// <summary>
+        /// Whether a group of actions that cannot be read as a whole is read an action at a time, keeping those that can
+        /// be read (a host, which plays and sends on only what it read). A guest keeps nothing of such a group: the host
+        /// played all of it.
+        /// </summary>
+        protected virtual bool KeepsReadableActions => false;
+
+        /// <summary>
+        /// A group that could not be read as a whole: the same group with only the actions that can be read, each other
+        /// one handed to HandleUnreadableFrame on its own. Null when nothing can be kept: no action in it can be read, or
+        /// the fault is the group's own; the whole frame is then unreadable, as before.
+        /// </summary>
+        private ReplayEvent ReadableActionsOf(JObject frame)
+        {
+            JToken events = frame[nameof(GroupedEvent.events)];
+            JArray children = events as JArray ?? (events as JObject)?["$values"] as JArray;
+            if (children == null) return null;
+            var lost = new List<(int Index, JObject Entry, string Problem)>();
+            for (int i = 0; i < children.Count; i++)
+            {
+                if (!(children[i] is JObject entry))
+                {
+                    // Only the sender's number is known: an empty entry carries no tag to refuse.
+                    lost.Add((i, new JObject { [TimberNetBase.PLAYER_KEY] = frame[TimberNetBase.PLAYER_KEY] },
+                        "The group of actions holds an empty entry, which cannot be played."));
+                    continue;
+                }
+                ReplayEvent read = TryRead(entry, out string problem);
+                if (read is GroupedEvent) problem = "The group of actions holds another group, which cannot be played.";
+                else if (read != null) continue;
+                lost.Add((i, entry, problem));
+            }
+            if (lost.Count == 0 || lost.Count == children.Count) return null;
+            var kept = (JObject)frame.DeepClone();
+            JToken keptEvents = kept[nameof(GroupedEvent.events)];
+            JArray keptChildren = keptEvents as JArray ?? (JArray)((JObject)keptEvents)["$values"];
+            for (int i = lost.Count - 1; i >= 0; i--) keptChildren.RemoveAt(lost[i].Index);
+            ReplayEvent group = TryRead(kept, out _);
+            if (group == null) return null;
+            foreach (var entry in lost)
+            {
+                LogUnreadable("An action that could not be read, of a group whose other actions were kept: ", entry.Entry);
+                HandleUnreadableFrame(entry.Entry, entry.Problem);
+            }
+            return group;
         }
 
         // Newtonsoft names the "$type" it could not create and where it was; the exceptions inside say why.
@@ -93,9 +150,14 @@ namespace BeaverBuddies.IO
             List<ReplayEvent> events = new List<ReplayEvent>();
             foreach (JObject frame in NetBase.ReadEvents(ticksSinceLoad))
             {
-                ReplayEvent replayEvent = ToEvent(frame, out string problem);
+                ReplayEvent replayEvent = TryRead(frame, out string problem);
+                if (replayEvent == null && KeepsReadableActions) replayEvent = ReadableActionsOf(frame);
                 if (replayEvent != null) events.Add(replayEvent);
-                else if (!HandleUnreadableFrame(frame, problem)) return new List<ReplayEvent>();
+                else
+                {
+                    LogUnreadable("The frame that could not be read: ", frame);
+                    if (!HandleUnreadableFrame(frame, problem)) return new List<ReplayEvent>();
+                }
             }
             return events;
         }
