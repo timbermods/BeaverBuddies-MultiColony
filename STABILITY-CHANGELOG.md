@@ -5,6 +5,18 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha18
+
+**CONNECTION-PANEL.md covers MultiColony.** No code change.
+
+- The player rows with each player's colony, *(colony N)*: where the number comes from, a helper, a guest not yet
+  seated, and shared-colony games.
+- *Out of sync* now also means a colony-state difference (the every-tick digest or the daily check).
+- A guest who leaves: off the list, and away from the next day for hand-over.
+- Who can join and when joining closes; what the join check compares (including the mod's own files).
+- The check count brought up to date; a known limit on seat versus presence.
+- Checks unchanged: StabilityTests 263; RuntimeChecks 229.
+
 ## 1.4.0-alpha17
 
 **TWO-COLONIES.md covers alpha11 to alpha16.** No code change.

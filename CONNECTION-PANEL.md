@@ -1,9 +1,10 @@
 # Connection panel
 
 A small panel in the corner of your screen during a multiplayer game. It shows who is
-connected, how good each connection is, whether you are in sync, and how fast the
-simulation is running, and below that it has a chat box for the players in the game. It can be
-collapsed to a single line or hidden completely.
+connected and, in a separate-colonies game, which colony each player runs; how good each
+connection is; whether you are in sync; and how fast the simulation is running. Below that it
+has a chat box for the players in the game. It can be collapsed to a single line or hidden
+completely.
 
 ## What it shows
 
@@ -19,9 +20,9 @@ o  3 players  42 ms                                 [+]
 Multiplayer                                 Host   [-]
 o  In sync
 -------------------------------------------------------
-Kyler                                              -
-Sarah                                          42 ms
-Bob                                           190 ms
+Kyler (colony 1)                                   -
+Sarah (colony 2)                               42 ms
+Bob (colony 3)                                190 ms
 -------------------------------------------------------
 Tick rate   1.7 ticks/s
 Speed       1x
@@ -33,10 +34,16 @@ and nothing else; your own row (Kyler here) is in bold, with a dash where the pi
 button at the right of the header, `[-]` here, is drawn in a small box so it is not mistaken for that dash, which
 sits at the same edge.
 
+In a **separate-colonies game** (MultiColony, see [TWO-COLONIES.md](TWO-COLONIES.md)) each name carries the
+colony that player runs, *(colony N)*, as the host seated them: the number is the save's, the same whoever
+hosts, and a player who joins once every colony is taken shows the host's colony (they help run it). A guest
+shows no colony until the host has seated it, a moment after joining. In a shared-colony game the rows are
+names only, as before.
+
 | Item | Meaning |
 | --- | --- |
-| **Status** | *In sync* is normal. *Catching up* (guests): this game is a few ticks behind the host. *Waiting for host* (guests): this game has been held at the start of a tick for a moment, waiting for the host's word for it (since 1.4.0-alpha5; before, it meant nothing had arrived from the host for a moment). *Connection unstable*: someone has stopped responding for five seconds. *Out of sync*: a desync was detected. *Disconnected*: the session has ended. The dot beside it follows the status: green when in sync, yellow while catching up or waiting for the host, red when unstable, out of sync or disconnected. |
-| **Players** | Everyone in the session, host first, each as a name and a ping. Your own row is bold and shows a dash instead of a ping. |
+| **Status** | *In sync* is normal. *Catching up* (guests): this game is a few ticks behind the host. *Waiting for host* (guests): this game has been held at the start of a tick for a moment, waiting for the host's word for it (since 1.4.0-alpha5; before, it meant nothing had arrived from the host for a moment). *Connection unstable*: someone has stopped responding for five seconds. *Out of sync*: a desync was detected: the game's random state differed from the host's at an action, or, in MultiColony, the colony state differed (the every-tick digest since 1.4.0-alpha13, or the daily colony check since alpha11; the log says which). *Disconnected*: the session has ended. The dot beside it follows the status: green when in sync, yellow while catching up or waiting for the host, red when unstable, out of sync or disconnected. |
+| **Players** | Everyone in the session, host first, each as a name and a ping (and, with separate colonies, their colony). Your own row is bold and shows a dash instead of a ping. A guest who leaves drops off the list; in MultiColony their colony counts as away from the next day (see [TWO-COLONIES.md](TWO-COLONIES.md#when-a-colony-is-handed-over)). |
 | **Ping** | Round-trip time between you and that player, in milliseconds. Normal text: 80 ms or less. Yellow: up to 160 ms. Red: more, or **No response**. `...`: not measured yet. |
 | **Tick rate** | Simulation ticks per second right now, averaged over about three seconds. Around 1.7 at normal speed; it rises with game speed and drops to 0 when paused. |
 | **Speed** | The current game speed, or Paused. |
@@ -152,13 +159,22 @@ Probes, the roster and chat all use the same separate lane as cursor activity. T
 part of the replay script or the desync hash, are handled before they can reach the game's event
 queue, are never sent to a guest who is still joining (a joining guest gets its save and state
 first, then the chat history), and are validated on arrival; a malformed frame is ignored and
-never ends the session. The panel only reads, and chat sends no gameplay event. If the panel
-ever fails, it disables itself and the game continues; if only the chat fails, the rest of the
-panel carries on.
+never ends the session. The panel only reads (the colony beside a name comes from the host's
+seating, which every computer plays as an action), and chat sends no gameplay event. If the
+panel ever fails, it disables itself and the game continues; if only the chat fails, the rest of
+the panel carries on.
+
+**Who can join.** A guest can join until the host's first tick, or until the first action that
+changes the game while the host still waits paused (a later joiner would be sent the save the
+host started from, without it); after that the join is refused with a message saying to rehost.
+The join also checks that both players run the same build: the game and mod versions and, since
+1.4.0-alpha11, the mod's own `Buildings` and `TemplateCollections` files. A different mod list is
+only a warning.
 
 ## Validation
 
-`dotnet run --project StabilityTests` (210 checks) covers:
+`dotnet run --project StabilityTests` (263 checks in 1.4.0-alpha17, of which the panel's and chat's are
+described here) covers:
 
 - the round-trip tracker: smoothing, jitter, ignored duplicate, unknown and expired
   replies, and silence measured from the last reply;
@@ -233,3 +249,5 @@ over its interface, which this relies on).
   of the screen. The chat is drawn in front of them while you type, but not otherwise.
 - Ping is measured about once a second, so it lags a sudden change slightly.
 - The panel does not show packet loss or bandwidth.
+- The colony beside a name is the seat, not presence: a colony whose player has left still names that player
+  in the **Ctrl+T** window (as away), which is where hand-overs are shown; the panel only lists who is connected.
