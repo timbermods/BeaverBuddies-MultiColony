@@ -58,8 +58,8 @@ internal static class ColonyRuntimeChecks
             // only ever the actor's own colony's (the stamped slot), like working hours.
             var expected = new[] { "ActAsColonyEvent", "ActionRefusedEvent", "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
                 "ColonyHandoverEvent", "ColonyPresenceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
-                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "StewardGrantedEvent", "StewardRevokedEvent", "TraceLoggedForTickEvent",
-                "TreeCuttingAreaEvent", "WishlistChangedEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
+                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedBoostEvent", "SpeedSetEvent", "StewardGrantedEvent", "StewardRevokedEvent",
+                "TraceLoggedForTickEvent", "TreeCuttingAreaEvent", "WishlistChangedEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
             if (!shared.SequenceEqual(expected))
                 throw new Exception("The shared list changed; review it and update this check: " + string.Join(", ", shared));
         });
@@ -210,10 +210,11 @@ internal static class ColonyRuntimeChecks
             var neutral = eventTypes
                 .Where(t => !(bool)changes.Invoke(RuntimeHelpers.GetUninitializedObject(t), null)!)
                 .Select(t => t.Name).OrderBy(n => n, StringComparer.Ordinal).ToList();
-            // ShowOptionsMenuEvent is a SpeedSetEvent (pausing to open the menu). ActAsColonyEvent is session state (which
-            // colony a steward acts as), not saved, and refused before the first tick anyway.
+            // ShowOptionsMenuEvent is a SpeedSetEvent (pausing to open the menu); SpeedBoostEvent is a speed change too (the
+            // session's boost, 1.4.0-beta5). ActAsColonyEvent is session state (which colony a steward acts as), not saved,
+            // and refused before the first tick anyway.
             var expected = new[] { "ActAsColonyEvent", "ActionRefusedEvent", "ClientDesyncedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
-                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent" };
+                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedBoostEvent", "SpeedSetEvent", "TraceLoggedForTickEvent" };
             if (!neutral.SequenceEqual(expected))
                 throw new Exception("The list of events that leave joining open changed; review it and update this check: " + string.Join(", ", neutral));
         });

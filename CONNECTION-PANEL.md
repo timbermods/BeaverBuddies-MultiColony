@@ -3,8 +3,8 @@
 A small panel in the corner of your screen during a multiplayer game. It shows who is
 connected and, in a separate-colonies game, which colony each player runs; how good each
 connection is; whether you are in sync; and how fast the simulation is running. Below that it
-has a chat box for the players in the game. It can be collapsed to a single line or hidden
-completely.
+has a speed boost for the game's speed, and a chat box for the players in the game. It can be
+collapsed to a single line or hidden completely.
 
 ## What it shows
 
@@ -47,7 +47,7 @@ names only, as before.
 | **Joining** | Host only, and only while players can still join (the game waits at its start and nothing has changed it): *open: unpausing, or any change, closes it*. The line disappears once the game has started. |
 | **Ping** | Round-trip time between you and that player, in milliseconds. Normal text: 80 ms or less. Yellow: up to 160 ms. Red: more, or **No response**. `...`: not measured yet. |
 | **Tick rate** | Simulation ticks per second right now, averaged over about three seconds. Around 1.7 at normal speed; it rises with game speed and drops to 0 when paused. |
-| **Speed** | The current game speed, or Paused. |
+| **Speed** | The speed the game runs at now, or Paused. With a speed boost (see [Chat](#chat)) it is the picked speed plus the boost; while a guest catches up it is above the picked speed. |
 | **Behind host** | Guests only: how many ticks behind the host this game is. Should sit at 0 or 1. |
 | **Guest behind** | Host only: how many ticks behind the slowest guest was at its last report, about once a second. Shown once a guest running 1.0.4 or newer has reported. |
 | **Easing off** | Host only, and only while it applies: the share of the chosen speed the host is running at because a guest cannot keep up, such as "75% of speed", or "75% (frame rate)" when it is a guest's frame rate that is holding it back. It returns to full speed by itself. Reads **waiting for a guest** while the host stands still for a guest more than 60 ticks behind (1.0.6). |
@@ -84,9 +84,10 @@ as wide as its text needs (between 210 and 300). The width it followed is writte
 
 ## Chat
 
-Below the connection panel, inside the same rectangle, is a chat box: the messages, and a box to
-type in. It has a fixed, compact height (about five lines and the box), so it does not grow with
-the rest of the panel, and it appears whenever the panel is expanded, in a multiplayer game only.
+Below the connection panel, inside the same rectangle, is a chat box: the speed boost row, the
+messages, and a box to type in. It has a fixed, compact height (the row, about five lines and the
+box), so it does not grow with the rest of the panel, and it appears whenever the panel is expanded,
+in a multiplayer game only.
 
 ```
 Multiplayer                                 Host   [-]
@@ -96,14 +97,27 @@ Kyler                                              -
 Sarah                                          42 ms
 -------------------------------------------------------
 Tick rate   1.7 ticks/s
-Speed       1x
+Speed       1.5x
 -------------------------------------------------------
+Speed boost [-] [+0.5] [+]   = 1.5x
 Sarah: anyone want to build a second dam?
 Kyler: yes, upstream of the farm
 Sarah: on it
 [ Type a message...                                   ]
 ```
 
+- **Speed boost** (1.4.0-beta5)**.** The row at the top of the chat adds a constant to the speed picked at the
+  top right (the game's speed 1, 2 and 3 run at 1, 3 and 7): with +0.5, speed 2 runs at 3.5 and the fastest
+  button at 7.5, about 12.5 ticks a second, past the 11.7 the buttons alone give. **-** and **+** step by 0.5;
+  type a number in the box (a sign, a comma or a dot are fine) and press **Enter**, or click elsewhere, to apply
+  it; **Esc** drops what you typed. It is for everyone in the game, and any player may change it: the change
+  travels like a speed change, so everyone runs at the same speed. The row shows the result, `= 3.5x`, while the
+  game runs, and the game's own speed buttons show a speed no button has the way the game shows any custom
+  speed: `x3.5` on the last button. The boost stays when you pick another speed or pause and unpause, and it is 0
+  again in a new session, like the chat. It goes from -6.5 to +23, and the game never runs below 0.5x or above
+  30x. It only changes how fast ticks are worked through, as the speed buttons do; how fast the game really goes
+  is still down to the slowest computer (the **Tick rate** line says), and the host eases off for a guest that
+  falls behind as before.
 - **Send:** click the box, type, press **Enter**. Enter sends and leaves the cursor in the box
   so you can keep talking. **Enter on an empty box, Esc, or a click on the game itself** gives
   the keyboard back to the game.
@@ -227,6 +241,14 @@ population panel first, then the nearest panel above, never a width that is not 
 its own text width when there is nothing to follow), for the chat's height, and that every label
 and every pacing text is short enough for its column (the old ones were not).
 
+The speed boost adds checks (1.4.0-beta5) for the boost kept to a hundredth and within its limits;
+the picked speed plus the boost, with paused staying paused; a running game between 0.5x and 30x
+whatever is typed; - and + moving by a half step to the grid and stopping at the limits; typed values
+read with a sign, a comma or spaces and refused otherwise; the value shown with a sign the same in
+every culture and readable back; the row's English strings; and, for a guest catching up at a speed
+above 7, that it is never held below its speed and that the lag it settles at is the same stretch of
+time as at speed 7. The runtime checks' two event lists name the boost's event.
+
 **Seen so far:** a screenshot from before the sizing changes showed the panel and chat drawing
 (an empty log and the box to type in). It also showed the chat as tall as the top of the panel,
 the alerts covering its text box, and the pacing text pushing the panel wider than the game's own
@@ -248,7 +270,8 @@ other than the top left, the settings and the optional keys, and that lines alre
 the chat that also means: that the box takes and gives back the keyboard as described (Enter, Esc, a click on the game, the optional key), that
 the game's hotkeys really stay off while you type and come back after, how a long message wraps, whether the log follows new messages and lets
 you scroll up, and that the mouse wheel over the chat scrolls it without also zooming the camera (the game skips zooming while the pointer is
-over its interface, which this relies on).
+over its interface, which this relies on). The speed boost row (1.4.0-beta5) has not been seen at all: the game's small - and + in the dark panel,
+the box taking and giving back the keyboard, the game's `x3.5` on its last speed button, and what a real colony's tick rate does above speed 7.
 
 ## Known limits
 
@@ -256,6 +279,8 @@ over its interface, which this relies on).
   players type, but the game's font decides which characters can be drawn.
 - Chat is text only: no emoji picker, no private messages, no commands, no message editing.
 - Chat is not saved: it lasts as long as the multiplayer session, and starts empty after a reload.
+- The speed boost is not saved either: it lasts as long as the session, and a new host starts at 0. It is one value
+  for everyone; there is no per-player speed, which lockstep does not allow.
 - Several alerts at once can still reach the chat, because the alerts grow upward from the bottom
   of the screen. The chat is drawn in front of them while you type, but not otherwise.
 - Ping is measured about once a second, so it lags a sudden change slightly.

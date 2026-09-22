@@ -24,4 +24,7 @@ lines 15 to 19 (joined roads, a refused Trading Post half, gates, automation, th
 - a placement the host accepts that throws on a guest (`A multiplayer action could not be completed`): the guest
   now trusts the host's verdict, so this would mean the two games already differed;
 - founding refused with *the game has not started yet* after the host has unpaused (the first-tick wait);
-- an *Editing* label on another colony's building for a change that was refused (known, presentation only).
+- an *Editing* label on another colony's building for a change that was refused (known, presentation only);
+- the speed boost row at the top of the chat (beta5, Script B line 8k): whether the game's small - and + draw in the
+  dark panel, whether the box gives the keyboard back after Enter or Esc, and where the tick rate settles above
+  speed 7 on real computers.

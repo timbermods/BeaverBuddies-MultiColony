@@ -1,3 +1,7 @@
+v1.4.0-beta5 (BeaverBuddies MultiColony)
+* A speed boost at the top of the chat box: - and + (or a typed number) add a constant to the speed picked at the top right, for everyone in the game, so the fastest button (7x) with +0.5 runs at 7.5x. From -6.5 to +23; the game never runs below 0.5x or above 30x. A guest catching up above speed 7 is no longer capped below its speed.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta4 (BeaverBuddies MultiColony)
 * From the Stability Fork 1.1.11: every player gets a colour of their own on the cursors and in the chat until they choose one (the host orange, then blue, green, pink, purple, teal, red, lime), and only the name is coloured in the chat. Colony colours stay the game's own.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.

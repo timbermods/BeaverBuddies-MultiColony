@@ -181,6 +181,12 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     in the panel's normal color with only the name colored. Under Options, Player cursors, *Their color* shows the
     same color. One player sets a Ping Color: theirs changes everywhere, the other's does not. In the trading window
     and the land outlines the colony colors are the game's own, not these.
+8k. **Speed boost (beta5).** At speed 1, the host clicks **+** in the chat box's top row once: the row shows +0.5
+    and *= 1.5x* on both computers, the game's speed buttons show *x1.5* on the last one, and the panel's *Speed*
+    line says 1.5x. The guest types 2 in the box and presses Enter: both run at 3x. Pick the fastest button: 9x;
+    note the tick rate on each computer and the guest's *Behind host* for a minute. Pause and unpause: the speed
+    comes back at 9x, not more. Type something in the box and press Esc: nothing changes. Set the boost back to 0
+    with **-** or by typing 0. Host again: it starts at 0.
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*

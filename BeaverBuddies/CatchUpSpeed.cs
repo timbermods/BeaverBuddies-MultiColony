@@ -30,25 +30,36 @@ namespace BeaverBuddies
 
         // Lag a guest settles at. At high speed not zero: a guest with nothing queued waits for the
         // host's next heartbeat before every tick, and at a tick every 0.1 s the network's jitter
-        // would show as stutter.
-        public static int BufferTicksFor(float targetSpeed) => targetSpeed <= ShortBufferMaxSpeed ? 1 : 2;
+        // would show as stutter. Above speed 7 (a speed boost, see SpeedBoost) the buffer grows with
+        // the speed so it stays the same stretch of time, about a sixth of a second: two ticks at
+        // speed 7, three at 10, nine at 30.
+        public static int BufferTicksFor(float targetSpeed) =>
+            targetSpeed <= ShortBufferMaxSpeed ? 1 : Math.Max(2, (int)Math.Round(targetSpeed * 2 / 7));
 
         // Once catching up, continue until this close. Each speed change notifies every animated
         // building, so the rule is built to change speed a few times per hitch, not every tick: the
         // release mark is below the buffer, so the lag flickering by one tick changes nothing.
-        public static int ReleaseTicksFor(float targetSpeed) => targetSpeed <= ShortBufferMaxSpeed ? 0 : 1;
+        public static int ReleaseTicksFor(float targetSpeed) =>
+            targetSpeed <= ShortBufferMaxSpeed ? 0 : BufferTicksFor(targetSpeed) - 1;
 
-        // The original cap on catch-up speed.
+        // The original cap on catch-up speed, for the speeds the game's buttons give (1, 3 and 7).
         public const float MaxSpeed = 10;
+
+        // A boosted speed can be above that cap. A guest then catches up this many steps above the
+        // chosen speed, whatever it is, so it is never held below the speed it is meant to run at.
+        public const float CatchUpMargin = 3;
+
+        public static float CapFor(float targetSpeed) => Math.Max(MaxSpeed, targetSpeed + CatchUpMargin);
 
         public static float For(float targetSpeed, int ticksBehind, float currentSpeed)
         {
             // The original rule, unchanged. It also covers a paused game (target 0), where a guest
             // that is behind still has to run to reach the tick the host paused on.
+            float cap = CapFor(targetSpeed);
             float speed = targetSpeed;
             if (ticksBehind > targetSpeed)
             {
-                speed = Math.Min(ticksBehind, MaxSpeed);
+                speed = Math.Max(targetSpeed, Math.Min(ticksBehind, cap));
             }
             if (targetSpeed <= 0)
             {
@@ -67,7 +78,7 @@ namespace BeaverBuddies
                 {
                     boosted = Math.Max(boosted, currentSpeed);
                 }
-                speed = Math.Max(speed, Math.Min(boosted, MaxSpeed));
+                speed = Math.Max(speed, Math.Min(boosted, cap));
             }
             return speed;
         }

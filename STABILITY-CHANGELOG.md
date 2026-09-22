@@ -5,6 +5,56 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta5
+
+**A speed boost, from the chat box.** A row at the top of the chat, `Speed boost [-] [0] [+]`, adds a constant to
+the speed the players pick at the top right (the game's speed 1, 2 and 3 run at 1, 3 and 7): with a boost of +0.5,
+speed 2 runs at 3.5, and the fastest button at 7.5, about 12.5 ticks a second, past the 11.7 the buttons alone
+give. The game itself puts no limit there (its developer panel has x30 and x99, and its speed manager takes any
+number); the mod's limits are what its lockstep can be expected to keep up with.
+- **How it works.** `-` and `+` step by 0.5, to the half-step grid; the box takes a typed number (a sign, a comma or
+  a dot are fine) on Enter, or when the cursor leaves it; Esc drops what was typed. Any player may change it, and
+  everyone plays the change as an event (`SpeedBoostEvent`: Global, changes nothing in the game), like a speed
+  change; the asker's row shows the asked value until the answer arrives, or the old one again if there was no
+  session to ask. The row shows what the boost makes of the picked speed, `= 3.5x`, while the game runs. The game's
+  own top-right buttons show a speed no button has the way the game shows any custom speed: `x3.5` on the last
+  button. A player who joins is told the boost in the start message (`InitializeClientEvent.speedBoost`, 0 from an
+  older host); a new session starts at 0, like the chat. The boost is between -6.5 and +23, and the game never runs
+  below 0.5x or above 30x (`SpeedBoost.cs`, pure). `Panel/ChatView.cs` (the row: the game's own small - and + and a
+  box drawn like the chat's), `Panel/ConnectionPanelService.cs` (the request and the refresh), `PanelLayout.ChatHeight`
+  178 (28 for the row).
+- **What it changes and what it does not.** Only how fast ticks are worked through, exactly as the speed buttons
+  do: nothing simulated, nothing sent with a tick, nothing saved. The tick rate is still bounded by the slowest
+  computer: the host eases off for a guest that falls behind as before, and the simulation's share of a frame grows
+  with the speed (a true speed 7 took about half of the host's frame in a large colony, alpha22), so a large colony
+  will not reach 30x; the connection panel's tick rate says what is really achieved.
+- **Speed changes with a boost.** The players' pick and the boost are kept apart (`ReplayService.ChosenSpeed` and
+  `Boost`; `TargetSpeed` is their sum, `SpeedSetEvent.speed` stays the pick): picking a speed keeps the boost, and
+  the game's return from a pause goes back to the picked speed, not the boosted one (a postfix on
+  `SpeedControlPanel.SetSpeed`; without it a pause at 3 + 0.5 unpaused to 3.5 + 0.5, and a guest that paused while
+  catching up came back at the catch-up speed). The game's keys for the next and previous speed find the picked
+  speed's button (a prefix on `TimeSpeedButtonGroup.GetCurrentButton`); before, at any speed no button has (a
+  catch-up speed too) they did nothing. A click on the speed already picked records nothing (it used to record a
+  no-op and run the bare speed for a frame).
+- **Catching up above speed 7.** The catch-up rule capped a guest at speed 10, which at a boosted speed of 12 would
+  have held a guest that fell behind *below* the speed it was meant to run at. The cap is now three above the
+  chosen speed when that is higher (`CatchUpSpeed.CapFor`), and the buffer a guest settles at grows with the speed
+  above 7 so it stays about a sixth of a second (two ticks at 7, three at 10, nine at 30) instead of two ticks of
+  20 ms, which the network's jitter would have crossed on every tick. Speeds 1 to 7 are exactly as before.
+- Docs: README, CONNECTION-PANEL.md (the row, the Speed line, the limits), ALPHA-TEST-SCRIPTS.md (B8k), the site
+  and the in-game changelog.
+- Checks: StabilityTests 296 (9 new: the boost kept to a hundredth and within its limits; the picked speed plus the
+  boost, paused staying paused; a running game between 0.5x and 30x whatever is typed; - and + moving by a half
+  step to the grid and stopping at the limits; typed values read with a sign, a comma or spaces and refused
+  otherwise; shown with a sign the same in every culture and readable back; the row's English strings; a boosted
+  speed never held below itself and catching up above it; the buffer above 7 a stretch of time, with a guest at
+  speed 14 that hitches settling at the same lag in seconds as at 7); RuntimeChecks 233 (the two event lists name
+  `SpeedBoostEvent`). Both builds, 0 warnings.
+- Not seen in a game: the row's look (the game's small - and + in the dark panel), that the box takes and gives
+  back the keyboard as the chat box does, the game's `x3.5` on the last speed button, and how far a real colony can
+  be pushed. Script B line 8k is this release's; where the tick rate settles above speed 7 on real computers is the
+  thing to report.
+
 ## 1.4.0-beta4
 
 **The Stability Fork's 1.1.11 chat and cursor colors.** MultiColony is now built on Stability Fork 1.1.11 (it was

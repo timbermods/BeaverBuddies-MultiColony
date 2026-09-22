@@ -32,12 +32,15 @@ namespace BeaverBuddies.Events
         public bool separateColonies;
         // Separate colonies: the host's choice of separate science for a colony founded in this session.
         public bool separateScience;
+        // The session's speed boost (SpeedBoost) as this player joins. Absent from an older host, which reads as 0.
+        public float speedBoost;
 
         public override void Replay(IReplayContext context)
         {
             //context.GetSingleton<ReplayService>().SetServerMapName(mapName);
             LargeColonySpeedLimit.AdoptHostChoice(removeLargeColonySpeedLimit);
             ColonySession.AdoptHostChoice(separateColonies, separateScience);
+            context.GetSingleton<ReplayService>().SetBoost(speedBoost);
             string warningMessage = null;
             if (serverGameVersion != GameVersions.CurrentVersion.ToString())
             {
@@ -71,6 +74,7 @@ namespace BeaverBuddies.Events
                 removeLargeColonySpeedLimit = LargeColonySpeedLimit.BeginHostSession(),
                 separateColonies = ColonySession.HostAllowsFounding,
                 separateScience = ColonySession.HostSeparateScience,
+                speedBoost = ReplayService.SessionBoost,
                 //mapName = mapName,
             };
             return message;

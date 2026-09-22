@@ -232,7 +232,10 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   **Allow Friends to Join Directly via Steam**. Only friends who join the host's friends-only lobby can connect.
 - **Direct IP:** the host forwards port **25565**, or both use a VPN such as Hamachi.
 - **The connection panel** (top-left) shows each player, their ping, whether you're in sync, the tick rate and a
-  chat box. Collapse it by clicking its title; hide or move it in Mod Settings. Chat names are drawn in each
+  chat box. At the top of the chat is a **speed boost**: `-` and `+` (or a typed number) add a constant to the speed
+  you pick at the top right, for everyone, so the fastest button with +0.5 runs at 7.5x (from -6.5 to +23; the
+  game never runs below 0.5x or above 30x). Collapse the panel by clicking its title; hide or move it in Mod
+  Settings. Chat names are drawn in each
   player's cursor color, and a player who has not chosen one gets a color of their own by player number (the host
   orange, then blue, green, pink, purple, teal, red and lime), so nobody starts out yellow.
 - **A guest's actions** go to the host and back before they happen. While they travel, the tiles of what you placed

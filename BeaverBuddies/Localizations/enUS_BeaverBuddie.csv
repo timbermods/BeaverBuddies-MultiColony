@@ -170,6 +170,8 @@ BeaverBuddies.KeyBindings.FocusChat,"Chat: start typing",""
 BeaverBuddies.Chat.Placeholder,"Type a message...",""
 BeaverBuddies.Chat.Empty,"No messages yet",""
 BeaverBuddies.Chat.Unread,"{0} new",""
+BeaverBuddies.Chat.Boost,"Speed boost",""
+BeaverBuddies.Chat.Boost.Tooltip,"Added to the speed picked at the top right, for everyone in the game: speed 2 (3x) with +0.5 runs at 3.5x. Click - or + for steps of 0.5, or type a number and press Enter. From -6.5 to +23; the game never runs below 0.5x or above 30x.",""
 BeaverBuddies.Settings.SeparateColonies,"Separate colonies (beta)",""
 BeaverBuddies.Settings.SeparateColonies.Tooltip,"Host only. Each player runs their own colony; roads meet only at a Trading Post, where colonies barter.
 A player without a colony founds one with Ctrl+K. Off: one shared colony.",""

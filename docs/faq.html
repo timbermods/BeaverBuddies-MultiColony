@@ -67,7 +67,7 @@
         <div class="answer">
           <ul>
             <li><b>Steam friend invites</b> on Valve's current networking API, with no port forwarding.</li>
-            <li>An in-game <b>connection panel</b> with players, ping, sync status and tick rate.</li>
+            <li>An in-game <b>connection panel</b> with players, ping, sync status, tick rate, chat and a speed boost.</li>
             <li><b>Player activity</b>: teammates' cursors, selection outlines and Viewing / Editing labels, with per-player cursor styling.</li>
             <li><b>Fixes</b> for a water desync that depended on frame rate, an animation crash, random-number, saving and demolition problems, and more.</li>
             <li><b>Clearer failures</b>: a mismatched build is refused before the save is sent, and failed connections and actions end with a plain-language reason.</li>
@@ -228,7 +228,8 @@
       <details class="q">
         <summary>What is the "tick rate" in the connection panel?</summary>
         <div class="answer">
-          <p>How many simulation ticks per second the game is running right now, averaged over about three seconds. It is around 1.7 at normal speed, rises with game speed, and drops to 0 when paused.</p>
+          <p>How many simulation ticks per second the game is running right now, averaged over about three seconds. It is around 1.7 at normal speed, rises with game speed (about 11.7 at the fastest button), and drops to 0 when paused.</p>
+          <p>To go past the fastest button, use the <b>speed boost</b> at the top of the chat box: <b>-</b> and <b>+</b>, or a typed number, add a constant to the speed everyone picked, so the fastest button with +0.5 runs at 7.5x. It goes from -6.5 to +23, and the game never runs below 0.5x or above 30x. How fast the game really goes is still down to the slowest computer; the tick rate says what is achieved.</p>
         </div>
       </details>
 

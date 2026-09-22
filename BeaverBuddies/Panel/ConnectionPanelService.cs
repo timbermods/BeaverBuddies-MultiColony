@@ -16,8 +16,8 @@ namespace BeaverBuddies.Panel
 {
     /// <summary>
     /// Shows connected players, ping, tick rate and sync state in a small HUD panel during multiplayer.
-    /// It only reads: it never sends a gameplay event, never touches the simulation, and any failure
-    /// disables just the panel.
+    /// It reads, and sends only chat and the speed boost (a speed change, which no more touches the
+    /// simulation than the speed buttons do); any failure disables just the panel.
     /// </summary>
     public sealed class ConnectionPanelService : RegisteredSingleton, IPostLoadableSingleton, IUpdatableSingleton, IInputProcessor, IResettableSingleton
     {
@@ -64,7 +64,11 @@ namespace BeaverBuddies.Panel
                 view.HeaderClicked += OnHeaderClicked;
                 view.FpsFloorClicked += OnFpsFloorClicked;
                 view.RowClicked += OnRowClicked;
-                if (view.Chat != null) { view.Chat.Submit = OnChatSubmit; view.Chat.ColorOf = ChatColorOf; }
+                if (view.Chat != null)
+                {
+                    view.Chat.Submit = OnChatSubmit; view.Chat.ColorOf = ChatColorOf;
+                    view.Chat.BoostRequested = OnBoostRequested;
+                }
                 view.SetVisible(false);
                 input.AddInputProcessor(this);
                 loaded = true;
@@ -179,7 +183,7 @@ namespace BeaverBuddies.Panel
             var model = PanelModelBuilder.Build(Collect(net, replay, now), Translate);
             view.Show(model, mode == PanelDisplayMode.Expanded);
             view.SetVisible(true);
-            if (mode == PanelDisplayMode.Expanded) RefreshChatColors();
+            if (mode == PanelDisplayMode.Expanded) { RefreshChatColors(); ShowBoost(replay); }
         }
 
         // ---- chat ----
@@ -254,6 +258,24 @@ namespace BeaverBuddies.Panel
         {
             if (view.Chat == null || chatFailed) return;
             try { view.Chat.RefreshColors(); }
+            catch (Exception error) { DisableChat(error); }
+        }
+
+        // ---- the speed boost ----
+
+        // The boost is the session's: the request is played by everyone as an event, like a speed change. It changes
+        // how fast ticks are worked through, never what is in them (SpeedBoost).
+        bool OnBoostRequested(float boost)
+        {
+            var net = CurrentNetwork();
+            if (net == null || net.IsStopped) return false;
+            return BeaverBuddies.Events.SpeedBoostRequest.Send(boost);
+        }
+
+        void ShowBoost(ReplayService replay)
+        {
+            if (view.Chat == null || chatFailed) return;
+            try { view.Chat.ShowBoost(replay?.Boost ?? 0, replay?.TargetSpeed ?? 0); }
             catch (Exception error) { DisableChat(error); }
         }
 
