@@ -359,8 +359,11 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   exchanges, the ledger, land, presence, hand-overs, working hours), and each guest compares it with its own at the
   same point: a difference stops that guest with the desync dialog that tick, with both digests and the number of
   changes each side counted in the log. As any player desyncs, every computer also logs its last 256 colony changes
-  (`Colony changes here as …`, each with its number and the digest it left): the first line that differs between two
-  players' logs is the change their computers did not make alike. Once a day the host also sends its full colony
+  (`Colony changes here as …`, each with its number and the digest it left). Line two players' lists up by change
+  number (`#n`): the first number whose line differs is the change their computers did not make alike. The host logs
+  its list only when word of the desync arrives, a tick or more later, and one large mark can count hundreds of
+  changes (one per tile), so the host's list may already start after the change count the guest reported; then it
+  has moved on too far to show the diverging change. Once a day the host also sends its full colony
   check with the day's presence, and a guest that differs stops too. Colony code draws no random numbers, so without
   these a difference showed only once it changed a beaver's random draw, or never.
 - Two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest from the

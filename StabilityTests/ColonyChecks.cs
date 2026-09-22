@@ -389,8 +389,16 @@ static class ColonyChecks
             // The newest carries the digest it left, the one a heartbeat would carry now.
             Equal(ColonyDigest.Value, recent[255].After);
             Check(recent[254].After != recent[255].After, "each change carries the digest after it");
-            // Printed oldest first, a change a line, to set two players' logs side by side.
-            string text = ColonyDigest.DescribeRecent();
+            // Printed oldest first, a change a line, to set two players' logs side by side. The same text whatever the
+            // computer's culture: Swedish writes a negative number with U+2212, not '-'.
+            string text;
+            var culture = System.Globalization.CultureInfo.CurrentCulture;
+            try
+            {
+                System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("sv-SE");
+                text = ColonyDigest.DescribeRecent();
+            }
+            finally { System.Globalization.CultureInfo.CurrentCulture = culture; }
             Check(text.Contains($"#45 land 45 -45 450 {long.MaxValue - 45} -> {recent[0].After:x16}"), "the oldest change kept is printed");
             Check(text.IndexOf("#45 ") < text.IndexOf("#300 "), "oldest first");
             Check(!text.Contains("#44 "), "a change pushed out is not printed");

@@ -15,8 +15,10 @@ namespace BeaverBuddies.Colonies
     /// in a different order have already diverged. The mixing is plain .NET so the headless checks can run it.
     ///
     /// The last <see cref="RecentSize"/> changes are kept as well, each with its number and the digest it left, and
-    /// every computer logs them when a player desyncs (ClientDesyncedEvent): the first line that differs between two
-    /// players' logs is the change they did not make alike. Nothing kept is hashed or sent.
+    /// every computer logs them when a player desyncs (ClientDesyncedEvent): lined up by number, the first line that
+    /// differs between two players' logs is the change they did not make alike. The host logs a tick or more after the
+    /// guest, so its list can already have moved past the guest's change count (one mark notes a change per tile).
+    /// Nothing kept is hashed or sent.
     /// </summary>
     public static class ColonyDigest
     {
