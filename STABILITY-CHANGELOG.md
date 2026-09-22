@@ -5,6 +5,22 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha17
+
+**TWO-COLONIES.md covers alpha11 to alpha16.** No code change.
+
+- State of testing names the unplayed builds and what the every-tick check means.
+- The rules: no building beside another colony's paths or buildings, finished or not; a founding takes the host's
+  difficulty when the save recorded none; hand-over by absence with detailed logging on, a guest who leaves, and
+  the host's hand-over from the first tick; a relic's science when nothing demolished it, and unnamed science; unlock
+  sets follow renamed buildings; copying settings from another colony's building; traded beavers must walk and
+  carry nothing.
+- Road networks: placing beside an unfinished path is refused; joined roads keep the game running.
+- Known limits: district centers get the block check; the crossing panel's snapshot.
+- How it works: what the host writes into actions, the join rules and check, the running digest. Testing: what the
+  check suites cover now.
+- Checks unchanged: StabilityTests 263; RuntimeChecks 229.
+
 ## 1.4.0-alpha16
 
 **The README covers alpha11 to alpha15.** No code change.

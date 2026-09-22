@@ -6,8 +6,10 @@ colonies meet only at **trading posts**, where they barter.
 
 **State of testing.** Alpha. Seen in a game with the land-split alphas (alpha1 to 5): hosting and joining over
 Steam, founding a second colony and building in it. **Nothing of this version's model has been seen in a game
-yet**: ownership, land, per-colony marks and work, trading-post exchanges and their panel, separate science and
-the road-network checks are covered by automated checks only. Play on a copy of your save and keep backups.
+yet**: ownership, land, per-colony marks and work, trading-post exchanges and their panel, separate science, the
+road-network checks and the desync review's fixes (alpha11 to alpha16) are covered by automated checks only. Since
+alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
+in that check would stop a healthy game too; the log line says which. Play on a copy of your save and keep backups.
 
 ## The rules in one minute
 
@@ -15,8 +17,8 @@ the road-network checks are covered by automated checks only. Play on a copy of 
   they live in; buildings to their district, or else to the colony that placed them; marks to the colony that made
   them. A colony's **land** is every tile within 10 tiles of its buildings and paths, first come: where two colonies
   both reach, the land is the one's that got there first, and stays theirs while they reach it.
-- **Build, mark and plant on your land or free land.** Never on another colony's land or right next to its roads.
-  Building towards another colony stops at the edge of its land.
+- **Build, mark and plant on your land or free land.** Never on another colony's land or right next to its roads,
+  buildings or paths, finished or still being built. Building towards another colony stops at the edge of its land.
 - **Two colonies' roads never join, except through a Trading Post**, the building colonies barter through, and the
   only place colonies meet. (A District Crossing links a colony's own districts, as in the game.)
 - **You change your own colony only**, whether or not the other player is playing.
@@ -55,7 +57,8 @@ colony's. Every other player **founds** their colony once:
    tick on, for the same reason.
 2. Place it at least 20 tiles from other colonies' buildings and paths (their land shows as coloured outlines), so
    both colonies have room to grow. It is free, needs no science, and appears **already built**, yours, with starting
-   beavers, food and water (the new game's, or the Normal difficulty's for a save that did not record them).
+   beavers, food and water (the new game's, or for a save that did not record them the host's Normal difficulty:
+   the host writes them into the founding, so a mod changing the difficulty on one computer changes nothing).
 3. Founding in a shared game turns it into a separate-colonies game. The existing districts stay the host's.
 
 ## Trading posts
@@ -148,11 +151,13 @@ unlocks too.
 - **Its player away:** once they have missed the number of in-game days of hosted co-op play the host set (**Hand
   over a colony after its player is away**, 7 by default, 0 for never) in a row: to the nearest colony whose player
   is playing. Days the host plays alone in single player, and the first day after loading (players are still
-  joining), don't count; a day the player is in the game starts the count again. The host decides and every
-  computer plays it. Not while debugging alone (with detailed logging on), where the host plays every colony.
-- **By the host**, from the Ctrl+T window: any colony whose player is away (not in this session), or that has no
-  beavers. Useful for a player whose Steam account changed: they join, get a new slot, and the host hands their old
-  colony to it.
+  joining), don't count; a day the player is in the game starts the count again. A guest who leaves is away from
+  the next day on. The host decides and every computer plays it. Not while the host tests alone with detailed
+  logging on and nobody connected, where the host plays every colony; with a guest connected, logging changes
+  nothing.
+- **By the host**, from the Ctrl+T window, from the first tick on: any colony whose player is away (left, or not in
+  this session), or that has no beavers. Useful for a player whose Steam account changed: they join, get a new slot,
+  and the host hands their old colony to it.
 
 The player who lost their colony gets a notice and may **found a new one** (Ctrl+K). A trading post between the two
 colonies then stands within one colony: its exchange ends (what waits on each half goes back home), and it trades
@@ -163,10 +168,13 @@ again only if another colony's roads reach its other half.
 With the setting on, when a separate-colonies game begins:
 
 - **Each colony has its own science.** Inventors, the Numbercruncher and the observatory add to their own colony's
-  science; a relic's reward goes to the colony of the beaver who demolished it; the Iron Teeth control tower uses its
-  own colony's. The top bar shows yours.
+  science; a relic's reward goes to the colony of the beaver who demolished it (a relic destroyed fully demolished by
+  a blast or a collapse pays the colony whose mark or land it stood on); the Iron Teeth control tower uses its own
+  colony's. The top bar shows yours. Science that simulation code neither earns for nor spends from a named colony
+  goes to the first colony on every computer, with a warning in the log.
 - **Each colony unlocks its own buildings.** Unlocking costs your colony's science and unlocks the building on your
-  toolbar only. Placing a building checks that your colony has it unlocked.
+  toolbar only. Placing a building checks that your colony has it unlocked. A building renamed by a game update
+  keeps its unlocks (the sets load through the game's own name mapper).
 - A shared game being split: its science and unlocks so far stay with the first colony; new colonies start with
   none. A new game: every colony starts with the same unlocks.
 - **Bot worker types** ("bots may work here") are unlocked per colony too, paid from the unlocking colony's science.
@@ -186,9 +194,9 @@ walk to the same places. So in a separate-colonies game:
 | Working hours | Each colony's own (the working-hours buttons and the clock show yours; the bell rings at the game's own hours, and a handed-over colony's hours stay its own) |
 | Chronometers set to working hours | Their own colony's hours |
 | Bot worker types (separate science) | Each colony's own unlocks |
-| Automation | A building, relay or memory cell may be wired only to its own colony's |
+| Automation | A building, relay or memory cell may be wired only to its own colony's (copying settings from another colony's building, or placing a copy of it, is refused or placed plain: it would copy the links too) |
 | Names | Only the owner renames |
-| Migration | Only between a colony's own districts |
+| Migration | Only between a colony's own districts; beavers change colony only through a Trading Post, and a traded beaver must be able to walk to its new district and carry nothing |
 
 Marks work per tile: a tile marked by one colony (for planting or cutting) can't be marked or unmarked by another.
 Unmarking an area removes only your own marks in it.
@@ -212,10 +220,12 @@ The game refuses to place a road, building or tubeway that would join two distri
 can only meet at a crossing (a Trading Post, between colonies). Two gaps are closed by this mod:
 
 - **Zipline links** are judged once, by the host, with the game's own check.
-- **Two placements that are each fine alone** can join roads once both are built (two players placing at the same
-  moment). Every computer notices at the same moment and warns both players ("Two districts' roads have been joined
-  without a District Crossing or Trading Post"): remove the joining path or building. The game's district bookkeeping cannot handle
-  joined roads, so do this at once.
+- **Placing beside another colony's path or building** is refused whether it is finished or still being built (the
+  game's own check knows only finished roads).
+- **Two placements that are each fine alone** can still join roads once both are built (two players placing at the
+  same moment). Every computer notices at the same tick and warns both players ("Two districts' roads have been
+  joined without a District Crossing or Trading Post"). The game keeps running: the first district keeps the shared
+  roads and the other goes without them until the joining path or building is removed, so do that soon.
 
 ## Water and the map
 
@@ -280,7 +290,10 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   the same reason: at most a tick later than in single player.
 - Placing is judged by the placing player's own tool: the check against joining two districts' roads is not repeated
   in the multiplayer replay, where it read state that differs between computers. Whether the spot is still free when
-  the placement is played is checked by the host alone; guests take its answer.
+  the placement is played is checked by the host alone (a district center by its blocks only); guests take its
+  answer. Two district centers placed on the same tiles in one tick: the second is skipped everywhere.
+- A District Crossing's panel, open on one computer, no longer changes what that computer's crossing workers export:
+  the snapshot the workers read is taken in the tick only.
 - Every tick the host's heartbeat carries a running digest of every colony state change (owners, marks, science,
   exchanges, the ledger, land, presence, hand-overs, working hours), and each guest compares it with its own at the
   same point: a difference stops that guest with the desync dialog that tick, with both digests and the number of
@@ -295,7 +308,15 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - **The host decides.** Every action goes through the host. The host writes which connection it came from (a guest
   cannot claim another), seats players by their stable id, writes the actor's colony into the action, checks it
   against the rules just before playing it, and plays and forwards it, keeps only the actor's part of a list action,
-  or drops it (logged as `[Colony] Refused …`). Guests never judge, so the computers cannot disagree.
+  or drops it (logged as `[Colony] Refused …`). Guests never judge, so the computers cannot disagree. What the host
+  decides while playing an action travels in the action too: whether a building could still be placed, what a
+  founded colony starts with, the day's presence and colony check. A Trading Post's two halves are judged together.
+- **Joining** closes at the first tick, or at the first action played while the host still waits paused, since a
+  later joiner is sent the save the host started from. The join check covers the mod's own files (`Buildings`,
+  `TemplateCollections`) as well as the game and mod versions.
+- **Every colony state change** (owners, marks, science and unlocks, exchanges and their ledger, land, traded
+  beavers, presence, hand-overs, working hours) made inside a tick or a replayed action folds into a running digest.
+  The host sends it with every heartbeat; a guest whose own differs stops that tick.
 - **Ownership is saved**: on the district centers, on every building (the colony that placed it, from its first
   moment as a construction site) and on map marks. Land is worked out from the buildings standing, the same on every
   computer. Beavers choose their work from these only, so every computer's beavers choose alike.
@@ -308,6 +329,8 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 ## Testing
 
 Automated checks (all passing): **StabilityTests** (headless: the network stamping, player slots, the ownership
-rules, founding, migration pairing) and **RuntimeChecks** against the compiled mod and the game's assemblies: every
-action type declares what it touches, the shared actions are listed for review, and every game method or field the
-mod hooks still exists. In-game test scripts: [ALPHA-TEST-SCRIPTS.md](ALPHA-TEST-SCRIPTS.md).
+rules, founding and the wait for the first tick, migration pairing, the blueprint join check, the colony digest) and
+**RuntimeChecks** against the compiled mod and the game's assemblies: every action type declares what it touches,
+the shared actions and the actions that leave joining open are listed for review, the host's answers survive the
+event JSON, no simulation-reachable game method reads a dev key the mod does not neutralise, and every game method
+or field the mod hooks still exists. In-game test scripts: [ALPHA-TEST-SCRIPTS.md](ALPHA-TEST-SCRIPTS.md).
