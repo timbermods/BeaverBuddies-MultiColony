@@ -195,7 +195,7 @@ only a warning.
 
 ## Validation
 
-`dotnet run --project StabilityTests` (263 checks in 1.4.0-alpha17, of which the panel's and chat's are
+`dotnet run --project StabilityTests` (348 checks in 1.4.0-beta11, of which the panel's and chat's are
 described here) covers:
 
 - the round-trip tracker: smoothing, jitter, ignored duplicate, unknown and expired

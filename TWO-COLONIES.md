@@ -7,8 +7,8 @@ colonies meet only at **trading posts**, where they barter.
 **State of testing.** Beta. Seen in a game with the land-split alphas (alpha1 to 5): hosting and joining over
 Steam, founding a second colony and building in it. **Nothing of this version's model has been seen in a game
 yet**: ownership, land, per-colony marks and work, trading-post exchanges and their panel, separate science, the
-road-network checks and the desync review's fixes (alpha11 to beta4) are covered by automated checks only. Since
-alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
+road-network checks, and every build since alpha11 (the desync review's fixes onward) are covered by automated checks
+only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
 in that check would stop a healthy game too; the log line says which. Play on a copy of your save and keep backups.
 
 ## The rules in one minute
@@ -39,7 +39,8 @@ in that check would stop a healthy game too; the log line says which. Play on a 
 The days before a hand-over (below) are read each day, so they can be changed during a game.
 
 **Who plays which colony** is remembered by the save: each player is known by their Steam ID (or, without Steam, by
-an id kept on their computer). The first time a player joins a save they take the next free colony; after that they
+an id kept on their computer). The host checks that id for a Steam join but not for a direct IP join (see *How it
+works*). The first time a player joins a save they take the next free colony; after that they
 always get the same one, whoever hosts. With every colony taken (four), an extra player joins as a helper of the
 host's colony. The connection panel shows each name with its colony number.
 
@@ -60,7 +61,7 @@ centers already there are the host's colony's. Every other player **founds** the
    same tool.) Not before: while the game is paused at the start, other players can still join, and a player who
    joined after the founding would load the save without it. The host can hand colonies over (Ctrl+T) from the first
    tick on, for the same reason.
-2. Place it at least 20 tiles from other colonies' buildings and paths (their land shows as coloured outlines), so
+2. Place it at least 20 tiles from other colonies' buildings and paths (their land shows as colored outlines), so
    both colonies have room to grow. It is free, needs no science, and appears **already built**, yours, with starting
    beavers, food and water (the new game's, or for a save that did not record them the host's Normal difficulty:
    the host writes them into the founding, so a mod changing the difficulty on one computer changes nothing).
@@ -166,7 +167,7 @@ marks your own colony's wishes the same way.
 
 **The trading-post panel** is built from the game's own panel pieces (the Workplace section's board, the
 description's blue cards, the game's wooden and red buttons, input boxes, progress bars and check boxes, and the
-warehouse's goods grid). On your half it shows who you trade with in their colour, with **All posts**; the exchange
+warehouse's goods grid). On your half it shows who you trade with in their color, with **All posts**; the exchange
 (the offer form, an offer waiting for an answer, or the round under way with each side's bar, what it waits for, and
 ending it); what waits on the half (only when something does); the post's **ledger** (the last rounds that crossed,
 with the cycle and day, what you gave and what the other player gave, by name); and what has passed each way between the two colonies (all
@@ -307,7 +308,7 @@ with a water source near each start.
 
 ## Seeing the land
 
-Every colony's land is outlined in its colour while a building, planting, cutting, demolishing or founding tool is in
+Every colony's land is outlined in its color while a building, planting, cutting, demolishing or founding tool is in
 hand, and at any time with **Ctrl+L**. Where two outlines meet is where a trading post goes.
 
 ## Testing alone (debug)
@@ -434,5 +435,5 @@ Automated checks (all passing): **StabilityTests** (headless: the network stampi
 rules, founding and the wait for the first tick, migration pairing, the blueprint join check, the colony digest) and
 **RuntimeChecks** against the compiled mod and the game's assemblies: every action type declares what it touches,
 the shared actions and the actions that leave joining open are listed for review, the host's answers survive the
-event JSON, no simulation-reachable game method reads a dev key the mod does not neutralise, and every game method
-or field the mod hooks still exists. In-game test scripts: [ALPHA-TEST-SCRIPTS.md](ALPHA-TEST-SCRIPTS.md).
+event JSON, no simulation-reachable game method reads a dev key the mod does not neutralize, and every game method
+or field the mod hooks still exists. In-game [test scripts](ALPHA-TEST-SCRIPTS.md).

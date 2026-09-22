@@ -11,10 +11,10 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 
 > [!WARNING]
 > **Beta.** Hosting, joining over Steam and founding a second colony have been played. This version's model
-> (colonies with their own land, trading posts and barter, colony handover) and the desync review's fixes (alpha11
-> to beta4) have **not been played yet**; they are covered by automated checks. Since alpha13, in a separate-colonies game, a guest whose
-> colony state differs from the host's stops at once, the tick it happens, so a bug in that check would also stop a healthy
-> game: the log line says which it was. Play on a copy of your save, keep backups, and please report what you find
+> (colonies with their own land, trading posts and barter, colony handover) and every build since alpha11 (the desync
+> review's fixes onward) have **not been played yet** in a separate-colonies game; they are covered by automated
+> checks. Since alpha13, in a separate-colonies game, a guest whose colony state differs from the host's stops at once,
+> the tick it happens. So a bug in that check would also stop a healthy game; the log line says which it was. Play on a copy of your save, keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
 
 MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
@@ -25,9 +25,12 @@ shared-colony co-op, which plays as in the Stability Fork (see [One shared colon
 ## Install
 
 **You need:** Timberborn **1.1.2.4** (Steam version, Windows is what has been tested) with the **Harmony** and
-**Mod Settings** mods enabled. **Every player** needs the same game version and **the exact same download** of this mod.
+**Mod Settings** mods enabled. **Every player** installs the same version of the mod (**the exact same download**) and
+runs the same game version.
 
-1. Download the `BeaverBuddies-MultiColony-….zip` from the [Releases page](https://github.com/timbermods/BeaverBuddies-MultiColony/releases), or use the zip you were sent.
+1. On the [Releases page](https://github.com/timbermods/BeaverBuddies-MultiColony/releases), open the newest release
+   (every release so far is a beta pre-release) and download `BeaverBuddies-MultiColony-….zip` under **Assets**
+   (not "Source code"). Or use the zip you were sent.
 2. **Close Timberborn.**
 3. In `Documents\Timberborn\Mods`, **delete every other BeaverBuddies folder** (the Stability Fork, the Workshop
    version, older MultiColony builds), and unsubscribe from the Workshop BeaverBuddies if you have it. They change
@@ -73,19 +76,21 @@ closes) or **Keep waiting** (nothing happens). A guest's change while you wait i
 
 **5. Guest without a colony: found yours.** Once the host unpauses, a message offers to **place your district
 center** (or press **Ctrl+K** later, whenever you are ready; before the first tick it says the game has not started
-yet). Other colonies' land shows as coloured outlines: place it **at least 20 tiles from
+yet). Other colonies' land shows as colored outlines: place it **at least 20 tiles from
 their buildings and paths**, so both colonies have room to grow. It is free, needs no science, and appears **already
 built**, with starting beavers, food and water. You found once; you may found again only if your colony is handed
 over.
 
 **Your colony is remembered.** The save knows each player by their Steam ID (or an id kept on your computer without
 Steam): you get the same colony every time, whoever hosts. The connection panel shows each name with its colony.
+Over Steam the host checks that id; over a direct IP join it can't (see [Which joins are
+verified](#how-it-works)).
 
 ## Playing your colony
 
 - **Your colony is your districts and your land**: every tile within 10 tiles of your buildings and paths that no
   other colony reached first. It grows as you build, and stops where another colony's land begins. Everything you
-  place is yours from the moment you place it. **Every colony's land is outlined in its colour** while you hold a
+  place is yours from the moment you place it. **Every colony's land is outlined in its color** while you hold a
   building, planting, cutting or demolishing tool, and any time with **Ctrl+L**.
 - **You build, mark trees and plant on your own land or free land.** Never on another colony's land or right next to
   its roads, buildings or paths, finished or still being built (the preview turns red and says why). Building towards another colony does not take its land: your land
@@ -180,7 +185,7 @@ this colony** on your colony's row: their actions, toolbar, top bar and science 
 they press **Back to your colony**. Both of you can play your colony at the same time. A colony looked after by a
 player who is in the game is **not handed over** for its own player's absence. The host may also ask a player to
 look after the colony of a player who is away, and may end any stewardship. The steward is remembered by the save
-(by Steam account), like the colonies are.
+(by the same Steam ID or local id as the colonies).
 
 ## When a colony is handed over
 
@@ -250,7 +255,8 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 
 - **Steam invites:** both players online in Steam and owning Timberborn. Settings **Enable Steam Networking** and
   **Allow Friends to Join Directly via Steam**. Only friends who join the host's friends-only lobby can connect.
-- **Direct IP:** the host forwards port **25565**, or both use a VPN such as Hamachi.
+- **Direct IP:** the host forwards port **25565**, or both use a VPN such as Hamachi. Anyone who can reach that port
+  while you host can join, and the host can't check who they are (see [Which joins are verified](#how-it-works)).
 - **The connection panel** (top-left) shows each player, their ping, whether you're in sync, the tick rate and a
   chat box. At the top of the chat is a **speed boost**: `-` and `+` (or a typed number) add a constant to the speed
   you pick at the top right, for everyone, so the fastest button with +0.5 runs at 7.5x (from -6.5 to +23; the
@@ -310,7 +316,7 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   of the colony state and the running digest that must match on every computer, and the last colony log lines.
 - **Reporting:** send `Player.log` from every player
   (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`), plus screenshots for anything on screen.
-  Lines from this mode start with `[Colony]`. Step-by-step test scripts are in [ALPHA-TEST-SCRIPTS.md](ALPHA-TEST-SCRIPTS.md).
+  Lines from this mode start with `[Colony]`. Step-by-step [test scripts](ALPHA-TEST-SCRIPTS.md) say what to try and what to expect.
 
 Report issues at [github.com/timbermods/BeaverBuddies-MultiColony/issues](https://github.com/timbermods/BeaverBuddies-MultiColony/issues),
 not to the original BeaverBuddies project.

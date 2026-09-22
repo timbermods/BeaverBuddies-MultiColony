@@ -120,8 +120,9 @@ fix and the pumping between ticks are covered by checks on their decisions, not 
 4. Start the game, play, then have the friend leave. Confirm the host keeps running. In MultiColony, from the
    next in-game day the **Ctrl+T** window shows the friend's colony as away, and the host may hand it over.
 5. Repeat with the friend's game **closed** when they accept (tests the launch invite).
-6. Repeat with an invite sent **after** Start Game (expect the "already started" message), and once with an
-   invite sent after the host placed a path while still paused (expect the "already changed the game" message).
+6. Repeat with an invite sent **after** the host has unpaused (expect the "already started" message), and once with
+   an invite sent after the host placed a path while still paused (expect the "already changed the game" message).
+   An invite sent after **Start Game** while the host still waits paused, with nothing changed, still works.
 6a. Rejoin the same save later with the friend hosting it: in MultiColony each of you gets the same colony as
     before (`[Colony] Player … plays slot …` in the log).
 7. Host with Steam Networking **off** and confirm direct IP works as before.
@@ -132,7 +133,8 @@ Steam's numeric end reason and debug text, which is what makes a failure diagnos
 ## Known limits
 
 - Both players must be online in Steam, and the friend must own Timberborn.
-- Joining after **Start Game**, or after the host changed anything while waiting paused, is not possible.
+- Joining after the host's first tick (unpausing), or after the host changed anything while waiting paused, is not
+  possible.
   After a desync, the host uses **Save and rehost**. A Steam guest's **Reconnect (wait for Rehost)** joins the
   host's new lobby when Steam shows it (the host has **Allow Friends to Join Directly via Steam** on); otherwise the
   guest is told to accept a fresh invite. In MultiColony a

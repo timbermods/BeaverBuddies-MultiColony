@@ -1,6 +1,7 @@
-# Separate colonies: alpha test scripts
+# Separate colonies: test scripts
 
-For the 1.4.0 alpha (colonies with their own land, trading posts and barter, colony handover). Please report a
+For the 1.4.0 betas (colonies with their own land, trading posts and barter, colony handover). The scripts began with
+the alphas; a label such as *(alpha13)* or *(beta2)* says which build a line was added for. Please report a
 result for **every line**: *works*, *fails* (what you saw), or *not tried*. A screenshot helps for anything drawn on
 screen (the trading-post panel, a notice, the connection panel, the toolbar). Send `Player.log` at the end
 (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`). Lines from this mode start with `[Colony]`.
@@ -22,7 +23,7 @@ colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode
    (colony 1's) district center or a building and try pause, priority, workers, rename, demolish: each shows *That
    belongs to another colony.* and nothing changes.
 4. **Found colony 2.** Press **Ctrl+K**: a district-center tool opens, and colony 1's land shows as an outline in its
-   colour. Move it within 10 tiles of colony 1's buildings: red, *That is another colony's land…*; between 10 and 20
+   color. Move it within 10 tiles of colony 1's buildings: red, *That is another colony's land…*; between 10 and 20
    tiles: red, *Too close to another colony…* Place it more than 20 tiles away: a finished
    district center appears with starting food, water and beavers; notice *A new colony has been founded.*; the log has
    `[Colony] Slot 1 founded a colony at …`. Select one of the new beavers: its district is the new district.
@@ -41,7 +42,7 @@ colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode
    half. Before colony 2's road reaches its half, select the post: *Not trading yet*, and why.
 8. **The panel.** Select colony 1's half. The panel is titled **Trading Post** and describes a trading post; there
    is no *Imported goods* box beside it (no **Manage distribution**), no stock list and no *No goods in stock* box. At
-   the bottom: *Trading with Colony 2* in its colour with **All posts**; a **You give** and a **You get** card, each
+   the bottom: *Trading with Colony 2* in its color with **All posts**; a **You give** and a **You get** card, each
    with a good (the one that colony has most of), *You have …* / *Colony 2 has …*, **−**, an amount box and **+**; a
    **Rounds** card with **−**, a box and **+**, and **Repeat until cancelled**; a line reading the offer back; **Make
    offer**; the **Ledger** (*No round has crossed here yet*); and *Traded with Colony 2* (screenshot please: it should
@@ -50,8 +51,8 @@ colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode
    the panel (science and beavers first, each good with the colony's stock); pick one. Open it again and pick the
    other card's good: the two swap. Untick *Only what is in stock*: every good shows. Click outside the box, or press
    Esc: it closes (Esc leaves the panel open). **−** and **+** move the amount by 10 (Shift: by 1), never past 100.
-   Type 150: the line turns red (*0 to 100 per round*) and **Make offer** greys out; so does 0 on both sides, and 0
-   rounds. Tick **Repeat until cancelled**: the rounds box greys out. Typing digits in a box must not change the game
+   Type 150: the line turns red (*0 to 100 per round*) and **Make offer** grays out; so does 0 on both sides, and 0
+   rounds. Tick **Repeat until cancelled**: the rounds box grays out. Typing digits in a box must not change the game
    speed or open any window. With the description shown and all worker slots in use on a small screen, the section
    scrolls instead of running off the bottom.
 9. **No trade by settings.** In colony 2's district (F8) set logs to import *Forced*: nothing crosses.
@@ -184,7 +185,7 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     dev mode off, the guest Ctrl-clicks a locked building: the tool does **not** open; the host's refusal notice
     appears instead. With the host's dev mode on, the tool opens once the host answers.
 8c. **Joined roads, two players (alpha12).** Colony 1 lays a path up to the edge of its land and pauses the moment it
-    finishes; colony 2 places a path on the neighbouring tile and resumes: refused (*…would touch another colony's
+    finishes; colony 2 places a path on the neighboring tile and resumes: refused (*…would touch another colony's
     building or path*). Force a join (both place at the same moment): the game keeps running on both computers and
     both see the *roads joined* notice.
 8d. **Gates, two players (alpha14).** One player opens a gate on their own roads while the other hovers a path
@@ -284,7 +285,7 @@ Everyone installs the same zip; the host turns on **Always Use Detailed Logging*
 per colony: population, land, exchanges).
 
 1. Everyone joins while the host waits paused; the host unpauses; then three or four players each found a colony on
-   a medium map, and link each pair of neighbours with a trading post. Try it the wrong way round once: player 2
+   a medium map, and link each pair of neighbors with a trading post. Try it the wrong way round once: player 2
    presses Ctrl+K before the host unpauses (a notice says the game has not started); the host places a path while
    paused, then player 3 tries to join (refused: the game was changed).
 1a. **Two join by IP at once (beta11).** With a save of a grown colony (a few MB), two guests press **Join co-op
