@@ -83,8 +83,8 @@ the repository's env.props setup before running RuntimeChecks.
 
 StabilityTests also runs the host's send lanes (1.4.0-beta12): frames in order, posting that never waits, a guest
 stuck past the limit reported stalled, and a real loopback session where one guest stops reading while the host
-broadcasts 2 MB. Every broadcast returns at once, the reading guest gets everything, and the stalled guest is dropped
-after the limit. It also checks that both ends read on dedicated threads above normal priority, and it runs a
+broadcasts 2 MB: every broadcast returns at once and the reading guest gets everything. A connection whose writes really
+block (whatever the machine's socket buffers hold) checks that the stalled guest is dropped after the limit. It also checks that both ends read on dedicated threads above normal priority, and it runs a
 frame-by-frame model of a guest behind an easing host (`PaceChecks`).
 
 RuntimeChecks also runs the Wonders' timing (1.4.0-beta12, from the Stability Fork's PR #46,

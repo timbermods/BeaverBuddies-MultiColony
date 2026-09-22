@@ -21,6 +21,41 @@ static class SendLaneChecks
         public void Stop() => Listener.Stop();
     }
 
+    // Hands out the streams it was given, in order, as a listener hands out connections.
+    sealed class ListListener : ISocketListener
+    {
+        readonly System.Collections.Concurrent.BlockingCollection<ISocketStream> pending = new();
+        public ListListener(params ISocketStream[] streams) { foreach (var s in streams) pending.Add(s); }
+        public void Start() { }
+        public ISocketStream AcceptClient() => pending.Take();
+        public void Stop() => pending.CompleteAdding();
+    }
+
+    // A direct connection (it can block, IBlockingWrites) whose writes, once Block is called, wait until it is closed:
+    // what a guest that stopped reading does to the host's socket once its buffers are full, on any machine.
+    sealed class GatedStream : ISocketStream, IBlockingWrites
+    {
+        readonly ISocketStream inner;
+        readonly ManualResetEventSlim open = new ManualResetEventSlim(true);
+        volatile bool closed;
+        public GatedStream(ISocketStream inner) => this.inner = inner;
+        public bool Closed => closed;
+        public void Block() => open.Reset();
+        public bool Connected => !closed && inner.Connected;
+        public string? Name => inner.Name;
+        public int MaxChunkSize => inner.MaxChunkSize;
+        public int MaxBytesPerSecond => inner.MaxBytesPerSecond;
+        public Task ConnectAsync() => inner.ConnectAsync();
+        public int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+        public void Write(byte[] buffer, int offset, int count)
+        {
+            open.Wait();
+            if (closed) throw new IOException("closed");
+            inner.Write(buffer, offset, count);
+        }
+        public void Close() { closed = true; open.Set(); inner.Close(); }
+    }
+
     // A stream that remembers which thread reads it.
     sealed class WatchedStream : ISocketStream
     {
@@ -90,7 +125,10 @@ static class SendLaneChecks
             Check(lane.WaitUntilEmpty(1000), "a closed lane still waited");
         });
 
-        yield return ("Direct TCP: a guest that stops reading no longer stops the host's broadcasts, and is dropped after the limit", () =>
+        // Real sockets: whatever the machine's socket buffers hold, the host's broadcasts return at once. (On beta11's code, on
+        // a machine whose buffers fill, the broadcast blocked here.) Whether the guest is then dropped depends on those
+        // buffers filling, which a CI runner's may not: that part is the next check, with a connection that really blocks.
+        yield return ("Direct TCP: a guest that stops reading no longer stops the host's broadcasts", () =>
         {
             int limitBefore = TimberServer.SendStallLimitMs;
             TimberServer.SendStallLimitMs = 1500;
@@ -131,19 +169,56 @@ static class SendLaneChecks
                 Check(broadcast.Join(10_000), "the host's broadcast waited for the guest that stopped reading");
                 Check(worstMs < 500, $"one broadcast took {worstMs} ms");
                 Check(SpinWait.SpinUntil(() => guest.HasEventsForTick(500), 10_000), "the guest that reads never got the last frame");
-
-                // Past the limit the next broadcast drops the stalled guest, and the one after forgets it.
-                Thread.Sleep(TimberServer.SendStallLimitMs + 300);
-                host.DoUserInitiatedEvent(Frame(501, random), "Test", 501);
-                host.DoUserInitiatedEvent(Frame(502, random), "Test", 502);
-                Check(host.ClientCount == 1, $"the stalled guest was not dropped ({host.ClientCount} guests)");
-                Check(SpinWait.SpinUntil(() => guest.HasEventsForTick(502), 5000), "the guest that reads stopped getting frames");
             }
             finally
             {
                 TimberServer.SendStallLimitMs = limitBefore;
                 try { stalled?.Close(); } catch { }
                 guest?.Close();
+                host.Close();
+            }
+        });
+
+        yield return ("Send lanes: a guest whose connection takes nothing is dropped after the limit, and the other plays on", () =>
+        {
+            int limitBefore = TimberServer.SendStallLimitMs;
+            TimberServer.SendStallLimitMs = 1000;
+            var (hostA, guestA) = PipeStream.Pair();
+            var (hostB, guestB) = PipeStream.Pair();
+            var healthy = new GatedStream(hostA);
+            var stalled = new GatedStream(hostB);
+            var host = new TimberServer(new ListListener(healthy, stalled), () => Task.FromResult(new byte[] { 1, 2, 3 }), null);
+            var reader = new TimberClient(guestA);
+            var frozen = new TimberClient(guestB);
+            try
+            {
+                int maps = 0;
+                reader.OnMapReceived += _ => maps++;
+                frozen.OnMapReceived += _ => maps++;
+                host.Start(); reader.Start(); frozen.Start();
+                Check(SpinWait.SpinUntil(() => { host.Update(); reader.Update(); frozen.Update(); return maps == 2 && host.ClientCount == 2; }, 4000),
+                    "the two guests never joined");
+                Thread.Sleep(200); // both joins finish and their lanes open
+                // One guest's connection now takes nothing more: every write to it waits, as a full socket's does.
+                stalled.Block();
+                var random = new Random(7);
+                var clock = Stopwatch.StartNew();
+                for (int tick = 1; tick <= 20; tick++) host.DoUserInitiatedEvent(Frame(tick, random), "Test", tick);
+                Check(clock.ElapsedMilliseconds < 500, $"the host's broadcasts waited {clock.ElapsedMilliseconds} ms for the stalled guest");
+                Check(SpinWait.SpinUntil(() => reader.HasEventsForTick(20), 2000), "the other guest stopped getting frames");
+                // Past the limit the next broadcast drops the stalled guest, and the one after forgets it.
+                Thread.Sleep(TimberServer.SendStallLimitMs + 200);
+                host.DoUserInitiatedEvent(Frame(21, random), "Test", 21);
+                host.DoUserInitiatedEvent(Frame(22, random), "Test", 22);
+                Check(host.ClientCount == 1, $"the stalled guest was not dropped ({host.ClientCount} guests)");
+                Check(stalled.Closed, "the stalled guest's connection was left open");
+                Check(SpinWait.SpinUntil(() => reader.HasEventsForTick(22), 2000), "the other guest stopped getting frames after the drop");
+            }
+            finally
+            {
+                TimberServer.SendStallLimitMs = limitBefore;
+                stalled.Close();
+                reader.Close(); frozen.Close();
                 host.Close();
             }
         });

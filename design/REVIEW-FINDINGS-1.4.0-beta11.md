@@ -27,6 +27,9 @@
   - one guards saves, and held before the fix;
   - one is a safety check.
 - The two new real-socket transport checks fail on beta11's TimberNet.
+- After the release, GitHub's runner showed the stalled-guest check depended on the machine's socket buffers (a large
+  enough buffer never stalls). It was split into a real-socket check (the host never waits) and one on a connection
+  that really blocks (the guest is dropped), which brings StabilityTests to 361.
 - The other new StabilityTests exercise code that is new in beta12.
 
 ---

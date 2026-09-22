@@ -92,6 +92,9 @@ Network:
 
 Checks:
 - StabilityTests 360 (12 new) and RuntimeChecks 314 (36 new, 14 of them the fork's Wonder checks).
+- After the release, the same day: on GitHub's runner the stalled-guest check found the guest never stalled (the
+  runner's socket buffers took the whole 2 MB). It is now two checks: real sockets for "the host never waits", and a
+  connection that really blocks for "the guest is dropped after the limit". StabilityTests 361; the mod is unchanged.
 - Run against beta11's code, the new checks for these fixes fail (the report lists which pass there, and why).
 - Not played: Script B lines 8t to 8y and Script C 1b.
 
