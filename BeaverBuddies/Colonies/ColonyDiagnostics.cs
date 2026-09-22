@@ -15,6 +15,7 @@ using Timberborn.DwellingSystem;
 using Timberborn.EntitySystem;
 using Timberborn.GameDistricts;
 using Timberborn.InputSystem;
+using Timberborn.InventorySystem;
 using Timberborn.Modding;
 using Timberborn.SingletonSystem;
 using Timberborn.StatusSystem;
@@ -219,7 +220,8 @@ namespace BeaverBuddies.Colonies
                         + 7 * Hash(districtBuilding.District) + 1);
                 CrossingExchange exchange = entity.GetComponent<CrossingExchange>();
                 if (exchange != null && exchange.IsOpen)
-                    exchanges += Hash(entity) * (1 + (int)exchange.State + 3 * exchange.Sent + 7919 * exchange.Total + 104729 * exchange.Rounds);
+                    exchanges += Hash(entity) * (1 + (int)exchange.State + 3 * exchange.Held + 7919 * exchange.Total + 104729 * exchange.Done
+                        + 15485863L * exchange.Serial + (exchange.CancelAsked ? 2 : 0));
             }
             ColonyReach reach = ColonyReach.Instance;
             string land = reach == null ? "-" : string.Join("/", Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(reach.LandSize));
@@ -442,11 +444,12 @@ namespace BeaverBuddies.Colonies
                     r.AppendLine("  no exchange");
                     continue;
                 }
-                r.AppendLine($"  exchange {ax.Serial} {ax.State}{(ax.Repeat ? $", repeating, round {ax.Rounds + 1}" : "")}: "
-                    + $"{ax.GoodId ?? "-"} {ax.Sent}/{ax.Total} for {bx.GoodId ?? "-"} {bx.Sent}/{bx.Total}");
+                r.AppendLine($"  exchange {ax.Serial} {ax.State}, round {ax.Done + 1} of {(ax.Repeat ? "until cancelled" : ax.Rounds.ToString())}: "
+                    + $"{ax.GoodId ?? "-"} {ax.Held}/{ax.Total} for {bx.GoodId ?? "-"} {bx.Held}/{bx.Total}"
+                    + (ax.CancelAsked || bx.CancelAsked ? ", a colony asked to end it" : ""));
                 if (ax.IsActive)
                 {
-                    string stall = Stall(half, ax) + Stall(partner, bx);
+                    string stall = Stall(half, ax, exchanges) + Stall(partner, bx, exchanges);
                     if (stall.Length > 0) r.AppendLine("  held up:" + stall);
                 }
             }
@@ -456,18 +459,19 @@ namespace BeaverBuddies.Colonies
         private static string Workers(DistrictCrossing half) =>
             half.GetComponent<Workplace>() is Workplace workplace ? $"{workplace.NumberOfAssignedWorkers}/{workplace.MaxWorkers}" : "-";
 
-        /// <summary>Why one side of a running exchange is not moving, if it can tell.</summary>
-        private static string Stall(DistrictCrossing half, CrossingExchange side)
+        /// <summary>Why one side of a running exchange is not in yet, if it can tell.</summary>
+        private static string Stall(DistrictCrossing half, CrossingExchange side, ColonyExchangeService exchanges)
         {
-            if (side.Remaining <= 0 || side.GoodId == null) return "";
-            string who = $" [{ColonyExchangeService.ColonyName(DistrictOwner.OwnerOfDistrict(TradingPosts.DistrictOf(half)) ?? -1)}]";
-            if (ColonyExchangeService.StillToBring(half) == 0) return who + " waiting for the other side (in step)";
-            if (half.GetComponent<Workplace>()?.NumberOfAssignedWorkers == 0 && !ExchangeTerms.IsSpecial(side.GoodId)) return who + " no workers on its half";
-            DistrictCrossingInventory partnerInventory = TradingPosts.Partner(half)?.GetComponent<DistrictCrossingInventory>();
-            if (partnerInventory != null && !ExchangeTerms.IsSpecial(side.GoodId)
-                && partnerInventory.Inventory.AmountInStock(side.GoodId) >= TradingPostCapacityPatcher.Capacity * 9 / 10)
-                return who + " the other half is full (not being hauled away)";
-            return "";
+            if (side.Total <= 0 || side.GoodId == null || exchanges.IsIn(half, side)) return "";
+            string who = $" [{ColonyExchangeService.ColonyName(ColonyExchangeService.OwnerOf(half))}]";
+            if (side.GoodId == ExchangeTerms.Science)
+                return who + $" has {ColonyExchangeService.ScienceToSpare(ColonyExchangeService.OwnerOf(half))} of {side.Total} science";
+            if (side.GoodId == ExchangeTerms.Beavers) return who + $" can spare {exchanges.BeaversToSpare(half)} of {side.Total} beavers";
+            if (half.GetComponent<Workplace>()?.NumberOfAssignedWorkers == 0) return who + " no workers on its half";
+            Inventory inventory = half.GetComponent<DistrictCrossingInventory>()?.Inventory;
+            if (inventory != null && inventory.UnreservedCapacity(side.GoodId) == 0)
+                return who + " no room on its half (the other colony's goods are not being hauled away)";
+            return who + $" {side.Held} of {side.Total} delivered";
         }
 
         private static string On(bool value) => value ? "on" : "off";

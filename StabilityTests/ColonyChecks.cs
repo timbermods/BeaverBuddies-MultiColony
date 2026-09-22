@@ -590,171 +590,198 @@ static class ColonyChecks
 
         // ---- exchanges at a trading post ----
 
-        yield return ("Colony: an exchange's terms name two different goods, amounts up to 9999, not both 0", () =>
+        yield return ("Colony: an exchange's terms name two different goods, up to 100 of each a round, not both 0", () =>
         {
             // Science and beavers are exchange items too; nobody carries them.
             Check(ExchangeTerms.IsSpecial(ExchangeTerms.Science)); Check(ExchangeTerms.IsSpecial(ExchangeTerms.Beavers));
             Check(!ExchangeTerms.IsSpecial("Log"));
-            Check(ExchangeTerms.AreValid(ExchangeTerms.Science, 500, "Plank", 100));
-            Check(ExchangeTerms.AreValid("Berries", 200, ExchangeTerms.Beavers, 3));
-            Check(ExchangeTerms.AreValid("Log", 1000, "Gear", 250));
-            Check(!ExchangeTerms.AreValid("Log", 1000, "Log", 250), "the same good both ways");
+            Equal(100, ExchangeTerms.MaxAmount);
+            Check(ExchangeTerms.AreValid(ExchangeTerms.Science, 100, "Plank", 100));
+            Check(ExchangeTerms.AreValid("Berries", 100, ExchangeTerms.Beavers, 3));
+            Check(ExchangeTerms.AreValid("Log", 100, "Gear", 25));
+            Check(!ExchangeTerms.AreValid("Log", 101, "Gear", 25), "more than a half holds");
+            Check(!ExchangeTerms.AreValid("Log", 10, "Gear", 1000), "more than a half holds");
+            Check(!ExchangeTerms.AreValid("Log", 100, "Log", 25), "the same good both ways");
             Check(!ExchangeTerms.AreValid("Log", 0, "Gear", 0), "nothing either way");
             Check(!ExchangeTerms.AreValid("Log", -1, "Gear", 5));
-            Check(!ExchangeTerms.AreValid("Log", 10000, "Gear", 5));
             Check(!ExchangeTerms.AreValid(null, 10, "Gear", 5), "an amount without a good");
             // A gift (asking for nothing) and a request (giving nothing) are exchanges too.
-            Check(ExchangeTerms.AreValid("Log", 1000, null, 0));
-            Check(ExchangeTerms.AreValid("Log", 0, "Gear", 250));
+            Check(ExchangeTerms.AreValid("Log", 100, null, 0));
+            Check(ExchangeTerms.AreValid("Log", 0, "Gear", 25));
             Check(ExchangeTerms.AreValid("Log", 30, "Log", 0), "a gift's unused good does not count");
             Equal(null, ExchangeTerms.GoodOf("Log", 0));
             Equal("Log", ExchangeTerms.GoodOf("Log", 1));
         });
 
-        yield return ("Colony: 1000 logs for 250 gears move in step: each side runs at most a tenth ahead", () =>
+        yield return ("Colony: an exchange runs 1 to 99 rounds, or round after round until both colonies end it", () =>
         {
-            // Nothing delivered yet: each side may bring its lead.
-            Equal(100, ExchangeTerms.StillToBring(1000, 0, 250, 0));
-            Equal(25, ExchangeTerms.StillToBring(250, 0, 1000, 0));
-            // Logs ran their lead; they wait for gears.
-            Equal(0, ExchangeTerms.StillToBring(1000, 100, 250, 0));
-            // 25 gears arrived (a tenth of theirs): logs may go on to 2 tenths.
-            Equal(100, ExchangeTerms.StillToBring(1000, 100, 250, 25));
-            // A share is rounded up, so one gear already lets some logs move.
-            Equal(4, ExchangeTerms.StillToBring(1000, 100, 250, 1));
-            // Once gears are done, the rest of the logs may come.
-            Equal(900, ExchangeTerms.StillToBring(1000, 100, 250, 250));
-            Equal(0, ExchangeTerms.StillToBring(1000, 1000, 250, 250));
+            Check(!ExchangeTerms.AreValidRounds(0)); Check(ExchangeTerms.AreValidRounds(1));
+            Check(ExchangeTerms.AreValidRounds(99)); Check(!ExchangeTerms.AreValidRounds(100));
+            // After the first of three rounds crossed there are two more; after the third, none.
+            Check(ExchangeTerms.HasAnotherRound(3, 1, repeat: false));
+            Check(ExchangeTerms.HasAnotherRound(3, 2, repeat: false));
+            Check(!ExchangeTerms.HasAnotherRound(3, 3, repeat: false));
+            Check(!ExchangeTerms.HasAnotherRound(1, 1, repeat: false));
+            Check(ExchangeTerms.HasAnotherRound(1, 500, repeat: true));
         });
 
-        yield return ("Colony: small exchanges and gifts are never held back", () =>
+        yield return ("Colony: a round's goods wait on their own half: workers bring what is missing, and no more is held", () =>
         {
-            // The lead is at least 10 (or the whole side when smaller).
-            Equal(10, ExchangeTerms.Lead(50));
-            Equal(1, ExchangeTerms.Lead(1));
-            Equal(1, ExchangeTerms.StillToBring(1, 0, 1, 0));
-            // A gift: the giver brings it all; the side giving nothing is done from the start.
-            Equal(30, ExchangeTerms.StillToBring(30, 0, 0, 0));
-            Equal(0, ExchangeTerms.StillToBring(0, 0, 30, 0));
-            Check(!ExchangeTerms.IsComplete(30, 29, 0, 0));
-            Check(ExchangeTerms.IsComplete(30, 30, 0, 0));
+            // Nothing on the half yet: bring all of it.
+            Equal(100, ExchangeTerms.StillToBring(100, 0, 0));
+            // Some already waits, some is on the way.
+            Equal(40, ExchangeTerms.StillToBring(100, 50, 10));
+            Equal(0, ExchangeTerms.StillToBring(100, 60, 40));
+            Equal(0, ExchangeTerms.StillToBring(100, 100, 0));
+            Check(ExchangeTerms.StillToBring(0, 0, 0) == 0, "a side giving nothing brings nothing");
+            // What arrives is held only up to the round's amount; the rest goes home.
+            Equal(15, ExchangeTerms.ToHold(100, 80, 15));
+            Equal(20, ExchangeTerms.ToHold(100, 80, 35));
+            Equal(0, ExchangeTerms.ToHold(100, 100, 5));
+            Check(!ExchangeTerms.IsDelivered(100, 99)); Check(ExchangeTerms.IsDelivered(100, 100)); Check(ExchangeTerms.IsDelivered(0, 0));
         });
 
-        yield return ("Colony: only what a side still owes counts; the rest is ordinary trade", () =>
+        yield return ("Colony: rounds with uneven loads always fill both halves, never past their amount", () =>
         {
-            Equal(15, ExchangeTerms.Counted(100, 80, 15));
-            Equal(20, ExchangeTerms.Counted(100, 80, 35));
-            Equal(0, ExchangeTerms.Counted(100, 100, 5));
-        });
-
-        yield return ("Colony: exchanges with uneven loads always finish, and never run ahead of the pace", () =>
-        {
-            // Beavers carry uneven loads, one side at a time, in a random order. Every delivery must stay within
-            // what the pace allowed, and every exchange must finish without getting stuck.
+            // Beavers carry uneven loads, one side at a time, in a random order, some still on the way when others
+            // arrive. Every round must end with exactly each side's amount waiting on its half.
             var random = new Random(20260921);
             for (int round = 0; round < 500; round++)
             {
-                int totalA = random.Next(0, 3000), totalB = random.Next(0, 3000);
+                int totalA = random.Next(0, 101), totalB = random.Next(0, 101);
                 if (totalA == 0 && totalB == 0) totalB = 1;
-                int sentA = 0, sentB = 0, steps = 0;
-                while (!ExchangeTerms.IsComplete(totalA, sentA, totalB, sentB))
+                int heldA = 0, heldB = 0, wayA = 0, wayB = 0, steps = 0;
+                while (!(ExchangeTerms.IsDelivered(totalA, heldA) && ExchangeTerms.IsDelivered(totalB, heldB)))
                 {
-                    Check(++steps < 100000, $"stuck at {sentA}/{totalA} and {sentB}/{totalB}");
+                    Check(++steps < 100000, $"stuck at {heldA}/{totalA} and {heldB}/{totalB}");
                     bool sideA = random.Next(2) == 0;
-                    int may = sideA ? ExchangeTerms.StillToBring(totalA, sentA, totalB, sentB)
-                        : ExchangeTerms.StillToBring(totalB, sentB, totalA, sentA);
-                    if (may == 0)
+                    int total = sideA ? totalA : totalB, held = sideA ? heldA : heldB, way = sideA ? wayA : wayB;
+                    // Either a worker sets out with a load, or a load on the way arrives.
+                    if (way > 0 && random.Next(2) == 0)
                     {
-                        // Waiting is fine as long as the other side can move.
-                        int other = sideA ? ExchangeTerms.StillToBring(totalB, sentB, totalA, sentA)
-                            : ExchangeTerms.StillToBring(totalA, sentA, totalB, sentB);
-                        Check(other > 0 || ExchangeTerms.IsComplete(totalA, sentA, totalB, sentB),
-                            $"both sides wait at {sentA}/{totalA} and {sentB}/{totalB}");
-                        continue;
+                        int arriving = Math.Min(way, random.Next(1, 16));
+                        held += ExchangeTerms.ToHold(total, held, arriving);
+                        way -= arriving;
                     }
-                    int load = Math.Min(may, random.Next(1, 16));
-                    if (sideA) sentA += ExchangeTerms.Counted(totalA, sentA, load);
-                    else sentB += ExchangeTerms.Counted(totalB, sentB, load);
-                    Check(sentA <= totalA && sentB <= totalB, "a side delivered more than its amount");
-                    // Neither side's share is ever more than its lead ahead of the other's (in the other's goods).
-                    if (totalA > 0 && totalB > 0 && sentB < totalB)
-                        Check(sentA <= ExchangeTerms.Allowed(totalA, totalB, sentB), "side A ran ahead of the pace");
-                    if (totalA > 0 && totalB > 0 && sentA < totalA)
-                        Check(sentB <= ExchangeTerms.Allowed(totalB, totalA, sentA), "side B ran ahead of the pace");
+                    else
+                    {
+                        int wanted = ExchangeTerms.StillToBring(total, held, way);
+                        if (wanted > 0) way += Math.Min(wanted, random.Next(1, 16));
+                    }
+                    Check(held <= total, "a half held more than its side");
+                    Check(held + way <= total, "workers set out with more than the round needs");
+                    if (sideA) { heldA = held; wayA = way; } else { heldB = held; wayB = way; }
                 }
-                Equal(totalA, sentA);
-                Equal(totalB, sentB);
+                Equal(totalA, heldA);
+                Equal(totalB, heldB);
             }
+        });
+
+        yield return ("Colony: a district gives only beavers able to move, and its last adult always stays", () =>
+        {
+            Equal(4, ExchangeTerms.BeaversToSpare(5, 5));
+            Check(ExchangeTerms.BeaversToSpare(1, 1) == 0, "the last adult stays");
+            Equal(0, ExchangeTerms.BeaversToSpare(0, 0));
+            // Contaminated adults do not move, but they are adults: they can be the one who stays.
+            Equal(2, ExchangeTerms.BeaversToSpare(5, 2));
+            Equal(1, ExchangeTerms.BeaversToSpare(2, 1));
+            Equal(0, ExchangeTerms.BeaversToSpare(3, 0));
         });
 
         // ---- the trading post's offer form ----
 
-        yield return ("Colony: an amount box holds a whole number from 0 to 9999, and empty means 0", () =>
+        yield return ("Colony: an amount box holds a whole number from 0 to 100, and empty means 0", () =>
         {
-            foreach (var (text, amount) in new[] { ("", 0), ("  ", 0), (null, 0), ("0", 0), ("100", 100), (" 42 ", 42), ("9999", 9999), ("0050", 50) })
+            foreach (var (text, amount) in new[] { ("", 0), ("  ", 0), (null, 0), ("0", 0), ("100", 100), (" 42 ", 42), ("050", 50) })
             {
                 Check(TradeOfferForm.TryReadAmount(text, out int read), $"[{text}] should read");
                 Equal(amount, read);
             }
-            foreach (string text in new[] { "10000", "-5", "+5", "1,000", "1.5", "12a", "1e3", "٣" })
+            foreach (string text in new[] { "101", "9999", "-5", "+5", "1,000", "1.5", "12a", "1e3", "٣" })
                 Check(!TradeOfferForm.TryReadAmount(text, out _), $"[{text}] should not read");
+            foreach (var (text, rounds) in new[] { ("1", 1), (" 3 ", 3), ("99", 99), ("07", 7) })
+            {
+                Check(TradeOfferForm.TryReadRounds(text, out int read), $"[{text}] rounds should read");
+                Equal(rounds, read);
+            }
+            foreach (string text in new[] { "", "0", "100", "-1", "x", null })
+                Check(!TradeOfferForm.TryReadRounds(text, out _), $"[{text}] rounds should not read");
         });
 
         yield return ("Colony: the offer form says what an offer is, or what is wrong with it", () =>
         {
-            TradeOfferForm.Verdict Judge(string giveItem, string giveText, string getItem, string getText) =>
-                TradeOfferForm.Judge(giveItem, giveText, getItem, getText, out _, out _);
-            Equal(TradeOfferForm.Verdict.Exchange, Judge("Log", "1000", "Gear", "250"));
+            TradeOfferForm.Verdict Judge(string giveItem, string giveText, string getItem, string getText, string roundsText = "1",
+                bool repeat = false) => TradeOfferForm.Judge(giveItem, giveText, getItem, getText, roundsText, repeat, out _, out _, out _);
+            Equal(TradeOfferForm.Verdict.Exchange, Judge("Log", "100", "Gear", "25"));
             Equal(TradeOfferForm.Verdict.Gift, Judge("Log", "30", "Gear", "0"));
             Equal(TradeOfferForm.Verdict.Gift, Judge("Log", "30", "Gear", ""));
             Equal(TradeOfferForm.Verdict.Request, Judge("Log", "0", "Gear", "25"));
             Equal(TradeOfferForm.Verdict.NothingEitherWay, Judge("Log", "0", "Gear", ""));
             Equal(TradeOfferForm.Verdict.SameItem, Judge("Log", "10", "Log", "10"));
             Equal(TradeOfferForm.Verdict.Gift, Judge("Log", "10", "Log", "0"));
-            Equal(TradeOfferForm.Verdict.BadAmount, Judge("Log", "10000", "Gear", "5"));
+            Equal(TradeOfferForm.Verdict.BadAmount, Judge("Log", "1000", "Gear", "5"));
             Equal(TradeOfferForm.Verdict.BadAmount, Judge("Log", "5", "Gear", "lots"));
             Equal(TradeOfferForm.Verdict.NoItem, Judge(null, "5", "Gear", "5"));
-            Equal(TradeOfferForm.Verdict.Exchange, Judge(ExchangeTerms.Science, "500", ExchangeTerms.Beavers, "2"));
+            Equal(TradeOfferForm.Verdict.Exchange, Judge(ExchangeTerms.Science, "100", ExchangeTerms.Beavers, "2"));
+            Equal(TradeOfferForm.Verdict.BadRounds, Judge("Log", "100", "Gear", "25", "0"));
+            Equal(TradeOfferForm.Verdict.BadRounds, Judge("Log", "100", "Gear", "25", "100"));
+            Equal(TradeOfferForm.Verdict.Exchange, Judge("Log", "100", "Gear", "25", "99"));
+            // A repeating offer ignores the rounds box.
+            Equal(TradeOfferForm.Verdict.Exchange, Judge("Log", "100", "Gear", "25", "", repeat: true));
+            TradeOfferForm.Judge("Log", "100", "Gear", "25", "7", false, out _, out _, out int seven);
+            Equal(7, seven);
 
-            // Whatever is typed, the form offers exactly what an exchange accepts, with the amounts it read.
+            // Whatever is typed, the form offers exactly what an exchange accepts, with the numbers it read.
             var random = new Random(20260921);
             string[] items = { "Log", "Gear", ExchangeTerms.Science, ExchangeTerms.Beavers, null, "" };
-            string[] texts = { "", "0", "1", "10", "250", "9999", "10000", "-1", "x", " 7 " };
+            string[] texts = { "", "0", "1", "10", "100", "101", "250", "-1", "x", " 7 " };
+            string[] roundTexts = { "", "0", "1", "2", "50", "99", "100", "x", " 3 " };
             for (int i = 0; i < 5000; i++)
             {
                 string giveItem = items[random.Next(items.Length)], getItem = items[random.Next(items.Length)];
-                string giveText = random.Next(4) == 0 ? texts[random.Next(texts.Length)] : random.Next(0, 10001).ToString();
-                string getText = random.Next(4) == 0 ? texts[random.Next(texts.Length)] : random.Next(0, 10001).ToString();
-                var verdict = TradeOfferForm.Judge(giveItem, giveText, getItem, getText, out int give, out int get);
+                string giveText = random.Next(4) == 0 ? texts[random.Next(texts.Length)] : random.Next(0, 130).ToString();
+                string getText = random.Next(4) == 0 ? texts[random.Next(texts.Length)] : random.Next(0, 130).ToString();
+                string roundsText = roundTexts[random.Next(roundTexts.Length)];
+                bool repeat = random.Next(3) == 0;
+                var verdict = TradeOfferForm.Judge(giveItem, giveText, getItem, getText, roundsText, repeat, out int give, out int get, out int rounds);
                 bool read = TradeOfferForm.TryReadAmount(giveText, out int g) & TradeOfferForm.TryReadAmount(getText, out int a);
-                bool valid = read && ExchangeTerms.AreValid(giveItem, g, getItem, a);
+                bool roundsRead = TradeOfferForm.TryReadRounds(roundsText, out int r);
+                bool valid = read && ExchangeTerms.AreValid(giveItem, g, getItem, a) && (repeat || roundsRead);
                 Check(TradeOfferForm.IsOffer(verdict) == valid,
-                    $"{giveText} {giveItem} for {getText} {getItem}: the form says {verdict}, an exchange says {(valid ? "valid" : "not valid")}");
-                if (TradeOfferForm.IsOffer(verdict)) { Equal(g, give); Equal(a, get); }
+                    $"{giveText} {giveItem} for {getText} {getItem} x[{roundsText}]{(repeat ? " repeating" : "")}: the form says {verdict}, an exchange says {(valid ? "valid" : "not valid")}");
+                if (TradeOfferForm.IsOffer(verdict))
+                {
+                    Equal(g, give); Equal(a, get);
+                    Equal(repeat ? 1 : r, rounds);
+                    Check(repeat || ExchangeTerms.AreValidRounds(rounds));
+                }
             }
         });
 
-        yield return ("Colony: − and + go to the next whole step, a beaver at a time, and stay within 0 to 9999", () =>
+        yield return ("Colony: − and + go to the next whole step and stay within their box's range", () =>
         {
             Equal(10, TradeOfferForm.Step("Log", shift: false));
-            Equal(100, TradeOfferForm.Step("Log", shift: true));
+            Equal(1, TradeOfferForm.Step("Log", shift: true));
             Equal(10, TradeOfferForm.Step(ExchangeTerms.Science, shift: false));
             Equal(1, TradeOfferForm.Step(ExchangeTerms.Beavers, shift: false));
             Equal(10, TradeOfferForm.Step(ExchangeTerms.Beavers, shift: true));
+            Equal(1, TradeOfferForm.RoundsStep(false));
+            Equal(10, TradeOfferForm.RoundsStep(true));
             Equal(100, TradeOfferForm.Stepped(95, 10, up: true));
             Equal(90, TradeOfferForm.Stepped(95, 10, up: false));
-            Equal(110, TradeOfferForm.Stepped(100, 10, up: true));
+            Check(TradeOfferForm.Stepped(100, 10, up: true) == 100, "no more than a half holds");
             Equal(90, TradeOfferForm.Stepped(100, 10, up: false));
-            Equal(100, TradeOfferForm.Stepped(5, 100, up: true));
-            Equal(0, TradeOfferForm.Stepped(5, 100, up: false));
             Equal(0, TradeOfferForm.Stepped(0, 10, up: false));
             Equal(1, TradeOfferForm.Stepped(0, 1, up: true));
-            Equal(9999, TradeOfferForm.Stepped(9995, 10, up: true));
-            Equal(9999, TradeOfferForm.Stepped(9999, 100, up: true));
-            Equal(9900, TradeOfferForm.Stepped(9999, 100, up: false));
-            for (int amount = 0; amount <= ExchangeTerms.MaxAmount; amount += 7)
+            Equal(99, TradeOfferForm.Stepped(98, 1, up: true));
+            // Rounds: from 1 to 99.
+            Equal(1, TradeOfferForm.Stepped(1, 1, up: false, 1, ExchangeTerms.MaxRounds));
+            Equal(10, TradeOfferForm.Stepped(1, 10, up: true, 1, ExchangeTerms.MaxRounds));
+            Equal(99, TradeOfferForm.Stepped(95, 10, up: true, 1, ExchangeTerms.MaxRounds));
+            Equal(1, TradeOfferForm.Stepped(5, 10, up: false, 1, ExchangeTerms.MaxRounds));
+            for (int amount = 0; amount <= ExchangeTerms.MaxAmount; amount += 3)
             {
-                foreach (int step in new[] { 1, 10, 100 })
+                foreach (int step in new[] { 1, 10 })
                 {
                     int up = TradeOfferForm.Stepped(amount, step, up: true), down = TradeOfferForm.Stepped(amount, step, up: false);
                     Check(up > amount || amount == ExchangeTerms.MaxAmount, $"+ from {amount} by {step} gave {up}");
@@ -762,6 +789,7 @@ static class ColonyChecks
                     Check(up - amount <= step && amount - down <= step, $"{amount} by {step} jumped to {down} or {up}");
                     Check(up % step == 0 || up == ExchangeTerms.MaxAmount, $"+ from {amount} by {step} is not a whole step: {up}");
                     Check(down % step == 0, $"- from {amount} by {step} is not a whole step: {down}");
+                    Check(up <= ExchangeTerms.MaxAmount && down >= 0);
                 }
             }
         });

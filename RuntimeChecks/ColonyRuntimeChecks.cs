@@ -55,7 +55,7 @@ internal static class ColonyRuntimeChecks
             // are set for the actor's own colony: both are checked when played, not here. Presence and handovers are
             // refused from anyone but the host (ColonyRulesService), and so is telling a guest its action was refused.
             var expected = new[] { "ActionRefusedEvent", "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
-                "ColonyHandoverEvent", "ColonyPresenceEvent", "GiftScienceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
+                "ColonyHandoverEvent", "ColonyPresenceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
                 "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent",
                 "TreeCuttingAreaEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
             if (!shared.SequenceEqual(expected))
@@ -279,8 +279,19 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.ToolSystem.ToolUnlockingService", "Timberborn.ToolSystem", "LockIfNeeded"),
             ("Timberborn.ToolSystem.ToolUnlockingService", "Timberborn.ToolSystem", "IsLocked"),
             // The trading post.
-            ("Timberborn.DistributionSystem.DistrictCrossingInventory", "Timberborn.DistributionSystem", "GiveStock"),
             ("Timberborn.DistributionSystem.DistrictCrossingInventory", "Timberborn.DistributionSystem", "TransferStock"),
+            // A round's goods wait on their half, reserved, until both sides are in; then they cross together.
+            ("Timberborn.InventorySystem.Inventory", "Timberborn.InventorySystem", "ReserveStock"),
+            ("Timberborn.InventorySystem.Inventory", "Timberborn.InventorySystem", "UnreserveStock"),
+            ("Timberborn.InventorySystem.Inventory", "Timberborn.InventorySystem", "UnreservedAmountInStock"),
+            // Traded beavers move as the game migrates them, and each arrival goes in the population log.
+            ("Timberborn.GameDistricts.Citizen", "Timberborn.GameDistricts", "AssignDistrict"),
+            ("Timberborn.GameDistrictsMigration.MigrationService", "Timberborn.GameDistrictsMigration", "IsNotContaminated"),
+            ("Timberborn.GameDistrictsMigration.MigrationService", "Timberborn.GameDistrictsMigration", "RefusesWork"),
+            ("Timberborn.GameDistrictsMigration.MigrationService", "Timberborn.GameDistrictsMigration", "IsEmployed"),
+            ("Timberborn.GameDistrictsMigration.MigrationService", "Timberborn.GameDistrictsMigration", "HasHome"),
+            ("Timberborn.GameDistrictsMigration.MigrationService", "Timberborn.GameDistrictsMigration", "GetDayOfBirth"),
+            ("Timberborn.NotificationSystem.NotificationBus", "Timberborn.NotificationSystem", "Post"),
             ("Timberborn.DistributionSystem.DistrictCrossingWorkplaceBehavior", "Timberborn.DistributionSystem", "TryExport"),
             ("Timberborn.DistributionSystem.DistrictCrossing", "Timberborn.DistributionSystem", "CanExportGood"),
             ("Timberborn.DistributionSystem.DistrictCrossingInventory", "Timberborn.DistributionSystem", "IncomingStock"),
@@ -360,6 +371,9 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.DistributionSystemUI.DistrictCrossingFragment", "Timberborn.DistributionSystemUI", "_districtCrossing"),
             ("Timberborn.DistributionSystemUI.DistrictCrossingFragment", "Timberborn.DistributionSystemUI", "_root"),
             ("Timberborn.DistributionSystemUI.DistrictCrossingInventoryFragment", "Timberborn.DistributionSystemUI", "_root"),
+            ("Timberborn.DistributionSystemUI.DistrictCrossingInventoryFragment", "Timberborn.DistributionSystemUI", "_districtCrossingInventory"),
+            ("Timberborn.DistributionSystem.DistrictCrossingInventory", "Timberborn.DistributionSystem", "_mirrorOperationLock"),
+            ("Timberborn.InventorySystem.Inventory", "Timberborn.InventorySystem", "_reservedStock"),
             ("Timberborn.ToolButtonSystem.ToolButton", "Timberborn.ToolButtonSystem", "_toolDisablers"),
             ("Timberborn.WorkSystem.WorkerWorkingHours", "Timberborn.WorkSystem", "_ignoreWorkingHours"),
             ("Timberborn.WorkSystem.WorkplaceWorkingHours", "Timberborn.WorkSystem", "_ignoreWorkingHours"),

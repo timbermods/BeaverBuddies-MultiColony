@@ -100,7 +100,7 @@ namespace BeaverBuddies.Colonies
 
             // A player the host has not seated yet has no colony to spend science from, give from or found for.
             if (replayEvent.slot < 0 && ColonyModeService.IsSeparateColonies && (replayEvent is BuildingUnlockedEvent
-                || replayEvent is WorkerTypeUnlockedEvent || replayEvent is GiftScienceEvent || replayEvent is ExchangeProposedEvent
+                || replayEvent is WorkerTypeUnlockedEvent || replayEvent is ExchangeCancelledEvent || replayEvent is ExchangeKeptEvent || replayEvent is ExchangeProposedEvent
                 || replayEvent is ExchangeAcceptedEvent || replayEvent is BuildingPlacedEvent || replayEvent is FoundColonyEvent
                 || replayEvent is WorkingHoursChangedEvent || replayEvent is PlantingAreaMarkedEvent
                 || replayEvent is TreeCuttingAreaEvent || replayEvent is ClearResourcesMarkedEvent))

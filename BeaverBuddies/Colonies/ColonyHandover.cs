@@ -297,13 +297,13 @@ namespace BeaverBuddies.Colonies
             ColonyReach.Instance?.Transfer(from, to);
             ColonyMarks.Instance?.Transfer(from, to);
             ColonyScienceService.Instance?.Transfer(from, to);
-            // A trading post between the two is now a crossing within one colony: its exchange ends.
+            // A trading post between the two is now a crossing within one colony: its exchange ends, and what waited on
+            // each half goes back home. (One that now joins other colonies than those that agreed ends at the next check.)
             foreach (DistrictCrossing crossing in _entityComponentRegistry.GetEnabled<DistrictCrossing>().ToList())
             {
                 CrossingExchange exchange = ColonyExchangeService.Of(crossing);
                 if (exchange == null || !exchange.IsOpen || TradingPosts.IsTradingPost(crossing)) continue;
-                exchange.Clear();
-                ColonyExchangeService.Of(TradingPosts.Partner(crossing))?.Clear();
+                ColonyExchangeService.Instance?.End(crossing, TradingPosts.Partner(crossing), $"slot {from}'s colony was handed to slot {to}");
             }
             deadSince[from] = Unknown;
             awayDays[from] = 0;

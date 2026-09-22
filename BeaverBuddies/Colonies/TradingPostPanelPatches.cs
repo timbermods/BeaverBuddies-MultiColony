@@ -10,8 +10,8 @@ namespace BeaverBuddies.Colonies
     /// <summary>
     /// The Trading Post is a District Crossing underneath (its model and workings), so the game gives its panel the
     /// crossing's district-distribution panels too: the imported goods beside it with "Manage distribution", and the
-    /// half's stock list. Import settings move nothing across a Trading Post, and its own panel lists what waits on the
-    /// half, so both are hidden there. The game's District Crossing keeps them. Display only.
+    /// half's stock list. Import settings move nothing across a Trading Post, and it is no store (its own panel says what
+    /// waits on the half), so both are hidden there. The game's District Crossing keeps them. Display only.
     /// </summary>
     static class TradingPostPanel
     {
@@ -50,18 +50,27 @@ namespace BeaverBuddies.Colonies
     }
 
     /*
-     * 9/21/2026 (Timberborn 1.1.2.4): the crossing's stock ("No goods in stock", or each good with its limit):
+     * 9/21/2026 (Timberborn 1.1.2.4): the crossing's stock ("No goods in stock", or each good with its limit) shows
+     * itself when shown, and again on every update (InventoryFragment.UpdateFragment: _root.ToggleDisplayStyle(true)
+     * while the inventory is enabled), so hiding it once is not enough:
         _districtCrossingInventory = entity.GetComponent<DistrictCrossingInventory>();
         if ((bool)_districtCrossingInventory)
         {
             _root.ToggleDisplayStyle(visible: true);
+            _inventoryFragment.ShowFragment(_districtCrossingInventory.Inventory);
+        }
      */
+    // A Trading Post is not a store: the fragment is never shown for one (it stays hidden, and with no inventory set its
+    // updates do nothing). Its own panel says what waits on the half, and why.
     [HarmonyPatch(typeof(DistrictCrossingInventoryFragment), nameof(DistrictCrossingInventoryFragment.ShowFragment))]
     static class TradingPostStockPanelPatcher
     {
-        static void Postfix(DistrictCrossingInventoryFragment __instance, BaseComponent entity)
+        static bool Prefix(DistrictCrossingInventoryFragment __instance, BaseComponent entity)
         {
-            if (TradingPostPanel.IsTradingPost(entity)) __instance._root.ToggleDisplayStyle(visible: false);
+            if (!TradingPostPanel.IsTradingPost(entity)) return true;
+            __instance._districtCrossingInventory = null;
+            __instance._root.ToggleDisplayStyle(visible: false);
+            return false;
         }
     }
 }

@@ -145,9 +145,10 @@ namespace BeaverBuddies.Colonies
         StorableGoodAmount good = new StorableGoodAmount(storableGood, DistrictCrossingCapacity);   // 30
         inventoryInitializer.AddAllowedGood(good);
      */
-    // A crossing buffers up to 100 of each good instead of 30, in every game (the number is read when a crossing is
-    // made or loaded, so it must not depend on the mode). The buffer is what one side can have delivered and not yet
-    // hauled away by the other.
+    // A crossing half has room for 100 of each good instead of 30, in every game (the number is read when a crossing is
+    // made or loaded, before anything tells a Trading Post from a District Crossing, so it must not depend on either).
+    // At a Trading Post the room is only ever used for a round under way: one side's goods waiting on their half (at
+    // most ExchangeTerms.MaxAmount, which equals this), or the other colony's waiting to be hauled away after crossing.
     [HarmonyPatch(typeof(DistrictCrossingInventoryInitializer), nameof(DistrictCrossingInventoryInitializer.AllowEveryGoodAsTakeable))]
     static class TradingPostCapacityPatcher
     {
@@ -171,52 +172,40 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    // ---- where goods pass from one half to the other ----
+    // ---- goods arriving on a half, and crossing ----
 
     /*
-     * 9/21/2026 (Timberborn 1.1.2.4): the only place goods cross (TransferStock -> linked half's GiveStock):
-        using (_mirrorOperationLock.Lock())
-        {
-            Inventory.GiveImported(goodAmount);
-        }
+     * 9/21/2026 (Timberborn 1.1.2.4): the game passes goods across as soon as they arrive on a half
+     * (DistrictCrossingInventory.OnInventoryStockChanged, for a positive change):
+        _linked.Reserve(e.GoodAmount);
+        TransferStock(e.GoodAmount.GoodId, e.GoodAmount.Amount);
+     * and TransferStock (not while the half is itself receiving, _mirrorOperationLock):
+        amount = Math.Min(amount, Inventory.UnreservedAmountInStock(goodId));
+        if (amount > 0) { Inventory.TakeExported(goodAmount); _linked.GiveStock(goodAmount); }
      */
-    // __instance is the half receiving the goods; its partner sent them. At a trading post: counts the exchange and
-    // the ledger.
-    [HarmonyPatch(typeof(DistrictCrossingInventory), nameof(DistrictCrossingInventory.GiveStock))]
-    static class TradingPostTransferPatcher
-    {
-        static void Postfix(DistrictCrossingInventory __instance, GoodAmount goodAmount)
-        {
-            if (!ColonyModeService.IsSeparateColonies || goodAmount.Amount <= 0) return;
-            DistrictCrossingInventory sender = __instance._linked;
-            if (!sender) return;
-            int? from = DistrictOwner.OwnerOfDistrict(TradingPosts.DistrictOf(sender));
-            int? to = DistrictOwner.OwnerOfDistrict(TradingPosts.DistrictOf(__instance));
-            if (from == null || to == null || from.Value == to.Value) return;
-            ColonyExchangeService.Instance?.CountDelivery(sender.GetComponent<DistrictCrossing>(), goodAmount.GoodId, goodAmount.Amount);
-            ColonyTradeLedger.Instance?.Record(from.Value, to.Value, goodAmount.GoodId, goodAmount.Amount);
-        }
-    }
-
-    // At a Trading Post goods pass only for a running exchange, up to what the sending colony still owes (and a
-    // crossing that joins two colonies passes nothing). A load still on the way when the exchange ends (or one over
-    // the amount) stays on its own half, and its colony's workers carry it home (the game empties a crossing half of
-    // what nobody takes across).
+    // At a Trading Post nothing passes by itself: a load of the exchange's good arriving on a half is held there for the
+    // round (reserved, so no beaver takes it), and a round crosses only when both sides are in, all at once
+    // (ColonyExchangeService.Cross, which is the one caller let through). Anything else arriving stays unreserved, and
+    // the half's own workers carry it home. A District Crossing that ends up joining two colonies passes nothing.
+    // District Crossings within one colony are the game's.
     [HarmonyPatch(typeof(DistrictCrossingInventory), nameof(DistrictCrossingInventory.TransferStock))]
     static class TradingPostPassPatcher
     {
         static void Prefix(DistrictCrossingInventory __instance, string goodId, ref int amount)
         {
             DistrictCrossing half = __instance.GetComponent<DistrictCrossing>();
-            if (!TradingPosts.TradesOnlyByExchange(half)) return;
-            amount = TradingPosts.IsTradingPost(half) ? Math.Min(amount, ColonyExchangeService.MayPass(half, goodId)) : 0;
+            if (!TradingPosts.TradesOnlyByExchange(half) || ColonyExchangeService.Crossing) return;
+            // The game calls this, unlocked, right after a load arrived on the half; locked while the half receives.
+            if (amount > 0 && __instance._mirrorOperationLock.IsUnlocked)
+                ColonyExchangeService.Instance?.OnArrival(half, __instance.Inventory, goodId, amount);
+            amount = 0;
         }
     }
 
-    // At a Trading Post a half's workers bring only their colony's side of a running exchange, as far as the pace
-    // allows; nothing moves by import and export settings. The other colony's workers haul away what arrives on their
-    // half as the game already does (emptying). A crossing that joins two colonies brings nothing. District Crossings
-    // between one colony's own districts are the game's.
+    // At a Trading Post a half's workers bring only their colony's goods for the round under way, up to what is still
+    // missing on the half; nothing moves by import and export settings. What waits on a half unreserved (the other
+    // colony's goods after a round crossed, or its own after an exchange ended) is carried off as the game already does
+    // (emptying). A crossing that joins two colonies brings nothing. District Crossings within one colony are the game's.
     [HarmonyPatch(typeof(DistrictCrossingWorkplaceBehavior), nameof(DistrictCrossingWorkplaceBehavior.TryExport))]
     static class TradingPostCarryPatcher
     {
@@ -238,12 +227,11 @@ namespace BeaverBuddies.Colonies
             DistrictCrossing crossing = __instance._districtCrossing;
             if (!TradingPosts.TradesOnlyByExchange(crossing)) return true;
             __result = false;
-            if (!TradingPosts.IsTradingPost(crossing)) return false;
             DistrictCrossingInventory crossingInventory = __instance._districtCrossingInventory;
             string goodId = ColonyExchangeService.GoodGiven(crossing);
-            if (goodId == null || ExchangeTerms.IsSpecial(goodId) || !crossing.CanExport || !crossingInventory) return false;
-            // Goods already being carried in count towards the pace (IncomingStock leaves out what has passed across).
-            int wanted = ColonyExchangeService.StillToBring(crossing) - crossingInventory.IncomingStock(goodId);
+            if (goodId == null || !crossing.CanExport || !crossingInventory) return false;
+            // Loads already being carried in (IncomingStock leaves out the room the half keeps for the other half's goods).
+            int wanted = ColonyExchangeService.StillToBring(crossing, crossingInventory.IncomingStock(goodId));
             if (wanted <= 0) return false;
             Inventory inventory = crossingInventory.Inventory;
             int carry = Math.Min(wanted, inventory.UnreservedCapacity(goodId));
@@ -265,36 +253,5 @@ namespace BeaverBuddies.Colonies
             __result = false;
             return false;
         }
-    }
-
-    // ---- science gifts, as actions every computer plays ----
-
-    /// <summary>A player gives science to another colony (separate science only).</summary>
-    [Serializable]
-    public class GiftScienceEvent : ReplayEvent
-    {
-        public int toSlot;
-        public int amount;
-
-        public override ColonyScope GetColonyScope() => ColonyScope.Global;
-
-        public override void Replay(IReplayContext context)
-        {
-            var science = ColonyScienceService.Instance;
-            int from = Math.Max(0, slot);
-            if (science == null || !science.Enabled || amount <= 0 || toSlot == from) return;
-            if (toSlot < 0 || toSlot >= ColonySlotTable.MaxSlots) return;
-            // Checked here, when every computer plays it: science may have been spent since the click.
-            if (science.PointsOf(from) < amount)
-            {
-                Plugin.LogWarning($"[Colony] Science gift of {amount} from slot {from} skipped: only {science.PointsOf(from)} left");
-                return;
-            }
-            science.Subtract(from, amount);
-            science.Add(toSlot, amount);
-            Plugin.Log($"[Colony] Slot {from} gave {amount} science to slot {toSlot}");
-        }
-
-        public override string ToActionString() => $"Gifting {amount} science to slot {toSlot}";
     }
 }

@@ -69,57 +69,67 @@ build both halves. It trades once its two halves are in two different colonies' 
 says so, and nothing crosses it.
 
 **Goods cross a Trading Post only through an exchange** agreed by the two colonies. Import and export settings (the
-Distribution tab) never move anything across one, so its panel has no *Imported goods* box, no **Manage
-distribution** and no stock list; it lists what waits on the half itself.
+Distribution tab) never move anything across one. A Trading Post is **not a store**: its halves hold goods only for
+the exchange under way (its panel has no *Imported goods* box, no **Manage distribution** and no stock list).
 
 **The District Crossing is the game's own**, with its usual cost, science and import and export settings, for
 linking a colony's own districts. It is an ordinary building for the colony rules: it may not stand on another
 colony's land or next to its roads. If one ever ends up joining two colonies anyway (another colony's road reaching
 its far half), it moves nothing between them, and its panel says to build a Trading Post.
 
-**An exchange** is "this many of one good for that many of another", for example *1000 logs for 250 gears*:
+**An exchange** is "this many of one item for that many of another, so many times", for example *100 logs for 25
+gears, 4 rounds*. Each colony trades from **its own half**, the one its roads reach: the other colony's half only
+says whose it is, with **Select your half**.
 
-1. **Offer.** Select either half of the trading post. The trading section at the bottom of its panel has a **You
-   give** and a **You get** card, each with an item and an amount from 0 to 9999. Click the item for the game's goods
-   grid beside the panel (science and beavers first, then the goods by the game's groups, each with the colony's
+1. **Offer.** Select your half of the trading post. Its trading section has a **You give** and a **You get** card,
+   each with an item and an amount from **0 to 100** (what a half holds of a good). Click the item for the game's
+   goods grid beside the panel (science and beavers first, then the goods by the game's groups, each with the colony's
    stock; *Only what is in stock* is ticked at first). Choosing the other card's item swaps the two. **−** and **+**
-   step the amount by 10 (Shift: 100; beavers by 1). A line under the cards reads the offer back, or says what is wrong
-   with it; **Make offer** waits for a valid one. **Repeat until cancelled** makes it a standing deal. One side may be
-   0: asking for 0 is a gift, giving 0 asks for help. The other player gets a notice.
-2. **Answer.** The other colony's player selects the trading post and chooses **Accept** or **Decline**. The offering
-   player may **Withdraw offer** until then. An offer changed in the meantime is never accepted by mistake.
-3. **Delivery.** Each colony's Trading Post workers fetch their colony's side from its storage and bring it to
-   their half; it passes to the other half at once, and the other colony's workers haul it away into their storage. No
-   beaver crosses.
-4. **In step.** Neither side may deliver more than a tenth of its amount (at least 10) ahead of what the other side
-   has delivered, so an exchange is never filled one way only. The panel says when your beavers are waiting.
-5. **Done.** When both amounts have crossed, both players get a notice and the trading post is free for the next
-   exchange; a repeating exchange starts its next round instead. **Cancel exchange** ends it early (either player);
-   what has crossed stays crossed.
+   step the amount by 10 (Shift: 1; beavers by 1, Shift: 10). **Rounds** (1 to 99) repeats the exchange that many
+   times, for more than 100; **Repeat until cancelled** makes it a standing deal. A line under the cards reads the
+   offer back (*sarawr gets 100 Berries, and you get 1 Beaver. 3 rounds: 300 Berries for 3 Beavers in all.*), or says
+   what is wrong with it; **Make offer** waits for a valid one. One side may be 0: asking for 0 is a gift, giving 0
+   asks for help. The other player gets a notice.
+2. **Answer.** The other colony's player selects their half and chooses **Accept** or **Decline**. The offering player
+   may **Withdraw offer** until then. An offer changed in the meantime is never accepted by mistake.
+3. **Each round.** Each colony's Trading Post workers fetch its goods from its storage and bring them to **its own
+   half**, where they wait, held for the round (no other beaver takes them). Each side's bar shows how much waits on
+   its half. Science and beavers are not carried: their bar shows how much the colony can give now.
+4. **Crossing.** When both sides are in, the round crosses **all at once**: the goods pass to the other half and that
+   colony's workers haul them away into their storage; science passes from pool to pool (only with separate science);
+   adult beavers move to the other colony's district (never the last adult), each with a line in the other colony's
+   notification journal (*Pip joined the colony from Colony 2 through a Trading Post.*). So nothing is ever given
+   before what it was exchanged for is in. The round goes in both halves' **ledger**, and the next round starts.
+5. **Done.** After the last round both players get a notice and the trading post is free for the next exchange.
 
-**Science and beavers** are exchange items too. Nobody carries them: science passes from pool to pool (only with
-separate science), 25 at a time, and adult beavers move from the giving half's district to the other, one at a
-time, the last adult always staying. Both keep the same pace as goods.
+**Ending an exchange early takes both colonies**, as agreeing to it did. **Cancel exchange** asks the other colony;
+nothing crosses while it is asked. The other player chooses **Agree to cancel** or **Keep trading**, and the asking
+player may take the request back (**Keep trading**). Once both agree, what waits on each half goes back into its own
+colony's storage; rounds that crossed stay crossed. If the post stops joining the two colonies (a road removed), its
+exchange pauses, and its colony may **End exchange** alone. When a colony is handed over, or a post ends up joining
+other colonies than the two that agreed, its exchange ends by itself, and what waits on each half goes back home.
 
-**Ctrl+T** (or **Trade** at the top right) opens the trading posts and colonies window: each of your Trading Posts
-with its exchange and progress (or *not trading yet*) and a **Go to** button, and each colony with its population and whether its player is
-playing.
+**Ctrl+T**, the **Trade** button at the top right (a square button like the game's own there) or **All posts** on a
+Trading Post opens the **trading posts and colonies** window, drawn as the game's own boxes are: each of your Trading
+Posts with its exchange and round (or *not trading yet*) and a **Go to** button, and each colony with its population
+and whether its player is playing. Its close button, Esc, Ctrl+T or the Trade button close it. It does not pause the
+game.
 
 **Good to know:**
 
 - One exchange at a time per trading post. Build more Trading Posts for more exchanges at once.
-- A half holds up to **100 of each good** waiting to be hauled away (30 in the game). What has not been hauled away
-  holds up further deliveries of that good: staff both halves, and keep storage room for what you receive.
-- Anything of an exchange's good that crosses counts towards it.
+- A half has room for **100 of each good**, used only by the round under way: its colony's goods waiting to cross,
+  or the other colony's waiting to be hauled away. What has not been hauled away holds up the next round of that
+  good: staff both halves, and keep storage room for what you receive.
 
 **The trading-post panel** is built from the game's own panel pieces (the Workplace section's board, the
 description's blue cards, the game's wooden and red buttons, input boxes, progress bars and check boxes, and the
-warehouse's goods grid). It shows who you trade with in their colour, with **All posts** (Ctrl+T); the exchange (the
-offer cards, an offer waiting for an answer, or each side's progress as a bar with its count); what is waiting on the
-half (only when something is); what has passed each way between the two colonies (all trading posts), as icons with
-amounts; and, with separate science, **Gift science 50 / 250**. A player of neither colony sees it read-only. When
-the game's sections above it leave too little room on the screen, its content scrolls instead of running off the
-bottom.
+warehouse's goods grid). On your half it shows who you trade with in their colour, with **All posts**; the exchange
+(the offer form, an offer waiting for an answer, or the round under way with each side's bar, what it waits for, and
+ending it); what waits on the half (only when something does); the post's **ledger** (the last rounds that crossed,
+with the cycle and day, what you gave and what you got); and what has passed each way between the two colonies (all
+trading posts), as icons with amounts. When the game's sections above it leave too little room on the screen, its
+content scrolls instead of running off the bottom.
 
 Either colony may remove a Trading Post between them (deleting one half removes both, as in the game); a District
 Crossing, or a Trading Post within one colony, is that colony's alone. Running a half (workers,
@@ -143,8 +153,8 @@ unlocks too.
   colony to it.
 
 The player who lost their colony gets a notice and may **found a new one** (Ctrl+K). A trading post between the two
-colonies then stands within one colony: its exchange ends, and it trades again only if another colony's roads reach
-its other half.
+colonies then stands within one colony: its exchange ends (what waits on each half goes back home), and it trades
+again only if another colony's roads reach its other half.
 
 ## Separate science and unlocks
 
@@ -249,8 +259,8 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   builds) takes its colony on its own, checked every 16 ticks: its district's, else the owner of the road at its
   entrance (a path: the road it is), else the colony whose land it stands on. One on nobody's land, or across two
   colonies' land, waits until one of these applies.
-- A half of a trading post holds at most 100 of a good; an exchange stalls while the receiving colony has nowhere to
-  put what arrives.
+- An exchange gives at most 100 of an item a round (the room a half has); more takes rounds. A round waits while the
+  receiving colony has not hauled away the last one's goods (no storage room, or no workers on its half).
 - Trading happens in a co-op session: host the game (even alone) to trade.
 - The *Global* history graphs (F9, F10, good tooltips) cover the whole map.
 - Separate science is meant for co-op: in single player, science earned by another start's buildings goes to that
@@ -281,8 +291,9 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   computer. Beavers choose their work from these only, so every computer's beavers choose alike.
 - **Science** keeps one pool and one unlock set per colony in the save. Simulation code that earns, spends or reads
   science names the colony of the building doing it; everything else is display.
-- **Exchanges** are saved on the two halves of the Trading Post. Goods are counted at the one place they pass from one
-  half to the other, identically on every computer; the totals delivered each way are kept there too.
+- **Exchanges** are saved on the two halves of the Trading Post, with each round's goods waiting on their half (held
+  there, and held again when a save is loaded). A round crosses in the simulation, at the same tick on every computer,
+  once both sides are in; the post's ledger and the totals traded each way are kept there too.
 
 ## Testing
 

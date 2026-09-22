@@ -17,7 +17,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>BeaverBuddies</AssemblyName>
     <Description>TimberModTest</Description>
-    <Version>1.4.0-alpha10</Version>
+    <Version>1.4.0-alpha11</Version>
     <!-- Report exactly the version above, without a +<commit> suffix. -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <TimberbornTargetVersion>1.1</TimberbornTargetVersion>
@@ -110,6 +110,8 @@
     <!-- The Trading Post building: its blueprints, icon, and its place in each faction's toolbar. -->
     <None Update="Buildings\**" CopyToOutputDirectory="PreserveNewest" />
     <None Update="TemplateCollections\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The Trade button's icon (loaded by the game's asset loader from the mod's folder). -->
+    <None Update="UI\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Resources.Designer.cs">
@@ -143,6 +145,7 @@
       <KeyBindingGroupFileToCopy Include="$(ProjectDir)$(OutDir)KeyBindingGroups\*" />
       <BuildingFileToCopy Include="$(ProjectDir)$(OutDir)Buildings\**\*" />
       <TemplateCollectionFileToCopy Include="$(ProjectDir)$(OutDir)TemplateCollections\**\*" />
+      <UIFileToCopy Include="$(ProjectDir)$(OutDir)UI\**\*" />
       <RootDirFilesToCopy Include="$(ProjectDir)thumbnail.png" />
     </ItemGroup>
     <!-- Clear VersionOutputPath Directory & Copy Output files inside -->
@@ -154,6 +157,7 @@
     <Copy SourceFiles="@(KeyBindingGroupFileToCopy)" DestinationFolder="$(VersionOutputPath)\KeyBindingGroups" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(BuildingFileToCopy)" DestinationFolder="$(VersionOutputPath)\Buildings\%(RecursiveDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(TemplateCollectionFileToCopy)" DestinationFolder="$(VersionOutputPath)\TemplateCollections\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(UIFileToCopy)" DestinationFolder="$(VersionOutputPath)\UI\%(RecursiveDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(RootDirFilesToCopy)" DestinationFolder="$(BeaverBuddiesModsPath)" SkipUnchangedFiles="true" />
   </Target>
 

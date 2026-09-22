@@ -5,10 +5,60 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
-## Unreleased
+## 1.4.0-alpha11
 
-**The alpha10 desync review's five findings, and a faster round trip for a guest's actions.** The review
-(`DESYNC-REVIEW-FINDINGS.md`) read every colony path of alpha10 for state that could differ between computers.
+**The Trading Post, reworked: each side's goods wait on its own half until both are in, then everything crosses at
+once; ending an exchange takes both colonies; a ledger per post; a native, closable trading window.** Also in this
+release: the alpha10 desync review's five fixes, and a faster round trip for a guest's actions (below).
+
+The Trading Post:
+- **Nothing crosses before what it was exchanged for is in.** Each round, each colony's Trading Post workers bring its
+  goods to its own half, where they wait, held (reserved, so no other beaver takes them; held again when a save is
+  loaded). When both sides are in, the round crosses in one go: the goods to the other half, for that colony's
+  workers to haul into storage; science from pool to pool; adult beavers to the other colony's district. Until now
+  goods passed across as they arrived, in step, and science and beavers moved by themselves every few moments, so
+  one colony could receive beavers or science long before its partner's goods arrived.
+- **Science is exchanged like a good** (it was already in the goods grid): the **Gift science 50 / 250** buttons and
+  their action (`GiftScienceEvent`) are gone. A science or beaver side is in when its colony can pay it now (the
+  science in its pool; adults able to move, one adult always staying), and it moves when the round crosses.
+- **Up to 100 of each item a round**, what a half holds, and **Rounds** (1 to 99) repeats the exchange for more;
+  **Repeat until cancelled** stays. The offer carries the rounds, and accepting checks them with the other terms.
+  − and + step by 10 (Shift: 1; beavers by 1, Shift: 10).
+- **Accurate progress on both sides:** each side's bar counts what waits on its own half, the other colony's side
+  included (it used to jump from nothing to done); science and beavers show what the colony can spare. A line says
+  what the round waits for: your workers, the other colony's goods, science, adults, or workers on your half.
+- **Ending an exchange early takes both colonies.** **Cancel exchange** asks the other colony, who chooses **Agree to
+  cancel** or **Keep trading**; the asking colony may take it back. Nothing is brought and nothing crosses while it
+  is asked. Once ended, what waits on each half goes back into its own colony's storage; rounds that crossed stay
+  crossed (before, a cancel was one-sided, and beavers already moved stayed moved). Offers are still declined or
+  withdrawn by one player. An exchange at a post that stops joining the two colonies pauses, and its colony may end
+  it alone; a handover, or a post that ends up joining other colonies than the two that agreed, ends it by itself.
+- **Not a store.** A half's room (100 of a good) is only used by the round under way. The game's stock list
+  (*No goods in stock*), which alpha10 hid once but which showed itself again on every update, is no longer shown
+  for a Trading Post.
+- **Only your half trades.** The trading menu is on the half your roads reach; the other colony's half says whose it
+  is, with **Select your half**.
+- **A ledger per post:** each half records the last 20 rounds that crossed there (the cycle and day, as the
+  notification journal writes them, and what its colony gave and got); the panel lists the last 8. The totals traded
+  between the two colonies stay below it.
+- **A beaver who joins through a Trading Post** gets a line in the receiving colony's notification journal, like a
+  birth (*Pip joined the colony from Colony 2 through a Trading Post.*). Traded beavers are chosen as the game
+  chooses who migrates.
+- **The trading posts and colonies window** (Ctrl+T, or **All posts** on a post) is the game's own box: its framed
+  panel, title badge and red close button (CoreStyle's `sliced-border`, `capsule-header`, `close-button`), with each
+  post and colony as a row on the game's green board and its buttons as the game's wooden ones. Its close button, Esc,
+  Ctrl+T and the Trade button close it (its old close button was an unstyled text button that did not show), and it
+  does not pause the game. The **Trade** button at the top right is the game's square toggle, like the water and
+  stockpile buttons beside it, with a trade icon drawn in their style (`UI/Images/BeaverBuddies`).
+- Amounts of one read in the singular (*1 Beaver*).
+- An exchange open in an earlier alpha's save starts its round again; one of more than 100 a round ends.
+- Checks: StabilityTests 261 (a round's goods: what workers bring and what is held never pass the round's amount,
+  and uneven loads always fill both halves; rounds 1 to 99; the last adult stays; the offer form with rounds, and
+  every text with an English line); RuntimeChecks 226 (the game members a round's holding and crossing, the beaver
+  moves and the population log use).
+
+**Also in this release: the alpha10 desync review's five findings, and a faster round trip for a guest's actions.**
+A review read every colony path of alpha10 for state that could differ between computers.
 
 - **Joining after someone acted at tick 0 (F1).** A player who joins is sent the save the host started from and only
   the actions played after they connect, so anything played while the host still waited, paused, was missing from
@@ -45,10 +95,10 @@ Faster for a guest (and the host):
 - **Compact JSON** for every action, and received actions are read straight from the parsed message instead of being
   written out as text and parsed again.
 - The line logged for every action (with Unity's stack trace) is only written with detailed logging on.
-- Checks: StabilityTests 261 (founding and hand-over wait for the first tick; the blueprint check changes with a
-  byte and matches between two installs); RuntimeChecks 214 (the host's answers survive the event JSON; the events
-  that leave joining open are listed; a scan of simulation-reachable game methods for dev key reads; `Found` reads no
-  local specs; the planting scope is judged by tiles).
+- Checks for these (counted in the totals above): founding and hand-over wait for the first tick; the blueprint check
+  changes with a byte and matches between two installs; the host's answers survive the event JSON; the events that
+  leave joining open are listed; a scan of simulation-reachable game methods for dev key reads; `Found` reads no local
+  specs; the planting scope is judged by tiles.
 
 Not done, and why:
 - **Playing a guest's action in the middle of the host's tick** would need both computers to apply it at the same
