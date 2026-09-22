@@ -11,8 +11,10 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 
 > [!WARNING]
 > **Alpha.** Hosting, joining over Steam and founding a second colony have been played. This version's model
-> (colonies with their own land, trading posts and barter, colony handover) has **not been played yet**; it is
-> covered by automated checks. Play on a copy of your save, keep backups, and please report what you find
+> (colonies with their own land, trading posts and barter, colony handover) and the desync review's fixes (alpha11
+> to alpha15) have **not been played yet**; they are covered by automated checks. Since alpha13 a guest whose colony
+> state differs from the host's stops at once, the tick it happens, so a bug in that check would also stop a healthy
+> game: the log line says which it was. Play on a copy of your save, keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
 
 MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
@@ -57,11 +59,13 @@ build cannot join.
 **3. Host: save, then host.** Save the game. Open **Load Game**, select that save and choose **Host co-op game**
 (instead of Load). Invite your friend with **Invite Friends** (Steam), or give them your IP address (port **25565**).
 
-**4. Guest: join** by accepting the Steam invite (or **Join co-op game** → the host's IP). **Do not unpause until
-everyone is in**: nobody can join a game that has already started.
+**4. Guest: join** by accepting the Steam invite (or **Join co-op game** → the host's IP). **Host: wait, paused,
+until everyone is in, and place or mark nothing meanwhile**: nobody can join once the game has started, or once
+anything was changed while it waited (a later joiner would be sent the save without it).
 
-**5. Guest without a colony: found yours.** A message offers to **place your district center** (or press **Ctrl+K**
-later, whenever you are ready). Other colonies' land shows as coloured outlines: place it **at least 20 tiles from
+**5. Guest without a colony: found yours.** Once the host unpauses, a message offers to **place your district
+center** (or press **Ctrl+K** later, whenever you are ready; before the first tick it says the game has not started
+yet). Other colonies' land shows as coloured outlines: place it **at least 20 tiles from
 their buildings and paths**, so both colonies have room to grow. It is free, needs no science, and appears **already
 built**, with starting beavers, food and water. You found once; you may found again only if your colony is handed
 over.
@@ -76,12 +80,13 @@ Steam): you get the same colony every time, whoever hosts. The connection panel 
   place is yours from the moment you place it. **Every colony's land is outlined in its colour** while you hold a
   building, planting, cutting or demolishing tool, and any time with **Ctrl+L**.
 - **You build, mark trees and plant on your own land or free land.** Never on another colony's land or right next to
-  its roads (the preview turns red and says why). Building towards another colony does not take its land: your land
+  its roads, buildings or paths, finished or still being built (the preview turns red and says why). Building towards another colony does not take its land: your land
   ends where theirs begins.
 - **You change only your own colony**, whether or not the other player is playing: their buildings, beavers,
   districts, marks and settings are refused (*That belongs to another colony.*).
 - **Your beavers work only for your colony:**
-  - builders build, demolish and pick up leftovers only for your colony;
+  - builders build and demolish only for your colony, and pick up leftovers, log piles and other stacks only where
+    your colony may work;
   - lumberjacks cut only trees you marked;
   - foresters and farmers plant only on your marks;
   - gatherers, farmers and scavengers take only what grows on your marks, or wild things on land no other colony holds.
@@ -140,7 +145,8 @@ population and whether its player is playing.
   through District Crossings, as in the game (with the bigger buffer: every crossing holds 100, in every game).
 - The panel also shows each side's round as a bar, what waits on your half, the post's **ledger** (each round that
   crossed there: when, what you gave, what you got), and what has passed each way between the two colonies.
-- Either player may remove a trading post.
+- Either of the two colonies trading through a post may remove it; no other colony can. Its two halves are placed as
+  one: if either may not stand where it was put, neither is placed.
 
 Details: [TWO-COLONIES.md](TWO-COLONIES.md#trading-posts).
 
@@ -150,10 +156,10 @@ A colony whose player can't run it goes to another player, with its buildings, l
 
 - **No beavers or bots left** for a whole day: to the nearest living colony.
 - **Its player away:** once they have missed the number of in-game days of hosted co-op play set by the host (7 by
-  default; days the host plays alone in single player, and the first day after loading, don't count): to the nearest
-  colony whose player is playing.
-- **By the host**, from the Ctrl+T window: any colony whose player is away, or that has no beavers (for example to
-  a player whose Steam account changed).
+  default, changeable during the game; days the host plays alone in single player, and the first day after loading,
+  don't count): to the nearest colony whose player is playing. A guest who leaves is away from the next day on.
+- **By the host**, from the Ctrl+T window, once the game has started: any colony whose player is away, or that has
+  no beavers (for example to a player whose Steam account changed).
 
 The player who lost their colony gets a notice and may **found a new one** with **Ctrl+K**.
 
@@ -165,7 +171,7 @@ The player who lost their colony gets a notice and may **found a new one** with 
 | **Ctrl+L** | Show every colony's land (it also shows while you hold a building, planting, cutting or demolishing tool) |
 | **Ctrl+T** | Trading posts and colonies |
 | **Ctrl+Shift+J** | Write a diagnostics report (also a button in the Ctrl+T window) |
-| **Ctrl+Shift+K** | *Debug only:* the host acts as the next colony, for testing alone (needs **Always Use Detailed Logging**) |
+| **Ctrl+Shift+K** | *Debug only:* the host acts as the next colony, for testing alone (needs **Always Use Detailed Logging** and nobody connected) |
 
 All can be changed under **Options → Bindings → BeaverBuddies**. The co-op keys **Ping Location**, **Toggle
 connection panel** and **Chat: start typing** are unbound until you set them there.
@@ -174,8 +180,13 @@ connection panel** and **Chat: start typing** are unbound until you set them the
 
 - **Up to four colonies.** More players join as helpers of the host's colony.
 - **The game ends** only when every beaver on the map is gone, not per colony.
-- **Two placements at the same moment** can join two districts' roads once both are built; both players are warned
-  (*Two districts' roads have been joined…*): remove the joining path or building at once.
+- **Two placements at the same moment** can join two districts' roads once both are built; the game keeps running,
+  both players are warned (*Two districts' roads have been joined…*), and the first district keeps the shared roads
+  until the joining path or building is removed.
+- **Dev mode** (Alt+Shift+Z): only the host's instant unlock and *Finish now* are shared; its other tools desync the
+  game, and its two Ctrl keys (place finished, don't recover goods) are off in co-op.
+- **Gates and automation** react at the tick rather than the frame in co-op: at most a tick later than in single
+  player, the same on every computer.
 - **Single player:** without a co-op session nothing is refused and no colony can be founded. Host the game (even
   alone) to play the mode.
 - **Performance:** more colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest
@@ -196,13 +207,23 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 - **A guest's actions** go to the host and back before they happen. While they travel, the tiles of what you placed
   or marked are tinted (red for a removal); if the host refuses the action, a notice says why.
 - **Mismatched mods** are flagged when someone joins. It's a warning, but a mod that changes the simulation will
-  cause desyncs, so match mod lists.
-- **Desyncs** can still happen. The host uses **Save and Rehost**.
+  cause desyncs, so match mod lists. This mod's own files are checked, not warned about: a different zip, or a
+  missing or edited `Buildings` or `TemplateCollections` folder, is refused at the join.
+- **Desyncs** can still happen. Colony state (owners, marks, science, exchanges, land) is compared with the host's
+  every tick, and in full once a day, so one is caught when it happens. The host uses **Save and Rehost**.
 
 ## Troubleshooting and reporting problems
 
 - **Can't join / stuck on "Receiving map…":** every player must have the same zip. Reinstall from the same file and restart.
+  *Multiplayer build mismatch* names what differs (the game or mod version, or the mod's `Buildings` and
+  `TemplateCollections` files).
+- **"The Host has already changed the game … can no longer be joined":** the host placed or marked something while
+  waiting paused. The host saves and rehosts; everyone joins before the host touches anything.
+- **Ctrl+K says the game has not started yet:** wait until the host unpauses once.
 - **Ctrl+K says the host has turned off Separate colonies:** the host ticks **Separate colonies (alpha)** and rehosts.
+- **A desync dialog with `Colony state differs` in the log:** the every-tick colony check (alpha13) disagreed. It
+  may be a bug in the check itself; send both players' `Player.log`: the line has both numbers and how many changes
+  each side counted.
 - **"That is another colony's land":** that tile is within 10 tiles of their buildings or paths, and they were
   there first. Build on your side. To trade, put a Trading Post across the edge of your two lands.
 - **Everything is refused right after joining:** the host has not seated you yet; wait a moment. If it persists,
@@ -212,8 +233,8 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   a chat or an issue, and saved in `%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\BeaverBuddies-Reports`.
   It is also written by itself when a computer desyncs: then send **every player's** latest report. It covers the
   frame and tick rate and the time spent in this mod's code, each colony's districts, homeless and jobless beavers,
-  building statuses (such as unreachable) and trading posts (with what is holding an exchange up), a daily check of
-  the colony state that must match on every computer, and the last colony log lines.
+  building statuses (such as unreachable) and trading posts (with what is holding an exchange up), the daily check
+  of the colony state and the running digest that must match on every computer, and the last colony log lines.
 - **Reporting:** send `Player.log` from every player
   (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`), plus screenshots for anything on screen.
   Lines from this mode start with `[Colony]`. Step-by-step test scripts are in [ALPHA-TEST-SCRIPTS.md](ALPHA-TEST-SCRIPTS.md).
@@ -230,6 +251,10 @@ not to the original BeaverBuddies project.
   computers can't disagree.
 - **Ownership is saved**: on district centers, on every building (the colony that placed it) and on map marks. Land
   is worked out from the buildings standing. Beavers' choices of work read only these, identically on every computer.
+- **Guests take the host's answers.** Whether a placement is still possible when it is played, what a founded colony
+  starts with, the day's presence: each is decided once by the host and written into the action every computer
+  plays. Every change to colony state folds into a running digest that the host sends with each heartbeat; a guest
+  whose digest differs stops that tick.
 - The save gets a few small extra entries (the mode, who plays which colony, owners, marks, science, working hours,
   exchanges, the trade ledger). Shared-colony games save only the building owners.
 

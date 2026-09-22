@@ -5,6 +5,25 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha16
+
+**The README covers alpha11 to alpha15.** No code change.
+
+- The alpha warning names the unplayed builds and what the every-tick check means for a healthy game.
+- Starting a game: the host waits paused and changes nothing until everyone is in (joining closes at the first
+  change as well as the first tick); founding is offered once the host unpauses.
+- Playing: no building beside another colony's paths and buildings, finished or not; log piles and stacks are
+  collected where the colony may work.
+- Trading posts: only the two partners may remove one; both halves are placed as one.
+- Hand-over: the setting can be changed during the game; a guest who leaves is away from the next day; the host's
+  hand-over waits for the first tick.
+- Controls and *Good to know*: Ctrl+Shift+K needs nobody connected; joined roads keep the game running; dev mode's
+  Ctrl keys are off in co-op; gates and automation react at the tick.
+- Co-op basics and troubleshooting: the mod's files are part of the join check; colony state is compared every tick
+  and daily; what the *can no longer be joined*, *has not started yet* and `Colony state differs` messages mean.
+- How it works: guests take the host's answers (placements, founding, presence) and the running digest.
+- Checks unchanged: StabilityTests 263; RuntimeChecks 229.
+
 ## 1.4.0-alpha15
 
 **The test scripts cover alpha12 to alpha14.** No code change.
