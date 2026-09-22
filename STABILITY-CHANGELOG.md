@@ -28,6 +28,10 @@ was fixed or refuted. The plan and the full report, with the evidence for every 
 [design/REVIEW-PLAN-1.4.0-beta11.md](design/REVIEW-PLAN-1.4.0-beta11.md) and
 [design/REVIEW-FINDINGS-1.4.0-beta11.md](design/REVIEW-FINDINGS-1.4.0-beta11.md). **Wire change.**
 
+**Built on the Stability Fork 1.1.14.** After this release, the same day, the fork took these fixes as its 1.1.14
+(its PR #55), without the separate-colony one. MultiColony records 1.1.14 as merged (MC11, a merge with no file
+changes): the fork's own additions (its host check for a building it lacks, its quiet guest leave) were already here.
+
 Desyncs:
 - **Wonders run on the tick** (the Stability Fork's PR #46, closed there, ported with one change).
   - What ran on render frames: every Wonder's activation and deactivation animation, and the whole of the Earth

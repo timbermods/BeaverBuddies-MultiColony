@@ -107,10 +107,11 @@ v1.4.0-alpha1 to alpha9
 * Exchanges between colonies, the colonies window (Ctrl+T), land outlines (Ctrl+L), a diagnostics report (Ctrl+Shift+J).
 * A guest sees its own actions sooner, with its click marked until the host answers and refusals explained.
 
-v1.1.10 to v1.1.12 (BeaverBuddies Stability Fork, which MultiColony is built on)
+v1.1.10 to v1.1.14 (BeaverBuddies Stability Fork, which MultiColony is built on)
 * Steam friend invites over Valve's current networking API, a connection panel with chat, player cursors and selections, and fixes for water, animation, random-number, saving, demolition and input desyncs and crashes.
 * 1.1.11 (in MultiColony since 1.4.0-beta4): every player gets a colour of their own until they choose one, and only the name is coloured in the chat.
 * 1.1.12 (in MultiColony since 1.4.0-beta10): the fuller desync check, direct connections sending at once, the desync dialog's reconnect; its other fixes came from MultiColony.
+* 1.1.13 and 1.1.14 came from MultiColony: the speed boost and your own chat color (1.4.0-beta5 and beta6), and beta12's fixes.
 
 v1.1.0-1.0.1
 * Fixed a build bug where Steam options were not included

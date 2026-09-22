@@ -3,8 +3,9 @@
 Code: `BeaverBuddies/Fixes/WonderTimingFix.cs`. Checks: `RuntimeChecks/WonderChecks.cs`.
 
 MultiColony 1.4.0-beta12 ports this from the Stability Fork's PR #46 (branch `claude/wonder-plane-ticks`, `7391560`),
-which the fork closed without merging. What MultiColony changed is in [In MultiColony](#in-multicolony) at the end;
-the rest of this note is the fork's, with its wording about "this fork" read as MultiColony.
+which the fork closed without merging; the fork then shipped MultiColony's version in its 1.1.14. What MultiColony
+changed is in [In MultiColony](#in-multicolony) at the end; the rest of this note is the fork's, with its wording about
+"this fork" read as MultiColony.
 
 ## The problem
 

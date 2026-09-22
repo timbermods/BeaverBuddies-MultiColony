@@ -19,8 +19,9 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > ([how](#troubleshooting-and-reporting-problems)).
 
 MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
-(1.1.12, the change after it that runs the mod's recording patches first, and its not-yet-merged change that runs the Wonders on the tick), which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything
-those do still works: Steam invites, the connection panel and chat, pings, player cursors, and ordinary
+1.1.14, which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). (The fork's last two
+releases came from here: 1.1.13's speed boost and chat color, and 1.1.14's fixes from beta12.) Everything those do
+still works: Steam invites, the connection panel and chat, pings, player cursors, and ordinary
 shared-colony co-op, which plays as in the Stability Fork (see [One shared colony](#one-shared-colony)).
 
 ## Install
