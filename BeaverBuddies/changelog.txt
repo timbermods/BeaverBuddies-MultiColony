@@ -1,6 +1,9 @@
-v1.4.0-beta3 (BeaverBuddies MultiColony)
-* The Mod Settings tooltips are one or two short lines each and no longer run off the screen.
+v1.4.0-beta4 (BeaverBuddies MultiColony)
+* From the Stability Fork 1.1.11: every player gets a colour of their own on the cursors and in the chat until they choose one (the host orange, then blue, green, pink, purple, teal, red, lime), and only the name is coloured in the chat. Colony colours stay the game's own.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
+v1.4.0-beta3
+* The Mod Settings tooltips are one or two short lines each and no longer run off the screen.
 
 v1.4.0-beta2
 * The trading window (Ctrl+T) shows each colony's food and water with the days they last, what it is looking for (set yours there, up to three things), and how many days of the host's limit an absent player has missed; everyone is warned the day before a hand-over.

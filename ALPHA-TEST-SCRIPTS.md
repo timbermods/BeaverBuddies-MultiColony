@@ -176,6 +176,11 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 8d. **Gates, two players (alpha14).** One player opens a gate on their own roads while the other hovers a path
     preview across it: it opens on both screens within a tick. A gate that would join the two colonies' roads stays
     shut with the conflict mark on both.
+8j. **Player colors (beta4).** With neither player having changed Ping Color: the host's cursor, selection outline,
+    label and chat name are orange on the guest's screen, and the guest's are blue on the host's; a chat message is
+    in the panel's normal color with only the name colored. Under Options, Player cursors, *Their color* shows the
+    same color. One player sets a Ping Color: theirs changes everywhere, the other's does not. In the trading window
+    and the land outlines the colony colors are the game's own, not these.
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*

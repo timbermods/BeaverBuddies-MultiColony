@@ -7,7 +7,7 @@ colonies meet only at **trading posts**, where they barter.
 **State of testing.** Beta. Seen in a game with the land-split alphas (alpha1 to 5): hosting and joining over
 Steam, founding a second colony and building in it. **Nothing of this version's model has been seen in a game
 yet**: ownership, land, per-colony marks and work, trading-post exchanges and their panel, separate science, the
-road-network checks and the desync review's fixes (alpha11 to beta3) are covered by automated checks only. Since
+road-network checks and the desync review's fixes (alpha11 to beta4) are covered by automated checks only. Since
 alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
 in that check would stop a healthy game too; the log line says which. Play on a copy of your save and keep backups.
 

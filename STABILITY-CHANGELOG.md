@@ -5,6 +5,36 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta4
+
+**The Stability Fork's 1.1.11 chat and cursor colors.** MultiColony is now built on Stability Fork 1.1.11 (it was
+1.1.10). That release changes only how players are colored on the cursors and in the chat; nothing that is
+simulated, sent or saved changes, and its author played it and reported that it works. Brought over as it is:
+- **Every player gets a color of their own.** Ping Color starts as the same yellow for everyone, so until someone
+  changed it every cursor and every name in the chat was yellow. A player who has not changed it now gets a color
+  by player number: the host is orange, and the guests are blue, green, pink, purple, teal, red and lime as they
+  join, repeating after eight. It applies to that player's cursor, selection outline, name label and chat name, and
+  to the swatch called *Their color* under Options, Player cursors. A color a player chose is never replaced (only
+  the exact default yellow counts as not chosen), and a color you set for someone under Player cursors still wins.
+  Pings keep the Ping Color as set. Whoever is looking works the color out from the player number, so nothing new
+  goes over the network, and a player who leaves and joins again gets a new number and so a new color.
+  `Activity/PlayerColors.cs` (the Stability Fork's, unchanged), used from `PlayerActivityService.Apply` and
+  `ConnectionPanelService.ChatColorOf`.
+- **Only the name is colored in the chat.** A whole line, name and message, took the player's color; now only the
+  name does, and the message is in the panel's normal text color (`Panel/ChatFormat.Line`).
+- **MultiColony's colony colors are a different set** and stay so: the land outlines, the *(colony N)* beside a
+  name and the trading window use the game's own start colors, one per colony. A player's cursor color and their
+  colony's color need not match (PLAYER-ACTIVITY.md and CONNECTION-PANEL.md say so).
+- The Ping Color tooltip says what the color is for, in two short lines (the Stability Fork's is one long one).
+- Docs: README, CONNECTION-PANEL.md, PLAYER-ACTIVITY.md, the site, `Doc/ToTestV6.md` and the in-game changelog name
+  1.1.11 and describe the colors.
+- Checks: StabilityTests 287 (5 new, the Stability Fork's: every player number up to eight gets a different color
+  and none is yellow, light enough to read, a chosen color is kept and only the default yellow replaced, two players
+  on the default differ and every machine picks the same, numbers past the palette start over; the chat-line check
+  expects only the name colored); RuntimeChecks 233.
+- Not seen in a MultiColony game: the colors were played in the Stability Fork, not here. Script B line 8j is this
+  release's.
+
 ## 1.4.0-beta3
 
 **Mod settings tooltips that fit on the screen.** No code change. The tooltips in Mod Settings ran to 250 to 430
