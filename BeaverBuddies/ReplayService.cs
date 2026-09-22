@@ -443,6 +443,9 @@ namespace BeaverBuddies
         /// <summary>
         /// Host: guest actions that arrived in a frame the host could not read (an action from a mod the host does not
         /// have, say) are lost for every player alike. Each is refused like any other, so its guest hears at once.
+        /// The refusals are queued before this tick's actions replay, so EnqueueEventForSending stamps no random state
+        /// on them (randomS0Before stays null) and guests do not compare it. That is safe: ActionRefusedEvent changes
+        /// nothing in the game and draws no random numbers.
         /// </summary>
         private void TellUnreadable(ServerEventIO server)
         {

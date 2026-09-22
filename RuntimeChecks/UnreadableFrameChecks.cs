@@ -3,8 +3,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 
 // What a player does with a received frame it cannot read: one whose "$type" the binder refuses (see
-// FrameTypeChecks), one from a mod this game does not have, one with no type at all, or a group of actions that
-// holds an empty entry or another group. The frames are read by the real ClientEventIO and ServerEventIO over a real
+// FrameTypeChecks), one from a mod this game does not have, one with no type at all, a group of actions that holds
+// an empty entry or another group, or an action with a value of the wrong kind. The frames are read by the real ClientEventIO and ServerEventIO over a real
 // TimberClient and TimberServer (standing in for the network, nothing is connected), from ReadEvents, which runs
 // inside a tick with nothing to catch an exception, so it must never throw.
 internal static class UnreadableFrameChecks
@@ -65,7 +65,9 @@ internal static class UnreadableFrameChecks
         string Group(int tick, params object[] events) => Write(GroupOf(tick, events));
 
         string Renamed(string json, string from, string to) =>
-            json.Contains($"\"{from}\"") ? json.Replace($"\"{from}\"", $"\"{to}\"") : throw new Exception($"{from} is not in {json}");
+            Replaced(json, $"\"{from}\"", $"\"{to}\"");
+        string Replaced(string json, string from, string to) =>
+            json.Contains(from) ? json.Replace(from, to) : throw new Exception($"{from} is not in {json}");
 
         const int Tick = 3;
         object Readable() => Frame(Group(Tick, Heartbeat("guest:read")));
@@ -86,6 +88,8 @@ internal static class UnreadableFrameChecks
                 new[] { "group of actions" }, new[] { "guest:5" }),
             ("a group inside a group", () => Frame(Group(Tick, Heartbeat("guest:6"), GroupOf(Tick, Heartbeat("guest:inner")))),
                 new[] { "group of actions" }, new[] { "guest:6" }),
+            ("an action with a value of the wrong kind", () => Frame(Replaced(Group(Tick, Heartbeat("guest:7")), "\"digest\":null", "\"digest\":\"x\"")),
+                new[] { "digest" }, new[] { "guest:7" }),
         };
 
         // The real event IO around a real TimberClient or TimberServer that has received these frames. Nothing is
@@ -197,6 +201,45 @@ internal static class UnreadableFrameChecks
             if (RefusedTags(io).Count != 0) throw new Exception("The same actions would be refused twice");
             // A guest never refuses anything: the host has played what it sent.
             if (clientIOType.GetMethod("TakeUnreadableRequestIds") != null) throw new Exception("A guest keeps tags to refuse");
+        });
+
+        test("A host sends each guest action it could not read back to that guest as refused", () =>
+        {
+            // The host's ReplayService as a tick reads the guests' frames (ReadEventsFromIO), with the ServerEventIO
+            // above installed. Only what that step touches is set up: the IO and the queue of actions to send.
+            var replayServiceType = mod.GetType("BeaverBuddies.ReplayService", true);
+            var installed = mod.GetType("BeaverBuddies.IO.EventIO", true).GetField("instance", all)
+                ?? throw new Exception("EventIO keeps no installed IO");
+            var refusedType = mod.GetType("BeaverBuddies.Events.ActionRefusedEvent", true);
+            object[] frames = new[] { Readable() }.Concat(unreadable.Select(bad => bad.Make())).Append(Readable()).ToArray();
+            object previous = installed.GetValue(null);
+            List<object> played = null, sent = null;
+            List<string> log = Logged(() =>
+            {
+                object io = Received(false, frames).IO;
+                installed.SetValue(null, io);
+                try
+                {
+                    object service = RuntimeHelpers.GetUninitializedObject(replayServiceType);
+                    object queue = Activator.CreateInstance(typeof(System.Collections.Concurrent.ConcurrentQueue<>).MakeGenericType(eventType));
+                    replayServiceType.GetField("eventsToSend", all).SetValue(service, queue);
+                    try { played = ((IEnumerable)replayServiceType.GetMethod("ReadEventsFromIO", all).Invoke(service, new object[] { Tick })).Cast<object>().ToList(); }
+                    catch (TargetInvocationException e) { throw new Exception("ReadEventsFromIO threw: " + e.InnerException?.Message, e.InnerException); }
+                    sent = ((IEnumerable)queue).Cast<object>().ToList();
+                }
+                finally { installed.SetValue(null, previous); }
+            });
+            if (played.Count != 2) throw new Exception($"{played.Count} actions are to be played; the 2 readable ones should be");
+            string[] expected = unreadable.SelectMany(bad => bad.Tags).ToArray();
+            var refused = sent.Where(e => e.GetType() == refusedType).ToList();
+            string[] tags = refused.Select(e => (string)refusedType.GetField("refusedRequestId").GetValue(e)).ToArray();
+            if (refused.Count != sent.Count || !tags.SequenceEqual(expected))
+                throw new Exception($"Sent {sent.Count} actions refusing [{string.Join(", ", tags)}]; expected refusals of [{string.Join(", ", expected)}]:\n{string.Join("\n", log)}");
+            foreach (object e in refused)
+            {
+                string reason = refusedType.GetField("refusal").GetValue(e).ToString();
+                if (reason != "HostRefused") throw new Exception($"An action was refused as {reason}, not HostRefused");
+            }
         });
     }
 }
