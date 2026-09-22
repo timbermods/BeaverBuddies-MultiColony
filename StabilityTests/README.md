@@ -48,6 +48,25 @@ Run it on the build output (`bin`), which has MonoMod and Newtonsoft.Json beside
 folders after the game's Managed folder are searched for the mod's other dependencies: Harmony
 (Workshop item 3284904751) and ModSettings (Workshop item 3283831040, its `version-1.1/Scripts`).
 
+RuntimeChecks also checks which types a multiplayer frame may create. Frames are read with
+Newtonsoft's `TypeNameHandling.All`, so every `$type` in one names a type to create, and the
+`ReplayEventBinder` only lets actions and what they carry through. A frame that names any other type
+(a harmless sentinel stands in for a dangerous one), or a list, array, map or Nullable of it, even
+with the elements' own types left out, is refused before anything is created. So are Unity objects,
+delegates and reflection types, and a generic action whose type arguments no action carries. Because
+a frame that leaves a `$type` out gets the declared type without the binder being asked, no action
+may declare a Unity object, a delegate or a reflection type at any depth either. Every action the
+mod sends reads back unchanged through the same path the network uses, with every field filled in
+(separate colonies' `ColonyStartingSettings` included), and is written exactly as it is without the
+binder, so the event hash does not change. Actions from
+another mod's assembly loaded from bytes (standing in for MixedStorage's `StorageAllocationEvent`)
+pass, with the classes they declare. A frame that cannot be read (a refused type, an action from a mod
+that is not installed, no type at all, a group of actions holding an empty entry or another group, or
+a value of the wrong kind)
+is fed to the real guest and host event IO: the guest stops the session with a reason naming the type
+and its assembly and plays nothing more of that tick, and the host logs it, keeps the guest's other
+actions, carries on, and sends that guest an `ActionRefusedEvent` for each action it lost.
+
 Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
 the repository's env.props setup before running RuntimeChecks.

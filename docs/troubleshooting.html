@@ -113,7 +113,7 @@
         <summary>A warning says my mods and the other player's mods are not the same</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>When someone joins, both players' games compare their lists of enabled mods and warn you if any mod is on only one computer or is at a different version. The host sees the warning in the lobby, before starting; a guest sees it as soon as the game has loaded. It is only a warning and nobody is stopped from playing, because the mod cannot tell which mods matter. A mod that changes the simulation (a housing or pathfinding mod, for example) will make the two games drift apart, which is a desync.</p>
+          <p>When someone joins, both players' games compare their lists of enabled mods and warn you if any mod is on only one computer or is at a different version. The host sees the warning in the lobby, before starting; a guest sees it as soon as the game has loaded. It is only a warning, because the mod cannot tell which mods matter. A mod that changes the simulation (a housing or pathfinding mod, for example) will make the two games drift apart, which is a desync. A mod that sends its own multiplayer actions (MixedStorage, for example) must be on every computer: a guest without it stops the session at the first such action from the host, with a message naming the mod, and an action a guest sends that the host cannot read is refused.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>Read which mods are listed: "Only on your computer", "Only on &hellip;'s computer" and "Different versions".</li>
@@ -223,7 +223,7 @@
         <summary>"Multiplayer has stopped because this action may have changed only part of the game state"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>A multiplayer action could not be completed on one player's game. Carrying on could leave two games different without anyone noticing, so the mod stops the session.</p>
+          <p>A multiplayer action could not be completed on one player's game. Carrying on could leave two games different without anyone noticing, so the mod stops the session. On a guest the message can also start "An action from the host could not be read": the host sent an action, usually from a mod the guest does not have, which the message names. Install the same mods on every computer (see <a href="#mods-differ">the mod warning</a>).</p>
           <p class="sub">Try this</p>
           <ol>
             <li>Press <b>Escape</b> to open the menu, return to the main menu and <b>reload a known-good save</b> before hosting again.</li>

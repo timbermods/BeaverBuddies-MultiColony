@@ -71,6 +71,11 @@ namespace BeaverBuddies.IO
             // a debugging aid, and the hash is over the JObject's own text, the same on every computer either way).
             Formatting = Formatting.None;
             TypeNameHandling = TypeNameHandling.All;
+            // Every frame from the other player is read with these settings, and TypeNameHandling.All lets each
+            // "$type" in it pick a type to create: only actions and what they carry may be created. The JSON that is
+            // written is unchanged. A type that travels in an object slot but that no action declares goes here;
+            // separate colonies' payloads (FoundColonyEvent's ColonyStartingSettings) are declared, so they need not.
+            SerializationBinder = new ReplayEventBinder(/* extraPayloadTypes: none in this build */);
             Converters.Add(new Vector3Converter());
             Converters.Add(new Vector3IntConverter());
         }

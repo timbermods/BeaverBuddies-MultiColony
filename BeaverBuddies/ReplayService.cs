@@ -322,8 +322,9 @@ namespace BeaverBuddies
             // Every event a guest sends reaches the host inside a group, and the host numbered the group by the
             // connection it came from. The events inside take the group's number, whatever the guest wrote on them.
             // (A guest must not do this: the host's own groups carry 0 and hold events from several players.)
-            if (io is ServerEventIO)
+            if (io is ServerEventIO server)
             {
+                TellUnreadable(server);
                 foreach (var grouped in eventsToReplay.OfType<GroupedEvent>())
                 {
                     foreach (var child in grouped.events) child.player = grouped.player;
@@ -433,17 +434,48 @@ namespace BeaverBuddies
                     if (refusal != ColonyRefusal.None) SingletonManager.GetSingleton<ColonyRulesService>()?.Notify(refusal);
                     return;
                 }
-                if (replayEvent.requestId == null || !CanAct || EventIO.SkipRecording) return;
-                EnqueueEventForSending(new ActionRefusedEvent()
-                {
-                    refusedRequestId = replayEvent.requestId,
-                    refusal = refusal == ColonyRefusal.None ? ColonyRefusal.HostRefused : refusal,
-                });
+                TellGuestRefused(replayEvent.requestId, refusal == ColonyRefusal.None ? ColonyRefusal.HostRefused : refusal);
             }
             catch (Exception error)
             {
                 Plugin.LogWarning($"Could not tell player {replayEvent.player} their action was refused: {error.Message}");
             }
+        }
+
+        /// <summary>
+        /// Host: guest actions that arrived in a frame the host could not read (an action from a mod the host does not
+        /// have, say) are lost for every player alike. Each is refused like any other, so its guest hears at once.
+        /// The refusals are queued before this tick's actions replay, so EnqueueEventForSending stamps no random state
+        /// on them (randomS0Before stays null) and guests do not compare it. That is safe: ActionRefusedEvent changes
+        /// nothing in the game and draws no random numbers.
+        /// </summary>
+        private void TellUnreadable(ServerEventIO server)
+        {
+            try
+            {
+                foreach (string requestId in server.TakeUnreadableRequestIds())
+                {
+                    TellGuestRefused(requestId, ColonyRefusal.HostRefused);
+                }
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning($"Could not tell a guest their action could not be read: {error.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Host: tells the guest that tagged an action <paramref name="requestId"/> (a guest's own tag, see
+        /// ReplayEvent.requestId) that it was refused, and why.
+        /// </summary>
+        private void TellGuestRefused(string requestId, ColonyRefusal refusal)
+        {
+            if (requestId == null || !CanAct || EventIO.SkipRecording) return;
+            EnqueueEventForSending(new ActionRefusedEvent()
+            {
+                refusedRequestId = requestId,
+                refusal = refusal,
+            });
         }
 
         public void AbortReplay(string reason)
