@@ -55,11 +55,12 @@ internal static class ColonyRuntimeChecks
             // are set for the actor's own colony: both are checked when played, not here. Presence and handovers are
             // refused from anyone but the host (ColonyRulesService), and so is telling a guest its action was refused.
             // Looking after a colony (grants, switching) is judged by the host against ColonyStewardRules; a wishlist is
-            // only ever the actor's own colony's (the stamped slot), like working hours.
+            // only ever the actor's own colony's (the stamped slot), like working hours. So is dev mode's Add 1000 Science,
+            // which the host also refuses while its dev mode is off.
             var expected = new[] { "ActAsColonyEvent", "ActionRefusedEvent", "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
                 "ColonyHandoverEvent", "ColonyPresenceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
-                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedBoostEvent", "SpeedSetEvent", "StewardGrantedEvent", "StewardRevokedEvent",
-                "TraceLoggedForTickEvent", "TreeCuttingAreaEvent", "WishlistChangedEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
+                "PlayerHelloEvent", "ScienceAddedEvent", "ShowOptionsMenuEvent", "SpeedBoostEvent", "SpeedSetEvent", "StewardGrantedEvent",
+                "StewardRevokedEvent", "TraceLoggedForTickEvent", "TreeCuttingAreaEvent", "WishlistChangedEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
             if (!shared.SequenceEqual(expected))
                 throw new Exception("The shared list changed; review it and update this check: " + string.Join(", ", shared));
         });
@@ -404,6 +405,7 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.WorkSystem.WorkplaceUnlockingService", "Timberborn.WorkSystem", "UnlockIgnoringCost"),
             ("Timberborn.ConstructionSitesUI.ConstructionSiteDebugFragment", "Timberborn.ConstructionSitesUI", "OnFinishNowClick"),
             ("Timberborn.ConstructionSites.ConstructionSite", "Timberborn.ConstructionSites", "FinishNow"),
+            ("Timberborn.ScienceSystemUI.ScienceAdder", "Timberborn.ScienceSystemUI", "AddScience"),
             // A guest's pending actions, drawn until the host answers.
             ("Timberborn.Rendering.AreaTileDrawer", "Timberborn.Rendering", "UpdateArea"),
             ("Timberborn.Rendering.AreaTileDrawerFactory", "Timberborn.Rendering", "Create"),

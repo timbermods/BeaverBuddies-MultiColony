@@ -1,3 +1,7 @@
+v1.4.0-beta14 (BeaverBuddies MultiColony)
+* Dev mode's "Add 1000 Science" is now shared in multiplayer (while the host has dev mode on), so buying a building with that science no longer desyncs the game. The science goes to the colony of the player who clicked.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta13 (BeaverBuddies MultiColony)
 * Clearer Mod Settings tooltips for the two colony choices. "Separate colonies for new games" is only for new games: on, each player gets their own colony; off, everyone shares one. "Allow founding colonies in a shared game" is for a shared save you already have: it lets a player found their own colony, which splits the save for good.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.

@@ -16,6 +16,7 @@ using Timberborn.EntitySystem;
 using Timberborn.Forestry;
 using Timberborn.PlantingUI;
 using Timberborn.ScienceSystem;
+using Timberborn.ScienceSystemUI;
 using Timberborn.TerrainQueryingSystem;
 using Timberborn.TemplateInstantiation;
 using Timberborn.ToolButtonSystem;
@@ -670,6 +671,46 @@ namespace BeaverBuddies.Events
             // opening on the guest and every placement made with it being refused.
             if (!(EventIO.Get() is ClientEventIO)) successCallback?.Invoke();
             return false;
+        }
+    }
+
+    // Dev mode's "Add 1000 Science" (the dev panel) added the science on this computer alone: the next unlock paid with
+    // it was skipped on the other computers for want of science, and the game desynced. It is now played on every
+    // computer; with separate science the points go to the colony of the player who clicked.
+    [Serializable]
+    class ScienceAddedEvent : ReplayEvent
+    {
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
+
+        public int amount;
+
+        public override void Replay(IReplayContext context)
+        {
+            var scienceService = context.GetSingleton<ScienceService>();
+            if (Colonies.ColonyScienceService.IsEnabled)
+                Colonies.ColonyScienceService.InSlot(System.Math.Max(0, slot), () => scienceService.AddPoints(amount));
+            else scienceService.AddPoints(amount);
+        }
+
+        public override string ToActionString()
+        {
+            return $"Adding {amount} science (dev mode)";
+        }
+    }
+
+    [HarmonyPatch(typeof(ScienceAdder), nameof(ScienceAdder.AddScience))]
+    class ScienceAdderPatcher
+    {
+        // The amount the game's AddScience adds (a RuntimeCheck reads it from the game).
+        internal const int Amount = 1000;
+
+        [HarmonyPriority(Priority.First)]
+        static bool Prefix()
+        {
+            return ReplayEvent.DoPrefix(() => new ScienceAddedEvent()
+            {
+                amount = Amount,
+            });
         }
     }
 

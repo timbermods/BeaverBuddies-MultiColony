@@ -115,6 +115,7 @@ BindingChecks.Run(assembly, Path.GetFullPath(args[1]), args.Skip(2).Select(Path.
 DesyncCheckChecks.Run(assembly, Test);
 DesyncDialogChecks.Run(assembly, Test);
 ReviewFixChecks.Run(assembly, Test);
+DevScienceChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

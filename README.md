@@ -10,9 +10,10 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 [Install](#install) · [Start](#start-a-game) · [Playing](#playing-your-colony) · [Trading](#trading-posts) · [Handover](#when-a-colony-is-handed-over) · [Controls](#controls) · [One shared colony](#one-shared-colony) · [Troubleshooting](#troubleshooting-and-reporting-problems) · [Full rules](TWO-COLONIES.md) · [Changelog](STABILITY-CHANGELOG.md)
 
 > [!WARNING]
-> **Beta.** Hosting, joining over Steam and founding a second colony have been played. This version's model
-> (colonies with their own land, trading posts and barter, colony handover) and the desync review's fixes (alpha11
-> onward) have **not been played yet** in a separate-colonies game; they are covered by automated checks. Since
+> **Beta.** Hosting, joining over Steam and founding a second colony have been played, and beta12 had one short
+> separate-colonies session (a founding and a few minutes of building, in step at every tick until dev mode's science,
+> fixed in beta14). The rest of this version's model (trading posts and barter, colony handover) and most of the desync
+> review's fixes (alpha11 onward) have **not been played yet**; they are covered by automated checks. Since
 > alpha13, in a separate-colonies game, a guest whose colony state differs from the host's stops the tick it happens,
 > so a bug in that check would also stop a healthy game; the log line says which it was. Play on a copy of your save,
 > keep backups, and please report what you find
@@ -227,8 +228,9 @@ connection panel** and **Chat: start typing** are unbound until you set them the
 - **Two placements at the same moment** can join two districts' roads once both are built; the game keeps running,
   both players are warned (*Two districts' roads have been joined…*), and the first district keeps the shared roads
   until the joining path or building is removed.
-- **Dev mode** (Alt+Shift+Z): only the host's instant unlock and *Finish now* are shared; its other tools desync the
-  game, and its two Ctrl keys (place finished, don't recover goods) are off in co-op.
+- **Dev mode** (Alt+Shift+Z): only its instant unlock, *Finish now* and the dev panel's *Add 1000 Science* are shared
+  (while the host has dev mode on); its other tools desync the game, and its two Ctrl keys (place finished, don't
+  recover goods) are off in co-op.
 - **Gates and automation** react at the tick rather than the frame in co-op: at most a tick later than in single
   player, the same on every computer. So do the **Wonders**' animations and the Earth Repopulator's plane launch
   (a launch takes a few ticks longer), and a **spring-return lever** switches off the tick after it is pressed even

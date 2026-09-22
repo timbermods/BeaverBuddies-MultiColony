@@ -5,6 +5,33 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta14
+
+**Dev mode's *Add 1000 Science* is shared, so buying a building with it no longer desyncs a co-op game.** Found
+playing beta12 (2026-09-22, two players over Steam, separate colonies and separate science). The host turned dev mode
+on, clicked *Add 1000 Science* in the dev panel, then placed Platforms, which were still locked: the game unlocks the
+building first and pays its 100 science. The science had been added on the host's computer alone. When the unlock
+was played on the guest, the host's colony had no science there, so the guest skipped it (*Not enough science to
+unlock Platform.Folktails for slot 0 any more; skipped*), and the every-tick colony check stopped the guest at that
+tick: the host's list of changes had a `science-spend` and an `unlock` that the guest's lacked, then the same eight
+`land` changes (the Platforms, placed on both). Placing them on water had nothing to do with it.
+
+- The dev panel's button (`ScienceAdder.AddScience`) is now an action like dev mode's free unlock
+  (`ScienceAddedEvent`, `Events/ToolEvents.cs`): played on every computer, into the clicking player's colony with
+  separate science (the one pool otherwise).
+- As with the free unlock and *Finish now*, the host refuses it while its own dev mode is off, and from a player it
+  has not seated yet (who has no colony to add to).
+- The dev mode notice, the README, TWO-COLONIES.md and the site name it with the other two shared tools. Dev mode's
+  other tools still change only the computer they are used on, and desync the game.
+- **Wire change** (a new event type; the join already requires the same build).
+- RuntimeChecks 318 (4 new: the game still has `ScienceAdder.AddScience`; the patch is on it and records the 1000 it
+  adds; the host's two refusals; the replay adds the science). The shared-event list check names the new event.
+  Against beta13's DLL the four fail.
+
+The rest of that session played as it should: a founding, then 268 ticks of both players building, with the colony
+check agreeing at every tick until the science; then both computers' logs named what differed. The README, the
+site and TWO-COLONIES.md now say the colony model has had this one short session.
+
 ## 1.4.0-beta13
 
 **Clearer tooltips for the two colony settings.** Players read *Separate colonies for new games* and *Allow founding

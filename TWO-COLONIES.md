@@ -5,10 +5,11 @@ working hours and, if the host chooses, their own science and unlocks. It is co-
 colonies meet only at **trading posts**, where they barter.
 
 **State of testing.** Beta. Seen in a game with the land-split alphas (alpha1 to 5): hosting and joining over
-Steam, founding a second colony and building in it. **Nothing of this version's model has been seen in a game
-yet**: ownership, land, per-colony marks and work, trading-post exchanges and their panel, separate science, the
-road-network checks, and the desync review's fixes (alpha11 onward) are covered by automated checks
-only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
+Steam, founding a second colony and building in it; and in one short beta12 session with separate science: a
+founding and a few minutes of both players building, in step at every tick until dev mode's science (fixed in
+beta14). **The rest of this version's model has not been seen in a game yet**: trading-post exchanges and their
+panel, colony handover, the road-network checks, and most of the desync review's fixes (alpha11 onward) are covered
+by automated checks only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
 in that check would stop a healthy game too; the log line says which. Play on a copy of your save and keep backups.
 
 ## The rules in one minute
@@ -319,10 +320,11 @@ science and every refusal follow. Every switch is logged. It does nothing while 
 with detailed logging. While the host tests alone this way, every colony counts as present, so none is handed over
 for absence.
 
-**Dev mode** (Alt+Shift+Z) in co-op: while the host has dev mode on, two of its tools are played on every computer, for
+**Dev mode** (Alt+Shift+Z) in co-op: while the host has dev mode on, three of its tools are played on every computer, for
 the colony of the player using them:
 - its instant unlock (Ctrl-click on a locked building or bot toggle), which costs no science;
-- a construction site's *Finish now*.
+- a construction site's *Finish now*;
+- the dev panel's *Add 1000 Science*, which adds to that colony's science (the one pool in a shared game).
 
 Its other tools, such as deleting any object or the dev panel's other buttons, change only the computer they are used
 on, and desync the game. A notice says so when dev mode is switched on in co-op.
@@ -355,7 +357,8 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - Separate science is meant for co-op: in single player, science earned by another start's buildings goes to that
   colony's pool, which only its player can spend.
 - A guest's planting tools follow the first colony's unlocks (the game builds that list before the guest is seated).
-- Dev mode's tools, apart from its instant unlock and *Finish now*, are not shared: using them desyncs a co-op game.
+- Dev mode's tools, apart from its instant unlock, *Finish now* and *Add 1000 Science*, are not shared: using them
+  desyncs a co-op game.
   (Its "place finished" and "don't recover goods" keys, both Ctrl, are off in co-op.)
 - While a co-op game is paused, what was just built or removed updates its district (the district badge and highlight,
   and which district's builders a new construction site waits for) when the game resumes, at the same moment on every

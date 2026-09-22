@@ -24,7 +24,7 @@
     </a>
     <nav class="nav" aria-label="Main">
       <a href="index.html" aria-current="page">Overview</a>
-      <a href="#new">New in beta13</a>
+      <a href="#new">New in beta14</a>
       <a href="#features">Features</a>
       <a href="#trading">Trading</a>
       <a href="install.html">Install</a>
@@ -41,13 +41,13 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta13</span> &middot; beta</span></div>
+      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta14</span> &middot; beta</span></div>
       <h1>One map.<br>A colony each.</h1>
       <p class="lede">Play Timberborn with friends without sharing a colony. Each player runs their own districts, land, beavers, stock and science on one shared map, and the colonies meet only at <b>trading posts</b>, where they barter. Co-op, not a race: nobody wins, and everyone can help.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.4.0-beta13</span></span>
+          <span>Download <span data-release="version">1.4.0-beta14</span></span>
         </a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
         <a class="btn btn-secondary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules</a>
@@ -55,7 +55,7 @@
       <p class="hero-note">Free and open source. Built against Timberborn 1.1.2.4 on Windows with the Steam version. Needs Harmony and Mod Settings.</p>
       <div class="callout warn" role="note">
         <strong class="label">Beta</strong>
-        <p>The colony model is covered by <b>675 automated checks</b> and has <b>not been played yet</b>. Play on a copy of your save, keep backups, and <a href="#status">see exactly what is and isn't tested</a>.</p>
+        <p>The colony model is covered by <b>679 automated checks</b> and has had <b>only one short playtest</b>. Play on a copy of your save, keep backups, and <a href="#status">see exactly what is and isn't tested</a>.</p>
       </div>
     </div>
 
@@ -134,7 +134,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.4.0-beta13</span></b><span>Latest pre-release</span></li>
+      <li><b><span data-release="version">1.4.0-beta14</span></b><span>Latest pre-release</span></li>
       <li><b>Up to 4 colonies</b><span>More players help the host's</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built against</span></li>
       <li><b>Steam invites</b><span>No port forwarding</span></li>
@@ -143,15 +143,19 @@
   </div>
 </div>
 
-<!-- ============ new in beta13 ============ -->
+<!-- ============ new in beta14 ============ -->
 <section class="tint" id="new">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">New in 1.4.0-beta13</div>
-      <h2>Clearer colony settings, after a desync and network review</h2>
-      <p>beta13 rewrites the tooltips of the two colony settings so they can't be mixed up. beta12 went over everything that keeps the players' games in step, and fixed what it found: Wonders on the tick, deletions the same for everyone, players who follow a host that slows down, and a direct player whose connection dies no longer freezing the rest. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta12">beta12 release notes</a>, the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/design/REVIEW-FINDINGS-1.4.0-beta11.md">review report</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
+      <div class="eyebrow">New in 1.4.0-beta14</div>
+      <h2>Dev mode's science shared, and clearer colony settings</h2>
+      <p>beta14 shares dev mode's <b>Add 1000 Science</b> with every player; it desynced the first beta12 session. beta13 rewrote the tooltips of the two colony settings so they can't be mixed up. beta12 went over everything that keeps the players' games in step, and fixed what it found: Wonders on the tick, deletions the same for everyone, players who follow a host that slows down, and a direct player whose connection dies no longer freezing the rest. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta12">beta12 release notes</a>, the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/design/REVIEW-FINDINGS-1.4.0-beta11.md">review report</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
     </div>
     <div class="grid grid-3">
+      <article class="card">
+        <h3 style="margin-top:0">Dev mode's science, shared</h3>
+        <p><b>beta14.</b> <b>Add 1000 Science</b> in the dev panel added the science on one computer only, so buying a building with it desynced the game. It is now played for everyone, into the colony of the player who clicked, while the host has dev mode on.</p>
+      </article>
       <article class="card">
         <h3 style="margin-top:0">Which colony setting?</h3>
         <p><b>beta13.</b> <b>Separate colonies for new games</b> is only for new games: on, each player gets their own colony. <b>Allow founding colonies in a shared game</b> is only for a shared save you already have: it lets a player found a colony and splits the save for good. For a new game with a colony each, the first is all you need.</p>
@@ -159,10 +163,6 @@
       <article class="card">
         <h3 style="margin-top:0">Wonders on the tick</h3>
         <p><b>beta12.</b> The Earth Repopulator's plane launch and every Wonder's animation ran on each player's frames, so a launch desynced the game. They now advance once per tick, the same for everyone (the Stability Fork's tick-driven Wonders, ported).</p>
-      </article>
-      <article class="card">
-        <h3 style="margin-top:0">Gone for everyone at once</h3>
-        <p><b>beta12.</b> Something deleted during a tick, such as a tree an explosion took, stayed "there" until the end of the frame, a different moment on each computer. Now the rest of that tick waits for the next frame everywhere, and the game runs no slower.</p>
       </article>
       <article class="card">
         <h3 style="margin-top:0">Everyone at the host's pace</h3>
@@ -174,8 +174,8 @@
       </article>
       <article class="card">
       <article class="card">
-        <h3 style="margin-top:0">Still unplayed</h3>
-        <p>675 automated checks cover all of it (49 new in beta12, among them the game's own Wonder code at three frame rates and a player who stops receiving), and this build has not been played yet. The test scripts' lines B8t to B8z and C1b are the ones to try first.</p>
+        <h3 style="margin-top:0">Barely played</h3>
+        <p>679 automated checks cover all of it (4 new in beta14; 49 in beta12, among them the game's own Wonder code at three frame rates and a player who stops receiving). beta12 has had one short session: a founding and a few minutes of building stayed in step until dev mode's science. The test scripts' lines B8t to B8z, B9a and C1b are the ones to try first.</p>
       </article>
     </div>
   </div>
@@ -365,11 +365,11 @@
       <table>
         <thead><tr><th>Part</th><th>Status</th><th>Notes</th></tr></thead>
         <tbody>
-          <tr><td>Steam invites, connection panel, cursors, the fork's desync fixes</td><td><span class="chip ok">Confirmed</span></td><td>Played for hours with two players in large colonies (Stability Fork 1.1.10; 1.1.11's player colors as well; 1.1.12's fuller desync check not yet).</td></tr>
+          <tr><td>Steam invites, connection panel, cursors, the fork's desync fixes</td><td><span class="chip ok">Confirmed</span></td><td>Played for hours with two players in large colonies (Stability Fork 1.1.10; 1.1.11's player colors as well; 1.1.12's fuller desync check in one short beta12 session).</td></tr>
           <tr><td>Hosting, joining, founding a second colony and building in it</td><td><span class="chip ok">Confirmed</span></td><td>Played in the early land-split alphas.</td></tr>
-          <tr><td>Land, ownership, per-colony work and science</td><td><span class="chip tested">Tested</span></td><td>StabilityTests 361 and RuntimeChecks 314, which read the game's own assemblies.</td></tr>
+          <tr><td>Land, ownership, per-colony work and science</td><td><span class="chip tested">Tested</span></td><td>StabilityTests 361 and RuntimeChecks 318, which read the game's own assemblies.</td></tr>
           <tr><td>Trading posts and exchanges</td><td><span class="chip tested">Tested</span></td><td>Every rule of a round is checked headlessly; the panel has not been seen in a game.</td></tr>
-          <tr><td>The every-tick colony check</td><td><span class="chip tested">Tested</span></td><td>A bug in the check itself would stop a healthy game; the log line says what differed. The first thing to try: <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/ALPHA-TEST-SCRIPTS.md">Script B, line 8a</a>.</td></tr>
+          <tr><td>The every-tick colony check</td><td><span class="chip ok">Confirmed</span></td><td>Once, briefly: a beta12 session stayed in step through a founding and 268 ticks of building, then the check caught dev mode's science (fixed in beta14) and named what differed. A bug in the check itself would stop a healthy game; the log line says what differed. The first thing to try: <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/ALPHA-TEST-SCRIPTS.md">Script B, line 8a</a>.</td></tr>
         </tbody>
       </table>
     </div>
@@ -400,7 +400,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta13</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta14</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>

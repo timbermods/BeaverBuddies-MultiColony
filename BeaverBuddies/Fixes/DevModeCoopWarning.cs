@@ -9,9 +9,9 @@ namespace BeaverBuddies.Fixes
 {
     /// <summary>
     /// Dev mode's tools change the game on the computer they are used on. In a co-op game its instant unlock
-    /// (Ctrl-click on a locked building or bot toggle) and a construction site's "Finish now" are played on every
-    /// computer; the rest (deleting any object, the dev panel's other buttons...) are not, and desync the game. This
-    /// says so when dev mode is on in a co-op game.
+    /// (Ctrl-click on a locked building or bot toggle), a construction site's "Finish now" and the dev panel's "Add
+    /// 1000 Science" are played on every computer; the rest (deleting any object, the dev panel's other buttons...) are
+    /// not, and desync the game. This says so when dev mode is on in a co-op game.
     /// </summary>
     public class DevModeCoopWarning : ILoadableSingleton, IPostLoadableSingleton
     {
@@ -45,7 +45,7 @@ namespace BeaverBuddies.Fixes
         private void Warn()
         {
             if (EventIO.IsNull) return;
-            Plugin.LogWarning("Dev mode is on in a co-op game: its instant unlock and Finish now are shared, its other tools desync the game");
+            Plugin.LogWarning("Dev mode is on in a co-op game: its instant unlock, Finish now and Add 1000 Science are shared, its other tools desync the game");
             try
             {
                 _quickNotificationService.SendWarningNotification(RegisteredLocalizationService.T("BeaverBuddies.DevMode.CoopWarning"));

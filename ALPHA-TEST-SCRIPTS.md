@@ -297,6 +297,11 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
    place it with Ctrl still held; while the guest places paths, the host holds Ctrl+L; while the host holds Ctrl, a
    building finishes demolition. Every building must look the same on both screens (a construction site, not a
    finished building), and recovered goods appear on both.
+9a. **Add 1000 Science (beta14).** The host keeps dev mode on, opens the dev panel and clicks *Add 1000 Science*,
+    then places a locked building (Platforms, on water or not): the host's science reads 1000 less the building's
+    cost, the building is unlocked and placed on both screens, and nobody's game stops. The friend turns dev mode on
+    too and does the same: the science and the unlock are the friend's colony's alone. With the host's dev mode off,
+    the friend's click is refused with a notice.
 10. **A partial install.** The guest deletes `Buildings/DistrictManagement/MultiColonyTradingPost` from its mod folder
     and tries to join: the join is refused with a build mismatch message, not merely warned about. Put the folder back.
 11. Both players press **Ctrl+Shift+J** before quitting, and diff the `day N tick T:` lines of the two reports: they

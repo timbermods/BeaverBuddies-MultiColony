@@ -126,8 +126,8 @@ namespace BeaverBuddies.Colonies
                 }
             }
 
-            // Dev mode's shortcuts that every computer plays (a free unlock, Finish now), in every game: only while the
-            // host has dev mode on. The host decides whether the game is being tested; a guest can't cheat alone.
+            // Dev mode's shortcuts that every computer plays (a free unlock, Finish now, Add 1000 Science), in every game:
+            // only while the host has dev mode on. The host decides whether the game is being tested; a guest can't cheat alone.
             if (IsDevShortcut(replayEvent) && !service._devModeManager.Enabled)
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: the host's dev mode is off");
@@ -162,7 +162,7 @@ namespace BeaverBuddies.Colonies
                 || replayEvent is WorkingHoursChangedEvent || replayEvent is PlantingAreaMarkedEvent
                 || replayEvent is TreeCuttingAreaEvent || replayEvent is ClearResourcesMarkedEvent
                 || replayEvent is StewardGrantedEvent || replayEvent is StewardRevokedEvent || replayEvent is ActAsColonyEvent
-                || replayEvent is WishlistChangedEvent || replayEvent is ExchangeFloorSetEvent))
+                || replayEvent is WishlistChangedEvent || replayEvent is ExchangeFloorSetEvent || replayEvent is ScienceAddedEvent))
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: not seated yet");
                 refusal = ColonyRefusal.HostRefused;
@@ -254,7 +254,7 @@ namespace BeaverBuddies.Colonies
         private static bool IsDevShortcut(ReplayEvent replayEvent) =>
             (replayEvent is BuildingUnlockedEvent building && building.free)
             || (replayEvent is WorkerTypeUnlockedEvent workerType && workerType.free)
-            || replayEvent is ConstructionSiteFinishedNowEvent;
+            || replayEvent is ConstructionSiteFinishedNowEvent || replayEvent is ScienceAddedEvent;
 
         /// <summary>
         /// Before a player's own action is recorded. True means refuse it here and say why. A list event that is only
