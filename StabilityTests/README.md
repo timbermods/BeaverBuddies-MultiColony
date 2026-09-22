@@ -38,8 +38,12 @@ fixture, verifies identical results across six registration orders after the
 ordering fix, and checks water diagnostic snapshots and field hashes:
 
 ```
-dotnet run --project RuntimeChecks -- /path/to/BeaverBuddies.dll /path/to/Timberborn_Data/Managed /path/to/Harmony-directory
+dotnet run --project RuntimeChecks -- /path/to/BeaverBuddies.dll /path/to/Timberborn_Data/Managed /path/to/Harmony-directory /path/to/ModSettings/version-1.1/Scripts
 ```
+
+Run it on the build output (`bin`), which has MonoMod and Newtonsoft.Json beside the mod. The
+folders after the game's Managed folder are searched for the mod's other dependencies: Harmony
+(Workshop item 3284904751) and ModSettings (Workshop item 3283831040, its `version-1.1/Scripts`).
 
 Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
