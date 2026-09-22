@@ -79,7 +79,8 @@ Canonical example: `BeaverBuddies/Events/ToolEvents.cs:25–116`.
    `Replay(IReplayContext)` and `ToActionString()`.
 2. Harmony **prefix** on the game method the UI calls, returning
    `ReplayEvent.DoPrefix(() => new MyEvent{...})` or `DoEntityPrefix(...)`
-   (`ReplayEvent.cs:112–151`). Returning false suppresses the local action
+   (`ReplayEvent.cs:112–151`), with `[HarmonyPriority(Priority.First)]` (see
+   the comment on `DoPrefix`). Returning false suppresses the local action
    until the event comes back and replays on every client at a tick boundary
    (`ReplayService.cs` ~257–320).
 3. Serialization is Newtonsoft with `TypeNameHandling.All`; the event type

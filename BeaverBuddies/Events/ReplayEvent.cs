@@ -142,6 +142,16 @@ namespace BeaverBuddies.Events
         /// if we should skip recording and do the default method behavior.
         /// </param>
         /// <returns>True if the method should use default behavior</returns>
+        /// <remarks>
+        /// Every prefix that records through this (directly, through DoEntityPrefix or an event's own DoPrefix helper)
+        /// carries [HarmonyPriority(Priority.First)]. A prefix that replaces the game's method runs last
+        /// (Priority.Last), after other mods' prefixes; a recording prefix runs first, before them. Here the local
+        /// player's action is recorded and skipped, and it is played later on every computer in the same tick, when
+        /// this lets the method run. Another mod's prefix that ran before this one would act at the click, on this
+        /// computer alone, and if it returned false Harmony would skip this prefix too: the action would never be
+        /// sent. Running first also refuses what the colony rules refuse (below) before any other mod acts on it.
+        /// RuntimeChecks finds the recording prefixes from their code and fails on one that does not run first.
+        /// </remarks>
         public static bool DoPrefix(Func<ReplayEvent> getEvent)
         {
             // If we're already replaying events, just let the original method run.

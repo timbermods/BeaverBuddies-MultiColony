@@ -101,6 +101,7 @@ InputRecoveryChecks.Run(assembly, Test);
 MenuRecoveryChecks.Run(assembly, Test);
 ReplayEventChecks.Run(assembly, Test);
 PlantingLevelChecks.Run(assembly, Test);
+RecordingPriorityChecks.Run(assembly, Test);
 TraceChecks.Run(assembly, Test);
 ModListChecks.Run(assembly, Test);
 FrameTypeChecks.Run(assembly, Test);
