@@ -1,27 +1,24 @@
-Beaver Buddies is a Timberborn mod that adds multiplayer co-op!
+Play Timberborn together, each with your own colony, on one map.
 
-If you're already sold, dive right into our [url=https://github.com/thomaswp/BeaverBuddies/wiki/Installation-and-Running]installation and troubleshooting guide[/url]. Or [url=https://discord.com/channels/558398674389172225/1203786573142032445]join us on Discord[/url] (first you must join the [url=https://discord.com/invite/timberborn]Tiberborn Discord[/url])!
+[b]Alpha.[/b] Nothing of the colony model has been played yet; it is covered by automated checks. Play on a copy of your save, keep backups, and report what you find (with every player's Player.log) at https://github.com/timbermods/BeaverBuddies-MultiColony/issues
 
+[b]Each player runs their own colony:[/b] their own districts, land, beavers, stock, working hours and (if the host chooses) science and unlocks. Your screen shows your colony; your beavers work for your colony only; nobody can change anyone else's colony.
 
-Features
+[b]Colonies meet at trading posts:[/b] a building of its own (10 logs, no science), placed where two colonies' land meets. Offer "100 logs for 25 gears, 4 rounds" (or science, or beavers, or a gift), the other player accepts, and both colonies' beavers carry it out: each side's goods wait on its own half and cross all at once when both are in. Standing deals repeat by themselves; ending one early takes both players.
+
+[b]Found your colony anywhere:[/b] on a standard map the host starts with the colony that is there; every other player founds theirs once the host unpauses, free and already built, with starting beavers. Colonies are remembered by Steam account, whoever hosts. A colony whose player stops playing, or that dies out, is handed to another player, and its player can found again.
+
+[b]Desyncs are caught at once:[/b] colony state is compared with the host's every tick, so a game that drifts stops the tick it happens instead of much later.
+
 [list]
-[*] Players work together to build a Beaver civilization.
-[*] Players work on the same map in real-time, but each player has their own camera and user interface.
-[*] The multiplayer works similar to co-op games like Stardew Valley, Factorio, Dungeons 3, and Parkitect.
-[*] All resources and abilities are shared among players, but players who want more independence can use a multi-start map (below). 
-[*] Each player can start with their own district! Download a [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3372147096]multiplayer map[/url] or create your own in the map editor.
-[*] Host and connect from in-game menus.
+[*] Up to four colonies; more players join as helpers of the host's colony.
+[*] Steam friend invites (no port forwarding), or direct IP.
+[*] A connection panel with chat, teammates' cursors and selections, pings.
+[*] Turn [b]Separate colonies[/b] off for ordinary shared-colony co-op.
 [/list]
 
+Built on the BeaverBuddies Stability Fork and on BeaverBuddies by thomaswp and contributors. Guides: https://github.com/timbermods/BeaverBuddies-MultiColony
 
-[b]Note[/b]: BeaverBuddies is still undergoing heavy testing and improvement. You may experience desyncs or game crashes. The mod may not work on the most complex saves yet. It also may not work on all systems equally well. You can help improve the mod by playing and reporting any bugs you find.
- 
-Want to learn more? Have an issue to report?
+[b]Do not enable another BeaverBuddies at the same time:[/b] they cannot run together (the main menu tells you if one is enabled). Every player needs the same version, and the same files: a copy with the Trading Post's files missing or edited is refused at the join. Join while the host waits, paused, before they build anything.
 
-Check out the [url=https://github.com/thomaswp/BeaverBuddies/wiki]documentation[/url] with answer to common questions.  
-
-To report a desync:
-1) When the desync alert pops up, enable detailed logging and rehost/reconnect.
-2) If it happens again, use the "Post Bug Report" option to automatically upload a detailed report that will help us fix your issue!
-
-If you encounter a crash or other issue that requires more information, [url=https://github.com/thomaswp/BeaverBuddies/issues]report bugs you find here[/url].
+Requires Harmony and Mod Settings.

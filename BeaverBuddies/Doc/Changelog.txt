@@ -1,12 +1,8 @@
-v1.5.0
+The changelog of BeaverBuddies MultiColony is STABILITY-CHANGELOG.md at the repository root, one entry per
+version, newest first, back to the Stability Fork's first change over the original BeaverBuddies v1.1 branch.
 
-* NEW (beta): Steam networking support with crossplay! Invite friends via Steam and (once they've loaded the BeaverBuddies mod), they can join. Still a work in progress: feedback appreciated in our Discord thread (see description for how to join)!
-* NEW: If Steam peer-to-peer networking is supported for your network, you no longer need to port forward (though direct connection is faster).
-* NEW: In-game settings management. No more ReplayConfig.js - you can now edit game settings from within Timberborn. The mod now *requires* the ModSettings mod. 
-  * On Steam, subscribe here: https://steamcommunity.com/sharedfiles/filedetails/?id=3283831040
-  * On Mod.io, download here: https://mod.io/g/timberborn/m/mod-settings
-* A number of desync and bug fixes:
-  * Crash on Rehost should be fixed
-  * Placing conflicting structures (e.g. accidental double-clicking when building) should no longer cause a desync
-  * The following buildings should now be supported for network: Wonders, Badwater Dome, District Center (default worker behavior), character/building renaming
-* Decreased network load
+The short in-game version (the text the changelog dialog would show; the dialog is off in this fork, see
+Help/ChangeLogService.cs) is BeaverBuddies/changelog.txt, embedded as the ChangeLog resource.
+
+This file used to hold the original project's draft notes for its 1.5.0 release (Steam networking, in-game
+settings); those are in the original's history at https://github.com/thomaswp/BeaverBuddies.

@@ -5,6 +5,20 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha21
+
+**The in-game changelog and the Doc folder describe MultiColony.** No code change.
+
+- `BeaverBuddies/changelog.txt` (the ChangeLog resource the in-game changelog dialog reads; the dialog stays off in
+  this fork, `Help/ChangeLogService.cs`) now begins with MultiColony's versions, alpha21 back to alpha1, then the
+  Stability Fork, above the original project's entries.
+- `BeaverBuddies/Doc/` gains a README saying what each file is and which are the original project's historical
+  lists; `Changelog.txt`, `WorkshopDescription.txt` (Steam BBCode, from WORKSHOP.md) and `ToTestV6.md` (what is owed
+  to in-game testing and what to watch for) are rewritten for this fork; `Consent.txt`, `TranslationPrompt.txt`
+  and `Movement.md` get a note on where the shipped text lives, the state of translations, and the fix that
+  answered the analysis.
+- Checks unchanged: StabilityTests 263; RuntimeChecks 229.
+
 ## 1.4.0-alpha20
 
 **Every guide and page is current.** No code change.

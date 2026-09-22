@@ -1,6 +1,11 @@
 
 # Movement
 
+(The original project's notes on how the animation desync arose. The Stability Fork's fix, kept in this fork as
+Fixes/AnimationFixes.cs, makes the animation reselect a valid segment when time runs backward between ticks and
+falls back before water listeners on non-finite coordinates; StabilityTests covers both. The analysis below is
+still the reason.)
+
 Walker: Just calls PathFollower.MoveAlongPath
 
 PathFollower: contains the current long-term path, e.g. from one building to the next and determines the movement that should occur for each tick. Doesn't save state. 

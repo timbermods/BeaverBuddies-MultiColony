@@ -1,3 +1,40 @@
+v1.4.0-alpha21 (BeaverBuddies MultiColony)
+* Documentation only: this in-game changelog and the Doc folder describe MultiColony. Nothing in the game changed since alpha14.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
+v1.4.0-alpha15 to alpha20 (documentation)
+* The test scripts, README, TWO-COLONIES, CONNECTION-PANEL, STEAM-INVITES, PLAYER-ACTIVITY and WORKSHOP guides, and the docs site, brought up to date with alpha11 to alpha14. No code change.
+
+v1.4.0-alpha14
+* In co-op, gates open and close at the tick and are judged on the real roads, automation reacts at the tick, and the District Crossing panel no longer freezes the snapshot its workers read: each was per frame, which differs between computers.
+* Two district centers placed on the same tiles in one tick no longer stop the session.
+
+v1.4.0-alpha13
+* A running digest of every colony state change is sent with each heartbeat; a guest whose digest differs stops the tick it happens, with both numbers in the log.
+* The daily colony check now covers unlock names, contested land, every exchange, the goods on each half, the totals, the mode flags and the slot table, in every co-op game.
+
+v1.4.0-alpha12
+* Two colonies' roads joined no longer freeze the game; placing beside another colony's unfinished path is refused; a Trading Post's halves are accepted or refused together, and only its partners may remove it.
+* Hand-over by absence works with detailed logging on; a guest who leaves is away from the next day; Ctrl+Shift+K needs nobody connected.
+* A guest's dev-mode unlock waits for the host; log piles go to the colony that may work there; traded beavers must be able to walk there and carry nothing; copying settings from another colony's building is refused; a refused working-hours change resets the panel.
+
+v1.4.0-alpha11
+* The Trading Post reworked: each side's goods wait on its own half until both are in, then everything crosses at once; science is traded like a good; up to 100 an item a round, with rounds; ending an exchange takes both colonies; a ledger per post; a native trading window.
+* The desync review's fixes: founding and hand-over wait for the host's first tick, and the first change while paused closes joining; dev mode's Ctrl keys are off in co-op; relic science goes to the right colony; founding uses the host's starting settings; a guest missing the Trading Post's files is refused; the daily colony check is compared between computers.
+* A guest's placements come back faster: the host checks a placement once and guests take its answer.
+
+v1.4.0-alpha10
+* The Trading Post is its own building (10 logs, no science); the District Crossing is the game's own again.
+
+v1.4.0-alpha1 to alpha9
+* Separate colonies: each player's own districts, land (10 tiles around its buildings, first come), beavers, stock, marks, working hours and, if the host chooses, science and unlocks.
+* Founding a colony on any map, once the host has started; colonies remembered by Steam account; hand-over when a colony dies out, its player is away too long, or by the host.
+* Exchanges between colonies, the colonies window (Ctrl+T), land outlines (Ctrl+L), a diagnostics report (Ctrl+Shift+J).
+* A guest sees its own actions sooner, with its click marked until the host answers and refusals explained.
+
+v1.1.10 and v1.1.11 (BeaverBuddies Stability Fork, which MultiColony is built on)
+* Steam friend invites over Valve's current networking API, a connection panel with chat, player cursors and selections, and fixes for water, animation, random-number, saving, demolition and input desyncs and crashes.
+
 v1.1.0-1.0.1
 * Fixed a build bug where Steam options were not included
 

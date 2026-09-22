@@ -1,10 +1,16 @@
+The mod's own strings are English only: every language file under Localizations/ carries the original
+BeaverBuddies' translations, and the Stability Fork's and MultiColony's lines (BeaverBuddies.Panel.*,
+BeaverBuddies.Colony.*, BeaverBuddies.Host.*, BeaverBuddies.KeyBind.* and others) exist in enUS only; the game
+shows the English text elsewhere. This prompt is how the original project asked for translations; to translate the
+new lines, take them from enUS_BeaverBuddie.csv (grep for the prefixes above) and use the same request.
+
 Here is a localization CSV snippet for enUS:
 
-BeaverBuddies.Editor.StartingLocation1,"Starting Location - Player 1",""
-BeaverBuddies.Editor.StartingLocation2,"Starting Location - Player 2",""
-BeaverBuddies.Editor.StartingLocation3,"Starting Location - Player 3",""
-BeaverBuddies.Editor.StartingLocation4,"Starting Location - Player 4",""
-BeaverBuddies.NewGame.MaxStartingLocations,"Max Starting Locations",""
+BeaverBuddies.Colony.Founding.Prompt,"You can found your own colony. Place your district center at least 20 tiles from other colonies (their land shows as coloured outlines): it appears finished, with starting beavers, food and water, and it is yours. Cancel to keep playing together for now; press Ctrl+K whenever you are ready.",""
+BeaverBuddies.Colony.Refused.OtherColony,"That belongs to another colony.",""
+BeaverBuddies.Colony.Refused.NotStartedYet,"Not before the game starts: players can still join. Ask the host to unpause first.",""
+BeaverBuddies.Colony.PanelName,"{0} (colony {1})",""
 
-The second column is the translated string. Please produce similar snippets for the following: 
-deDE, esES, frFR, itIT, jaJP, koKR, plPL, ptBR, ruRU, thTH, trTR, ukUA, zhCN, zhTW
+The second column is the translated string. Keep the {0} and {1} placeholders, and the quotes. Please produce
+similar snippets for the following: deDE, esES, frFR, itIT, jaJP, koKR, plPL, ptBR, ruRU, thTH, trTR, ukUA, zhCN,
+zhTW

@@ -1,3 +1,8 @@
+(The text of the data-sharing consent dialog, as the game shows it: the BeaverBuddies.ClientDesynced.ConsentMessage
+line in Localizations/enUS_BeaverBuddie.csv is the copy that ships; edit both. In this fork's builds the Post Bug
+Report button uploads nothing, because they carry no upload token: after a desync, send every player's report from
+BeaverBuddies-Reports next to Player.log by hand, as README.md and the troubleshooting page say.)
+
 Consent to Share Usage Data
 
 By choosing to share your data, you agree to send certain information from your gameplay session to the developers of this mod. This may include:
