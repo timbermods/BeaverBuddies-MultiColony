@@ -45,6 +45,21 @@ namespace BeaverBuddies.Colonies
             return int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out amount) && amount <= ExchangeTerms.MaxAmount;
         }
 
+        /// <summary>The "keep at least" box: empty means 0; otherwise digits only, up to <see cref="ExchangeTerms.MaxKeep"/>.</summary>
+        public static bool TryReadKeep(string text, out int keep)
+        {
+            text = text?.Trim();
+            if (string.IsNullOrEmpty(text))
+            {
+                keep = 0;
+                return true;
+            }
+            return int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out keep) && keep <= ExchangeTerms.MaxKeep;
+        }
+
+        /// <summary>How far one click of − or + moves the reserve: fifty at a time (Shift: ten).</summary>
+        public static int KeepStep(bool shift) => shift ? 10 : 50;
+
         /// <summary>The rounds box: digits only, from 1 to <see cref="ExchangeTerms.MaxRounds"/>.</summary>
         public static bool TryReadRounds(string text, out int rounds) =>
             int.TryParse(text?.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out rounds) && ExchangeTerms.AreValidRounds(rounds);

@@ -45,6 +45,10 @@ namespace BeaverBuddies.Colonies
 
         private Func<string, int> stockOf;
         private Action<string> choose;
+        // Which items to mark as looked for by the other colony, and what the mark's tooltip says.
+        private Func<string, bool> wanted;
+        private string wantedNote;
+        private bool inStockDefault = true;
         private string selected;
         private float anchorTop, placedTop = float.NaN;
         private bool mouseOverBox, mouseOverOpener;
@@ -110,12 +114,24 @@ namespace BeaverBuddies.Colonies
 
         /// <param name="side">The fragment's number for the side being chosen.</param>
         /// <param name="anchor">The element the box opens beside (its top is lined up with the box's).</param>
-        public void Open(int side, string heading, string current, Func<string, int> stock, Action<string> onChoose, VisualElement anchor)
+        /// <param name="wantedItems">Items to mark as looked for by the other colony (their count in the game's yellow).</param>
+        /// <param name="wantedTooltip">What the mark means, added to a marked item's tooltip.</param>
+        /// <param name="inStockOnlyDefault">How the "Only what is in stock" box starts for this use of the picker.</param>
+        public void Open(int side, string heading, string current, Func<string, int> stock, Action<string> onChoose, VisualElement anchor,
+            Func<string, bool> wantedItems = null, string wantedTooltip = null, bool inStockOnlyDefault = true)
         {
             Side = side;
             selected = current;
             stockOf = stock;
             choose = onChoose;
+            wanted = wantedItems;
+            wantedNote = wantedTooltip;
+            // The box keeps the player's tick between uses of one kind; a different kind of use starts from its own default.
+            if (inStockOnlyDefault != inStockDefault)
+            {
+                inStockDefault = inStockOnlyDefault;
+                inStockOnly.SetValueWithoutNotify(inStockOnlyDefault);
+            }
             title.text = heading;
             VisualElement parent = Root.parent;
             anchorTop = parent != null && anchor != null ? anchor.worldBound.yMin - parent.worldBound.yMin : 0;
@@ -146,6 +162,7 @@ namespace BeaverBuddies.Colonies
             scroll.Clear();
             choose = null;
             stockOf = null;
+            wanted = null;
         }
 
         /// <summary>Esc or a click outside the box (and outside the buttons that open it) closes it.</summary>
@@ -242,11 +259,15 @@ namespace BeaverBuddies.Colonies
             count.style.unityTextAlign = TextAnchor.MiddleCenter;
             count.style.whiteSpace = WhiteSpace.NoWrap;
             count.pickingMode = PickingMode.Ignore;
+            // An item the other colony is looking for: its count in the game's yellow, and a word in its tooltip.
+            bool isWanted = wanted != null && wanted(item);
+            if (isWanted) count.AddToClassList("text--yellow");
             button.Add(count);
             wrapper.Add(button);
             var cell = new Cell { Item = item, Button = button, Icon = icon, Count = count };
+            string note = isWanted && !string.IsNullOrEmpty(wantedNote) ? " " + wantedNote : "";
             _tooltipRegistrar.Register(button, () => string.Format(T("BeaverBuddies.Colony.Trade.CellTooltip"), _items.Name(item),
-                stockOf != null ? stockOf(item).ToString("N0", CultureInfo.CurrentCulture) : "0"));
+                stockOf != null ? stockOf(item).ToString("N0", CultureInfo.CurrentCulture) : "0") + note);
             ShowCount(cell, stock);
             cells.Add(cell);
             return wrapper;

@@ -54,7 +54,7 @@
       <p class="hero-note">Free and open source. Built against Timberborn 1.1.2.4 on Windows with the Steam version. Needs Harmony and Mod Settings.</p>
       <div class="callout warn" role="note">
         <strong class="label">Beta</strong>
-        <p>The colony model is covered by <b>500 automated checks</b> and has <b>not been played yet</b>. Play on a copy of your save, keep backups, and <a href="#status">see exactly what is and isn't tested</a>.</p>
+        <p>The colony model is covered by <b>515 automated checks</b> and has <b>not been played yet</b>. Play on a copy of your save, keep backups, and <a href="#status">see exactly what is and isn't tested</a>.</p>
       </div>
     </div>
 
@@ -192,7 +192,7 @@
       <article class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4"/></svg></div>
         <h3>Trading posts</h3>
-        <p>The one place colonies meet. Offer goods, science or beavers, or a gift; the other player accepts; the beavers do the carrying. <a href="#trading">How an exchange works</a></p>
+        <p>The one place colonies meet. Offer goods, science or beavers, or a gift; the other player accepts; the beavers do the carrying. Say what you are looking for, keep a reserve on a standing deal, offer the last exchange again in one click. <a href="#trading">How an exchange works</a></p>
       </article>
       <article class="card">
         <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l1 4h3l-2 5 2 6H5l2-6-2-5h3z"/><path d="M10 14h4"/></svg></div>
@@ -202,7 +202,7 @@
       <article class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></div>
         <h3>Colonies are remembered</h3>
-        <p>The save knows you by your Steam account: the same colony every time, whoever hosts. A colony whose player stops coming, or that dies out, is handed to a neighbour, and its player can found again.</p>
+        <p>The save knows you by your Steam account: the same colony every time, whoever hosts. Away for the evening? Ask a friend to look after your colony. A colony whose player stops coming, or that dies out, is handed to a neighbour (everyone is warned the day before), and its player can found again.</p>
       </article>
       <article class="card">
         <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
@@ -328,7 +328,7 @@
         <tbody>
           <tr><td>Steam invites, connection panel, cursors, the fork's desync fixes</td><td><span class="chip ok">Confirmed</span></td><td>Played for hours with two players in large colonies (Stability Fork 1.1.10).</td></tr>
           <tr><td>Hosting, joining, founding a second colony and building in it</td><td><span class="chip ok">Confirmed</span></td><td>Played in the early land-split alphas.</td></tr>
-          <tr><td>Land, ownership, per-colony work and science</td><td><span class="chip tested">Tested</span></td><td>StabilityTests 268 and RuntimeChecks 232, which read the game's own assemblies.</td></tr>
+          <tr><td>Land, ownership, per-colony work and science</td><td><span class="chip tested">Tested</span></td><td>StabilityTests 282 and RuntimeChecks 233, which read the game's own assemblies.</td></tr>
           <tr><td>Trading posts and exchanges</td><td><span class="chip tested">Tested</span></td><td>Every rule of a round is checked headlessly; the panel has not been seen in a game.</td></tr>
           <tr><td>The every-tick colony check</td><td><span class="chip tested">Tested</span></td><td>A bug in the check itself would stop a healthy game; the log line says what differed. The first thing to try: <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/ALPHA-TEST-SCRIPTS.md">Script B, line 8a</a>.</td></tr>
         </tbody>
@@ -344,7 +344,7 @@
     <h2>Good to know before you play</h2>
     <ul>
       <li><b>Everyone must run the exact same build</b> of the mod and the same version of the game; the join is refused otherwise. Other mods should match too (you get a warning).</li>
-      <li><b>Join before the host starts or builds.</b> Nobody can join after the first tick, or after the host places or marks anything while waiting paused.</li>
+      <li><b>Join before the host starts or builds.</b> Nobody can join after the first tick, or after the host places or marks anything while waiting paused; the host is asked before that first change, and a guest's change while the host waits is refused.</li>
       <li><b>Only one BeaverBuddies at a time.</b> If another is enabled, the main menu names it and this one stays out of the way.</li>
       <li><b>The map is shared.</b> Water, droughts, badwater tides and weather reach everyone; a dam upstream still changes what flows downstream. The game ends only when every beaver on the map is gone.</li>
       <li><b>Text is English only</b> for what this mod adds; other languages show the English text there.</li>

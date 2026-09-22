@@ -38,5 +38,10 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/IO/BlueprintDigest.cs" Link="BlueprintDigest.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ColonyDigest.cs" Link="ColonyDigest.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ColonyProfiler.cs" Link="ColonyProfiler.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ColonyAbsence.cs" Link="ColonyAbsence.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ColonyStewardRules.cs" Link="ColonyStewardRules.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/WishlistTerms.cs" Link="WishlistTerms.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/SupplyDays.cs" Link="SupplyDays.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/HostStartRules.cs" Link="HostStartRules.cs" />
   </ItemGroup>
 </Project>

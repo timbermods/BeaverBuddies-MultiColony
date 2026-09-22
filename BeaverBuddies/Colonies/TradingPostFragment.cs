@@ -116,6 +116,22 @@ namespace BeaverBuddies.Colonies
         private Label ledgerTitle, historyTitle;
         private ChipRow sentRow, receivedRow;
         private string ledgerShown;
+        // What the other colony is looking for, under the header.
+        private ChipRow wantsRow;
+        // The last exchange at this post, to offer again with one click.
+        private VisualElement lastRow;
+        private Label lastLabel;
+        private Button offerAgainButton;
+        // A reserve: what the colony keeps back of what it gives (the offer form's, and the running exchange's).
+        private VisualElement keepCard, activeKeepRow;
+        private TextField keepBox, activeKeepBox;
+        private Button keepLess, keepMore, activeKeepLess, activeKeepMore;
+        private int shownKeep = -1;
+        // Terms to put into the form when it next shows: a declined or withdrawn offer, a ledger row, the last exchange.
+        private bool prefillPending;
+        private string prefillGive, prefillGet;
+        private int prefillGiveAmount, prefillGetAmount, prefillRounds, prefillKeep;
+        private bool prefillRepeat;
 
         private DistrictCrossing crossing;
         private float nextRefresh;
@@ -179,6 +195,14 @@ namespace BeaverBuddies.Colonies
             myHalfButton = NativeElements.WoodenButton(T("BeaverBuddies.Colony.Trade.SelectMyHalf"), SelectMyHalf);
             myHalfButton.style.marginTop = 6;
             body.Add(myHalfButton);
+            // "Sarah is looking for: [icons]" (their wishlist, Ctrl+T), so a player sees what would please before choosing.
+            wantsRow = BuildChipRow();
+            wantsRow.Root.style.marginTop = 5;
+            wantsRow.Caption.style.width = StyleKeyword.Auto;
+            wantsRow.Caption.style.marginRight = 6;
+            wantsRow.Caption.enableRichText = true;
+            _tooltipRegistrar.Register(wantsRow.Root, T("BeaverBuddies.Colony.Trade.TheyWantTooltip"));
+            body.Add(wantsRow.Root);
             body.Add(BuildCompose());
             body.Add(BuildProposal());
             body.Add(BuildActive());
@@ -201,11 +225,26 @@ namespace BeaverBuddies.Colonies
         private VisualElement BuildCompose()
         {
             compose = new VisualElement();
+            // "Last exchange here: 100 Logs for 25 Gears, 4 rounds. [Offer again]"
+            lastRow = NativeElements.Row();
+            lastRow.style.marginTop = 6;
+            lastLabel = RichText(12);
+            lastLabel.style.color = NativeElements.Muted;
+            lastLabel.style.flexGrow = 1;
+            lastLabel.style.flexShrink = 1;
+            lastRow.Add(lastLabel);
+            offerAgainButton = SmallButton(T("BeaverBuddies.Colony.Trade.OfferAgain"), OfferAgain);
+            offerAgainButton.style.marginLeft = 6;
+            _tooltipRegistrar.Register(offerAgainButton, T("BeaverBuddies.Colony.Trade.OfferAgainTooltip"));
+            lastRow.Add(offerAgainButton);
+            compose.Add(lastRow);
             giveSide = BuildOfferSide(Give, T("BeaverBuddies.Colony.Trade.YouGiveCaption"));
             getSide = BuildOfferSide(Get, T("BeaverBuddies.Colony.Trade.YouGetCaption"));
             compose.Add(giveSide.Card);
             compose.Add(getSide.Card);
             compose.Add(BuildRounds());
+            keepCard = BuildKeepCard(out keepBox, out keepLess, out keepMore, () => RefreshSummary());
+            compose.Add(keepCard);
             summary = RichText(12);
             summary.style.marginTop = 6;
             summary.style.marginLeft = 1;
@@ -313,6 +352,57 @@ namespace BeaverBuddies.Colonies
             return card;
         }
 
+        /// <summary>
+        /// "Keep at least" [−] [200] [+] "of what you give", on the description's blue: the side is brought or paid only
+        /// while the colony has that much left after the round. <paramref name="changed"/> runs after − or +, and when
+        /// the player leaves the box.
+        /// </summary>
+        private NineSliceVisualElement BuildKeepCard(out TextField box, out Button less, out Button more, Action changed)
+        {
+            NineSliceVisualElement card = Card();
+            VisualElement top = NativeElements.Row();
+            top.style.justifyContent = Justify.SpaceBetween;
+            top.style.marginBottom = 3;
+            Label caption = NativeElements.Caption(T("BeaverBuddies.Colony.Trade.KeepCaption"));
+            _tooltipRegistrar.Register(caption, T("BeaverBuddies.Colony.Trade.KeepTooltip"));
+            top.Add(caption);
+            Label note = NativeElements.MutedText(T("BeaverBuddies.Colony.Trade.KeepNote"));
+            note.style.unityTextAlign = TextAnchor.MiddleRight;
+            note.style.flexShrink = 1;
+            note.style.marginLeft = 6;
+            top.Add(note);
+            card.Add(top);
+            VisualElement row = NativeElements.Row();
+            TextField field = NativeElements.InputBox(maxLength: 4, width: 52);
+            field.value = "0";
+            Button minus = NativeElements.SquareButton(plus: false, e => StepKeep(field, up: false, e.shiftKey, changed));
+            _tooltipRegistrar.Register(minus, () => string.Format(T("BeaverBuddies.Colony.Trade.StepLess"), TradeOfferForm.KeepStep(false), TradeOfferForm.KeepStep(true)));
+            row.Add(minus);
+            _tooltipRegistrar.Register(field, () => string.Format(T("BeaverBuddies.Colony.Trade.KeepBoxTooltip"), ExchangeTerms.MaxKeep));
+            field.RegisterCallback<FocusOutEvent>(_ => changed());
+            field.RegisterCallback<KeyDownEvent>(e =>
+            {
+                if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter) field.Blur();
+            });
+            row.Add(field);
+            Button plus = NativeElements.SquareButton(plus: true, e => StepKeep(field, up: true, e.shiftKey, changed));
+            _tooltipRegistrar.Register(plus, () => string.Format(T("BeaverBuddies.Colony.Trade.StepMore"), TradeOfferForm.KeepStep(false), TradeOfferForm.KeepStep(true)));
+            row.Add(plus);
+            card.Add(row);
+            box = field;
+            less = minus;
+            more = plus;
+            return card;
+        }
+
+        private static void StepKeep(TextField box, bool up, bool shift, Action changed)
+        {
+            if (!TradeOfferForm.TryReadKeep(box.value, out int keep)) keep = 0;
+            int next = TradeOfferForm.Stepped(keep, TradeOfferForm.KeepStep(shift), up, 0, ExchangeTerms.MaxKeep);
+            box.value = next.ToString(CultureInfo.InvariantCulture);
+            changed();
+        }
+
         private VisualElement BuildProposal()
         {
             proposal = new VisualElement();
@@ -339,6 +429,8 @@ namespace BeaverBuddies.Colonies
                 answerButtons.Add(button);
             }
             declineButton.style.marginLeft = 6;
+            _tooltipRegistrar.Register(declineButton, T("BeaverBuddies.Colony.Trade.DeclineTooltip"));
+            _tooltipRegistrar.Register(withdrawButton, T("BeaverBuddies.Colony.Trade.WithdrawTooltip"));
             proposal.Add(answerButtons);
             return proposal;
         }
@@ -351,6 +443,8 @@ namespace BeaverBuddies.Colonies
             giveProgress = BuildProgressRow(green: false);
             getProgress = BuildProgressRow(green: true);
             card.Add(giveProgress.Root);
+            activeKeepRow = BuildActiveKeepRow();
+            card.Add(activeKeepRow);
             card.Add(getProgress.Root);
             statusLabel = RichText(12);
             statusLabel.style.marginTop = 5;
@@ -381,6 +475,34 @@ namespace BeaverBuddies.Colonies
             cancelArea.Add(cancelButtons);
             active.Add(cancelArea);
             return active;
+        }
+
+        /// <summary>Under "You give" while an exchange runs: "Keep at least [−] [200] [+]", changed at any time.</summary>
+        private VisualElement BuildActiveKeepRow()
+        {
+            VisualElement row = NativeElements.Row();
+            row.style.marginTop = 4;
+            row.style.marginBottom = 2;
+            Label caption = NativeElements.MutedText(T("BeaverBuddies.Colony.Trade.KeepCaption"));
+            caption.style.marginRight = 6;
+            _tooltipRegistrar.Register(caption, T("BeaverBuddies.Colony.Trade.KeepTooltip"));
+            row.Add(caption);
+            activeKeepLess = NativeElements.SquareButton(plus: false, e => StepKeep(activeKeepBox, up: false, e.shiftKey, CommitActiveKeep));
+            _tooltipRegistrar.Register(activeKeepLess, () => string.Format(T("BeaverBuddies.Colony.Trade.StepLess"), TradeOfferForm.KeepStep(false), TradeOfferForm.KeepStep(true)));
+            row.Add(activeKeepLess);
+            activeKeepBox = NativeElements.InputBox(maxLength: 4, width: 52);
+            activeKeepBox.value = "0";
+            _tooltipRegistrar.Register(activeKeepBox, () => string.Format(T("BeaverBuddies.Colony.Trade.KeepBoxTooltip"), ExchangeTerms.MaxKeep));
+            activeKeepBox.RegisterCallback<FocusOutEvent>(_ => CommitActiveKeep());
+            activeKeepBox.RegisterCallback<KeyDownEvent>(e =>
+            {
+                if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter) activeKeepBox.Blur();
+            });
+            row.Add(activeKeepBox);
+            activeKeepMore = NativeElements.SquareButton(plus: true, e => StepKeep(activeKeepBox, up: true, e.shiftKey, CommitActiveKeep));
+            _tooltipRegistrar.Register(activeKeepMore, () => string.Format(T("BeaverBuddies.Colony.Trade.StepMore"), TradeOfferForm.KeepStep(false), TradeOfferForm.KeepStep(true)));
+            row.Add(activeKeepMore);
+            return row;
         }
 
         private VisualElement BuildLedger()
@@ -555,6 +677,8 @@ namespace BeaverBuddies.Colonies
             giveSide?.Amount.Blur();
             getSide?.Amount.Blur();
             roundsBox?.Blur();
+            keepBox?.Blur();
+            activeKeepBox?.Blur();
         }
 
         public void UpdateFragment()
@@ -635,7 +759,7 @@ namespace BeaverBuddies.Colonies
             NativeElements.Show(myHalfButton, false);
             if (!ownTrading)
             {
-                foreach (VisualElement section in new[] { compose, dockRow.Root, ledgerSection, historySection })
+                foreach (VisualElement section in new[] { compose, dockRow.Root, ledgerSection, historySection, wantsRow.Root })
                     NativeElements.Show(section, false);
                 picker.Close();
                 StopTyping();
@@ -655,6 +779,7 @@ namespace BeaverBuddies.Colonies
 
             NativeElements.Show(noticeLabel, false);
             NativeElements.SetText(headerText, string.Format(T("BeaverBuddies.Colony.Trade.TradingWith"), ColoredName(partnerSlot)));
+            RefreshWants(partnerSlot);
             Remember(state, ax, bx);
             bool composing = state == ExchangeState.None;
             NativeElements.Show(compose, composing);
@@ -667,7 +792,7 @@ namespace BeaverBuddies.Colonies
             }
 
             int me = OwnerOf(crossing);
-            if (composing) RefreshCompose(crossing, partner, me, partnerSlot);
+            if (composing) RefreshCompose(crossing, partner, me, partnerSlot, ax);
             else if (state == ExchangeState.Proposed) RefreshProposal(ax, bx, canAccept: true);
             else RefreshActive(ax, bx, me, partnerSlot, paused: false);
 
@@ -714,8 +839,11 @@ namespace BeaverBuddies.Colonies
             NativeElements.SetText(noticeLabel, T(ColonyModeService.IsSeparateColonies ? "BeaverBuddies.Colony.Trade.NotLinked" : "BeaverBuddies.Colony.Trade.NoColonies"));
         }
 
+        private ExchangeState shownState;
+
         private void Remember(ExchangeState state, CrossingExchange ax, CrossingExchange bx)
         {
+            shownState = state;
             shownSerial = state == ExchangeState.None ? 0 : ax.Serial;
             if (state == ExchangeState.None) return;
             shownGiveGood = ax.GoodId;
@@ -728,15 +856,78 @@ namespace BeaverBuddies.Colonies
 
         // ---- making an offer ----
 
-        private void RefreshCompose(DistrictCrossing mine, DistrictCrossing theirs, int me, int them)
+        private void RefreshCompose(DistrictCrossing mine, DistrictCrossing theirs, int me, int them, CrossingExchange ax)
         {
+            // Terms left for the form (a declined offer, a ledger row, the last exchange) go in before anything else.
+            if (prefillPending) ApplyPrefill();
             // A new form starts on goods (what each colony has most of), never on science or beavers.
             if (giveItem == null || !_items.IsOffered(giveItem)) giveItem = _items.MostStocked(mine, me, getItem);
             if (getItem == null || !_items.IsOffered(getItem) || getItem == giveItem) getItem = _items.MostStocked(theirs, them, giveItem);
             ShowSide(giveSide, giveItem, string.Format(T("BeaverBuddies.Colony.Trade.YouHaveN"), Count(_items.StockOf(mine, me, giveItem))));
             ShowSide(getSide, getItem, string.Format(T("BeaverBuddies.Colony.Trade.TheyHaveN"), PlainName(them),
                 Count(_items.StockOf(theirs, them, getItem))));
+            RefreshLast(ax, them);
             RefreshSummary();
+        }
+
+        /// <summary>"Last exchange here: 100 Logs for 25 Gears, 4 rounds." with Offer again, when this half remembers one.</summary>
+        private void RefreshLast(CrossingExchange ax, int them)
+        {
+            string give = null, get = null;
+            int giveAmount = 0, getAmount = 0, rounds = 1;
+            bool repeat = false;
+            bool known = ax != null && ExchangeTerms.TryDecodeTerms(ax.LastTerms, out give, out giveAmount, out get, out getAmount,
+                out rounds, out repeat, out _);
+            NativeElements.Show(lastRow, known);
+            if (!known) return;
+            string terms = string.Format(T("BeaverBuddies.Colony.Trade.LastTerms"), AmountOf(giveAmount, give), AmountOf(getAmount, get))
+                + " " + RoundsText(rounds, repeat, giveAmount, give, getAmount, get);
+            NativeElements.SetText(lastLabel, terms);
+        }
+
+        private void OfferAgain()
+        {
+            CrossingExchange ax = ColonyExchangeService.Of(MyHalf());
+            if (ax == null || !ExchangeTerms.TryDecodeTerms(ax.LastTerms, out string give, out int giveAmount, out string get, out int getAmount,
+                out int rounds, out bool repeat, out int keep)) return;
+            Prefill(give, giveAmount, get, getAmount, rounds, repeat, keep);
+        }
+
+        /// <summary>Terms for the form: taken up when it next shows (at once, if it is showing now).</summary>
+        private void Prefill(string give, int giveAmount, string get, int getAmount, int rounds, bool repeat, int keep)
+        {
+            prefillGive = give;
+            prefillGiveAmount = giveAmount;
+            prefillGet = get;
+            prefillGetAmount = getAmount;
+            prefillRounds = rounds;
+            prefillRepeat = repeat;
+            prefillKeep = keep;
+            prefillPending = true;
+            nextRefresh = 0;
+            Refresh();
+        }
+
+        private void ApplyPrefill()
+        {
+            prefillPending = false;
+            if (prefillGive != null && _items.IsOffered(prefillGive)) giveItem = prefillGive;
+            if (prefillGet != null && _items.IsOffered(prefillGet) && prefillGet != giveItem) getItem = prefillGet;
+            giveSide.Amount.SetValueWithoutNotify(Math.Max(0, Math.Min(ExchangeTerms.MaxAmount, prefillGiveAmount)).ToString(CultureInfo.InvariantCulture));
+            getSide.Amount.SetValueWithoutNotify(Math.Max(0, Math.Min(ExchangeTerms.MaxAmount, prefillGetAmount)).ToString(CultureInfo.InvariantCulture));
+            roundsBox.SetValueWithoutNotify(Math.Max(1, Math.Min(ExchangeTerms.MaxRounds, prefillRounds)).ToString(CultureInfo.InvariantCulture));
+            repeatToggle.SetValueWithoutNotify(prefillRepeat);
+            keepBox.SetValueWithoutNotify(Math.Max(0, Math.Min(ExchangeTerms.MaxKeep, prefillKeep)).ToString(CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>"Sarah is looking for: [icons]" under the header, when she has said so (Ctrl+T).</summary>
+        private void RefreshWants(int them)
+        {
+            IReadOnlyList<string> wants = ColonyWishlist.Instance?.Of(them) ?? (IReadOnlyList<string>)Array.Empty<string>();
+            NativeElements.Show(wantsRow.Root, wants.Count > 0);
+            if (wants.Count == 0) return;
+            ShowChips(wantsRow, string.Format(T("BeaverBuddies.Colony.Trade.TheyWant"), ColoredName(them)),
+                wants.Select(item => new KeyValuePair<string, int>(item, 0)).ToList(), amounts: false);
         }
 
         private void ShowSide(OfferSide side, string item, string stock)
@@ -758,8 +949,19 @@ namespace BeaverBuddies.Colonies
             roundsMore.SetEnabled(!repeat);
             TradeOfferForm.Verdict verdict = TradeOfferForm.Judge(giveItem, giveSide.Amount.value, getItem, getSide.Amount.value,
                 roundsBox.value, repeat, out int give, out int get, out int rounds);
+            // A reserve matters over more than one round, and only when this side gives something.
+            bool keepShown = give > 0 && (repeat || rounds > 1);
+            NativeElements.Show(keepCard, keepShown);
+            bool keepRead = TradeOfferForm.TryReadKeep(keepBox.value, out int keep);
             string partner = PlainName(partnerSlot);
             string text;
+            if (keepShown && !keepRead && TradeOfferForm.IsOffer(verdict))
+            {
+                NativeElements.SetText(summary, string.Format(T("BeaverBuddies.Colony.Trade.ErrorKeep"), ExchangeTerms.MaxKeep));
+                summary.style.color = NativeElements.Warning;
+                makeOfferButton.SetEnabled(false);
+                return;
+            }
             switch (verdict)
             {
                 case TradeOfferForm.Verdict.Exchange:
@@ -789,6 +991,7 @@ namespace BeaverBuddies.Colonies
             }
             bool offer = TradeOfferForm.IsOffer(verdict);
             if (offer) text += " " + RoundsText(rounds, repeat, give, giveItem, get, getItem);
+            if (offer && keepShown && keep > 0) text += " " + string.Format(T("BeaverBuddies.Colony.Trade.SummaryKeep"), Count(keep), _items.Name(giveItem));
             NativeElements.SetText(summary, text);
             summary.style.color = offer ? NativeElements.Muted : NativeElements.Warning;
             makeOfferButton.SetEnabled(offer);
@@ -842,7 +1045,13 @@ namespace BeaverBuddies.Colonies
             string heading = side.Side == Give
                 ? T("BeaverBuddies.Colony.Trade.PickGive")
                 : string.Format(T("BeaverBuddies.Colony.Trade.PickGet"), PlainName(slot));
-            picker.Open(side.Side, heading, ItemOf(side), item => _items.StockOf(half, slot, item), item => Choose(side, item), side.Card);
+            // Giving: what the other colony is looking for is marked. Asking: what your own colony is looking for.
+            int wisher = side.Side == Give ? OwnerOf(TradingPosts.Partner(myHalf)) : OwnerOf(myHalf);
+            string note = side.Side == Give
+                ? string.Format(T("BeaverBuddies.Colony.Trade.WantedByThem"), PlainName(wisher))
+                : T("BeaverBuddies.Colony.Trade.WantedByYou");
+            picker.Open(side.Side, heading, ItemOf(side), item => _items.StockOf(half, slot, item), item => Choose(side, item), side.Card,
+                item => ColonyWishlist.Instance?.Wants(wisher, item) ?? false, note);
         }
 
         private void Choose(OfferSide side, string item)
@@ -913,6 +1122,7 @@ namespace BeaverBuddies.Colonies
                 ? string.Format(T("BeaverBuddies.Colony.Trade.RoundRepeating"), ax.Done + 1)
                 : string.Format(T("BeaverBuddies.Colony.Trade.RoundOf"), ax.Done + 1, ax.Rounds));
             bool mineIn = ShowProgress(giveProgress, T("BeaverBuddies.Colony.Trade.YouGiveCaption"), crossing, ax, exchanges, own: true);
+            RefreshActiveKeep(ax, paused);
             bool theirsIn = ShowProgress(getProgress, T("BeaverBuddies.Colony.Trade.YouGetCaption"), partner, bx, exchanges, own: false);
             NativeElements.SetText(statusLabel, paused ? T("BeaverBuddies.Colony.Trade.PausedStatus") : Status(ax, bx, mineIn, theirsIn, me, them, exchanges));
             statusLabel.style.color = paused ? NativeElements.Warning : NativeElements.Muted;
@@ -957,12 +1167,48 @@ namespace BeaverBuddies.Colonies
             return exchanges?.IsIn(half, side) ?? false;
         }
 
+        /// <summary>The reserve of the running exchange, from this side, shown while the box is not being typed in.</summary>
+        private void RefreshActiveKeep(CrossingExchange ax, bool paused)
+        {
+            bool shown = !paused && ax.Total > 0;
+            NativeElements.Show(activeKeepRow, shown);
+            if (!shown) return;
+            bool typing = activeKeepBox.focusController?.focusedElement == activeKeepBox;
+            if (ax.Keep != shownKeep && !typing)
+            {
+                shownKeep = ax.Keep;
+                activeKeepBox.SetValueWithoutNotify(ax.Keep.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        /// <summary>The box was left, or − or + clicked: the new reserve goes to every computer, if it changed.</summary>
+        private void CommitActiveKeep()
+        {
+            DistrictCrossing myHalf = MyHalf();
+            CrossingExchange ax = ColonyExchangeService.Of(myHalf);
+            if (ax == null || !ax.IsActive || shownSerial == 0) return;
+            if (!TradeOfferForm.TryReadKeep(activeKeepBox.value, out int keep))
+            {
+                activeKeepBox.SetValueWithoutNotify(ax.Keep.ToString(CultureInfo.InvariantCulture));
+                return;
+            }
+            if (keep == ax.Keep) return;
+            shownKeep = keep;
+            string halfId = ReplayEvent.GetEntityID(myHalf);
+            int serial = shownSerial;
+            Send(() => new ExchangeFloorSetEvent { crossingID = halfId, serial = serial, keep = keep });
+        }
+
         /// <summary>What the round waits for now, in one line.</summary>
         private string Status(CrossingExchange ax, CrossingExchange bx, bool mineIn, bool theirsIn, int me, int them,
             ColonyExchangeService exchanges)
         {
             string partner = PlainName(them);
             if (ax.CancelAsked || bx.CancelAsked) return T("BeaverBuddies.Colony.Trade.StatusOnHold");
+            if (!mineIn && exchanges != null && exchanges.IsHeldByFloor(crossing, ax))
+                return string.Format(T("BeaverBuddies.Colony.Trade.StatusYourReserve"), Count(ax.Keep), _items.Name(ax.GoodId));
+            if (mineIn && !theirsIn && exchanges != null && exchanges.IsHeldByFloor(TradingPosts.Partner(crossing), bx))
+                return string.Format(T("BeaverBuddies.Colony.Trade.StatusTheirReserve"), partner);
             if (!mineIn)
             {
                 if (ax.GoodId == ExchangeTerms.Science)
@@ -1051,6 +1297,10 @@ namespace BeaverBuddies.Colonies
                 // Both sides named: "You gave [icon] 100", "Sarah gave [icon] 25" (the partner in their colour).
                 row.Add(LedgerPart(T("BeaverBuddies.Colony.Trade.LedgerYouGave"), record.Gave, record.GaveAmount));
                 row.Add(LedgerPart(string.Format(T("BeaverBuddies.Colony.Trade.LedgerTheyGave"), ColoredName(partnerSlot)), record.Got, record.GotAmount));
+                // A click puts the round's terms in the offer form (once the post is free), to offer the same again.
+                TradeRecord terms = record;
+                row.RegisterCallback<ClickEvent>(_ => Prefill(terms.Gave, terms.GaveAmount, terms.Got, terms.GotAmount, 1, false, 0));
+                _tooltipRegistrar.Register(row, T("BeaverBuddies.Colony.Trade.LedgerRowTooltip"));
                 ledgerRows.Add(row);
             }
             if (records.Count > LedgerShown)
@@ -1098,11 +1348,11 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>A caption and the goods as icons with their amounts, most first; rebuilt only when they change.</summary>
-        private void ShowChips(ChipRow row, string caption, List<KeyValuePair<string, int>> goods)
+        private void ShowChips(ChipRow row, string caption, List<KeyValuePair<string, int>> goods, bool amounts = true)
         {
             NativeElements.SetText(row.Caption, caption);
             goods = goods ?? new List<KeyValuePair<string, int>>();
-            string shown = string.Join("|", goods.Take(ChipsShown).Select(g => g.Key + ":" + g.Value)) + "|" + goods.Count;
+            string shown = string.Join("|", goods.Take(ChipsShown).Select(g => g.Key + ":" + g.Value)) + "|" + goods.Count + (amounts ? "" : "|plain");
             if (shown == row.Shown) return;
             row.Shown = shown;
             row.Chips.Clear();
@@ -1120,7 +1370,7 @@ namespace BeaverBuddies.Colonies
                 icon.sprite = _items.IconOf(good.Key);
                 icon.style.marginRight = 2;
                 chip.Add(icon);
-                chip.Add(NativeElements.Text(Count(good.Value), 12));
+                if (amounts) chip.Add(NativeElements.Text(Count(good.Value), 12));
                 _tooltipRegistrar.Register(chip, _items.Name(good.Key));
                 row.Chips.Add(chip);
             }
@@ -1152,12 +1402,16 @@ namespace BeaverBuddies.Colonies
             TradeOfferForm.Verdict verdict = TradeOfferForm.Judge(giveItem, giveSide.Amount.value, getItem, getSide.Amount.value,
                 roundsBox.value, repeating, out int give, out int get, out int rounds);
             if (!TradeOfferForm.IsOffer(verdict) || !ExchangeTerms.AreValid(giveItem, give, getItem, get)) return;
+            // The reserve counts only where its box is shown (more than one round, something given).
+            int keep = 0;
+            if (give > 0 && (repeating || rounds > 1) && (!TradeOfferForm.TryReadKeep(keepBox.value, out keep) || !ExchangeTerms.IsValidKeep(keep))) return;
             string halfId = ReplayEvent.GetEntityID(myHalf);
             string giving = ExchangeTerms.GoodOf(giveItem, give), asking = ExchangeTerms.GoodOf(getItem, get);
+            int keeping = keep;
             Send(() => new ExchangeProposedEvent
             {
                 crossingID = halfId, giveGood = giving, giveAmount = give, getGood = asking, getAmount = get, rounds = rounds,
-                repeat = repeating,
+                repeat = repeating, keep = keeping,
             });
         }
 
@@ -1181,6 +1435,19 @@ namespace BeaverBuddies.Colonies
         {
             DistrictCrossing myHalf = MyHalf();
             if (!myHalf || shownSerial == 0) return;
+            // Declining or withdrawing an offer leaves its terms in the form, from this side: change a number and offer back.
+            if (shownState == ExchangeState.Proposed)
+            {
+                int keep = ColonyExchangeService.Of(myHalf)?.Keep ?? 0;
+                prefillGive = shownGiveGood;
+                prefillGiveAmount = shownGiveAmount;
+                prefillGet = shownGetGood;
+                prefillGetAmount = shownGetAmount;
+                prefillRounds = shownRounds;
+                prefillRepeat = shownRepeat;
+                prefillKeep = keep;
+                prefillPending = true;
+            }
             string halfId = ReplayEvent.GetEntityID(myHalf);
             int serial = shownSerial;
             Send(() => new ExchangeCancelledEvent { crossingID = halfId, serial = serial });

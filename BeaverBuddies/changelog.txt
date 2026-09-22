@@ -1,3 +1,10 @@
+v1.4.0-beta2 (BeaverBuddies MultiColony)
+* The trading window (Ctrl+T) shows each colony's food and water with the days they last, what it is looking for (set yours there, up to three things), and how many days of the host's limit an absent player has missed; everyone is warned the day before a hand-over.
+* Ask a friend to look after your colony: they switch into it and back from the trading window, and it is not handed over while they are in the game.
+* Click a player in the connection panel to take your camera to them; the Home key brings you back to your colony.
+* A Trading Post remembers its last exchange (Offer again; a ledger row puts a round's terms in the form); Decline leaves the offer's terms in your form for a counter-offer; Keep at least sets a reserve so a standing deal never starves you.
+* The host is asked before its first change while players can still join; a guest's change then is refused; the panel says Joining: open.
+
 v1.4.0-beta1 (BeaverBuddies MultiColony)
 * A performance pass with the guest (player 2) in mind: events are hashed and compressed once and never written out twice; Steam is served before the game's frame; cursor frames go out only when something changed; the profiler, working-hours, placement-preview and top-bar patches no longer take a lock or allocate on every call. Nothing simulated changed.
 * The mod list and the two settings now say (beta).

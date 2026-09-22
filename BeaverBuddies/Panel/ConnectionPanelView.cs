@@ -45,6 +45,9 @@ namespace BeaverBuddies.Panel
         /// <summary>Raised when the host clicks the guest frame rate floor: pick the next one.</summary>
         public event Action FpsFloorClicked;
 
+        /// <summary>Raised when a player's row is clicked: take the camera to them (or, for your own row, home).</summary>
+        public event Action<PanelRow> RowClicked;
+
         public ConnectionPanelView(ILoc loc, VisualElementInitializer initializer)
         {
             this.loc = loc;
@@ -220,6 +223,7 @@ namespace BeaverBuddies.Panel
             foreach (var row in model.Rows) rows.Add(PlayerRow(row));
 
             facts.Clear();
+            if (model.JoiningText != null) facts.Add(Fact("BeaverBuddies.Panel.LabelJoining", model.JoiningText));
             facts.Add(Fact("BeaverBuddies.Panel.LabelTickRate", model.TickRateText));
             facts.Add(Fact("BeaverBuddies.Panel.LabelSpeed", model.SpeedText));
             if (model.BehindText != null) facts.Add(Fact("BeaverBuddies.Panel.LabelBehind", model.BehindText));
@@ -238,6 +242,9 @@ namespace BeaverBuddies.Panel
             var ping = Text(row.PingText, 13, PingColor(row.Quality), bold: row.IsYou);
             ping.style.marginLeft = 10; ping.style.minWidth = 52; ping.style.unityTextAlign = TextAnchor.MiddleRight;
             line.Add(name); line.Add(ping);
+            // A click takes the camera to that player (your own row: back to your colony).
+            line.tooltip = string.Format(CultureInfo.InvariantCulture, loc.T(row.IsYou ? "BeaverBuddies.Panel.RowYouTooltip" : "BeaverBuddies.Panel.RowTooltip"), row.Name);
+            line.RegisterCallback<ClickEvent>(e => { RowClicked?.Invoke(row); e.StopPropagation(); });
             return line;
         }
 

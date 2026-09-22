@@ -115,6 +115,26 @@ colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode
 22. **Mode off.** Untick **Separate colonies** and start a new game: one shared colony, no refusals, no Trading Post
     in District Management, District Crossings trade by import settings as in the game (holding up to 100), science is
     one pool.
+22a. **The start prompt (beta2).** Host a save and, while still paused at the start, place a path: a dialog asks
+    whether to start the game or keep waiting. **Keep waiting**: nothing is placed, the notice says players can still
+    join, and the connection panel still says *Joining: open*. Place again and choose **Start the game**: the path
+    appears, the *Joining* line goes, and the log says joining closed.
+22b. **Food and water, and wishes (beta2).** Open Ctrl+T: each colony's row shows the top bar's food and water icons
+    with the stock and, from the second day on, the days it lasts (red under a day). On your colony, **Looking for:**
+    press **+**: the goods grid opens beside the window, unticked; choose gears, then planks; chips appear; click a
+    chip to change it; **Clear** drops them. As colony 2 (Ctrl+Shift+K), colony 1's row shows *Looking for:* with the
+    icons, a Trading Post's panel shows *… is looking for:* under the header, and in the **You give** grid those
+    goods' counts are yellow with *… is looking for this* in the tooltip.
+22c. **Offer again and counter-offers (beta2).** After an exchange has run, the form shows *Last exchange here: …*
+    with **Offer again**: the terms come back, rounds and all. Click a ledger row: that round's terms come into the
+    form, one round. Make an offer as colony 1, switch to colony 2 and **Decline**: colony 2's form now holds the
+    mirrored terms (what colony 2 would give and get); change a number and **Make offer**.
+22d. **A reserve (beta2).** Offer 50 logs for 10 planks, **Repeat until cancelled**, and set **Keep at least** to
+    more than colony 1 has, minus 50: accept as colony 2; colony 1's workers bring nothing and the status says the
+    colony keeps N logs back; colony 2 sees *… keeps a reserve*. Lower the reserve on the running exchange (the box
+    under **You give**, Enter or click away): the round goes on. Save and reload: the reserve and the last terms are
+    still there.
+22e. **Home (beta2).** Scroll far away and press **Home**: the camera returns to your biggest district center.
 23. Send `Player.log`.
 
 ## Script B: two players (about 45 minutes)
@@ -163,6 +183,21 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     The other player's cursor still follows their mouse, shows *Editing:* on a building they change, and disappears
     about three seconds after they quit. Note the guest's frame rate from the connection panel, as in line 6, to
     compare with alpha22.
+8f. **Looking after a colony (beta2).** The host, on its own colony in Ctrl+T, presses **Let <friend> look after
+    it**: both get a notice; the friend's window shows *You look after this colony* and **Run this colony**. The friend
+    presses it: their connection panel row shows the host's colony number, their toolbar and top bar are the host's
+    colony's, and a building they place is the host's colony's (the host can change it). **Back to your colony**
+    restores their own. The host presses **Take it back**: the friend, if still running it, is put back to their own
+    colony with a notice. Then the friend leaves while looking after the host's colony (grant it again first) and
+    the host plays past the limit: the host's colony is **not** handed over while the friend is in the game; once the
+    friend has left too, it is (from the next day's check).
+8g. **The warning before a hand-over (beta2).** With the host's setting at 2 and the friend away, the day the window
+    shows *missed 2 of 2 days* the host gets the warning notice; the next day the colony is handed over.
+8h. **A guest's change while the host waits (beta2).** Host a save; the friend joins; before the host unpauses, the
+    friend places a path: refused with *Not before the game starts: players can still join*. The host unpauses; the
+    friend places again: fine.
+8i. **Go to a player (beta2).** Click the friend's row in the connection panel: the camera jumps to their cursor;
+    with their cursor over the interface, to what they have selected; with neither, a notice says so.
 9. **Dev mode and Ctrl.** The host turns dev mode on (Alt+Shift+Z). Ctrl-click a locked building to unlock it, then
    place it with Ctrl still held; while the guest places paths, the host holds Ctrl+L; while the host holds Ctrl, a
    building finishes demolition. Every building must look the same on both screens (a construction site, not a

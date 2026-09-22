@@ -45,27 +45,47 @@ namespace BeaverBuddies.Colonies
 
         private static ColonySlotService Slots => ColonySlotService.Instance;
 
-        /// <summary>The slot a connection plays, as the host judges it; -1 before it has said hello.</summary>
+        /// <summary>The seat a connection was given (its own colony), whatever it acts as now; -1 before it has said hello.</summary>
+        public static int SeatOfPlayer(int player) => Slots?.SlotOfPlayer(player) ?? (player == HostPlayer ? 0 : -1);
+
+        /// <summary>
+        /// The slot a connection's actions count as, as the host judges it: its seat, or a colony it looks after and
+        /// has switched into (see ColonyStewards); -1 before it has said hello.
+        /// </summary>
         public static int SlotOfPlayer(int player)
         {
-            int slot = Slots?.SlotOfPlayer(player) ?? (player == HostPlayer ? 0 : -1);
+            int slot = SeatOfPlayer(player);
+            if (slot >= 0)
+            {
+                int? acting = ColonyStewards.Instance?.ActingSlotOf(player);
+                if (acting != null && acting.Value >= 0 && acting.Value < ColonySlotTable.MaxSlots) slot = acting.Value;
+            }
             // The shift is a debug aid: it ends with detailed logging, whatever it was set to.
             if (player == HostPlayer && slot >= 0 && HostSlotShift != 0 && Settings.Debug)
                 slot = (slot + HostSlotShift) % ColonySlotTable.MaxSlots;
             return slot;
         }
 
-        /// <summary>This computer's slot; -1 on a guest until the host has seated it.</summary>
+        /// <summary>This computer's connection number: 0 on the host; on a guest -1 until the host has seated it.</summary>
+        public static int LocalPlayer => EventIO.Get() is ClientEventIO ? Slots?.LocalPlayer ?? -1 : HostPlayer;
+
+        /// <summary>This computer's slot, the colony its actions count as; -1 on a guest until the host has seated it.</summary>
         public static int LocalSlot
         {
             get
             {
-                if (EventIO.Get() is ClientEventIO)
-                {
-                    int local = Slots?.LocalPlayer ?? -1;
-                    return local < 0 ? -1 : SlotOfPlayer(local);
-                }
-                return SlotOfPlayer(HostPlayer);
+                int local = LocalPlayer;
+                return local < 0 ? -1 : SlotOfPlayer(local);
+            }
+        }
+
+        /// <summary>This computer's own seat, whatever colony it acts as now; -1 on a guest until the host has seated it.</summary>
+        public static int LocalSeat
+        {
+            get
+            {
+                int local = LocalPlayer;
+                return local < 0 ? -1 : SeatOfPlayer(local);
             }
         }
 

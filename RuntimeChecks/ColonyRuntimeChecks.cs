@@ -54,10 +54,12 @@ internal static class ColonyRuntimeChecks
             // Unmarking trees (an empty tree event unmarks) only ever removes the actor's own marks, and working hours
             // are set for the actor's own colony: both are checked when played, not here. Presence and handovers are
             // refused from anyone but the host (ColonyRulesService), and so is telling a guest its action was refused.
-            var expected = new[] { "ActionRefusedEvent", "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
+            // Looking after a colony (grants, switching) is judged by the host against ColonyStewardRules; a wishlist is
+            // only ever the actor's own colony's (the stamped slot), like working hours.
+            var expected = new[] { "ActAsColonyEvent", "ActionRefusedEvent", "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
                 "ColonyHandoverEvent", "ColonyPresenceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
-                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent",
-                "TreeCuttingAreaEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
+                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "StewardGrantedEvent", "StewardRevokedEvent", "TraceLoggedForTickEvent",
+                "TreeCuttingAreaEvent", "WishlistChangedEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
             if (!shared.SequenceEqual(expected))
                 throw new Exception("The shared list changed; review it and update this check: " + string.Join(", ", shared));
         });
@@ -151,6 +153,55 @@ internal static class ColonyRuntimeChecks
             if ((string?)presenceType.GetField("check")!.GetValue(RoundTrip(presence)) != "owners=1 stamps=2") throw new Exception("the day's check was lost");
         });
 
+        test("Colony: the day's players by id, the host's limit, the session's players, a steward and a reserve survive the JSON", () =>
+        {
+            var json = mod.GetType("BeaverBuddies.IO.JsonSettings", true)!;
+            MethodInfo serialize = json.GetMethod("Serialize")!.MakeGenericMethod(replayEvent);
+            MethodInfo deserialize = json.GetMethod("Deserialize")!.MakeGenericMethod(replayEvent);
+            object RoundTrip(object e) => deserialize.Invoke(null, new object[] { serialize.Invoke(null, new[] { e })! })!;
+
+            var presenceType = mod.GetType("BeaverBuddies.Colonies.ColonyPresenceEvent", true)!;
+            object presence = Activator.CreateInstance(presenceType, true)!;
+            presenceType.GetField("presentPlayerIds")!.SetValue(presence, new List<string> { "steam:1", "local:abc" });
+            presenceType.GetField("limit")!.SetValue(presence, 7);
+            object presenceBack = RoundTrip(presence);
+            var ids = (List<string>?)presenceType.GetField("presentPlayerIds")!.GetValue(presenceBack);
+            if (ids == null || !ids.SequenceEqual(new[] { "steam:1", "local:abc" })) throw new Exception("the players' ids were lost");
+            if ((int)presenceType.GetField("limit")!.GetValue(presenceBack)! != 7) throw new Exception("the limit was lost");
+            if ((int)presenceType.GetField("limit")!.GetValue(RoundTrip(Activator.CreateInstance(presenceType, true)!))! != -1)
+                throw new Exception("an older host's presence did not read as an unknown limit");
+
+            var helloType = mod.GetType("BeaverBuddies.Colonies.PlayerHelloEvent", true)!;
+            object hello = Activator.CreateInstance(helloType, true)!;
+            helloType.GetField("players")!.SetValue(hello, "0|steam:1|Kyler\n1|steam:2|Sarah");
+            if ((string?)helloType.GetField("players")!.GetValue(RoundTrip(hello)) != "0|steam:1|Kyler\n1|steam:2|Sarah") throw new Exception("the session's players were lost");
+
+            var grantType = mod.GetType("BeaverBuddies.Colonies.StewardGrantedEvent", true)!;
+            object grant = Activator.CreateInstance(grantType, true)!;
+            grantType.GetField("colonySlot")!.SetValue(grant, 2);
+            grantType.GetField("stewardPlayerId")!.SetValue(grant, "steam:2");
+            grantType.GetField("stewardName")!.SetValue(grant, "Sarah");
+            object grantBack = RoundTrip(grant);
+            if ((int)grantType.GetField("colonySlot")!.GetValue(grantBack)! != 2 || (string?)grantType.GetField("stewardPlayerId")!.GetValue(grantBack) != "steam:2"
+                || (string?)grantType.GetField("stewardName")!.GetValue(grantBack) != "Sarah")
+                throw new Exception("the grant changed on the way");
+
+            var actType = mod.GetType("BeaverBuddies.Colonies.ActAsColonyEvent", true)!;
+            if ((int)actType.GetField("colonySlot")!.GetValue(RoundTrip(Activator.CreateInstance(actType, true)!))! != -1)
+                throw new Exception("acting as nothing did not read as the own seat");
+
+            var proposedType = mod.GetType("BeaverBuddies.Colonies.ExchangeProposedEvent", true)!;
+            object proposed = Activator.CreateInstance(proposedType, true)!;
+            proposedType.GetField("keep")!.SetValue(proposed, 200);
+            if ((int)proposedType.GetField("keep")!.GetValue(RoundTrip(proposed))! != 200) throw new Exception("the reserve was lost");
+
+            var wishType = mod.GetType("BeaverBuddies.Colonies.WishlistChangedEvent", true)!;
+            object wish = Activator.CreateInstance(wishType, true)!;
+            wishType.GetField("items")!.SetValue(wish, new List<string> { "Gear", "Plank" });
+            var items = (List<string>?)wishType.GetField("items")!.GetValue(RoundTrip(wish));
+            if (items == null || !items.SequenceEqual(new[] { "Gear", "Plank" })) throw new Exception("the wishes were lost");
+        });
+
         test("Colony: the events that leave joining open at tick 0 are listed for review", () =>
         {
             // The first action that changes the game closes joining (ReplayService): a later joiner would be sent the
@@ -159,8 +210,9 @@ internal static class ColonyRuntimeChecks
             var neutral = eventTypes
                 .Where(t => !(bool)changes.Invoke(RuntimeHelpers.GetUninitializedObject(t), null)!)
                 .Select(t => t.Name).OrderBy(n => n, StringComparer.Ordinal).ToList();
-            // ShowOptionsMenuEvent is a SpeedSetEvent (pausing to open the menu).
-            var expected = new[] { "ActionRefusedEvent", "ClientDesyncedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
+            // ShowOptionsMenuEvent is a SpeedSetEvent (pausing to open the menu). ActAsColonyEvent is session state (which
+            // colony a steward acts as), not saved, and refused before the first tick anyway.
+            var expected = new[] { "ActAsColonyEvent", "ActionRefusedEvent", "ClientDesyncedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
                 "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent" };
             if (!neutral.SequenceEqual(expected))
                 throw new Exception("The list of events that leave joining open changed; review it and update this check: " + string.Join(", ", neutral));

@@ -84,13 +84,37 @@ namespace BeaverBuddies.Colonies
                 return false;
             }
 
-            // Founding and handing over wait for the first tick, in every game (see ColonyRules.WaitsForStart).
-            if (ColonyRules.WaitsForStart(replayEvent is FoundColonyEvent || replayEvent is ColonyHandoverEvent,
-                SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1))
+            int hostTicks = SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1;
+            // Founding, handing over and switching colonies wait for the first tick, in every game (ColonyRules.WaitsForStart).
+            if (ColonyRules.WaitsForStart(replayEvent is FoundColonyEvent || replayEvent is ColonyHandoverEvent || replayEvent is ActAsColonyEvent,
+                hostTicks))
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: the game has not started, players can still join");
                 refusal = ColonyRefusal.NotStartedYet;
                 return false;
+            }
+
+            // While the host waits at the start for players to join, a guest's change would close joining unseen (the
+            // host's own is held for the host's word: HostStartGate). Refused with the same notice as a founding.
+            if (replayEvent.player != ColonySession.HostPlayer && hostTicks == 0 && replayEvent.ChangesGame()
+                && (EventIO.Get() as ServerEventIO)?.IsAcceptingClients == true)
+            {
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: the host is still waiting for players");
+                refusal = ColonyRefusal.NotStartedYet;
+                return false;
+            }
+
+            // Looking after a colony: who may ask whom, and who may switch into which colony (ColonyStewardRules).
+            if (replayEvent is StewardGrantedEvent || replayEvent is StewardRevokedEvent || replayEvent is ActAsColonyEvent)
+            {
+                ColonyStewards stewards = ColonyStewards.Instance;
+                string stewardWhy = "no steward service";
+                if (stewards == null || !stewards.HostAllows(replayEvent, out stewardWhy))
+                {
+                    Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: {stewardWhy}");
+                    refusal = ColonyRefusal.HostRefused;
+                    return false;
+                }
             }
 
             // Dev mode's shortcuts that every computer plays (a free unlock, Finish now), in every game: only while the
@@ -116,7 +140,9 @@ namespace BeaverBuddies.Colonies
                 || replayEvent is WorkerTypeUnlockedEvent || replayEvent is ExchangeCancelledEvent || replayEvent is ExchangeKeptEvent || replayEvent is ExchangeProposedEvent
                 || replayEvent is ExchangeAcceptedEvent || replayEvent is BuildingPlacedEvent || replayEvent is FoundColonyEvent
                 || replayEvent is WorkingHoursChangedEvent || replayEvent is PlantingAreaMarkedEvent
-                || replayEvent is TreeCuttingAreaEvent || replayEvent is ClearResourcesMarkedEvent))
+                || replayEvent is TreeCuttingAreaEvent || replayEvent is ClearResourcesMarkedEvent
+                || replayEvent is StewardGrantedEvent || replayEvent is StewardRevokedEvent || replayEvent is ActAsColonyEvent
+                || replayEvent is WishlistChangedEvent || replayEvent is ExchangeFloorSetEvent))
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: not seated yet");
                 refusal = ColonyRefusal.HostRefused;

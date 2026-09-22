@@ -180,6 +180,25 @@ namespace BeaverBuddies.Activity
             return false;
         }
 
+        /// <summary>
+        /// Where a player is: their cursor on the map, else what they have selected (a world position). False when
+        /// neither is known (they left, their cursor is off the map, or player activity is off).
+        /// </summary>
+        public bool TryLocate(int playerId, out Vector3 point)
+        {
+            point = default;
+            if (!remote.TryGetValue(playerId, out var player) || player.State == null) return false;
+            if (player.State.CursorVisible)
+            {
+                point = player.CursorTo;
+                return true;
+            }
+            var selected = player.Selected;
+            if (!selected || selected.Deleted) return false;
+            point = selected.Transform.position;
+            return true;
+        }
+
         /// <summary>Connected players in a stable order (host first), for the settings panel.</summary>
         public List<PlayerCursorEntry> Players() =>
             remote.Values.OrderBy(p => p.PlayerId).Select(p => new PlayerCursorEntry(p)).ToList();

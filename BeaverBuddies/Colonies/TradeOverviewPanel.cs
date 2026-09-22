@@ -25,6 +25,9 @@ namespace BeaverBuddies.Colonies
     /// close button, as the population's well-being): every Trading Post of the player's colony with its exchange and a
     /// button to go there, and every colony with its player, population and whether it is being played. The host also
     /// finds here the buttons to hand a colony over (only a colony whose player is away, or which has no beavers left).
+    /// Each colony's row also shows its food and water (with the days they last), what it is looking for (its player
+    /// sets that here, from the game's goods grid), how close an absent player's colony is to a hand-over, and who
+    /// looks after it: a player asks another to look after their colony here, and a steward switches into it and back.
     /// It opens and closes with Ctrl+T, the square Trade button at the top right, or "All posts" on a Trading Post, and
     /// closes with its close button or Esc. It does not pause the game (pausing is shared in co-op). Display and buttons
     /// only: each button sends an ordinary action.
@@ -44,6 +47,16 @@ namespace BeaverBuddies.Colonies
         private readonly ITooltipRegistrar _tooltipRegistrar;
         private readonly EntityComponentRegistry _entityComponentRegistry;
         private readonly EntitySelectionService _entitySelectionService;
+        private readonly TradeItems _items;
+
+        /// <summary>A colony's row: its texts, its food and water, what it is looking for.</summary>
+        private sealed class ColonyCard
+        {
+            public Label Title, Detail, Note;
+            public VisualElement Supplies, Wishes;
+            public Image FoodIcon, WaterIcon;
+            public Label Food, Water;
+        }
 
         private VisualElement window, postsList, coloniesList;
         private NineSliceVisualElement box;
@@ -51,18 +64,19 @@ namespace BeaverBuddies.Colonies
         private Label postsTitle, emptyPosts;
         private VisualElement topButton;
         private Toggle topToggle;
+        private TradingPostGoodPicker picker;
         private bool open;
         private float nextRefresh;
         // What the lists show, so they are rebuilt only when that changes (a rebuild would swallow a click).
         private string postsShape, coloniesShape;
         private readonly Dictionary<string, (Label title, Label detail)> postLabels = new Dictionary<string, (Label, Label)>();
-        private readonly Dictionary<int, (Label title, Label detail)> colonyLabels = new Dictionary<int, (Label, Label)>();
+        private readonly Dictionary<int, ColonyCard> colonyCards = new Dictionary<int, ColonyCard>();
 
         public static TradeOverviewPanel Instance { get; private set; }
 
         public TradeOverviewPanel(UILayout uiLayout, InputService inputService, VisualElementInitializer visualElementInitializer,
             VisualElementLoader visualElementLoader, IAssetLoader assetLoader, ITooltipRegistrar tooltipRegistrar,
-            EntityComponentRegistry entityComponentRegistry, EntitySelectionService entitySelectionService)
+            EntityComponentRegistry entityComponentRegistry, EntitySelectionService entitySelectionService, TradeItems items)
         {
             _uiLayout = uiLayout;
             _inputService = inputService;
@@ -72,6 +86,7 @@ namespace BeaverBuddies.Colonies
             _tooltipRegistrar = tooltipRegistrar;
             _entityComponentRegistry = entityComponentRegistry;
             _entitySelectionService = entitySelectionService;
+            _items = items;
         }
 
         public void PostLoad()
@@ -141,6 +156,7 @@ namespace BeaverBuddies.Colonies
         public void Close()
         {
             open = false;
+            picker?.Close();
             if (window != null) window.style.display = DisplayStyle.None;
             topToggle?.SetValueWithoutNotify(false);
         }
@@ -249,6 +265,10 @@ namespace BeaverBuddies.Colonies
             footer.Add(report);
             box.Add(footer);
 
+            // The game's goods grid, beside the box, for what this player's colony is looking for.
+            picker = new TradingPostGoodPicker(_items, _inputService, _tooltipRegistrar, _visualElementInitializer);
+            box.Add(picker.Root);
+
             _visualElementInitializer.InitializeVisualElement(window);
             window.style.display = DisplayStyle.None;
             _uiLayout.AddAbsoluteItem(window);
@@ -324,38 +344,285 @@ namespace BeaverBuddies.Colonies
 
             // Colonies.
             ColonyLifecycle lifecycle = ColonyLifecycle.Instance;
-            ColonySlotTable table = ColonySlotService.Instance?.Table;
+            ColonySlotService slotService = ColonySlotService.Instance;
+            ColonySlotTable table = slotService?.Table;
+            ColonyStewards stewards = ColonyStewards.Instance;
+            ColonyWishlist wishlist = ColonyWishlist.Instance;
+            int seat = ColonySession.LocalSeat;
+            string myId = slotService?.LocalPlayerId;
             List<int> slots = Enumerable.Range(0, ColonySlotTable.MaxSlots)
                 .Where(slot => (lifecycle?.OwnsDistrict(slot) ?? false) || (table?.Entries.Any(e => e.Slot == slot) ?? false)).ToList();
             bool host = EventIO.Get() is ServerEventIO;
+            List<int> present = ColonyLifecycle.PresentSlots();
             // The host's handover buttons depend on who may be handed over to whom.
             var handovers = host && lifecycle != null
                 ? slots.SelectMany(from => slots.Where(to => lifecycle.HostMayHandOver(from, to)).Select(to => (from, to))).ToList()
                 : new List<(int from, int to)>();
-            string coloniesKey = string.Join(",", slots) + "|" + string.Join(",", handovers.Select(h => $"{h.from}>{h.to}"));
+            // Players who could look after a colony: everyone the session knows but this player.
+            var others = (slotService?.Players ?? Enumerable.Empty<(int player, string id, string name)>())
+                .Where(p => p.id != myId).GroupBy(p => p.id).Select(g => g.First()).ToList();
+            bool started = lifecycle != null && !ColonyRules.WaitsForStart(true, SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1);
+            string coloniesKey = string.Join(",", slots) + "|" + string.Join(",", handovers.Select(h => $"{h.from}>{h.to}"))
+                + "|" + me + "/" + seat + "|" + string.Join(",", others.Select(p => p.id)) + "|" + string.Join(",", present)
+                + "|" + (stewards?.Fingerprint() ?? "") + "|" + (wishlist?.Fingerprint() ?? "") + "|" + (started ? "s" : "w");
             if (coloniesKey != coloniesShape)
             {
                 coloniesShape = coloniesKey;
                 coloniesList.Clear();
-                colonyLabels.Clear();
+                colonyCards.Clear();
                 foreach (int slot in slots)
                 {
-                    var buttons = handovers.Where(h => h.from == slot)
-                        .Select(h => SmallButton(string.Format(T("BeaverBuddies.Colony.Overview.HandTo"), NativeElements.Plain(ColonyExchangeService.ColonyName(h.to))),
-                            () => HandOver(h.from, h.to)))
-                        .ToArray();
-                    coloniesList.Add(Card(out Label title, out Label detail, buttons));
-                    colonyLabels[slot] = (title, detail);
+                    var buttons = new List<Button>();
+                    foreach (var h in handovers.Where(h => h.from == slot))
+                        buttons.Add(SmallButton(string.Format(T("BeaverBuddies.Colony.Overview.HandTo"), NativeElements.Plain(ColonyExchangeService.ColonyName(h.to))),
+                            () => HandOver(h.from, h.to)));
+                    if (started) buttons.AddRange(StewardButtons(slot, seat, me, myId, host, present, others, stewards, lifecycle));
+                    ColonyCard card = BuildColonyCard(buttons.ToArray());
+                    coloniesList.Add(card.Title.parent.parent.parent);
+                    colonyCards[slot] = card;
+                    // This player's colony (the one their actions count as) says what it is looking for from here.
+                    if (slot == me && started) BuildWishEditor(card, slot, wishlist);
                 }
                 _visualElementInitializer.InitializeVisualElement(coloniesList);
             }
-            List<int> present = ColonyLifecycle.PresentSlots();
+            ColonySupplies supplies = ColonySupplies.Instance;
             foreach (int slot in slots)
             {
-                if (!colonyLabels.TryGetValue(slot, out var labels)) continue;
-                NativeElements.SetText(labels.title, ColoredName(slot) + (slot == me ? " " + T("BeaverBuddies.Colony.Overview.You") : ""));
-                NativeElements.SetText(labels.detail, DescribeColony(slot, lifecycle, present));
+                if (!colonyCards.TryGetValue(slot, out ColonyCard card)) continue;
+                string who = slot == seat ? " " + T("BeaverBuddies.Colony.Overview.You")
+                    : slot == me ? " " + T("BeaverBuddies.Colony.Overview.YouRunning") : "";
+                NativeElements.SetText(card.Title, ColoredName(slot) + who);
+                NativeElements.SetText(card.Detail, DescribeColony(slot, lifecycle, present));
+                RefreshSupplies(card, slot, lifecycle, supplies);
+                RefreshNote(card, slot, seat, me, myId, stewards, slotService);
+                if (slot != me) RefreshWishes(card, slot, wishlist);
             }
+        }
+
+        // ---- a colony's row ----
+
+        /// <summary>
+        /// The buttons for looking after a colony: an owner asks another player (or takes the colony back); a steward
+        /// switches into the colony and back; the host asks a player on behalf of an absent one, or ends a stewardship.
+        /// </summary>
+        private IEnumerable<Button> StewardButtons(int slot, int seat, int me, string myId, bool host, List<int> present,
+            List<(int player, string id, string name)> others, ColonyStewards stewards, ColonyLifecycle lifecycle)
+        {
+            if (stewards == null || lifecycle == null || !lifecycle.OwnsDistrict(slot)) yield break;
+            bool mine = slot == seat;
+            string stewardId = stewards.StewardIdOf(slot);
+            if (mine)
+            {
+                if (stewardId == null)
+                {
+                    foreach (var p in others)
+                        yield return SmallButton(string.Format(T("BeaverBuddies.Colony.Overview.LetLookAfter"), NativeElements.Plain(p.name)), () => Grant(slot, p.id, p.name));
+                }
+                else yield return SmallButton(T("BeaverBuddies.Colony.Overview.TakeBack"), () => Revoke(slot));
+                yield break;
+            }
+            if (stewardId != null && stewardId == myId)
+            {
+                yield return me == slot
+                    ? SmallButton(T("BeaverBuddies.Colony.Overview.BackToYours"), () => ActAs(-1))
+                    : SmallButton(T("BeaverBuddies.Colony.Overview.RunColony"), () => ActAs(slot));
+                yield break;
+            }
+            if (!host || present.Contains(slot)) yield break;
+            // The host, for a colony whose player is away.
+            if (stewardId == null)
+            {
+                foreach (var p in others.Where(p => ColonySession.SeatOfPlayer(p.player) != slot))
+                    yield return SmallButton(string.Format(T("BeaverBuddies.Colony.Overview.LetLookAfter"), NativeElements.Plain(p.name)), () => Grant(slot, p.id, p.name));
+            }
+            else yield return SmallButton(T("BeaverBuddies.Colony.Overview.EndStewardship"), () => Revoke(slot));
+        }
+
+        /// <summary>"24 beavers and bots, playing" or "player away (missed 6 of 7 days)".</summary>
+        private string DescribeColony(int slot, ColonyLifecycle lifecycle, List<int> present)
+        {
+            if (lifecycle == null || !lifecycle.OwnsDistrict(slot)) return T("BeaverBuddies.Colony.Overview.NoColony");
+            int population = lifecycle.PopulationOf(slot);
+            string status;
+            if (population == 0) status = T("BeaverBuddies.Colony.Overview.Dead");
+            else if (present.Contains(slot)) status = T("BeaverBuddies.Colony.Overview.Playing");
+            else
+            {
+                int? away = lifecycle.DaysAway(slot);
+                int limit = lifecycle.HandoverLimit;
+                if (away == null) status = T("BeaverBuddies.Colony.Overview.AwayUnknown");
+                else if (limit > 0) status = string.Format(T("BeaverBuddies.Colony.Overview.AwayOf"), away.Value, limit);
+                else if (limit == 0) status = string.Format(T("BeaverBuddies.Colony.Overview.AwayNoLimit"), away.Value);
+                else status = string.Format(T("BeaverBuddies.Colony.Overview.Away"), away.Value);
+            }
+            return string.Format(T("BeaverBuddies.Colony.Overview.Colony"), population, status);
+        }
+
+        /// <summary>Food and water as the top bar draws them: the icon, the stock, and the days it lasts at yesterday's use.</summary>
+        private void RefreshSupplies(ColonyCard card, int slot, ColonyLifecycle lifecycle, ColonySupplies supplies)
+        {
+            bool shown = supplies != null && lifecycle != null && lifecycle.OwnsDistrict(slot);
+            NativeElements.Show(card.Supplies, shown);
+            if (!shown) return;
+            if (card.FoodIcon.sprite != supplies.FoodIcon) card.FoodIcon.sprite = supplies.FoodIcon;
+            if (card.WaterIcon.sprite != supplies.WaterIcon) card.WaterIcon.sprite = supplies.WaterIcon;
+            ShowSupply(card.Food, supplies.Food(slot));
+            ShowSupply(card.Water, supplies.Water(slot));
+        }
+
+        private static void ShowSupply(Label label, Supply supply)
+        {
+            string days = SupplyDays.Format(supply.Days);
+            string stock = supply.Stock.ToString("N0", System.Globalization.CultureInfo.CurrentCulture);
+            NativeElements.SetText(label, days == null
+                ? string.Format(T("BeaverBuddies.Colony.Overview.SupplyNoDays"), stock)
+                : string.Format(T("BeaverBuddies.Colony.Overview.SupplyDays"), stock, days));
+            label.style.color = SupplyDays.IsLow(supply.Days) ? new StyleColor(NativeElements.Warning) : new StyleColor(NativeElements.Muted);
+        }
+
+        /// <summary>Who looks after the colony, and who is running it now, in one muted line (or none).</summary>
+        private void RefreshNote(ColonyCard card, int slot, int seat, int me, string myId, ColonyStewards stewards, ColonySlotService slotService)
+        {
+            string text = "";
+            if (stewards != null)
+            {
+                string stewardId = stewards.StewardIdOf(slot);
+                if (stewardId != null)
+                    text = stewardId == myId ? T("BeaverBuddies.Colony.Overview.YouLookAfter")
+                        : string.Format(T("BeaverBuddies.Colony.Overview.LookedAfterBy"), NativeElements.Plain(stewards.StewardNameOf(slot)));
+                // Somebody else switched into it (their own name, as the session knows them).
+                foreach (var pair in stewards.Acting)
+                {
+                    if (pair.Value != slot || pair.Key == ColonySession.LocalPlayer) continue;
+                    string name = slotService?.PlayerNameOf(slotService.PlayerIdOf(pair.Key)) ?? "";
+                    text += (text.Length > 0 ? " " : "") + string.Format(T("BeaverBuddies.Colony.Overview.RunBy"), NativeElements.Plain(name));
+                }
+            }
+            if (slot == seat && me != seat)
+                text += (text.Length > 0 ? " " : "") + string.Format(T("BeaverBuddies.Colony.Overview.YouAreRunning"), NativeElements.Plain(ColonyExchangeService.ColonyName(me)));
+            NativeElements.SetText(card.Note, text);
+            NativeElements.Show(card.Note, text.Length > 0);
+        }
+
+        /// <summary>Another colony's wishes: "Looking for: [icons]", or nothing.</summary>
+        private void RefreshWishes(ColonyCard card, int slot, ColonyWishlist wishlist)
+        {
+            IReadOnlyList<string> wishes = wishlist?.Of(slot) ?? (IReadOnlyList<string>)Array.Empty<string>();
+            NativeElements.Show(card.Wishes, wishes.Count > 0);
+            if (wishes.Count == 0) return;
+            string key = string.Join(",", wishes);
+            if (card.Wishes.userData as string == key) return;
+            card.Wishes.userData = key;
+            card.Wishes.Clear();
+            Label caption = NativeElements.MutedText(T("BeaverBuddies.Colony.Overview.LookingFor"));
+            caption.style.marginRight = 6;
+            card.Wishes.Add(caption);
+            foreach (string item in wishes) card.Wishes.Add(WishChip(item, null));
+        }
+
+        /// <summary>
+        /// This player's colony's wishes, as buttons: click one to change it, + to add (up to three), Clear to drop
+        /// them all. The game's goods grid opens beside the box.
+        /// </summary>
+        private void BuildWishEditor(ColonyCard card, int slot, ColonyWishlist wishlist)
+        {
+            NativeElements.Show(card.Wishes, true);
+            card.Wishes.Clear();
+            Label caption = NativeElements.MutedText(T("BeaverBuddies.Colony.Overview.LookingFor"));
+            caption.style.marginRight = 6;
+            _tooltipRegistrar.Register(caption, T("BeaverBuddies.Colony.Overview.LookingForTooltip"));
+            card.Wishes.Add(caption);
+            List<string> wishes = (wishlist?.Of(slot) ?? (IReadOnlyList<string>)Array.Empty<string>()).ToList();
+            for (int i = 0; i < wishes.Count; i++)
+            {
+                int index = i;
+                Button chip = WishChip(wishes[i], () => EditWish(slot, index, card.Wishes));
+                picker.AddOpener(chip);
+                card.Wishes.Add(chip);
+            }
+            if (wishes.Count < WishlistTerms.MaxWishes)
+            {
+                int index = wishes.Count;
+                Button add = NativeElements.SquareButton(plus: true, _ => EditWish(slot, index, card.Wishes));
+                _tooltipRegistrar.Register(add, T("BeaverBuddies.Colony.Overview.AddWishTooltip"));
+                picker.AddOpener(add);
+                card.Wishes.Add(add);
+            }
+            if (wishes.Count > 0)
+            {
+                Button clear = NativeElements.RedButton(T("BeaverBuddies.Colony.Overview.ClearWishes"), () => SendWishes(new List<string>()));
+                clear.style.fontSize = 12;
+                clear.style.minHeight = 24;
+                clear.style.height = 24;
+                clear.style.paddingTop = 0;
+                clear.style.paddingBottom = 0;
+                clear.style.marginLeft = 8;
+                card.Wishes.Add(clear);
+            }
+        }
+
+        /// <summary>A good's icon on the game's wooden button (or, with no click, a plain chip with a tooltip).</summary>
+        private Button WishChip(string item, Action onClick)
+        {
+            Button chip = NativeElements.WoodenButton("", onClick);
+            chip.style.minHeight = 28;
+            chip.style.height = 28;
+            chip.style.paddingLeft = 4; chip.style.paddingRight = 4; chip.style.paddingTop = 2; chip.style.paddingBottom = 2;
+            chip.style.marginRight = 4;
+            if (onClick == null) chip.pickingMode = PickingMode.Position;
+            Image icon = NativeElements.Icon(20);
+            icon.sprite = _items.IconOf(item);
+            chip.Add(icon);
+            _tooltipRegistrar.Register(chip, onClick == null ? _items.Name(item) : string.Format(T("BeaverBuddies.Colony.Overview.WishTooltip"), _items.Name(item)));
+            return chip;
+        }
+
+        private void EditWish(int slot, int index, VisualElement anchor)
+        {
+            if (picker.IsOpen && picker.Side == index + 1)
+            {
+                picker.Close();
+                return;
+            }
+            List<string> wishes = (ColonyWishlist.Instance?.Of(slot) ?? (IReadOnlyList<string>)Array.Empty<string>()).ToList();
+            string current = index < wishes.Count ? wishes[index] : null;
+            picker.Open(index + 1, T("BeaverBuddies.Colony.Overview.PickWish"), current, item => _items.StockOfColony(slot, item),
+                item => SetWish(slot, index, item), anchor, inStockOnlyDefault: false);
+        }
+
+        private void SetWish(int slot, int index, string item)
+        {
+            List<string> wishes = (ColonyWishlist.Instance?.Of(slot) ?? (IReadOnlyList<string>)Array.Empty<string>()).ToList();
+            if (index < wishes.Count) wishes[index] = item;
+            else wishes.Add(item);
+            SendWishes(WishlistTerms.Normalize(wishes, null));
+        }
+
+        private void SendWishes(List<string> items)
+        {
+            if (ReplayEvent.DoPrefix(() => new WishlistChangedEvent { items = items }))
+                SingletonManager.GetSingleton<ColonyRulesService>()?.ShowNotice(T("BeaverBuddies.Colony.Trade.HostFirst"));
+            nextRefresh = 0;
+        }
+
+        // ---- looking after a colony ----
+
+        private void Grant(int slot, string playerId, string name)
+        {
+            ReplayEvent.DoPrefix(() => new StewardGrantedEvent { colonySlot = slot, stewardPlayerId = playerId, stewardName = name });
+            nextRefresh = 0;
+        }
+
+        private void Revoke(int slot)
+        {
+            ReplayEvent.DoPrefix(() => new StewardRevokedEvent { colonySlot = slot });
+            nextRefresh = 0;
+        }
+
+        private void ActAs(int slot)
+        {
+            ReplayEvent.DoPrefix(() => new ActAsColonyEvent { colonySlot = slot });
+            nextRefresh = 0;
         }
 
         /// <summary>"With {colony}" and one line on its exchange: the terms and the round's progress, or why it is idle.</summary>
@@ -399,21 +666,6 @@ namespace BeaverBuddies.Colonies
             return $"{side.Held}/{side.Total}";
         }
 
-        private string DescribeColony(int slot, ColonyLifecycle lifecycle, List<int> present)
-        {
-            if (lifecycle == null || !lifecycle.OwnsDistrict(slot)) return T("BeaverBuddies.Colony.Overview.NoColony");
-            int population = lifecycle.PopulationOf(slot);
-            string status;
-            if (population == 0) status = T("BeaverBuddies.Colony.Overview.Dead");
-            else if (present.Contains(slot)) status = T("BeaverBuddies.Colony.Overview.Playing");
-            else
-            {
-                int? away = lifecycle.DaysAway(slot);
-                status = away == null ? T("BeaverBuddies.Colony.Overview.AwayUnknown") : string.Format(T("BeaverBuddies.Colony.Overview.Away"), away.Value);
-            }
-            return string.Format(T("BeaverBuddies.Colony.Overview.Colony"), population, status);
-        }
-
         private void GoTo(DistrictCrossing half)
         {
             if (!half) return;
@@ -429,6 +681,42 @@ namespace BeaverBuddies.Colonies
         }
 
         // ---- elements ----
+
+        /// <summary>
+        /// A colony's row: the post row's title and line, then its food and water (icons and days), a muted note (who
+        /// looks after it), and what it is looking for, with its buttons at the right.
+        /// </summary>
+        private ColonyCard BuildColonyCard(params Button[] buttons)
+        {
+            var card = new ColonyCard();
+            NineSliceVisualElement board = Card(out card.Title, out card.Detail, buttons);
+            VisualElement text = card.Title.parent;
+            card.Supplies = NativeElements.Row();
+            card.Supplies.style.marginTop = 3;
+            card.FoodIcon = NativeElements.Icon(18);
+            card.Food = NativeElements.MutedText("", 12);
+            card.Food.style.marginLeft = 3;
+            card.Food.style.marginRight = 12;
+            card.WaterIcon = NativeElements.Icon(18);
+            card.Water = NativeElements.MutedText("", 12);
+            card.Water.style.marginLeft = 3;
+            card.Supplies.Add(card.FoodIcon);
+            card.Supplies.Add(card.Food);
+            card.Supplies.Add(card.WaterIcon);
+            card.Supplies.Add(card.Water);
+            _tooltipRegistrar.Register(card.Supplies, T("BeaverBuddies.Colony.Overview.SuppliesTooltip"));
+            text.Add(card.Supplies);
+            card.Note = NativeElements.MutedText("", 12);
+            card.Note.style.marginTop = 2;
+            card.Note.style.display = DisplayStyle.None;
+            text.Add(card.Note);
+            card.Wishes = NativeElements.Row();
+            card.Wishes.style.marginTop = 4;
+            card.Wishes.style.flexWrap = Wrap.Wrap;
+            card.Wishes.style.display = DisplayStyle.None;
+            text.Add(card.Wishes);
+            return card;
+        }
 
         /// <summary>A row of the list on the game's green board: a title, a line under it, and its buttons at the right.</summary>
         private static NineSliceVisualElement Card(out Label title, out Label detail, params Button[] buttons)

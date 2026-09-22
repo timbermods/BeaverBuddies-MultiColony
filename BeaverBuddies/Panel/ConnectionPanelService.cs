@@ -63,6 +63,7 @@ namespace BeaverBuddies.Panel
                 view = new ConnectionPanelView(loc, initializer);
                 view.HeaderClicked += OnHeaderClicked;
                 view.FpsFloorClicked += OnFpsFloorClicked;
+                view.RowClicked += OnRowClicked;
                 if (view.Chat != null) { view.Chat.Submit = OnChatSubmit; view.Chat.ColorOf = ChatColorOf; }
                 view.SetVisible(false);
                 input.AddInputProcessor(this);
@@ -121,6 +122,15 @@ namespace BeaverBuddies.Panel
         {
             Settings.SetGuestFpsFloor(FrameRatePacing.NextFloor(Settings.GuestFpsFloorValue));
             nextRefresh = 0;
+        }
+
+        // A player's row leads to that player on the map; your own row leads home. Display only: the camera is yours.
+        void OnRowClicked(PanelRow row)
+        {
+            var navigation = BeaverBuddies.Colonies.ColonyNavigation.Instance;
+            if (navigation == null) return;
+            if (row.IsYou) navigation.GoHome();
+            else navigation.GoToPlayer(row.Id, row.Name);
         }
 
         void OnHeaderClicked()
@@ -309,6 +319,7 @@ namespace BeaverBuddies.Panel
                 HostPacingHolding = replay?.HostPacingHolding == true,
                 GuestFpsFloor = Settings.GuestFpsFloorValue,
                 FrameRatePacingPercent = replay?.FrameRatePacingPercent ?? 100,
+                JoiningOpen = io is ServerEventIO server && server.IsAcceptingClients,
             };
 
             // Names come from player activity (the same names other players chose for pings and cursors).

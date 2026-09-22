@@ -70,6 +70,11 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyLandOverlay>().AsSingleton();
             containerDefinition.Bind<TradeOverviewPanel>().AsSingleton();
             containerDefinition.Bind<ColonyDiagnostics>().AsSingleton();
+            containerDefinition.Bind<ColonyStewards>().AsSingleton();
+            containerDefinition.Bind<ColonyWishlist>().AsSingleton();
+            containerDefinition.Bind<ColonySupplies>().AsSingleton();
+            containerDefinition.Bind<HostStartGate>().AsSingleton();
+            containerDefinition.Bind<ColonyNavigation>().AsSingleton();
             containerDefinition.Bind<TradeItems>().AsSingleton();
             containerDefinition.Bind<TradingPostFragment>().AsSingleton();
             containerDefinition.MultiBind<EntityPanelModule>().ToProvider<EntityPanelModuleProvider>().AsSingleton();

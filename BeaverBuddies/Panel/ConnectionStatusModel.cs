@@ -77,11 +77,15 @@ namespace BeaverBuddies.Panel
         public int GuestFpsFloor;
         /// <summary>Host only: percent of the chosen speed the host runs at because of a guest's frame rate.</summary>
         public int FrameRatePacingPercent = 100;
+        /// <summary>Host only: players can still join (the game waits at its start and nothing has changed it).</summary>
+        public bool JoiningOpen;
         public List<PanelPlayer> Players = new List<PanelPlayer>();
     }
 
     public sealed class PanelRow
     {
+        /// <summary>The player's connection number, so a click on the row can lead to them.</summary>
+        public int Id;
         public string Name = "", PingText = "";
         public Quality Quality;
         /// <summary>Your own row. It is drawn in bold, and its ping is a dash: you have no ping to yourself.</summary>
@@ -108,6 +112,8 @@ namespace BeaverBuddies.Panel
         public string GuestFpsText;
         /// <summary>Only for the host: the chosen guest frame rate floor ("Off", "30 fps"). Clicking it picks the next one.</summary>
         public string FpsFloorText;
+        /// <summary>Only for the host, and only while players can still join: what closes joining. Null otherwise.</summary>
+        public string JoiningText;
     }
 
     public static class PanelModelBuilder
@@ -143,7 +149,7 @@ namespace BeaverBuddies.Panel
             var you = input.Players.FirstOrDefault(p => p.IsYou);
             foreach (var player in OrderedPlayers(input.Players))
             {
-                var row = new PanelRow { Name = player.Name, IsYou = player.IsYou };
+                var row = new PanelRow { Id = player.Id, Name = player.Name, IsYou = player.IsYou };
                 if (player.IsYou)
                 {
                     row.PingText = YourPingText;
@@ -183,6 +189,8 @@ namespace BeaverBuddies.Panel
             if (!input.IsHost)
                 model.BehindText = t(input.TicksBehind == 1 ? "BeaverBuddies.Panel.TicksOne" : "BeaverBuddies.Panel.TicksMany",
                     new object[] { input.TicksBehind });
+
+            if (input.IsHost && input.JoiningOpen) model.JoiningText = t("BeaverBuddies.Panel.JoiningOpen", Array.Empty<object>());
 
             if (input.IsHost)
             {

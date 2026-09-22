@@ -1,0 +1,15 @@
+{
+  "KeyBindingSpec": {
+    "Id": "BeaverBuddies.KeyBind.GoHome",
+    "GroupId": "KeyBindingGroup.BeaverBuddies",
+    "LocKey": "BeaverBuddies.KeyBindings.GoHome",
+    "Order": 9,
+    "AllowOtherModifiers": false,
+    "DevModeOnly": false
+  },
+  "PrimaryInputBindingSpec": {
+    "Path": "/Keyboard/home",
+    "InputModifiers": "None",
+    "Unchangeable": false
+  }
+}

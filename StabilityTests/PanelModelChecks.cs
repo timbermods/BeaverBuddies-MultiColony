@@ -22,6 +22,10 @@ static class PanelModelChecks
         ["BeaverBuddies.Panel.LinkDirect"] = "Direct", ["BeaverBuddies.Panel.LinkSteam"] = "Steam",
         ["BeaverBuddies.Panel.FpsValue"] = "{0} fps", ["BeaverBuddies.Panel.FpsFloorOff"] = "Off",
         ["BeaverBuddies.Panel.PacingFpsValue"] = "{0}% (frame rate)",
+        ["BeaverBuddies.Panel.JoiningOpen"] = "open: unpausing, or any change, closes it",
+        ["BeaverBuddies.Panel.LabelJoining"] = "Joining",
+        ["BeaverBuddies.Panel.RowTooltip"] = "Click to take your camera to {0}.", ["BeaverBuddies.Panel.RowYouTooltip"] = "Click to go back to your colony (also the Home key).",
+        ["BeaverBuddies.Panel.PlayerNotOnMap"] = "{0}'s cursor is not on the map right now.",
     };
     static string T(string key, object[] args) => string.Format(CultureInfo.InvariantCulture, English[key], args);
 

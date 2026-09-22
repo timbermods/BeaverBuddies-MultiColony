@@ -11,6 +11,9 @@ their side of the map as you would a teammate.
   space, so cameras can be at different positions and zoom levels, and markers
   interpolate between samples. A cursor over UI, outside the game window or off the
   map is hidden; losing application focus hides yours too.
+- **Finding a player.** Click a player's row in the connection panel to take your camera to their cursor (or to
+  what they have selected, when their cursor is off the map); your own row, or the Home key, takes you back to your
+  own colony. Display only: nothing is sent.
 - **Remote selection outlines.** Remote selected entities use Timberborn's native
   selection outline in that player's color. Each remote player has an independent
   secondary highlighter, and your own selection/hover colors take priority when you

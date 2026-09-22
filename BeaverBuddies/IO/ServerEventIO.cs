@@ -105,6 +105,9 @@ namespace BeaverBuddies.IO
 
         private bool stoppedAccepting;
 
+        /// <summary>Players can still join: the first tick has not run and nothing has changed the game yet.</summary>
+        public bool IsAcceptingClients => !stoppedAccepting && (NetBase?.IsAcceptingClients ?? false);
+
         /// <summary>
         /// No more players from now on: the first tick has run, or (<paramref name="gameChanged"/>) an action that
         /// changed the game was played before it. Either way a player joining later would be missing something.

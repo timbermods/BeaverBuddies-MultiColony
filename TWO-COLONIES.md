@@ -7,7 +7,7 @@ colonies meet only at **trading posts**, where they barter.
 **State of testing.** Beta. Seen in a game with the land-split alphas (alpha1 to 5): hosting and joining over
 Steam, founding a second colony and building in it. **Nothing of this version's model has been seen in a game
 yet**: ownership, land, per-colony marks and work, trading-post exchanges and their panel, separate science, the
-road-network checks and the desync review's fixes (alpha11 to beta1) are covered by automated checks only. Since
+road-network checks and the desync review's fixes (alpha11 to beta2) are covered by automated checks only. Since
 alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
 in that check would stop a healthy game too; the log line says which. Play on a copy of your save and keep backups.
 
@@ -46,7 +46,10 @@ the host's first colony is start 1, the next player's start 2, and so on.
 
 **Joining closes** at the host's first tick, or at the first action that changes the game while it is still
 paused (placing or marking something): a player joining after that would be sent the save the host started from,
-without it. The host should wait for everyone, then unpause.
+without it. The host should wait for everyone, then unpause. So that this never happens by accident, the host's
+first change while joining is open is held and the host is asked (**Start the game**, which plays it and closes
+joining, or **Keep waiting**, which drops it), and a guest's change while the host waits is refused with the same
+notice as a founding. The connection panel shows the host *Joining: open* until then.
 
 **Any other game** (a standard map, or any existing save): the district centers already there are the host's
 colony's. Every other player **founds** their colony once:
@@ -93,9 +96,15 @@ says whose it is, with **Select your half**.
    times, for more than 100; **Repeat until cancelled** makes it a standing deal. A line under the cards reads the
    offer back (*sarawr gets 100 Berries, and you get 1 Beaver. 3 rounds: 300 Berries for 3 Beavers in all.*), or says
    what is wrong with it; **Make offer** waits for a valid one. One side may be 0: asking for 0 is a gift, giving 0
-   asks for help. The other player gets a notice.
+   asks for help. For an exchange of more than one round, **Keep at least** sets a reserve of what you give (0 to
+   9999): your side is brought (or paid) only while your colony would still have that much after the round, counting
+   what already waits on your half; what waits stays, and the round goes on once you have more. Each side has its own
+   reserve: the offering side's goes with the offer, and either side can change its own on the running exchange.
+   The other player gets a notice.
 2. **Answer.** The other colony's player selects their half and chooses **Accept** or **Decline**. The offering player
-   may **Withdraw offer** until then. An offer changed in the meantime is never accepted by mistake.
+   may **Withdraw offer** until then. An offer changed in the meantime is never accepted by mistake. Declining or
+   withdrawing leaves the offer's terms in the form of whoever did it, so a counter-offer is a changed number and
+   **Make offer**.
 3. **Each round.** Each colony's Trading Post workers fetch its goods from its storage and bring them to **its own
    half**, where they wait, held for the round (no other beaver takes them). Each side's bar shows how much waits on
    its half. Science and beavers are not carried: their bar shows how much the colony can give now.
@@ -113,11 +122,26 @@ colony's storage; rounds that crossed stay crossed. If the post stops joining th
 exchange pauses, and its colony may **End exchange** alone. When a colony is handed over, or a post ends up joining
 other colonies than the two that agreed, its exchange ends by itself, and what waits on each half goes back home.
 
+**Offering again.** Each half remembers the last exchange offered or accepted there, from its own side; a line above
+the form (*Last exchange here: 100 Logs for 25 Gears. 4 rounds…*) has **Offer again**, and a click on a row of the
+post's ledger puts that round's terms into the form (one round). Terms are only ever put into the form; nothing is
+offered until **Make offer**.
+
 **Ctrl+T**, the **Trade** button at the top right (a square button like the game's own there) or **All posts** on a
 Trading Post opens the **trading posts and colonies** window, drawn as the game's own boxes are: each of your Trading
-Posts with its exchange and round (or *not trading yet*) and a **Go to** button, and each colony with its population
-and whether its player is playing. Its close button, Esc, Ctrl+T or the Trade button close it. It does not pause the
-game.
+Posts with its exchange and round (or *not trading yet*) and a **Go to** button, and each colony with its population,
+whether its player is playing (an absent player: *missed 6 of 7 days*, the host's limit), its **food and water** (the
+top bar's icons, the stock, and the days it lasts at the rate the colony used yesterday, from the game's own daily
+samples; red under a day), what it is **looking for**, and who looks after it. Its close button, Esc, Ctrl+T or the
+Trade button close it. It does not pause the game.
+
+**Looking for.** In that window, this player's own colony has a **Looking for** row: up to three items (goods,
+science or beavers) chosen from the game's goods grid (the box opens beside the window, unticked so every good
+shows), each chip a button to change it, **+** to add and **Clear** to drop them. It is saved colony state, set by an
+action (a colony sets only its own). Other players see the wishes beside the colony in their own window, as
+*Sarah is looking for: [icons]* under the header of a Trading Post they share with her, and in the goods grid when
+they choose what to give her (the count in the game's yellow, with a word in the tooltip); choosing what to ask for
+marks your own colony's wishes the same way.
 
 **Good to know:**
 
@@ -140,6 +164,26 @@ game); no other colony may. A District Crossing, or a Trading Post within one co
 Running a half (workers, priority) stays with its colony. The two halves are placed as one: if either half may not
 stand where it was put, neither is placed.
 
+## Looking after a colony
+
+A colony's player may ask another player in the session to look after it, so an evening away is not a week of
+neglect and not a hand-over. It rests on the seat flip the host already had for testing alone: a player's actions
+count as one colony at a time, and a steward switches which.
+
+- **Asking.** In the Ctrl+T window, on your own colony: **Let … look after it**, one button per other player the
+  session knows (by the stable id the slot table uses, so a helper without a colony can be a steward too); later,
+  **Take it back**. The host may ask a player to look after the colony of a player who is away, and may end any
+  stewardship (**End stewardship**); the steward may end it too. The grant is saved with the game and holds across
+  sessions and hosts; a hand-over ends it.
+- **Running it.** The steward finds **Run this colony** on the colony's row (and **Back to your colony** afterwards).
+  While they run it, their actions are judged and stamped as that colony's, and their toolbar, science, top bar,
+  working hours and every refusal follow, exactly as the owner's would; the connection panel shows them with that
+  colony's number. Which colony a player acts as is session state (an action every computer plays, refused before
+  the first tick like a founding), forgotten when the session ends. Both players may act on the colony at once.
+- **Not handed over.** A colony looked after by a steward who is in the game is not handed over for its own player's
+  absence (the days away still count, and show in the window). The host judges every grant, revocation and switch
+  (ColonyStewardRules); a player who does not look after a colony cannot switch into it.
+
 ## When a colony is handed over
 
 A colony whose player can't run it goes to another colony: its district centers, buildings, land, marks, stock and
@@ -159,9 +203,12 @@ unlocks too.
   this session), or that has no beavers. Useful for a player whose Steam account changed: they join, get a new slot,
   and the host hands their old colony to it.
 
-The player who lost their colony gets a notice and may **found a new one** (Ctrl+K). A trading post between the two
-colonies then stands within one colony: its exchange ends (what waits on each half goes back home), and it trades
-again only if another colony's roads reach its other half.
+The host tells every computer its limit with the day's presence, so the Ctrl+T window shows *missed 6 of 7 days*
+everywhere, and the day the count reaches the limit every player in the game is warned that the colony is handed
+over the next day unless its player is back (a colony looked after by a present steward gets no warning, as it is
+not handed over). The player who lost their colony gets a notice and may **found a new one** (Ctrl+K). A trading
+post between the two colonies then stands within one colony: its exchange ends (what waits on each half goes back
+home), and it trades again only if another colony's roads reach its other half.
 
 ## Separate science and unlocks
 
@@ -302,6 +349,12 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   once it changed a beaver's random draw, or never.
 - Two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest from the
   connection panel.
+- The days of food and water in the Ctrl+T window are an estimate from yesterday's use (today's, scaled, before a
+  full day has been sampled): a colony that just doubled its beavers eats faster than the number says. Display only.
+- A reserve counts a colony's stock in the district of its Trading Post half, as the game counts it (the goods on
+  the half included), not the whole colony's.
+- A steward's own colony is "present" while they play; the colony they look after counts as present only for the
+  hand-over rule, not for its own player's days away.
 
 ## How it works
 
@@ -324,7 +377,12 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   science names the colony of the building doing it; everything else is display.
 - **Exchanges** are saved on the two halves of the Trading Post, with each round's goods waiting on their half (held
   there, and held again when a save is loaded). A round crosses in the simulation, at the same tick on every computer,
-  once both sides are in; the post's ledger and the totals traded each way are kept there too.
+  once both sides are in; the post's ledger, each side's reserve and the last terms offered there, and the totals
+  traded each way, are kept there too.
+- **Stewards and wishes** are saved singletons (a steward's stable id per colony; up to three items per colony), set
+  by actions the host judges, and part of the running digest and the daily check. Which colony a steward acts as
+  right now, and who is in the game today (by stable id, with the host's hand-over limit), travel in actions and are
+  not saved.
 
 ## Testing
 

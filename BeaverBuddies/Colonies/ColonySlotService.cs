@@ -64,6 +64,11 @@ namespace BeaverBuddies.Colonies
 
         // connection number -> slot, for this session.
         private readonly SortedDictionary<int, int> session = new SortedDictionary<int, int>();
+        // connection number -> the player's stable id and name, for this session (the host's own included), so a
+        // colony can be looked after by a player and every computer knows who that is.
+        private readonly SortedDictionary<int, string> playerIds = new SortedDictionary<int, string>();
+        private readonly SortedDictionary<int, string> playerNames = new SortedDictionary<int, string>();
+        private string hostPlayerId;
 
         /// <summary>This computer's connection number (0 on the host); -1 until the host has answered its hello.</summary>
         public int LocalPlayer { get; private set; } = -1;
@@ -95,9 +100,14 @@ namespace BeaverBuddies.Colonies
 
         private void SeatHost()
         {
-            int slot = Table.Resolve(LocalPlayerIdentity.Id, LocalPlayerIdentity.Name) ?? 0;
+            hostPlayerId = LocalPlayerIdentity.Id;
+            int slot = Table.Resolve(hostPlayerId, LocalPlayerIdentity.Name) ?? 0;
             session.Clear();
             session[ColonySession.HostPlayer] = slot;
+            playerIds.Clear();
+            playerNames.Clear();
+            playerIds[ColonySession.HostPlayer] = hostPlayerId;
+            playerNames[ColonySession.HostPlayer] = LocalPlayerIdentity.Name ?? "";
             LocalPlayer = ColonySession.HostPlayer;
             Plugin.Log($"[Colony] The host plays slot {slot} ({Table.Entries.Count} player(s) known to this save)");
             ColonyScienceService.Instance?.RefreshToolLocks();
@@ -122,6 +132,33 @@ namespace BeaverBuddies.Colonies
 
         public IEnumerable<KeyValuePair<int, int>> Session => session;
 
+        /// <summary>The stable id this computer's player is known by this session (the one it said hello with).</summary>
+        public string LocalPlayerId =>
+            EventIO.Get() is ServerEventIO ? hostPlayerId ?? LocalPlayerIdentity.Id : sentPlayerId ?? LocalPlayerIdentity.Id;
+
+        /// <summary>A connection's stable id, or null if it has not said hello.</summary>
+        public string PlayerIdOf(int player) => playerIds.TryGetValue(player, out string id) ? id : null;
+
+        /// <summary>The name a player (by stable id) goes by this session, or null if the session does not know them.</summary>
+        public string PlayerNameOf(string playerId)
+        {
+            foreach (var pair in playerIds)
+            {
+                if (pair.Value == playerId) return playerNames.TryGetValue(pair.Key, out string name) ? name : "";
+            }
+            return null;
+        }
+
+        /// <summary>Whether a player (by stable id) has said hello this session.</summary>
+        public bool HasPlayer(string playerId) => !string.IsNullOrEmpty(playerId) && playerIds.ContainsValue(playerId);
+
+        /// <summary>Every player known this session: connection number, stable id and name.</summary>
+        public IEnumerable<(int player, string id, string name)> Players =>
+            playerIds.Select(p => (p.Key, p.Value, playerNames.TryGetValue(p.Key, out string name) ? name : ""));
+
+        private string EncodePlayers() => string.Join("\n", playerIds.Select(p =>
+            $"{p.Key}|{p.Value}|{(playerNames.TryGetValue(p.Key, out string name) ? name : "").Replace("\n", " ").Replace("|", "/")}"));
+
         /// <summary>Host only, before a hello is replayed: seat the player and write the tables into the event.</summary>
         public void HostSeat(PlayerHelloEvent hello)
         {
@@ -129,8 +166,11 @@ namespace BeaverBuddies.Colonies
             int? slot = Table.Resolve(hello.playerId, hello.playerName);
             int seat = slot ?? Math.Max(0, hostSlot);
             session[hello.player] = seat;
+            playerIds[hello.player] = hello.playerId;
+            playerNames[hello.player] = hello.playerName ?? "";
             hello.table = ColonySlotTable.Encode(Table.Entries);
             hello.session = string.Join(",", session.Select(p => $"{p.Key}:{p.Value}"));
+            hello.players = EncodePlayers();
             Plugin.Log(slot.HasValue
                 ? $"[Colony] Player {hello.player} ({hello.playerName}) plays slot {seat}"
                 : $"[Colony] Player {hello.player} ({hello.playerName}) joins as a helper of slot {seat}: every slot is taken");
@@ -146,6 +186,18 @@ namespace BeaverBuddies.Colonies
                 string[] parts = pair.Split(':');
                 if (parts.Length == 2 && int.TryParse(parts[0], out int player) && int.TryParse(parts[1], out int slot))
                     session[player] = slot;
+            }
+            if (hello.players != null)
+            {
+                playerIds.Clear();
+                playerNames.Clear();
+                foreach (string line in hello.players.Split('\n'))
+                {
+                    string[] parts = line.Split(new[] { '|' }, 3);
+                    if (parts.Length < 2 || !int.TryParse(parts[0], out int player) || string.IsNullOrEmpty(parts[1])) continue;
+                    playerIds[player] = parts[1];
+                    playerNames[player] = parts.Length > 2 ? parts[2] : "";
+                }
             }
             if (hello.playerId == (sentPlayerId ?? LocalPlayerIdentity.Id) && !(EventIO.Get() is ServerEventIO))
             {
@@ -173,6 +225,8 @@ namespace BeaverBuddies.Colonies
         // Written by the host before the event is played and sent on.
         public string table;
         public string session;
+        /// <summary>Every player in the session by connection number, stable id and name ("player|id|name" per line).</summary>
+        public string players;
 
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
 

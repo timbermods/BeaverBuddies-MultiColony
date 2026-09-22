@@ -5,6 +5,60 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta2
+
+**Nine things that make a colony each easier to live with.** Everything sits on machinery that was already there;
+nothing simulated changes unless a player uses it. All new text is English only.
+
+- **Food and water at a glance.** Each colony's row in the trading window (Ctrl+T) shows the top bar's food and
+  water icons with the stock and the days it lasts at the rate the colony used yesterday (the game's own daily
+  samples; today's use, scaled, before a full day has been sampled; red under a day). `Colonies/ColonySupplies.cs`,
+  `SupplyDays.cs` (pure). Display only.
+- **Looking after a colony.** A colony's player asks another player in the session to look after it (**Let … look
+  after it** on their own row; **Take it back** later); the steward presses **Run this colony** and their actions,
+  toolbar, top bar, science and refusals count as that colony's until **Back to your colony**, the way the debug
+  seat flip worked for the host alone. The host may do this for an absent player's colony and may end any
+  stewardship. A colony looked after by a steward who is in the game is not handed over for absence. The grant is
+  saved (by the steward's stable id); which colony a player acts as is session state played as an action, refused
+  before the first tick. Every hello now carries every player's stable id and name (`PlayerHelloEvent.players`), so
+  every computer knows who a steward is. `Colonies/ColonyStewards.cs`, `ColonyStewardRules.cs` (pure);
+  `ColonySession.SeatOfPlayer` / `LocalSeat` beside `SlotOfPlayer` / `LocalSlot`; three events (`StewardGrantedEvent`,
+  `StewardRevokedEvent`, `ActAsColonyEvent`) judged on the host by `ColonyStewardRules`.
+- **Go to a player, and Home.** A click on a player's row in the connection panel takes the camera to their cursor
+  (or what they have selected); the own row, or the **Home** key (rebindable), goes back to the colony's biggest
+  district center. `Colonies/ColonyNavigation.cs`, `PlayerActivityService.TryLocate`. Display only.
+- **The day before a hand-over.** The host's presence event now carries its hand-over limit and the day's players by
+  stable id; the window shows *missed 6 of 7 days*, and the day the count reaches the limit every player in the game
+  is warned (`ColonyAbsence.cs`, pure). No hand-over rule changed, apart from stewards.
+- **Offer again, and counter-offers.** Each half remembers the last exchange offered or accepted there (saved;
+  `CrossingExchange.LastTerms`, encoded by `ExchangeTerms.EncodeTerms`): a line above the form offers it again in one
+  click, and a click on a ledger row puts that round's terms into the form. **Decline** and **Withdraw offer** leave
+  the offer's terms in the form of whoever pressed them. Terms only ever go into the form; nothing is offered without
+  **Make offer**.
+- **A wishlist per colony.** Up to three items a colony is looking for, set from its own row in the trading window
+  with the game's goods grid (opened unticked, beside the window). Shown beside the colony in every player's window,
+  under the header of a Trading Post with that colony (*Sarah is looking for: [icons]*), and in the goods grid when a
+  partner chooses what to give (the count in yellow, a word in the tooltip). Saved; `Colonies/ColonyWishlist.cs`,
+  `WishlistTerms.cs` (pure); `WishlistChangedEvent` (the actor's own colony, like working hours).
+- **A reserve on an exchange.** **Keep at least** (shown for more than one round) sets what a side keeps back: its
+  goods are brought, or its science or beavers paid, only while the colony would still have that much after the
+  round (the goods on its half count as had). Each side has its own, the offering side's with the offer
+  (`ExchangeProposedEvent.keep`), either side's changeable on the running exchange (`ExchangeFloorSetEvent`). Saved on
+  the half (`CrossingExchange.Keep`), in the digest and the daily check; `ExchangeTerms.CanSpare` /
+  `StillToBringKeeping` (pure). The status line says when a reserve holds a side back.
+- **The host is asked before its first change closes joining.** While the host waits paused at the start with
+  players able to join, its first change (a path, a mark, a founding) is held and a dialog asks: **Start the game**
+  (the held actions are then recorded in order) or **Keep waiting** (they are dropped, with a notice). A guest's
+  change while the host waits is refused with the founding's *Not before the game starts* notice. The connection
+  panel shows the host **Joining: open** until then. `Colonies/HostStartGate.cs`, `HostStartRules.cs` (pure);
+  `ServerEventIO.IsAcceptingClients`; the hook in `ReplayEvent.DoPrefix`.
+- The daily colony check and the diagnostics report now cover stewards and wishes; the report names the seat beside
+  the acting slot.
+- Checks: StabilityTests 282 (+14: supply days, the reserve and the terms string, the wishlist, the steward rules,
+  the start gate, the hand-over timing, the panel's joining line); RuntimeChecks 233 (+1: the new fields through the
+  event JSON; the two review lists updated). Both builds, with 0 warnings. Nothing of this version has been played
+  yet; ALPHA-TEST-SCRIPTS.md lines A22a to A22e and B8f to B8i cover it.
+
 ## 1.4.0-beta1
 
 **A performance review of alpha22 with the guest (player 2) in mind, and what it changed.** The lockstep design was

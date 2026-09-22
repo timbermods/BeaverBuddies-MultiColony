@@ -12,7 +12,7 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > [!WARNING]
 > **Beta.** Hosting, joining over Steam and founding a second colony have been played. This version's model
 > (colonies with their own land, trading posts and barter, colony handover) and the desync review's fixes (alpha11
-> to beta1) have **not been played yet**; they are covered by automated checks. Since alpha13 a guest whose colony
+> to beta2) have **not been played yet**; they are covered by automated checks. Since alpha13 a guest whose colony
 > state differs from the host's stops at once, the tick it happens, so a bug in that check would also stop a healthy
 > game: the log line says which it was. Play on a copy of your save, keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
@@ -60,8 +60,10 @@ build cannot join.
 (instead of Load). Invite your friend with **Invite Friends** (Steam), or give them your IP address (port **25565**).
 
 **4. Guest: join** by accepting the Steam invite (or **Join co-op game** → the host's IP). **Host: wait, paused,
-until everyone is in, and place or mark nothing meanwhile**: nobody can join once the game has started, or once
-anything was changed while it waited (a later joiner would be sent the save without it).
+until everyone is in**: nobody can join once the game has started, or once anything was changed while it waited (a
+later joiner would be sent the save without it). The connection panel says **Joining: open** until then. If you
+place or mark something while waiting, the game asks first: **Start the game** (what you did is played, and joining
+closes) or **Keep waiting** (nothing happens). A guest's change while you wait is refused with a notice.
 
 **5. Guest without a colony: found yours.** Once the host unpauses, a message offers to **place your district
 center** (or press **Ctrl+K** later, whenever you are ready; before the first tick it says the game has not started
@@ -116,8 +118,13 @@ half** (the one its roads reach); the other colony's half only offers **Select y
    good). Amounts go from **0 to 100** a round: **−** and **+** (10 at a time, Shift for 1; beavers one at a time) or
    type them. For more, set **Rounds** (1 to 99), or tick **Repeat until cancelled** for a standing deal. The line
    under the cards says what you are offering, e.g. *sarawr gets 100 Logs, and you get 25 Gears. 4 rounds: 400 Logs
-   for 100 Gears in all.* **Set a side to 0** for a gift (or to ask for help). Then **Make offer**.
-2. **The other player accepts** (or declines) on their half. They get a notice when you make the offer.
+   for 100 Gears in all.* **Set a side to 0** for a gift (or to ask for help). For a deal of more than one round,
+   **Keep at least** sets a reserve: your workers bring a round only while your colony would still have that much
+   left after it, so a standing deal never starves you (the other side sets its own, on the running exchange).
+   Then **Make offer**.
+2. **The other player accepts** (or declines) on their half. They get a notice when you make the offer. **Decline**
+   (and **Withdraw offer**) leaves the offer's terms in your own form, so a counter-offer is a changed number and
+   **Make offer**.
 3. **The beavers do the rest.** Each round, each colony's Trading Post workers bring their side's goods from their own
    storage to **their own half**, where they wait. When both sides are in, the round **crosses all at once**: goods
    to the other half (that colony's workers haul them into storage), science from pool to pool, beavers to the other
@@ -132,10 +139,19 @@ the round crosses. Each beaver who arrives gets a line in the notification journ
 who chooses **Agree to cancel** or **Keep trading**. What waits on each half then goes back to its own colony; rounds
 that crossed stay crossed.
 
+**Offer again:** the panel remembers the last exchange at each post and offers it again in one click (a line above
+the form); clicking a row of the post's ledger puts that round's terms into the form.
+
 **All your trading posts at once:** **Ctrl+T**, the square **Trade** button at the top right, or **All posts** on a
 trading post opens a window (drawn like the game's own boxes; close it with its close button, Esc or Ctrl+T) listing
-every trading post of your colony, its exchange and its round, with a **Go to** button; and every colony, its
-population and whether its player is playing.
+every trading post of your colony, its exchange and its round, with a **Go to** button; and every colony with its
+population, whether its player is playing (and how many days of the host's limit an absent player has missed), its
+**food and water** with the days they last at yesterday's use, what it is **looking for**, and who looks after it.
+
+**Looking for:** in that window, your own colony has a **Looking for** row: up to three goods (or science, or
+beavers) you would like to receive, chosen from the game's goods grid. Other players see them beside your colony
+there, under the header of a trading post they share with you, and in the goods grid when they choose what to give
+you (the count in yellow).
 
 - **One exchange at a time** per trading post; build more Trading Posts for more at once.
 - **A Trading Post is not a store.** Each half has room for 100 of a good, used only by the round under way: your
@@ -150,6 +166,16 @@ population and whether its player is playing.
 
 Details: [TWO-COLONIES.md](TWO-COLONIES.md#trading-posts).
 
+## Looking after another player's colony
+
+Away for the evening? Ask a friend to look after your colony: in the **Ctrl+T** window, on your colony, press **Let
+… look after it** (one button per other player in the session), or **Take it back** later. The steward finds **Run
+this colony** on your colony's row: their actions, toolbar, top bar and science then count as your colony's until
+they press **Back to your colony**. Both of you can play your colony at the same time. A colony looked after by a
+player who is in the game is **not handed over** for its own player's absence. The host may also ask a player to
+look after the colony of a player who is away, and may end any stewardship. The steward is remembered by the save
+(by Steam account), like the colonies are.
+
 ## When a colony is handed over
 
 A colony whose player can't run it goes to another player, with its buildings, land, stock and science:
@@ -161,7 +187,9 @@ A colony whose player can't run it goes to another player, with its buildings, l
 - **By the host**, from the Ctrl+T window, once the game has started: any colony whose player is away, or that has
   no beavers (for example to a player whose Steam account changed).
 
-The player who lost their colony gets a notice and may **found a new one** with **Ctrl+K**.
+The Ctrl+T window shows how close an absent player is (*missed 6 of 7 days*), and the day the count reaches the
+limit every player in the game gets a warning: unless the absent player is in the game the next day, the colony is
+handed over then. The player who lost their colony gets a notice and may **found a new one** with **Ctrl+K**.
 
 ## Controls
 
@@ -170,6 +198,7 @@ The player who lost their colony gets a notice and may **found a new one** with 
 | **Ctrl+K** | Found your colony (a player without one) |
 | **Ctrl+L** | Show every colony's land (it also shows while you hold a building, planting, cutting or demolishing tool) |
 | **Ctrl+T** | Trading posts and colonies |
+| **Home** | Back to your colony (its biggest district center); clicking a name in the connection panel takes your camera to that player instead |
 | **Ctrl+Shift+J** | Write a diagnostics report (also a button in the Ctrl+T window) |
 | **Ctrl+Shift+K** | *Debug only:* the host acts as the next colony, for testing alone (needs **Always Use Detailed Logging** and nobody connected) |
 

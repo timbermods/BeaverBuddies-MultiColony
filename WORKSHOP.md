@@ -29,7 +29,12 @@ anyone else's colony.
 **Colonies meet at trading posts:** a building of its own (10 logs, no science), placed where two colonies' land
 meets. Offer "100 logs for 25 gears, 4 rounds" (or science, or beavers, or a gift), the other player accepts, and
 both colonies' beavers carry it out: each side's goods wait on its own half and cross all at once when both are in.
-Standing deals repeat by themselves; ending one early takes both players.
+Standing deals repeat by themselves, with a reserve so they never starve you; ending one early takes both players.
+Say what your colony is looking for, see at a glance how many days of food and water each colony has, and offer the
+last exchange again in one click.
+
+**Away for the evening?** Ask a friend to look after your colony: they switch into it and back, and it is not handed
+over while they are in the game.
 
 **Found your colony anywhere:** on a standard map the host starts with the colony that is there; every other player
 founds theirs once the host unpauses, free and already built, with starting beavers. Colonies are remembered by

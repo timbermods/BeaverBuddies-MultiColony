@@ -46,6 +46,9 @@ namespace BeaverBuddies.Colonies
 
         public string NameOf(int slot) => entries.FirstOrDefault(e => e.Slot == slot).Name;
 
+        /// <summary>The stable id of the player who plays a slot, or null while nobody does.</summary>
+        public string PlayerIdOf(int slot) => entries.FirstOrDefault(e => e.Slot == slot).PlayerId;
+
         /// <summary>
         /// The slot for this player, recording them if they are new and a slot is free. Returns null for a helper
         /// (every slot taken): the caller seats them on the host's slot.

@@ -17,6 +17,7 @@ using Timberborn.Goods;
 using Timberborn.InventorySystem;
 using Timberborn.NotificationSystem;
 using Timberborn.Persistence;
+using Timberborn.ResourceCountingSystem;
 using Timberborn.SingletonSystem;
 using Timberborn.TickSystem;
 using Timberborn.WorldPersistence;
@@ -83,6 +84,8 @@ namespace BeaverBuddies.Colonies
         private static readonly PropertyKey<int> DoneKey = new PropertyKey<int>("Done");
         private static readonly PropertyKey<int> CancelAskedKey = new PropertyKey<int>("CancelAsked");
         private static readonly PropertyKey<int> ColonyKey = new PropertyKey<int>("Colony");
+        private static readonly PropertyKey<int> KeepKey = new PropertyKey<int>("Keep");
+        private static readonly PropertyKey<string> LastTermsKey = new PropertyKey<string>("LastTerms");
         private static readonly ListKey<string> LedgerKey = new ListKey<string>("Ledger");
 
         private readonly List<TradeRecord> ledger = new List<TradeRecord>();
@@ -113,6 +116,13 @@ namespace BeaverBuddies.Colonies
         public bool CancelAsked { get; private set; }
         /// <summary>The colony this half belonged to when the exchange was offered (-1 when none is open).</summary>
         public int Colony { get; private set; } = -1;
+        /// <summary>
+        /// What this half's colony keeps back: its side is brought (or paid) only while the colony has at least this
+        /// much left after the round (ExchangeTerms.CanSpare). 0 for no floor. Each side sets its own.
+        /// </summary>
+        public int Keep { get; private set; }
+        /// <summary>The last exchange offered or accepted here, from this half's side (ExchangeTerms.EncodeTerms), to offer again.</summary>
+        public string LastTerms { get; private set; }
         /// <summary>Rounds that crossed here, oldest first.</summary>
         public IReadOnlyList<TradeRecord> Ledger => ledger;
 
@@ -121,7 +131,7 @@ namespace BeaverBuddies.Colonies
         public bool IsActive => State == ExchangeState.Active;
         public bool GivesGoods => Total > 0 && GoodId != null && !ExchangeTerms.IsSpecial(GoodId);
 
-        internal void Propose(int serial, bool proposedHere, string goodId, int total, int rounds, bool repeat, int colony)
+        internal void Propose(int serial, bool proposedHere, string goodId, int total, int rounds, bool repeat, int colony, int keep)
         {
             Serial = serial;
             State = ExchangeState.Proposed;
@@ -134,7 +144,21 @@ namespace BeaverBuddies.Colonies
             Done = 0;
             CancelAsked = false;
             Colony = colony;
+            Keep = ExchangeTerms.IsValidKeep(keep) ? keep : 0;
             Changed("propose");
+        }
+
+        internal void SetKeep(int keep)
+        {
+            Keep = Math.Max(0, Math.Min(ExchangeTerms.MaxKeep, keep));
+            Changed("keep");
+        }
+
+        /// <summary>The terms just offered or accepted, from this side, kept after the exchange ends so they can be offered again.</summary>
+        internal void RememberTerms(string encoded)
+        {
+            LastTerms = encoded;
+            ColonyDigest.Note("last-terms", Hash(), ColonyDigest.Of(encoded));
         }
 
         internal void Activate()
@@ -174,7 +198,8 @@ namespace BeaverBuddies.Colonies
         public long Fingerprint() =>
             1 + (int)State + 3L * Held + 7919L * Total + 104729L * Done + 15485863L * Serial + 1299709L * Rounds
             + (CancelAsked ? 2 : 0) + (Repeat ? 4 : 0) + (ProposedHere ? 8 : 0) + 16L * (Colony + 2)
-            + 17L * ColonyDigest.Of(GoodId) + 19L * ledger.Count + (ledger.Count > 0 ? ColonyDigest.Of(ledger[ledger.Count - 1].Encode()) : 0);
+            + 17L * ColonyDigest.Of(GoodId) + 19L * ledger.Count + (ledger.Count > 0 ? ColonyDigest.Of(ledger[ledger.Count - 1].Encode()) : 0)
+            + 23L * Keep + 29L * ColonyDigest.Of(LastTerms);
 
         private void Changed(string what) => ColonyDigest.Note("exchange-" + what, Hash(), Fingerprint());
 
@@ -194,15 +219,18 @@ namespace BeaverBuddies.Colonies
             Done = 0;
             CancelAsked = false;
             Colony = -1;
+            Keep = 0;
         }
 
         public void Save(IEntitySaver entitySaver)
         {
-            if (!IsOpen && Serial == 0 && ledger.Count == 0) return;
+            if (!IsOpen && Serial == 0 && ledger.Count == 0 && LastTerms == null) return;
             IObjectSaver saver = entitySaver.GetComponent(ExchangeKey);
             saver.Set(SerialKey, Serial);
             if (ledger.Count > 0) saver.Set(LedgerKey, ledger.Select(r => r.Encode()).ToList());
+            if (!string.IsNullOrEmpty(LastTerms)) saver.Set(LastTermsKey, LastTerms);
             if (!IsOpen) return;
+            if (Keep > 0) saver.Set(KeepKey, Keep);
             saver.Set(StateKey, (int)State);
             saver.Set(ProposedHereKey, ProposedHere ? 1 : 0);
             if (!string.IsNullOrEmpty(GoodId)) saver.Set(GoodKey, GoodId);
@@ -224,6 +252,11 @@ namespace BeaverBuddies.Colonies
                 foreach (string entry in loader.Get(LedgerKey))
                     if (TradeRecord.TryDecode(entry, out TradeRecord record)) Record(record);
             }
+            if (loader.Has(LastTermsKey))
+            {
+                string last = loader.Get(LastTermsKey);
+                if (ExchangeTerms.TryDecodeTerms(last, out _, out _, out _, out _, out _, out _, out _)) LastTerms = last;
+            }
             int state = loader.Has(StateKey) ? loader.Get(StateKey) : 0;
             string good = loader.Has(GoodKey) ? loader.Get(GoodKey) : null;
             int total = loader.Has(TotalKey) ? loader.Get(TotalKey) : 0;
@@ -243,6 +276,7 @@ namespace BeaverBuddies.Colonies
             Done = loader.Has(DoneKey) ? Math.Max(0, loader.Get(DoneKey)) : 0;
             CancelAsked = loader.Has(CancelAskedKey) && loader.Get(CancelAskedKey) != 0;
             Colony = loader.Has(ColonyKey) ? loader.Get(ColonyKey) : -1;
+            Keep = loader.Has(KeepKey) && ExchangeTerms.IsValidKeep(loader.Get(KeepKey)) ? loader.Get(KeepKey) : 0;
         }
 
         /// <summary>
@@ -285,6 +319,7 @@ namespace BeaverBuddies.Colonies
         private readonly NotificationBus _notificationBus;
         private readonly GameCycleService _gameCycleService;
         private readonly MigrationService _migrationService;
+        private readonly ResourceCountingService _resourceCountingService;
         private int ticks;
         /// <summary>Diagnostics: the crossing phase (not saved; the same on every computer that loaded together).</summary>
         public int Ticks => ticks;
@@ -296,7 +331,7 @@ namespace BeaverBuddies.Colonies
 
         public ColonyExchangeService(IGoodService goodService, ColonyRulesService colonyRulesService,
             EntityComponentRegistry entityComponentRegistry, NotificationBus notificationBus, GameCycleService gameCycleService,
-            MigrationService migrationService)
+            MigrationService migrationService, ResourceCountingService resourceCountingService)
         {
             _goodService = goodService;
             _colonyRulesService = colonyRulesService;
@@ -304,6 +339,7 @@ namespace BeaverBuddies.Colonies
             _notificationBus = notificationBus;
             _gameCycleService = gameCycleService;
             _migrationService = migrationService;
+            _resourceCountingService = resourceCountingService;
         }
 
         // Loadable only so the game builds it at load: it is found through SingletonManager, not injected.
@@ -326,8 +362,34 @@ namespace BeaverBuddies.Colonies
             CrossingExchange mine = Of(half), theirs = Of(TradingPosts.Partner(half));
             if (mine == null || theirs == null || !mine.IsActive || !theirs.IsActive || !mine.GivesGoods) return 0;
             if (mine.CancelAsked || theirs.CancelAsked) return 0;
+            // A colony that keeps a reserve brings nothing while the round would eat into it (the goods on its half count as had).
+            if (mine.Keep > 0)
+            {
+                int have = Instance?.StockOf(half, mine.GoodId) ?? int.MaxValue;
+                return ExchangeTerms.StillToBringKeeping(mine.Total, mine.Held, onTheWay, have, mine.Keep);
+            }
             return ExchangeTerms.StillToBring(mine.Total, mine.Held, onTheWay);
         }
+
+        /// <summary>How much of a good the half's district has now (the game's own count, read in the tick).</summary>
+        public int StockOf(DistrictCrossing half, string goodId)
+        {
+            DistrictCenter district = TradingPosts.DistrictOf(half);
+            if (!district || string.IsNullOrEmpty(goodId) || !_goodService.HasGood(goodId)) return 0;
+            return _resourceCountingService.GetDistrictResourceCounter(district).GetResourceCount(goodId).AvailableStock;
+        }
+
+        /// <summary>What a side has of what it gives: its stock of the good, its science to spare, or its adults to spare.</summary>
+        public int HaveOf(DistrictCrossing half, CrossingExchange side)
+        {
+            if (side.GoodId == ExchangeTerms.Science) return ScienceToSpare(OwnerOf(half));
+            if (side.GoodId == ExchangeTerms.Beavers) return BeaversToSpare(half);
+            return StockOf(half, side.GoodId);
+        }
+
+        /// <summary>Display: the side is not in because its colony keeps a reserve the round would eat into.</summary>
+        public bool IsHeldByFloor(DistrictCrossing half, CrossingExchange side) =>
+            side.Total > 0 && side.Keep > 0 && !IsIn(half, side) && !ExchangeTerms.CanSpare(HaveOf(half, side), side.Total, side.Keep);
 
         /// <summary>The good this half's workers bring in a running exchange, or null.</summary>
         public static string GoodGiven(DistrictCrossing half)
@@ -411,8 +473,9 @@ namespace BeaverBuddies.Colonies
         public bool IsIn(DistrictCrossing half, CrossingExchange side)
         {
             if (side.Total <= 0) return true;
-            if (side.GoodId == ExchangeTerms.Science) return ScienceToSpare(OwnerOf(half)) >= side.Total;
-            if (side.GoodId == ExchangeTerms.Beavers) return BeaversToSpare(half) >= side.Total;
+            // Science and beavers are paid as the round crosses: a reserve holds the payment back.
+            if (side.GoodId == ExchangeTerms.Science) return ExchangeTerms.CanSpare(ScienceToSpare(OwnerOf(half)), side.Total, side.Keep);
+            if (side.GoodId == ExchangeTerms.Beavers) return ExchangeTerms.CanSpare(BeaversToSpare(half), side.Total, side.Keep);
             return ExchangeTerms.IsDelivered(side.Total, side.Held);
         }
 
@@ -527,13 +590,14 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>Why an offer cannot be made from this half, or null.</summary>
         public string WhyNotPropose(DistrictCrossing half, int actorSlot, string giveGood, int giveAmount, string getGood, int getAmount,
-            int rounds, bool repeat)
+            int rounds, bool repeat, int keep = 0)
         {
             if (!half) return "no such crossing";
             if (!TradingPosts.IsTradingPost(half)) return "the crossing is not a Trading Post between two colonies";
             if (actorSlot < 0 || OwnerOf(half) != actorSlot) return $"the half is slot {OwnerOf(half)}'s, not slot {actorSlot}'s";
             if (!ExchangeTerms.AreValid(giveGood, giveAmount, getGood, getAmount)) return "the terms are not valid";
             if (!repeat && !ExchangeTerms.AreValidRounds(rounds)) return $"{rounds} rounds";
+            if (!ExchangeTerms.IsValidKeep(keep)) return $"a reserve of {keep}";
             if ((giveAmount > 0 && !IsKnownItem(giveGood)) || (getAmount > 0 && !IsKnownItem(getGood)))
                 return "a good is unknown in this game, or science is not separate";
             CrossingExchange mine = Of(half), theirs = Of(TradingPosts.Partner(half));
@@ -547,9 +611,9 @@ namespace BeaverBuddies.Colonies
             item == ExchangeTerms.Beavers || (item == ExchangeTerms.Science ? ColonyScienceService.IsEnabled : _goodService.HasGood(item));
 
         public void Propose(DistrictCrossing half, int actorSlot, string giveGood, int giveAmount, string getGood, int getAmount,
-            int rounds, bool repeat)
+            int rounds, bool repeat, int keep = 0)
         {
-            string why = WhyNotPropose(half, actorSlot, giveGood, giveAmount, getGood, getAmount, rounds, repeat);
+            string why = WhyNotPropose(half, actorSlot, giveGood, giveAmount, getGood, getAmount, rounds, repeat, keep);
             if (why != null)
             {
                 Plugin.LogWarning($"[Colony] Exchange offer skipped: {why}");
@@ -561,10 +625,13 @@ namespace BeaverBuddies.Colonies
             int from = OwnerOf(half), to = OwnerOf(partner);
             // Both halves agree on the number; it only ever grows.
             int serial = Math.Max(mine.Serial, theirs.Serial) + 1;
-            mine.Propose(serial, true, giveGood, giveAmount, rounds, repeat, from);
-            theirs.Propose(serial, false, getGood, getAmount, rounds, repeat, to);
+            mine.Propose(serial, true, giveGood, giveAmount, rounds, repeat, from, keep);
+            theirs.Propose(serial, false, getGood, getAmount, rounds, repeat, to, 0);
+            // Each half remembers the terms from its own side, to offer them again later.
+            mine.RememberTerms(ExchangeTerms.EncodeTerms(giveGood, giveAmount, getGood, getAmount, rounds, repeat, keep));
+            theirs.RememberTerms(ExchangeTerms.EncodeTerms(getGood, getAmount, giveGood, giveAmount, rounds, repeat, 0));
             Plugin.Log($"[Colony] Slot {from} offers {giveAmount} {giveGood} for {getAmount} {getGood} from slot {to}, "
-                + $"{(repeat ? "repeating" : rounds + " rounds")} (exchange {serial})");
+                + $"{(repeat ? "repeating" : rounds + " rounds")}{(keep > 0 ? $", keeping {keep}" : "")} (exchange {serial})");
             Tell(() => to, null, () => string.Format(T("BeaverBuddies.Colony.Trade.Notice.Proposed"),
                 ColonyName(from), Amount(giveAmount, giveGood), Amount(getAmount, getGood)), warning: false);
         }
@@ -632,6 +699,22 @@ namespace BeaverBuddies.Colonies
             mine.AskCancel(true);
             Plugin.Log($"[Colony] Slot {me} asks to end exchange {serial}");
             Tell(() => them, null, () => string.Format(T("BeaverBuddies.Colony.Trade.Notice.CancelAsked"), ColonyName(me)), warning: true);
+        }
+
+        /// <summary>
+        /// A colony sets what it keeps back in exchange <paramref name="serial"/> at its half (0 for no floor): its side
+        /// is brought or paid only while the colony can spare the round. Changed at any time while the exchange is open.
+        /// </summary>
+        public void SetKeep(DistrictCrossing half, int actorSlot, int serial, int keep)
+        {
+            if (!TryGetOwnOpen(half, actorSlot, serial, "reserve", out CrossingExchange mine, out _, out _)) return;
+            if (!ExchangeTerms.IsValidKeep(keep))
+            {
+                Plugin.LogWarning($"[Colony] Exchange reserve skipped: {keep} is not a valid reserve");
+                return;
+            }
+            mine.SetKeep(keep);
+            Plugin.Log($"[Colony] Slot {OwnerOf(half)} keeps {keep} {mine.GoodId} back in exchange {serial}");
         }
 
         /// <summary>
@@ -753,6 +836,8 @@ namespace BeaverBuddies.Colonies
         public int getAmount;
         public int rounds = 1;
         public bool repeat;
+        /// <summary>What the offering colony keeps back of what it gives (0 for no floor); the other side sets its own later.</summary>
+        public int keep;
 
         // The offering half must be the actor's (checked again when played).
         public override ColonyScope GetColonyScope() => ColonyScope.Entities(crossingID);
@@ -760,7 +845,7 @@ namespace BeaverBuddies.Colonies
         public override void Replay(IReplayContext context)
         {
             var half = GetComponent<DistrictCrossing>(context, crossingID);
-            ColonyExchangeService.Instance?.Propose(half, slot, giveGood, giveAmount, getGood, getAmount, rounds, repeat);
+            ColonyExchangeService.Instance?.Propose(half, slot, giveGood, giveAmount, getGood, getAmount, rounds, repeat, keep);
         }
 
         public override string ToActionString() => $"Offering {giveAmount} {giveGood} for {getAmount} {getGood}, {(repeat ? "repeating" : rounds + " times")}";
@@ -812,6 +897,26 @@ namespace BeaverBuddies.Colonies
         }
 
         public override string ToActionString() => "Ending an exchange";
+    }
+
+    /// <summary>A colony sets what it keeps back of what it gives in the exchange at its half of a trading post.</summary>
+    [Serializable]
+    public class ExchangeFloorSetEvent : ReplayEvent
+    {
+        public string crossingID;
+        public int serial;
+        public int keep;
+
+        public override ColonyScope GetColonyScope() => ColonyScope.Entities(crossingID);
+
+        public override void Replay(IReplayContext context)
+        {
+            var half = GetComponent<DistrictCrossing>(context, crossingID);
+            if (half == null) return;
+            ColonyExchangeService.Instance?.SetKeep(half, slot, serial, keep);
+        }
+
+        public override string ToActionString() => $"Keeping {keep} back in an exchange";
     }
 
     /// <summary>A colony wants the exchange at its half of a trading post to go on (no longer asks, or refuses, to end it).</summary>

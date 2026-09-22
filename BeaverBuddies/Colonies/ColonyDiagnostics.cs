@@ -204,6 +204,7 @@ namespace BeaverBuddies.Colonies
                 + $"exchanges={(uint)exchanges:x} stock={(uint)stock:x} totals={(uint)(ColonyTradeLedger.Instance?.Fingerprint() ?? 0):x} "
                 + $"marks=[{ColonyMarks.Instance?.Fingerprint()}] science=[{ColonyScienceService.Instance?.Fingerprint()}] "
                 + $"hours=[{ColonyWorkingHours.Instance?.Fingerprint()}] away=[{ColonyLifecycle.Instance?.Fingerprint()}] "
+                + $"stewards=[{ColonyStewards.Instance?.Fingerprint()}] wishes=[{ColonyWishlist.Instance?.Fingerprint()}] "
                 + $"flags={flags} phases={phases} digest={ColonyDigest.Describe()}";
         }
 
@@ -256,7 +257,7 @@ namespace BeaverBuddies.Colonies
             EventIO io = EventIO.Get();
             string role = io != null ? RoleOf(io) : lastRole != null ? lastRole + " (the session has ended)" : "single player";
             ReplayService replay = SingletonManager.GetSingleton<ReplayService>();
-            r.AppendLine($"Role: {role} | local colony slot {ColonySession.LocalSlot} | separate colonies {On(ColonyModeService.IsSeparateColonies)}, "
+            r.AppendLine($"Role: {role} | local colony slot {ColonySession.LocalSlot} (seat {ColonySession.LocalSeat}) | separate colonies {On(ColonyModeService.IsSeparateColonies)}, "
                 + $"separate science {On(ColonyScienceService.IsEnabled)} | detailed logging {On(Settings.Debug)}, away days setting {Settings.AbandonedColonyDaysValue} | "
                 + $"dev mode {On(_devModeManager.Enabled)}" + (devModeUsed && !_devModeManager.Enabled ? " (was on this game)" : ""));
             r.AppendLine($"Game: day {_dayNightCycle.DayNumber}, {_dayNightCycle.HoursPassedToday:0.0} h | ticks since load {ticks}"

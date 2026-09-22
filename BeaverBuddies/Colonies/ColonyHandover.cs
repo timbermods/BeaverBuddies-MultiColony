@@ -55,6 +55,14 @@ namespace BeaverBuddies.Colonies
         private int checkedDay = int.MinValue;
         // Host only: handovers asked for and not yet played, so each is asked for once.
         private readonly HashSet<int> requested = new HashSet<int>();
+        // Session: the players in the game as the host last said, by stable id, and the host's hand-over limit.
+        private readonly HashSet<string> presentPlayerIds = new HashSet<string>();
+
+        /// <summary>The host's "hand over after days away" setting as it last told everyone; -1 until it has, 0 for never.</summary>
+        public int HandoverLimit { get; private set; } = -1;
+
+        /// <summary>Whether a player (by stable id) was in the game when the host last said who is.</summary>
+        public bool IsPlayerPresent(string playerId) => playerId != null && presentPlayerIds.Contains(playerId);
 
         public static ColonyLifecycle Instance => SingletonManager.GetSingleton<ColonyLifecycle>();
 
@@ -228,13 +236,16 @@ namespace BeaverBuddies.Colonies
             List<int> present = alone
                 ? Enumerable.Range(0, ColonySlotTable.MaxSlots).Where(OwnsDistrict).ToList()
                 : PresentSlots();
-            ReplayEvent.DoPrefix(() => new ColonyPresenceEvent { day = day, presentSlots = present });
-            // The host's setting, read each day, so it can be changed during a game.
+            List<string> presentIds = PresentPlayerIds();
+            // The host's setting, read each day, so it can be changed during a game; told to everyone with the day.
             int limit = Settings.AbandonedColonyDaysValue;
+            ReplayEvent.DoPrefix(() => new ColonyPresenceEvent { day = day, presentSlots = present, presentPlayerIds = presentIds, limit = limit });
             if (limit <= 0 || alone) return;
             for (int slot = 0; slot < ColonySlotTable.MaxSlots; slot++)
             {
                 if (present.Contains(slot) || !OwnsDistrict(slot) || PopulationOf(slot) == 0 || requested.Contains(slot)) continue;
+                // A colony looked after by a player who is in the game is not handed over for its own player's absence.
+                if (ColonyStewards.Instance?.IsLookedAfterBy(slot, presentIds) == true) continue;
                 int? away = DaysAway(slot);
                 if (away == null || away.Value < limit) continue;
                 int? to = NearestLiving(slot, present);
@@ -260,19 +271,57 @@ namespace BeaverBuddies.Colonies
                 .Where(slot => slot >= 0).Distinct().OrderBy(slot => slot).ToList();
         }
 
+        /// <summary>Host: the stable ids of the players in this session now (the host's, and every guest still connected).</summary>
+        public static List<string> PresentPlayerIds()
+        {
+            List<int> connected = (EventIO.Get() as ServerEventIO)?.NetBase?.ConnectedPlayerIds;
+            ColonySlotService slots = ColonySlotService.Instance;
+            if (slots == null) return new List<string>();
+            return slots.Players
+                .Where(p => p.player == ColonySession.HostPlayer || connected == null || connected.Contains(p.player))
+                .Select(p => p.id).Where(id => !string.IsNullOrEmpty(id)).Distinct().OrderBy(id => id, StringComparer.Ordinal).ToList();
+        }
+
         /// <summary>
         /// Played on every computer, once a day of hosted play: these colonies' players are in the game; every other
-        /// colony's player has missed another day.
+        /// colony's player has missed another day. A colony one day short of the host's limit is announced, so the
+        /// hand-over the next day surprises nobody.
         /// </summary>
-        public void Seen(IEnumerable<int> slots, int day)
+        public void Seen(IEnumerable<int> slots, int day, IEnumerable<string> playerIds = null, int limit = -1)
         {
             var present = new HashSet<int>(slots);
+            presentPlayerIds.Clear();
+            if (playerIds != null) foreach (string id in playerIds) presentPlayerIds.Add(id);
+            HandoverLimit = limit;
             for (int slot = 0; slot < awayDays.Length; slot++)
             {
                 if (present.Contains(slot) || !OwnsDistrict(slot)) awayDays[slot] = 0;
                 else awayDays[slot]++;
             }
             ColonyDigest.Note("seen", day, present.Sum(slot => 1L << slot), awayDays.Sum(days => (long)days));
+            WarnBeforeHandover(present, limit);
+        }
+
+        // Display only: the hand-over comes with the next day's check, once the count has reached the limit.
+        private void WarnBeforeHandover(HashSet<int> present, int limit)
+        {
+            if (limit <= 0) return;
+            try
+            {
+                int local = ColonySession.LocalSeat;
+                if (local < 0) return;
+                for (int slot = 0; slot < awayDays.Length; slot++)
+                {
+                    if (slot == local || present.Contains(slot) || !ColonyAbsence.IsDueTomorrow(awayDays[slot], limit)) continue;
+                    if (!OwnsDistrict(slot) || PopulationOf(slot) == 0 || ColonyStewards.Instance?.IsLookedAfter(slot) == true) continue;
+                    _colonyRulesService.ShowNotice(string.Format(RegisteredLocalizationService.T("BeaverBuddies.Colony.Handover.Tomorrow"),
+                        ColonyExchangeService.ColonyName(slot), limit), warning: true);
+                }
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Colony] Could not warn of a hand-over: " + error.Message);
+            }
         }
 
         /// <summary>
@@ -323,6 +372,8 @@ namespace BeaverBuddies.Colonies
                 if (exchange == null || !exchange.IsOpen || TradingPosts.IsTradingPost(crossing)) continue;
                 ColonyExchangeService.Instance?.End(crossing, TradingPosts.Partner(crossing), $"slot {from}'s colony was handed to slot {to}");
             }
+            // Whoever looked after it looks after nothing now: it is another player's colony.
+            ColonyStewards.Instance?.Revoke(from, "the colony was handed over");
             deadSince[from] = Unknown;
             awayDays[from] = 0;
             requested.Remove(from);
@@ -368,6 +419,10 @@ namespace BeaverBuddies.Colonies
     {
         public int day;
         public List<int> presentSlots;
+        /// <summary>The same players by stable id, so every computer knows whether a colony's steward is in the game.</summary>
+        public List<string> presentPlayerIds;
+        /// <summary>The host's "hand over after days away" setting (0 for never), so every computer can say how close a hand-over is.</summary>
+        public int limit = -1;
         /// <summary>The host's colony check for the day, written as the host plays this; null from an older host.</summary>
         public string check;
 
@@ -376,7 +431,7 @@ namespace BeaverBuddies.Colonies
 
         public override void Replay(IReplayContext context)
         {
-            ColonyLifecycle.Instance?.Seen(presentSlots ?? new List<int>(), day);
+            ColonyLifecycle.Instance?.Seen(presentSlots ?? new List<int>(), day, presentPlayerIds, limit);
             Compare();
         }
 

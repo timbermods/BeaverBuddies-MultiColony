@@ -23,16 +23,18 @@ namespace BeaverBuddies.Colonies
         private readonly IGoodService _goodService;
         private readonly GoodsGroupSpecService _goodsGroupSpecService;
         private readonly ResourceCountingService _resourceCountingService;
+        private readonly DistrictCenterRegistry _districtCenterRegistry;
         private Sprite scienceIcon, beaverIcon;
         private bool specialIconsLoaded;
         private List<(Sprite icon, List<string> goods)> groups;
 
         public TradeItems(IGoodService goodService, GoodsGroupSpecService goodsGroupSpecService,
-            ResourceCountingService resourceCountingService)
+            ResourceCountingService resourceCountingService, DistrictCenterRegistry districtCenterRegistry)
         {
             _goodService = goodService;
             _goodsGroupSpecService = goodsGroupSpecService;
             _resourceCountingService = resourceCountingService;
+            _districtCenterRegistry = districtCenterRegistry;
         }
 
         /// <summary>A good of this game, science (only when each colony has its own), or beavers.</summary>
@@ -88,6 +90,23 @@ namespace BeaverBuddies.Colonies
             if (item == ExchangeTerms.Beavers) return district.GetComponent<DistrictPopulation>()?.NumberOfAdults ?? 0;
             if (!_goodService.HasGood(item)) return 0;
             return _resourceCountingService.GetDistrictResourceCounter(district).GetResourceCount(item).AvailableStock;
+        }
+
+        /// <summary>How much a colony has of an item over all its districts: stock, science, or adult beavers.</summary>
+        public int StockOfColony(int slot, string item)
+        {
+            if (string.IsNullOrEmpty(item) || slot < 0) return 0;
+            if (item == ExchangeTerms.Science) return ColonyScienceService.Instance?.PointsOf(slot) ?? 0;
+            bool beavers = item == ExchangeTerms.Beavers;
+            if (!beavers && !_goodService.HasGood(item)) return 0;
+            int total = 0;
+            foreach (DistrictCenter districtCenter in _districtCenterRegistry.FinishedDistrictCenters)
+            {
+                if (DistrictOwner.OwnerOfDistrict(districtCenter) != slot) continue;
+                if (beavers) total += districtCenter.GetComponent<DistrictPopulation>()?.NumberOfAdults ?? 0;
+                else total += _resourceCountingService.GetDistrictResourceCounter(districtCenter).GetResourceCount(item).AvailableStock;
+            }
+            return total;
         }
 
         /// <summary>The good a colony has most of at a crossing half's district (a form's first choice), never another.</summary>
