@@ -439,6 +439,45 @@ static class ColonyChecks
             Equal(ColonyRefusal.TooCloseToColony, ColonyRules.JudgeFounding(true, false, true, true, false, tooCloseToColony: true).Refusal);
         });
 
+        yield return ("Colony: only the founder hears how a founding went; the others hear only that a colony was founded", () =>
+        {
+            // Every computer plays the founding at its tick. Slot 1 asked for it; the host (slot 0) and a third player
+            // did not, and a spot that changed ("try again with Ctrl+K") is not theirs to hear about.
+            Equal(FoundingNotice.None, ColonyRules.FoundingNoticeFor(localSlot: 0, founderSlot: 1, founded: false));
+            Equal(FoundingNotice.None, ColonyRules.FoundingNoticeFor(2, 1, false));
+            Equal(FoundingNotice.Founded, ColonyRules.FoundingNoticeFor(0, 1, true));
+            Equal(FoundingNotice.Founded, ColonyRules.FoundingNoticeFor(2, 1, true));
+            // A guest the host has not seated yet (-1) is not the founder either.
+            Equal(FoundingNotice.None, ColonyRules.FoundingNoticeFor(-1, 1, false));
+            Equal(FoundingNotice.Founded, ColonyRules.FoundingNoticeFor(-1, 1, true));
+            // The founder: whether it worked, or that the spot changed.
+            Equal(FoundingNotice.Done, ColonyRules.FoundingNoticeFor(1, 1, true));
+            Equal(FoundingNotice.Failed, ColonyRules.FoundingNoticeFor(1, 1, false));
+            Equal(FoundingNotice.Done, ColonyRules.FoundingNoticeFor(0, 0, true));
+        });
+
+        yield return ("Colony: a founding notice is a warning only for the founder's failed try, and names the colony for the others", () =>
+        {
+            // The founder's retry hint is the one notice that asks for something; a founding that worked is news.
+            Equal<string>(null, ColonyRules.FoundingNoticeKey(FoundingNotice.None));
+            Equal("BeaverBuddies.Colony.Founding.Done", ColonyRules.FoundingNoticeKey(FoundingNotice.Done));
+            Equal("BeaverBuddies.Colony.Founding.Failed", ColonyRules.FoundingNoticeKey(FoundingNotice.Failed));
+            Equal("BeaverBuddies.Colony.Founding.Other", ColonyRules.FoundingNoticeKey(FoundingNotice.Founded));
+            Equal(false, ColonyRules.FoundingNoticeWarns(FoundingNotice.Done));
+            Equal(true, ColonyRules.FoundingNoticeWarns(FoundingNotice.Failed));
+            Equal(false, ColonyRules.FoundingNoticeWarns(FoundingNotice.Founded));
+            // The others' notice names the colony ({0}); the founder's own texts take no name.
+            string root = AppContext.BaseDirectory;
+            while (root != null && !File.Exists(Path.Combine(root, "BeaverBuddies.sln"))) root = Path.GetDirectoryName(root);
+            Check(root != null, "could not find the repository root");
+            var english = File.ReadAllLines(Path.Combine(root!, "BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv"))
+                .Select(line => line.Split(new[] { ',' }, 2)).Where(parts => parts.Length == 2)
+                .GroupBy(parts => parts[0]).ToDictionary(group => group.Key, group => group.First()[1]);
+            Check(english[ColonyRules.FoundingNoticeKey(FoundingNotice.Founded)].Contains("{0}"), "the others' founding notice does not name the colony");
+            Check(!english[ColonyRules.FoundingNoticeKey(FoundingNotice.Done)].Contains("{0}"), "the founder's founding notice expects a name");
+            Check(!english[ColonyRules.FoundingNoticeKey(FoundingNotice.Failed)].Contains("{0}"), "the founder's failed founding notice expects a name");
+        });
+
         // ---- automatic migration ----
 
         yield return ("Colony: automatic migration only pairs districts of one owner", () =>

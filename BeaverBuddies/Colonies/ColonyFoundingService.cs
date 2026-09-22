@@ -318,7 +318,7 @@ namespace BeaverBuddies.Colonies
             if (!verdict.IsAllowed)
             {
                 Plugin.LogWarning($"[Colony] Founding at {placement.Coordinates} skipped: {verdict.Refusal}, {verdict.Detail}");
-                Notice("BeaverBuddies.Colony.Founding.Failed");
+                TellFounding(slot, founded: false);
                 return;
             }
             // The event's own (the host's), never this computer's specs: see HostStartingSettings. An event from an
@@ -366,7 +366,7 @@ namespace BeaverBuddies.Colonies
                 try { _cameraTargeter.CenterCameraOn(building.GetComponent<SelectableObject>()); }
                 catch (Exception error) { Plugin.LogWarning("[Colony] Could not move the camera: " + error.Message); }
             }
-            Notice("BeaverBuddies.Colony.Founding.Done");
+            TellFounding(slot, founded: true);
         }
 
         private static Vector3 SpawnPosition(Building building, BlockObject blockObject)
@@ -400,6 +400,31 @@ namespace BeaverBuddies.Colonies
 
         private static void Notice(string key) =>
             SingletonManager.GetSingleton<ColonyRulesService>()?.ShowNotice(RegisteredLocalizationService.T(key));
+
+        /// <summary>
+        /// Display only, on this computer, as a founding is played or skipped: the founder hears how it went, everyone
+        /// else only that a colony was founded. Which notice, which text and whether it is a warning are decided in
+        /// ColonyRules (FoundingNoticeFor, FoundingNoticeKey, FoundingNoticeWarns), where StabilityTests checks them.
+        /// </summary>
+        private static void TellFounding(int slot, bool founded)
+        {
+            try
+            {
+                FoundingNotice notice = ColonyRules.FoundingNoticeFor(ColonySession.LocalSlot, slot, founded);
+                string key = ColonyRules.FoundingNoticeKey(notice);
+                if (key == null) return;
+                ColonyRulesService rules = SingletonManager.GetSingleton<ColonyRulesService>();
+                if (rules == null) return;
+                string text = RegisteredLocalizationService.T(key);
+                if (notice == FoundingNotice.Founded) text = string.Format(text, ColonyExchangeService.ColonyName(slot));
+                rules.ShowNotice(text, warning: ColonyRules.FoundingNoticeWarns(notice));
+            }
+            catch (Exception error)
+            {
+                // A notice is a courtesy; it must never break the founding every computer is playing.
+                Plugin.LogWarning("[Colony] Could not show a founding notice: " + error.Message);
+            }
+        }
 
         /// <summary>The founding tool's placer: the click becomes a founding action instead of a construction site.</summary>
         private sealed class FoundingPlacer : IBlockObjectPlacer

@@ -151,7 +151,9 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 1. The friend is seated (log: `[Colony] Player 1 (…) plays slot 1`). The connection panel shows each name with its
    colony, e.g. *Alex (colony 2)*.
 2. On a standard map or an existing save: once the host unpauses, the friend sees the offer to place a district
-   center and founds their colony. (Before that, Ctrl+K says the game has not started yet.)
+   center and founds their colony. (Before that, Ctrl+K says the game has not started yet.) The friend's notice is
+   *A new colony has been founded.*; the host's is a plain notice, not a warning: *A new colony has been founded:
+   Alex.* If the spot changed before it could be founded, only the friend is told to try again.
 3. Each player tries Script A line 3 against the other's colony: refused. Then one player leaves; the other tries
    again: still refused.
 4. Build a trading post between the two colonies and run an exchange (Script A lines 7 to 11, one player per side;
