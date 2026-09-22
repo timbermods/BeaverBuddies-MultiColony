@@ -261,7 +261,7 @@ places. So in a separate-colonies game:
 | Automation | A building, relay or memory cell may be wired only to its own colony's (copying settings from another colony's building, or placing a copy of it, is refused or placed plain: it would copy the links too) |
 | Names | Only the owner renames |
 | Other mods' building settings | Only the owner changes them: another mod's action for one building (MixedStorage's warehouse and pile goods) is judged like this mod's own |
-| Migration | Only between a colony's own districts; beavers change colony only through a Trading Post, and a traded beaver must be able to walk to its new district and carry nothing |
+| Migration | Only between a colony's own districts; beavers change colony only through a Trading Post, and a traded beaver must be able to walk to its new district and carry nothing. In the Migration tab (F7), another colony's district's automatic migration settings, and the manual buttons between it and yours, are greyed out |
 
 Marks work per tile: a tile marked by one colony (for planting or cutting) can't be marked or unmarked by another.
 Unmarking an area removes only your own marks in it.

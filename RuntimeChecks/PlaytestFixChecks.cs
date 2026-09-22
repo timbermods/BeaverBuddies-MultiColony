@@ -77,5 +77,37 @@ internal static class PlaytestFixChecks
                 if (Math.Max(r, Math.Max(g, b)) - Math.Min(r, Math.Min(g, b)) < 0.5f) throw new Exception($"a road colour is washed out: {r}, {g}, {b}");
             }
         });
+
+        test("Migration tab (beta17): another colony's district's migration controls are greyed out, its toggles show its setting", () =>
+        {
+            // The game's rows: automatic migration (minimum, − and +, two toggles set only when the row is made) and the
+            // manual panel's 1, 10 and all buttons.
+            var batch = Assembly.Load("Timberborn.GameDistrictsMigrationBatchControl");
+            foreach (var (patcher, typeName, method) in new[]
+            {
+                ("BeaverBuddies.Colonies.ColonyMigrationSettingsRowPatcher", "Timberborn.GameDistrictsMigrationBatchControl.PopulationDistributorBatchControlRowItem", "UpdateRowItem"),
+                ("BeaverBuddies.Colonies.ColonyManualMigrationButtonsPatcher", "Timberborn.GameDistrictsMigrationBatchControl.ManualMigrationPopulationRow", "SetButtonsEnabledState"),
+            })
+            {
+                Type type = batch.GetType(typeName, true)!;
+                if (type.GetMethod(method, all) == null) throw new Exception($"the game has no {type.Name}.{method}");
+                var attribute = mod.GetType(patcher, true)!.GetCustomAttributesData().First(a => a.AttributeType.Name == "HarmonyPatch");
+                if (((Type)attribute.ConstructorArguments[0].Value!).FullName != typeName || (string)attribute.ConstructorArguments[1].Value! != method)
+                    throw new Exception(patcher + " patches something else");
+            }
+            Type controls = mod.GetType("BeaverBuddies.Colonies.ColonyMigrationControls", true)!;
+            if (!Calls(new[] { controls.GetMethod("MayChange", all)! }, "BeaverBuddies.Colonies.ColonyViewService", "IsOwnDistrict"))
+                throw new Exception("the controls no longer ask whose district it is");
+            if (!Calls(new[] { controls.GetMethod("Enable", all)! }, "UnityEngine.UIElements.VisualElement", "SetEnabled"))
+                throw new Exception("the controls are not greyed out");
+            // (A toggle's SetValueWithoutNotify is its generic base field's.)
+            if (!IlScan.Instructions(controls.GetMethod("ShowSetting", all)!).Any(i => i.Calls && i.Member?.Name == "SetValueWithoutNotify"))
+                throw new Exception("the toggles do not show the real setting");
+            // The game's own row sets no toggle after it is made (why a refused click looked changed).
+            Type row = batch.GetType("Timberborn.GameDistrictsMigrationBatchControl.PopulationDistributorBatchControlRowItem", true)!;
+            if (IlScan.Instructions(row.GetMethod("UpdateRowItem", all)!).Any(i => i.Calls && i.Member?.Name == "SetValueWithoutNotify"
+                    && i.Member.DeclaringType?.Name.StartsWith("BaseField") == true && i.Member.DeclaringType.GetGenericArguments().FirstOrDefault() == typeof(bool)))
+                Console.WriteLine("      (the game's row now sets its toggles itself; the colony patch only repeats it)");
+        });
     }
 }

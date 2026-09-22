@@ -5,6 +5,24 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta17
+
+**Another colony's district's migration controls are greyed out.** Found playing beta15: in the Migration tab (F7),
+with the other colony's district chosen in the window's district list, its automatic migration row (the minimum, −
+and +, and the two toggles) could be clicked. Every such change was already refused (the Entities and Migration
+scopes, on the player's own computer and on the host; the host's log showed its own district's changes played and
+the other colony's manual migration refused), but the game's toggles are set only when a row is made, so a refused
+toggle went on looking changed.
+
+- `ColonyMigrationControls` (display only): `PopulationDistributorBatchControlRowItem.UpdateRowItem` greys the row
+  out on a district that is not this player's colony's (`ColonyViewService.IsOwnDistrict`), whose toggles then show
+  the district's real setting, its owner's changes included. This player's own rows are left as the game has them
+  (set from the toggle at once, played a tick or a round trip later), so they do not bounce back while waiting.
+- `ManualMigrationPopulationRow.SetButtonsEnabledState`: the 1, 10 and all buttons are greyed out while either
+  district of the manual panel is another colony's (they were refused with a notice before).
+- No wire change, no save change. RuntimeChecks 331 (1 new: the two patches' targets, and that the controls ask whose
+  district it is, grey out and show the setting). StabilityTests 355.
+
 ## 1.4.0-beta16
 
 **Five changes asked for after playing beta15**, where trading posts and exchanges worked (goods and beavers crossed,

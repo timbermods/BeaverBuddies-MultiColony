@@ -289,6 +289,11 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     a bright square in its color (colony 1 red, colony 2 green-teal), easy to tell apart on grass and on the paths
     themselves; a district center's and stairs' squares lie on the ground, none float inside them. Pick a building:
     the squares show while it is in hand, and not with the planting or cutting tools. A screenshot helps.
+8af. **Another colony's migration (beta17).** In the Migration tab (F7), choose the other colony's district in the
+    window's district list: its automatic migration row (the minimum, − and +, and both toggles) is greyed out, and
+    its toggles follow the other player's settings as they change them. In the manual migration panel, the 1, 10 and
+    all buttons are greyed out whenever one of the two districts is the other colony's. Your own district's controls
+    work as before.
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*

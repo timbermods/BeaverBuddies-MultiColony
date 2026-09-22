@@ -1,3 +1,7 @@
+v1.4.0-beta17 (BeaverBuddies MultiColony)
+* In the Migration tab, another colony's district's automatic migration settings, and the manual migration buttons between it and yours, are now greyed out. (Changes there were already refused, but the toggles looked changed.)
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta16 (BeaverBuddies MultiColony)
 * A Trading Post can be placed before the roads are there. It starts trading once your road reaches one end and another colony's road the other.
 * Other mods' settings on a building (MixedStorage's warehouse and pile goods) can no longer be changed on another colony's building.

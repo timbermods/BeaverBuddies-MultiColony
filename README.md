@@ -102,7 +102,8 @@ verified](#how-it-works)).
   time with **Ctrl+L**.
 - **You change only your own colony**, whether or not the other player is playing: their buildings, beavers,
   districts, marks and settings are refused (*That belongs to another colony.*), and so are the settings other mods
-  add to a building (MixedStorage's warehouse and pile goods).
+  add to a building (MixedStorage's warehouse and pile goods). In the Migration tab (F7), another colony's district's
+  migration controls are greyed out.
 - **Your beavers work only for your colony:**
   - builders build and demolish only for your colony;
   - lumberjacks cut only trees you marked;
