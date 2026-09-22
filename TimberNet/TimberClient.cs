@@ -47,10 +47,45 @@ namespace TimberNet
         }
 
         private ActivityChannel? activityChannel;
+        private volatile bool saveArrived;
 
         protected override void OnMapFrameReceived(ISocketStream stream)
         {
+            saveArrived = true;
             activityChannel = CreateActivityChannel(stream);
+        }
+
+        // ---- Waiting room (see LobbyFrames) ----
+
+        /// <summary>What the host's waiting room has said, if the host opened one. Written on the receive thread.</summary>
+        public LobbyInbox Lobby { get; } = new LobbyInbox();
+
+        protected override void HandleLobbyFrame(ISocketStream source, string type, JObject frame)
+        {
+            // Only the host's frames mean anything here.
+            if (LobbyFrames.IsGuestType(type)) return;
+            Lobby.Receive(type, frame, RttTracker.NowMs);
+        }
+
+        /// <summary>Says who this guest is to the host's waiting room. False once the save has come, or if not connected.</summary>
+        public bool SendLobbyHello(string id, string name) => SendLobbyFrame(LobbyFrames.Hello(id, name));
+
+        /// <summary>Tells the host's waiting room this guest is ready, or no longer is.</summary>
+        public bool SendLobbyReady(bool ready) => SendLobbyFrame(LobbyFrames.Ready(ready));
+
+        private bool SendLobbyFrame(JObject frame)
+        {
+            if (IsStopped || saveArrived) return false;
+            try
+            {
+                SendDataWithLength(client, MessageToBuffer(frame));
+                return true;
+            }
+            catch (Exception e)
+            {
+                HandleConnectionFailure(client, "Could not reach the host's waiting room: " + e.Message);
+                return false;
+            }
         }
 
         private sealed class RosterSnapshot

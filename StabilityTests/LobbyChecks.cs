@@ -1,0 +1,331 @@
+using System.Collections.Concurrent;
+using Newtonsoft.Json.Linq;
+using TimberNet;
+
+/// <summary>
+/// The waiting room's network phase (TimberNet: LobbyFrames, LobbyRoom, LobbyInbox and the server and client changes),
+/// over in-memory pipes with the real handshake.
+/// </summary>
+static class LobbyChecks
+{
+    static void Check(bool value, string message = "assertion failed") { if (!value) throw new Exception(message); }
+    static bool Until(Func<bool> condition, int ms = 3000) => SpinWait.SpinUntil(condition, ms);
+
+    public static IEnumerable<(string Name, Action Run)> Tests()
+    {
+        yield return ("A waiting-room guest is welcomed and sees the roster before any save; its hello and ready reach the host", () => WithRoom(rig =>
+        {
+            var guest = rig.Join();
+            Check(Until(() => guest.Lobby.View().Welcomed && guest.Lobby.View().Players.Count == 2), "not welcomed");
+            LobbyView view = guest.Lobby.View();
+            Check(view.You == 1 && view.Summary!.Settlement == "Beaverton" && view.Summary.HostName == "Kyler");
+            Check(view.Players[0].IsHost && view.Players[0].Colony == 1 && view.Players[1].Joining && view.Players[1].Colony == 2);
+            Check(guest.SendLobbyHello("local:anna", "Anna") && guest.SendLobbyReady(true));
+            Check(Until(() => rig.Host.Lobby!.Snapshot().Players.Count == 2 && rig.Host.Lobby!.Snapshot().Players[1].Ready), "ready not seen");
+            LobbySnapshot snapshot = rig.Host.Lobby!.Snapshot();
+            Check(snapshot.Players[1].Name == "Anna" && !snapshot.Players[1].Joining && snapshot.Guests[0].StableId == "local:anna");
+            Check(Until(() => guest.Lobby.View().Players.Count == 2 && guest.Lobby.View().Players[1].Ready), "the guest's roster did not follow");
+        }));
+
+        yield return ("Releasing the room sends the save, then the state and the first event, and the host's game thread sends none of it", () => WithRoom(rig =>
+        {
+            var recorder = new ThreadRecorder();
+            var guest = rig.Join(recorder);
+            byte[]? map = null;
+            guest.OnMapReceived += bytes => map = bytes;
+            Check(Until(() => guest.Lobby.View().Welcomed));
+            byte[] save = Enumerable.Range(0, 5000).Select(i => (byte)i).ToArray();
+            rig.Host.SetLobbyStage(LobbyStage.SendingWorld);
+            int caller = Environment.CurrentManagedThreadId;
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            rig.Host.ReleaseLobby(save);
+            Check(clock.ElapsedMilliseconds < 200, "ReleaseLobby waited");
+            Check(Until(() => { guest.Update(); return map != null; }), "no save");
+            Check(map!.SequenceEqual(save));
+            Check(!recorder.LargeWriteThreads.Contains(caller), "the save was written on the releasing thread");
+            Check(guest.Lobby.View().Stage == LobbyStage.SendingWorld, "the stage did not come before the save");
+            Check(Until(() => rig.Host.LobbyGuestsQueued));
+            List<JObject> events = new();
+            Check(Until(() => { events.AddRange(guest.ReadEvents(0)); return events.Any(e => (string?)e["type"] == "InitProbe"); }), "no init event");
+            Check(guest.Hash == rig.Host.Hash, "state and init did not arrive in order");
+            // In the game now: the host no longer treats it as waiting.
+            Check(rig.Host.Lobby!.Snapshot().Guests[0].InGame);
+        }));
+
+        yield return ("A guest still waiting can send nothing but its hello and ready; a frame too large closes only that guest", () => WithRoom(rig =>
+        {
+            var other = rig.Join();
+            Check(Until(() => other.Lobby.View().Welcomed));
+            PipeStream raw = rig.JoinRaw();
+            Check(Until(() => rig.Host.Lobby!.Snapshot().Players.Count == 3));
+            var net = new TestNet();
+            net.Send(raw, CompressionUtils.Compress(new JObject { ["type"] = "FakeAction", ["ticksSinceLoad"] = 0 }.ToString()));
+            net.Send(raw, CompressionUtils.Compress(new JObject { ["type"] = "SessionFault", ["reason"] = "x" }.ToString()));
+            net.Send(raw, CompressionUtils.Compress(LobbyFrames.Hello("local:raw", "Raw").ToString()));
+            Check(Until(() => rig.Host.Lobby!.Snapshot().Players.Any(p => p.Name == "Raw")), "the hello after the junk was not read");
+            Check(!rig.Host.IsStopped && rig.Host.ReadEvents(0).Count == 0, "a waiting guest's frame reached the game");
+            // A length the waiting room never accepts.
+            raw.Write(new byte[] { 0, 1, 0x11, 0x70 }, 0, 4);
+            Check(Until(() => rig.Host.Lobby!.Snapshot().Players.Count == 2), "the oversized guest stayed");
+            Check(Until(() => !raw.Connected || ReadsEnd(raw)), "the oversized guest was not closed");
+            Check(!other.IsStopped && rig.Host.Lobby!.Snapshot().Players.Any(p => p.Number == other.Lobby.View().You));
+        }));
+
+        yield return ("Ending the room tells every waiting guest why and closes it; closing the host closes waiting guests", () =>
+        {
+            WithRoom(rig =>
+            {
+                var a = rig.Join();
+                var b = rig.Join();
+                Check(Until(() => a.Lobby.View().Welcomed && b.Lobby.View().Welcomed));
+                rig.Host.CancelLobby(LobbyEndReason.Cancelled, null);
+                Check(Until(() => a.Lobby.View().Ended && b.Lobby.View().Ended), "not told");
+                Check(a.Lobby.View().EndReason == LobbyEndReason.Cancelled);
+                Check(Until(() => a.IsStopped && b.IsStopped), "not closed");
+            });
+            WithRoom(rig =>
+            {
+                var a = rig.Join();
+                Check(Until(() => a.Lobby.View().Welcomed));
+                rig.Host.Close();
+                Check(Until(() => a.IsStopped), "a waiting guest outlived the host");
+            });
+        });
+
+        yield return ("After Start nobody new comes in, with the room's reason, while those waiting still get the save", () => WithRoom(rig =>
+        {
+            var a = rig.Join();
+            byte[]? map = null;
+            a.OnMapReceived += bytes => map = bytes;
+            Check(Until(() => a.Lobby.View().Welcomed));
+            rig.Host.CloseLobbyToNewcomers("The room is closed.");
+            var late = rig.Join();
+            string error = "";
+            late.OnError += message => error = message;
+            Check(Until(() => { late.Update(); return error.Length > 0; }), "the newcomer was not refused");
+            Check(error.Contains("The room is closed.") && !late.Lobby.View().Welcomed);
+            Check(Until(() => a.Lobby.View().Stage == LobbyStage.Starting));
+            rig.Host.ReleaseLobby(new byte[] { 1, 2, 3 });
+            Check(Until(() => { a.Update(); return map != null; }), "the member did not get the save");
+        }));
+
+        yield return ("A guest reads a waiting-room frame only before its save, and never mistakes one for the save", () =>
+        {
+            byte[] welcome = CompressionUtils.Compress(LobbyFrames.Welcome(2,
+                new LobbySummary("Folktails", "Map", null, "Town", "Host", false)).ToString());
+            byte[] state = CompressionUtils.Compress(LobbyFrames.State(9, LobbyStage.CreatingWorld).ToString());
+            var bytes = new List<byte>();
+            bytes.AddRange(Length(LobbyFrames.Sentinel)); bytes.AddRange(Length(welcome.Length)); bytes.AddRange(welcome);
+            bytes.AddRange(Length(3)); bytes.AddRange(new byte[] { 7, 8, 9 });
+            bytes.AddRange(Length(LobbyFrames.Sentinel)); bytes.AddRange(Length(state.Length)); bytes.AddRange(state);
+            // A pipe that stays open: a stream that ended would stop the guest before it handed the save on.
+            var (hostSide, guestSide) = PipeStream.Pair();
+            hostSide.Write(bytes.ToArray(), 0, bytes.Count);
+            var client = new TimberClient(guestSide);
+            byte[]? map = null;
+            client.OnMapReceived += received => map = received;
+            try
+            {
+                client.Start();
+                Check(Until(() => { client.Update(); return map != null; }), "no save");
+                Check(map!.SequenceEqual(new byte[] { 7, 8, 9 }));
+                // The state frame after the save has been read (and dropped) by now.
+                Check(Until(() => client.Lobby.View().LastFrameAtMs > 0));
+                Thread.Sleep(100);
+                LobbyView view = client.Lobby.View();
+                Check(view.Welcomed && view.You == 2 && view.Summary!.ModeLocKey == null);
+                Check(view.Stage == LobbyStage.Open, "a frame after the save was used");
+                Check(!client.IsStopped, "the frame after the save broke the connection");
+            }
+            finally { client.Close(); hostSide.Close(); }
+        });
+
+        yield return ("Guests are numbered in the order they came; one who leaves drops off and the colonies move up", () => WithRoom(rig =>
+        {
+            var a = rig.Join(); Check(Until(() => a.Lobby.View().Welcomed));
+            var b = rig.Join(); Check(Until(() => b.Lobby.View().Welcomed));
+            var c = rig.Join(); Check(Until(() => c.Lobby.View().Welcomed));
+            Check(a.Lobby.View().You == 1 && b.Lobby.View().You == 2 && c.Lobby.View().You == 3);
+            Check(Until(() => a.Lobby.View().Players.Count == 4));
+            Check(a.Lobby.View().Players.Select(p => p.Colony).SequenceEqual(new int?[] { 1, 2, 3, 4 }));
+            b.Close();
+            Check(Until(() => rig.Host.Lobby!.Snapshot().Players.Count == 3), "the leaver stayed");
+            Check(rig.Host.Lobby!.Snapshot().Players.Select(p => p.Number).SequenceEqual(new[] { 0, 1, 3 }));
+            Check(Until(() => a.Lobby.View().Players.Count == 3 && a.Lobby.View().Players[2].Colony == 3), "the roster did not follow");
+        }));
+
+        yield return ("The host keeps a waiting guest's line alive while nothing else happens", () => WithRoom(rig =>
+        {
+            var a = rig.Join();
+            Check(Until(() => a.Lobby.View().Welcomed));
+            Thread.Sleep(400);
+            Check(RttTracker.NowMs - a.Lobby.View().LastFrameAtMs < 250, "no keep-alive");
+        }));
+
+        yield return ("The host can remove a waiting guest, and the eighth guest is refused", () => WithRoom(rig =>
+        {
+            var guests = new List<TimberClient>();
+            for (int i = 0; i < LobbyRoom.MaxGuests; i++)
+            {
+                var guest = rig.Join();
+                Check(Until(() => guest.Lobby.View().Welcomed), $"guest {i} not welcomed");
+                guests.Add(guest);
+            }
+            var eighth = rig.Join();
+            string error = "";
+            eighth.OnError += message => error = message;
+            Check(Until(() => { eighth.Update(); return error.Length > 0; }), "the eighth came in");
+            Check(error.Contains(LobbyRoom.FullMessage));
+            Check(rig.Host.RemoveFromLobby(guests[3].Lobby.View().You));
+            Check(Until(() => guests[3].Lobby.View().Ended && guests[3].Lobby.View().EndReason == LobbyEndReason.Removed), "not told");
+            Check(Until(() => rig.Host.Lobby!.Snapshot().Players.Count == LobbyRoom.MaxGuests), "still listed");
+            Check(!rig.Host.RemoveFromLobby(99));
+        }));
+
+        yield return ("A hello with a bad id is refused, and names are cleaned", () => WithRoom(rig =>
+        {
+            PipeStream raw = rig.JoinRaw();
+            Check(Until(() => rig.Host.Lobby!.Snapshot().Players.Count == 2));
+            var net = new TestNet();
+            net.Send(raw, CompressionUtils.Compress(LobbyFrames.Hello("steam:1|2", "Mallory").ToString()));
+            net.Send(raw, CompressionUtils.Compress(new JObject { ["type"] = LobbyFrames.ReadyType, ["ready"] = true }.ToString()));
+            Check(Until(() => rig.Host.Lobby!.Snapshot().Players[1].Ready));
+            Check(rig.Host.Lobby!.Snapshot().Players[1].Joining, "a bad hello was taken");
+            net.Send(raw, CompressionUtils.Compress(LobbyFrames.Hello("local:ok", "<b>Anna</b>\n").ToString()));
+            Check(Until(() => !rig.Host.Lobby!.Snapshot().Players[1].Joining));
+            string name = rig.Host.Lobby!.Snapshot().Players[1].Name;
+            Check(!name.Contains('<') && !name.Contains('\n') && name.Contains("Anna"), name);
+            Check(!LobbyFrames.IsWellFormedId("") && !LobbyFrames.IsWellFormedId(new string('a', 65)) && LobbyFrames.IsWellFormedId("steam:76561198000000000"));
+        }));
+
+        yield return ("Waiting-room frames round-trip, and bad ones are refused", () =>
+        {
+            var summary = new LobbySummary("Folktails", "Diorama", "NewGameMode.Hard", "Beaverton", "Kyler", true);
+            Check(LobbyFrames.TryParseWelcome(LobbyFrames.Welcome(3, summary), out int you, out LobbySummary? parsed) && you == 3
+                && parsed!.MapName == "Diorama" && parsed.ModeLocKey == "NewGameMode.Hard" && parsed.SeparateColonies);
+            var players = new[] { new LobbyPlayer(0, "Kyler", true, true, false, 1), new LobbyPlayer(4, "Helper", false, false, true, 0) };
+            Check(LobbyFrames.TryParseRoster(LobbyFrames.Roster(players), out List<LobbyPlayer> roster) && roster.Count == 2
+                && roster[1].Colony == 0 && roster[1].Joining && roster[1].Number == 4);
+            Check(LobbyFrames.TryParseState(LobbyFrames.State(5, LobbyStage.CreatingWorld), out int seq, out LobbyStage stage)
+                && seq == 5 && stage == LobbyStage.CreatingWorld);
+            Check(LobbyFrames.TryParseEnd(LobbyFrames.End(LobbyEndReason.Failed, "disk full"), out LobbyEndReason reason, out string? detail)
+                && reason == LobbyEndReason.Failed && detail == "disk full");
+            Check(!LobbyFrames.TryParseRoster(new JObject { ["players"] = new JArray(new JObject { ["n"] = 1, ["name"] = "x", ["ready"] = true,
+                ["host"] = false, ["joining"] = false, ["colony"] = 9 }) }, out _), "a colony past four was taken");
+            Check(!LobbyFrames.TryParseWelcome(new JObject { ["you"] = 0 }, out _, out _));
+            Check(!LobbyFrames.TryParseState(new JObject { ["seq"] = 1, ["state"] = "later" }, out _, out _));
+            Check(LobbyRoom.ColonyOf(0, true) == 1 && LobbyRoom.ColonyOf(3, true) == 4 && LobbyRoom.ColonyOf(4, true) == 0
+                && LobbyRoom.ColonyOf(1, false) == null);
+        });
+    }
+
+    static bool ReadsEnd(PipeStream stream)
+    {
+        var buffer = new byte[1];
+        try
+        {
+            var read = Task.Run(() => { while (stream.Read(buffer, 0, 1) == 1) { } return true; });
+            return read.Wait(500);
+        }
+        catch (Exception) { return true; }
+    }
+
+    static byte[] Length(int value)
+    {
+        byte[] bytes = BitConverter.GetBytes(value);
+        if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
+        return bytes;
+    }
+
+    static void WithRoom(Action<Rig> test)
+    {
+        int previous = TimberServer.LobbyIntervalMs;
+        TimberServer.LobbyIntervalMs = 50;
+        var rig = new Rig();
+        try { test(rig); }
+        finally
+        {
+            rig.Dispose();
+            TimberServer.LobbyIntervalMs = previous;
+        }
+    }
+
+    sealed class Rig : IDisposable
+    {
+        readonly RigListener listener = new();
+        readonly List<TimberClient> guests = new();
+        readonly List<PipeStream> raws = new();
+        public TimberServer Host { get; }
+
+        public Rig()
+        {
+            Host = new TimberServer(listener, () => throw new InvalidOperationException("a waiting room never asks for a map"),
+                () => new JObject { [TimberNetBase.TYPE_KEY] = "InitProbe", [TimberNetBase.TICKS_KEY] = 0 })
+            { CompatibilityIdentity = "same" };
+            Host.OpenLobby(new LobbyRoom(new LobbySummary("Folktails", "Diorama", "NewGameMode.Normal", "Beaverton", "Kyler", true)));
+            Host.Start();
+        }
+
+        public TimberClient Join(ThreadRecorder? recorder = null)
+        {
+            var (hostSide, guestSide) = PipeStream.Pair();
+            listener.Add(recorder == null ? hostSide : recorder.Wrap(hostSide));
+            var guest = new TimberClient(guestSide) { CompatibilityIdentity = "same" };
+            guests.Add(guest);
+            guest.Start();
+            return guest;
+        }
+
+        /// <summary>A guest that passed the handshake and then writes whatever the test wants.</summary>
+        public PipeStream JoinRaw()
+        {
+            var (hostSide, guestSide) = PipeStream.Pair();
+            listener.Add(hostSide);
+            raws.Add(guestSide);
+            CompatibilityHandshake.Run(guestSide, "same", false);
+            return guestSide;
+        }
+
+        public void Dispose()
+        {
+            Host.Close();
+            foreach (var guest in guests) guest.Close();
+            foreach (var raw in raws) raw.Close();
+        }
+    }
+
+    sealed class RigListener : ISocketListener
+    {
+        readonly BlockingCollection<ISocketStream> pending = new();
+        public void Add(ISocketStream stream) => pending.Add(stream);
+        public void Start() { }
+        public ISocketStream AcceptClient() => pending.Take();
+        public void Stop() => pending.CompleteAdding();
+    }
+
+    /// <summary>Records which threads write large chunks (the save) to a guest.</summary>
+    sealed class ThreadRecorder
+    {
+        public readonly ConcurrentBag<int> LargeWriteThreads = new();
+        public ISocketStream Wrap(ISocketStream inner) => new Stream(inner, this);
+
+        sealed class Stream : ISocketStream
+        {
+            readonly ISocketStream inner;
+            readonly ThreadRecorder recorder;
+            public Stream(ISocketStream inner, ThreadRecorder recorder) { this.inner = inner; this.recorder = recorder; }
+            public bool Connected => inner.Connected;
+            public string? Name => inner.Name;
+            public int MaxChunkSize => inner.MaxChunkSize;
+            public int MaxBytesPerSecond => inner.MaxBytesPerSecond;
+            public int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+            public void Write(byte[] buffer, int offset, int count)
+            {
+                if (count > 500) recorder.LargeWriteThreads.Add(Environment.CurrentManagedThreadId);
+                inner.Write(buffer, offset, count);
+            }
+            public void Close() => inner.Close();
+            public Task ConnectAsync() => inner.ConnectAsync();
+        }
+    }
+}

@@ -503,6 +503,35 @@ namespace TimberNet
             {
                 if (!TryReadLength(client, out int messageLength)) break;
 
+                // A waiting-room frame (see LobbyFrames): only a host that opened a waiting room writes the marker, and
+                // only before the guest's save. A guest reads one anywhere and uses it only before its save: a
+                // keep-alive can race the save frame. The marker never comes from a guest.
+                if (messageLength == LobbyFrames.Sentinel)
+                {
+                    if (!isClient)
+                    {
+                        HandleConnectionFailure(client, "A guest sent a waiting-room frame, which only a host sends.");
+                        break;
+                    }
+                    if (!TryReadLength(client, out int lobbyLength) || lobbyLength <= 0 || lobbyLength > LobbyFrames.MaxFrameBytes) break;
+                    byte[] lobbyFrame = client.ReadUntilComplete(lobbyLength);
+                    if (messageCount == 0) ReceiveLobbyFrame(client, lobbyFrame);
+                    continue;
+                }
+
+                // A guest still in the host's waiting room may send only its hello and its ready, and small ones; nothing
+                // it sends reaches the game before it has the save (IsInWaitingRoom).
+                if (!isClient && IsInWaitingRoom(client))
+                {
+                    if (messageLength <= 0 || messageLength > LobbyFrames.MaxFrameBytes)
+                    {
+                        HandleConnectionFailure(client, $"A guest in the waiting room sent a frame of {messageLength} bytes.");
+                        break;
+                    }
+                    ReceiveLobbyFrame(client, client.ReadUntilComplete(messageLength));
+                    continue;
+                }
+
                 // First message is always the file
                 if (messageCount == 0 && isClient)
                 {
@@ -553,6 +582,9 @@ namespace TimberNet
                     catch (Exception e) { Log("Ignoring a bad chat frame: " + e.Message); }
                     continue;
                 }
+                // Waiting-room frames are never actions: one that comes late (a ready toggled as the save went out) is
+                // dropped.
+                if (LobbyFrames.IsLobbyType(controlType)) continue;
                 if ((string?)control[TYPE_KEY] == "SessionFault")
                 {
                     sessionFaults.Enqueue("A peer could not replay a multiplayer action. Reload a known-good save before rehosting.");
@@ -565,6 +597,26 @@ namespace TimberNet
                 receivedEventQueue.Enqueue(control);
                 messageCount++;
             }
+        }
+
+        // ---- Waiting room (presentation only; see LobbyFrames) ----
+
+        /// <summary>Host: the connection is a guest still in the waiting room, which may send only waiting-room frames.</summary>
+        protected virtual bool IsInWaitingRoom(ISocketStream source) => false;
+
+        /// <summary>A waiting-room frame arrived on the receive thread (a guest's on the host, the host's on a guest).</summary>
+        protected virtual void HandleLobbyFrame(ISocketStream source, string type, JObject frame) { }
+
+        private void ReceiveLobbyFrame(ISocketStream source, byte[] compressed)
+        {
+            try
+            {
+                JObject frame = JObject.Parse(CompressionUtils.Decompress(compressed, LobbyFrames.MaxFrameBytes));
+                string? type = GetType(frame);
+                if (type != null && LobbyFrames.IsLobbyType(type)) HandleLobbyFrame(source, type, frame);
+            }
+            // Display only: a frame that can't be read is dropped, never fatal.
+            catch (Exception e) { Log("Ignoring a bad waiting-room frame: " + e.Message); }
         }
 
         protected byte[] MessageToBuffer(JObject message)
