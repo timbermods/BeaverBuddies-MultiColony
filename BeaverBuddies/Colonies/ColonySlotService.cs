@@ -164,15 +164,14 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// Host only, before a hello is replayed: seat the player and write the tables into the event. False refuses the
-        /// hello (<paramref name="why"/> says why) and changes nothing (ColonySlotTable.CheckHello).
+        /// hello (<paramref name="why"/> says why) and changes nothing (ColonySlotTable.SeatHello and CheckHello decide).
         /// <paramref name="verifiedId"/> is who the guest's connection proved to be (TimberServer.VerifiedIdOf), null for
         /// a direct connection. A player may be seated by that rather than the id the hello says; the hello keeps what
         /// it said, so the guest still finds its own, and every computer takes the seated id from the tables.
         /// </summary>
         public bool HostSeat(PlayerHelloEvent hello, string verifiedId, out string why)
         {
-            string alreadySeated = session.ContainsKey(hello.player) ? PlayerIdOf(hello.player) ?? "" : null;
-            HelloCheck check = Table.SeatHello(hello.playerId, verifiedId, alreadySeated, hello.playerName);
+            HelloCheck check = Table.SeatHello(hello.player, hello.playerId, verifiedId, session, playerIds, hello.playerName);
             why = check.Refusal;
             if (!check.IsAllowed) return false;
             int hostSlot = SlotOfPlayer(ColonySession.HostPlayer);
@@ -184,7 +183,7 @@ namespace BeaverBuddies.Colonies
             hello.session = string.Join(",", session.Select(p => $"{p.Key}:{p.Value}"));
             hello.players = EncodePlayers();
             if (check.SeatId != hello.playerId)
-                Plugin.Log($"[Colony] Player {hello.player} said hello as {hello.playerId}; seated as {check.SeatId}, the Steam ID its connection proved");
+                Plugin.Log($"[Colony] Player {hello.player} said hello as {ColonySlotTable.ForLog(hello.playerId)}; seated as {check.SeatId}, the Steam ID its connection proved");
             Plugin.Log(check.Slot.HasValue
                 ? $"[Colony] Player {hello.player} ({hello.playerName}) plays slot {seat}"
                 : $"[Colony] Player {hello.player} ({hello.playerName}) joins as a helper of slot {seat}: every slot is taken");

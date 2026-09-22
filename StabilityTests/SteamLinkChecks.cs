@@ -610,6 +610,10 @@ static class SteamLinkChecks
                 rig.Game.Run(() => client.Close());
                 Check(SpinWait.SpinUntil(() => { server.Update(); Thread.Sleep(1); return server.ConnectedPlayerIds.Count == 0; }, 4000),
                     "the host never saw the guest leave");
+                // The host forgets a gone guest the next time it sends (SendEventToClients drops it, RemoveActivity with
+                // it): send one event, so that has happened before asking.
+                server.DoUserInitiatedEvent(new JObject { [TimberNetBase.TYPE_KEY] = "Heartbeat", [TimberNetBase.TICKS_KEY] = 1 });
+                Equal(0, server.ClientCount);
                 Equal<string>(BeaverBuddies.Colonies.ColonySlotTable.SteamIdPrefix + GuestId, server.VerifiedIdOf(1));
             }
             finally { rig.Game.Run(() => { server.Close(); client.Close(); }); }

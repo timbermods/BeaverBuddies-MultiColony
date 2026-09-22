@@ -325,6 +325,65 @@ static class ColonyChecks
             Equal<string>(null, s.Host.VerifiedIdOf(0));
         });
 
+        yield return ("Colony: a hello whose id would break the slot table is refused, and its refusal is one log line", () =>
+        {
+            // The table and the players list are "slot|id|name" lines, and only the name was cleaned: a direct guest
+            // whose id held a line break wrote extra rows, reserving (and saving) every free colony at once.
+            var table = new ColonySlotTable();
+            table.Resolve("steam:1", "Host");
+            HelloCheck injected = table.SeatHello("local:x\n2|steam:99|Ghost\n3|steam:98|Ghost2", null, null, "Mallory");
+            Check(!injected.IsAllowed, $"an id with line breaks was seated as {injected.SeatId}");
+            Check(!injected.Refusal.Contains('\n') && !injected.Refusal.Contains('\r'), "the refusal spans lines: " + injected.Refusal);
+            Check(!table.SeatHello("local:x|y", null, null, "Mallory").IsAllowed, "an id with a '|' was seated");
+            Check(!table.SeatHello("local:x\u2028y", null, null, "Mallory").IsAllowed, "an id with a Unicode line separator was seated");
+            Check(!table.SeatHello("local:" + new string('a', ColonySlotTable.MaxIdLength), null, null, "Mallory").IsAllowed,
+                "an id longer than any the mod makes was seated");
+            Equal(1, table.Entries.Count);
+            Equal(1, ColonySlotTable.Decode(ColonySlotTable.Encode(table.Entries)).Count);
+            // Every id the mod makes still passes, and no id (a helper) too.
+            Check(ColonySlotTable.IsWellFormedId(ColonySlotTable.SteamIdPrefix + ulong.MaxValue), "a Steam ID was judged malformed");
+            Check(ColonySlotTable.IsWellFormedId("local:" + Guid.NewGuid().ToString("N")), "a local id was judged malformed");
+            Check(ColonySlotTable.IsWellFormedId(null) && ColonySlotTable.IsWellFormedId(""), "no id was judged malformed");
+            // Over Steam the proved id is what is seated, so a malformed local claim changes nothing; a malformed Steam ID
+            // claim is refused as a lie, and its refusal is on one line too.
+            Equal("steam:7", ColonySlotTable.CheckHello("local:x\n0|local:evil", "steam:7", null).SeatId);
+            HelloCheck lie = ColonySlotTable.CheckHello("steam:7\n0|local:evil", "steam:8", null);
+            Check(!lie.IsAllowed, "a malformed Steam ID claim was seated");
+            Check(!lie.Refusal.Contains('\n'), "the refusal spans lines: " + lie.Refusal);
+            Check(!ColonySlotTable.ForLog(new string('x', 1000)).Contains(new string('x', ColonySlotTable.MaxIdLength + 1)),
+                "a long id was logged in full");
+        });
+
+        yield return ("Colony: only a hello from a guest the host has numbered is seated, by what its connection was seated as", () =>
+        {
+            // The whole host decision (ColonySlotService.HostSeat hands it its session tables as they are).
+            var table = new ColonySlotTable();
+            table.Resolve("steam:1", "Host");
+            var session = new SortedDictionary<int, int> { [0] = 0 };
+            var ids = new SortedDictionary<int, string> { [0] = "steam:1" };
+            // -1: a connection the host no longer numbers (it left while its hello was on the way), so it can't be
+            // held to its Steam ID; 0 is the host, which never says hello.
+            Check(!table.SeatHello(-1, "steam:2", null, session, ids, "Late").IsAllowed, "a hello from connection -1 was seated");
+            Check(!table.SeatHello(0, "steam:2", null, session, ids, "Host?").IsAllowed, "a hello from the host's number was seated");
+            Equal(1, table.Entries.Count);
+
+            Equal<string>(null, ColonySlotTable.SeatedIdOf(1, session, ids));
+            HelloCheck first = table.SeatHello(1, "steam:2", "steam:2", session, ids, "Guest");
+            Check(first.IsAllowed, "refused: " + first.Refusal);
+            Equal<int?>(1, first.Slot);
+            session[1] = 1; ids[1] = "steam:2";
+            Equal("steam:2", ColonySlotTable.SeatedIdOf(1, session, ids));
+            Check(!table.SeatHello(1, "steam:3", null, session, ids, "Guest").IsAllowed, "a seated guest came back as steam:3");
+            Check(table.SeatHello(1, "steam:2", "steam:2", session, ids, "Guest").IsAllowed, "the same hello again was refused");
+            // Seated as a helper without an id: in the session, with no id (or a null one).
+            session[2] = 0;
+            Equal("", ColonySlotTable.SeatedIdOf(2, session, ids));
+            ids[2] = null!;
+            Equal("", ColonySlotTable.SeatedIdOf(2, session, ids));
+            Check(!table.SeatHello(2, "local:new", null, session, ids, "Helper").IsAllowed, "a helper took an id with a second hello");
+            Equal(2, table.Entries.Count);
+        });
+
         // ---- who may change what ----
 
         yield return ("Colony: your own things, and things in no district, are yours to change", () =>
