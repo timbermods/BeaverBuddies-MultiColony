@@ -103,6 +103,55 @@ namespace BeaverBuddies.IO
             };
         }
 
+        // The tags (requestId) of guest actions in frames that could not be read, in the order they arrived.
+        private readonly List<string> unreadableRequestIds = new List<string>();
+
+        // A guest's action only happens once the host has read it, played it and sent it back, so one the host cannot
+        // read is lost for every player alike and nobody goes out of step. Ending the session for it would let any
+        // guest end it. The guest is told its actions were refused (TakeUnreadableRequestIds), so it clears its marks
+        // and does not wait for an answer that never comes.
+        protected override bool HandleUnreadableFrame(JObject frame, string problem)
+        {
+            // The host numbered the frame by the connection it came from (TimberServer.StampReceivedEvent).
+            string guest = frame[TimberNetBase.PLAYER_KEY] is JValue { Type: JTokenType.Integer } player ? $"player {player}" : "a guest";
+            Plugin.LogWarning($"Ignored an action from {guest} that could not be read: {problem}");
+            try
+            {
+                unreadableRequestIds.AddRange(RequestIdsIn(frame));
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("Could not read which actions that guest sent: " + error.Message);
+            }
+            return true;
+        }
+
+        // The frame's own tag and those of the actions grouped in it, one level down, where TimberNetBase.StampPlayer
+        // stamps the sender. Only text counts: whatever else is there was written by the guest.
+        private static IEnumerable<string> RequestIdsIn(JObject frame)
+        {
+            if (frame[nameof(ReplayEvent.requestId)] is JValue { Type: JTokenType.String } own) yield return (string)own;
+            JToken events = frame[nameof(GroupedEvent.events)];
+            JArray children = events as JArray ?? (events as JObject)?["$values"] as JArray;
+            if (children == null) yield break;
+            foreach (JToken child in children)
+            {
+                if (child is JObject action && action[nameof(ReplayEvent.requestId)] is JValue { Type: JTokenType.String } tag)
+                    yield return (string)tag;
+            }
+        }
+
+        /// <summary>
+        /// Host: the tags of guest actions that arrived in frames this game could not read, since this was last called.
+        /// ReplayService refuses each, as it refuses an action the colony rules turn down (ActionRefusedEvent).
+        /// </summary>
+        public List<string> TakeUnreadableRequestIds()
+        {
+            List<string> taken = new List<string>(unreadableRequestIds);
+            unreadableRequestIds.Clear();
+            return taken;
+        }
+
         private bool stoppedAccepting;
 
         /// <summary>Players can still join: the first tick has not run and nothing has changed the game yet.</summary>

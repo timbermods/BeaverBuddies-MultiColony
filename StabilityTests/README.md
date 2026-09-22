@@ -45,7 +45,11 @@ anything is created. Every action the mod sends reads back unchanged through the
 network uses, with every field filled in (separate colonies' `ColonyStartingSettings` included), and
 is written exactly as it is without the binder, so the event hash does not change. Actions from
 another mod's assembly loaded from bytes (standing in for MixedStorage's `StorageAllocationEvent`)
-pass, with the classes they declare.
+pass, with the classes they declare. A frame that cannot be read (a refused type, an action from a mod
+that is not installed, no type at all, or a group of actions holding an empty entry or another group)
+is fed to the real guest and host event IO: the guest stops the session with a reason naming the type
+and its assembly and plays nothing more of that tick, and the host logs it, keeps the guest's other
+actions, carries on, and keeps the tags of the lost actions so that guest is told they were refused.
 
 Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
