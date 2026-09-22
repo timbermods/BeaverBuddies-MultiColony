@@ -5,10 +5,10 @@ hours and, if the host chooses, their own science and unlocks. It is co-op, not 
 colonies meet only at **trading posts**, where they barter.
 
 **State of testing.** Beta. Seen in a game with the land-split alphas (alpha1 to 5): hosting and joining over
-Steam, founding a second colony and building in it; and in two short sessions with separate science (beta12 and
-beta14): a founding and both players building, in step at every tick (beta12's one desync, dev mode's science, was
-fixed in beta14 and did not come back). **The rest of this version's model has not been seen in a game yet**: trading-post exchanges and their
-panel, colony handover, the road rule that replaced land in beta15, and most of the desync review's fixes (alpha11
+Steam, founding a second colony and building in it; and in three short sessions with separate science (beta12,
+beta14 and beta15): a founding and both players building, in step at every tick (beta12's one desync, dev mode's
+science, was fixed in beta14), and in beta15 trading posts with exchanges of goods and beavers. **The rest of this
+version's model has not been seen in a game yet**: colony handover, the road rule that replaced land in beta15, and most of the desync review's fixes (alpha11
 onward) are covered by automated checks only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
 in that check would stop a healthy game too; the log line says which. Play on a copy of your save and keep backups.
 
@@ -86,12 +86,10 @@ The **Trading Post** is its own building, in the District Management group next 
 District Crossing's model (each faction's own) and works like one, two linked halves each run by its own district's
 workers, but it only ever trades between colonies. It **costs 10 logs and needs no science**, so colonies can trade
 from the start, and it only shows in the toolbar of a separate-colonies game. Build it **between two colonies'
-roads**: each of you first builds a road up to the spot, and the post goes between the two road ends, one colony's
-road at each half's door. The post is 3 cells wide and 2 deep, so the two road ends are in line, 3 cells apart. It
-must have both roads when it is placed, from two different colonies, one of them yours; otherwise it is refused
-(*A Trading Post needs a road at each end: yours at one, another colony's at the other*). Either colony may place
-it; the placer's builders build both halves. It trades once its two halves are in two different colonies' districts;
-until then its panel says so, and nothing crosses it.
+roads**, one colony's road at each half's door (the post is 3 cells wide and 2 deep, so the two road ends are in
+line, 3 cells apart). Either colony may place it, anywhere, before the roads are there or after; the placer's
+builders build both halves. It trades once its two halves are in two different colonies' districts, each reached by
+a different colony's road; until then its panel says so, and nothing crosses it.
 
 **Goods cross a Trading Post only through an exchange** agreed by the two colonies. Import and export settings (the
 Distribution tab) never move anything across one. A Trading Post is **not a store**: its halves hold goods only for
@@ -145,8 +143,9 @@ the form (*Last exchange here: 100 Logs for 25 Gears. 4 rounds…*) has **Offer 
 post's ledger puts that round's terms into the form (one round). Terms are only ever put into the form; nothing is
 offered until **Make offer**.
 
-**Ctrl+T**, the **Trade** button at the top right (a square button like the game's own there) or **All posts** on a
-Trading Post opens the **trading posts and colonies** window, drawn as the game's own boxes are: each of your Trading
+**Ctrl+T**, the **Trade** button at the top right (a square button like the game's own there) or **All Posts** on a
+Trading Post opens the **trading posts and colonies** window (drag it by its title or frame to move it; it opens
+where it was left), drawn as the game's own boxes are: each of your Trading
 Posts with its exchange and round (or *not trading yet*) and a **Go to** button, and each colony with its population,
 whether its player is playing (an absent player: *missed 6 of 7 days*, the host's limit), its **food and water** (the
 top bar's icons, the stock, and the days it lasts at the rate the colony used yesterday, from the game's own daily
@@ -170,7 +169,7 @@ marks your own colony's wishes the same way.
 
 **The trading-post panel** is built from the game's own panel pieces (the Workplace section's board, the
 description's blue cards, the game's wooden and red buttons, input boxes, progress bars and check boxes, and the
-warehouse's goods grid). On your half it shows who you trade with in their color, with **All posts**; the exchange
+warehouse's goods grid). On your half it shows who you trade with in their color, with **All Posts**; the exchange
 (the offer form, an offer waiting for an answer, or the round under way with each side's bar, what it waits for, and
 ending it); what waits on the half (only when something does); the post's **ledger** (the last rounds that crossed,
 with the cycle and day, what you gave and what the other player gave, by name); and what has passed each way between the two colonies (all
@@ -261,6 +260,7 @@ places. So in a separate-colonies game:
 | Bot worker types (separate science) | Each colony's own unlocks |
 | Automation | A building, relay or memory cell may be wired only to its own colony's (copying settings from another colony's building, or placing a copy of it, is refused or placed plain: it would copy the links too) |
 | Names | Only the owner renames |
+| Other mods' building settings | Only the owner changes them: another mod's action for one building (MixedStorage's warehouse and pile goods) is judged like this mod's own |
 | Migration | Only between a colony's own districts; beavers change colony only through a Trading Post, and a traded beaver must be able to walk to its new district and carry nothing |
 
 Marks work per tile: a tile marked by one colony (for planting or cutting) can't be marked or unmarked by another.
@@ -319,9 +319,9 @@ with a water source near each start.
 
 ## Seeing the roads
 
-Every colony's paths are drawn in its color while a building, planting, cutting, demolishing or founding tool is in
-hand, and at any time with **Ctrl+L**, so you can see whose road reaches a spot before placing a Trading Post between
-two.
+Every cell of every colony's roads (paths, stairs, bridges, district centers) is drawn as a bright square in a strong
+version of its color while a building or founding tool is in hand, and at any time with **Ctrl+L**, so you can see
+whose road reaches a spot before placing a Trading Post between two.
 
 ## Testing alone (debug)
 
@@ -355,7 +355,7 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - There is no land: where to build is the players' call. Wild bushes, ruins and piles nobody marked go to whichever
   colony's workers reach them first.
 - Demolition marks on ruins and relics nobody marked may be set, cleared and worked by any colony.
-- A Trading Post needs both colonies' roads when it is placed. A road removed later leaves it standing; its exchange
+- A Trading Post trades only while a different colony's road reaches each half; with one removed, its exchange
   pauses until the road is back.
 - A building nobody placed as an action (built before the game was hosted, or in a save older than the two-colony
   builds) takes its colony on its own, checked at the first tick and every 16 ticks after: its district's, else the owner of the road at its

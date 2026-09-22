@@ -1,6 +1,6 @@
 Play Timberborn together, each with your own colony, on one map.
 
-[b]Beta.[/b] The colony model has had two short playtests; the rest is covered by automated checks. Play on a copy of your save, keep backups, and report what you find (with every player's Player.log) at https://github.com/timbermods/BeaverBuddies-MultiColony/issues
+[b]Beta.[/b] The colony model has had three short playtests; the rest is covered by automated checks. Play on a copy of your save, keep backups, and report what you find (with every player's Player.log) at https://github.com/timbermods/BeaverBuddies-MultiColony/issues
 
 [b]Each player runs their own colony:[/b] their own districts, beavers, stock, working hours and (if the host chooses) science and unlocks. Your screen shows your colony; your beavers work for your colony only; nobody can change anyone else's colony.
 

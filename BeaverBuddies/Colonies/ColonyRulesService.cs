@@ -284,6 +284,9 @@ namespace BeaverBuddies.Colonies
             return true;
         }
 
+        // Another mod's event types already warned about (once each: the warning is for the log, not for every click).
+        private static readonly HashSet<Type> warnedScopeless = new HashSet<Type>();
+
         private ColonyVerdict Judge(ReplayEvent replayEvent, int slot, bool rewrite)
         {
             ColonyScope scope;
@@ -299,10 +302,15 @@ namespace BeaverBuddies.Colonies
             }
             if (scope == null)
             {
-                // RuntimeChecks fails the build for an event without a scope, so this is only reached by an event
-                // added without one. Shared is the behaviour of a game without colonies.
-                Plugin.LogWarning($"[Colony] {replayEvent.type} declares no colony scope; allowing it");
-                return ColonyVerdict.Allow;
+                // RuntimeChecks fails the build for one of this mod's events without a scope, so this is another mod's
+                // (MixedStorage's StorageAllocationEvent). One that names a building in an entityID field changes that
+                // building: judged like this mod's own, so nobody sets another colony's warehouse through it.
+                scope = ColonyRules.ScopeByEntityField(replayEvent);
+                if (warnedScopeless.Add(replayEvent.GetType()))
+                    Plugin.LogWarning(scope != null
+                        ? $"[Colony] {replayEvent.type} declares no colony scope; judged as a change to the building in its entityID"
+                        : $"[Colony] {replayEvent.type} declares no colony scope and names no building; allowing it");
+                if (scope == null) return ColonyVerdict.Allow;
             }
             if (scope.Kind == ColonyScopeKind.Founding)
             {
@@ -345,7 +353,6 @@ namespace BeaverBuddies.Colonies
             ColonyRefusal.Blocked => "BeaverBuddies.Colony.Refused.Blocked",
             ColonyRefusal.FoundingConflict => "BeaverBuddies.Colony.Refused.FoundingConflict",
             ColonyRefusal.NotEnoughScience => "BeaverBuddies.Colony.Refused.NotEnoughScience",
-            ColonyRefusal.TradingPostRoads => "BeaverBuddies.Colony.Refused.TradingPostRoads",
             ColonyRefusal.TouchesOtherColony => "BeaverBuddies.Colony.Refused.TouchesOtherColony",
             ColonyRefusal.DevModeOff => "BeaverBuddies.Colony.Refused.DevModeOff",
             ColonyRefusal.HostRefused => "BeaverBuddies.Colony.Refused.HostRefused",

@@ -5,6 +5,41 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta16
+
+**Five changes asked for after playing beta15**, where trading posts and exchanges worked (goods and beavers crossed,
+the ledger filled). **Wire change** (a Trading Post's placement is judged differently).
+
+- **A Trading Post may be placed before its roads.** beta15 refused one without a road from each of two colonies at its
+  ends; the roads are now what it needs to work, not to be placed. It trades once its two halves are in two different
+  colonies' districts (`TradingPosts.JoinsTwoColonies`, unchanged), and its panel says *Not trading yet* until then.
+  `ColonyGameWorld.RoadConflict` answers None for a Trading Post before reading the map; `TradingPostRoads`, its
+  message, `ColonyRoadRule.TradingPost` and `FarEntrance` are gone. A post still carries no road, so the road rule
+  needs no exception beyond it.
+- **Other mods' per-building settings follow ownership.** MixedStorage's warehouse and pile goods could be changed on
+  another colony's building through its own menu: its `StorageAllocationEvent` declares no colony scope, so the host
+  allowed it ("declares no colony scope; allowing it"). An event that declares none but names one building in a public
+  string field called `entityID` (this mod's convention, and MixedStorage's) is now judged as a change to that building
+  (`ColonyRules.ScopeByEntityField`), on the player's own computer (refused there with *That belongs to another
+  colony.*) and on the host. No change to MixedStorage. Each such event type is logged once.
+- **The trading posts and colonies window moves.** Drag it by its title badge or its frame (not by its lists and
+  buttons); it stays on screen, and opens where it was left for the rest of the game. The footer says so.
+- **A Trading Post's All Posts button** no longer draws over the top of the panel's scrolling part: the header row has
+  a height of its own and a gap below it. The button (and the docs) now say **All Posts**.
+- **Ctrl+L reads at a glance.** beta15 drew each colony's roads with the game's area outline (thin lines along the
+  path edges) in the colonies' own colors, which `StartingLocationPlayer.PLAYER_COLORS` lightens for text: on a beige
+  path at night they were nearly invisible. Now every road cell is a filled square, the game's own tile marker (the
+  one it draws a building's range with: `MarkerDrawerFactory`'s mesh and material, built into `AreaTileDrawer`'s
+  mesh once per change, on the game's UI layer, lifted clear of the path models), in a strong version of each
+  colony's hue (`ColonyRoadOverlay.Palette`). A road piece of several levels (a district center, stairs) gets squares
+  on its bottom level only. It shows by itself while a building or the founding tool is in hand (no longer with the
+  planting, cutting or demolishing tools), and at any time with Ctrl+L. If the game has no marker to lend, the
+  outlines are drawn as before.
+- Checks: StabilityTests 355 (1 new for other mods' events; the 2 Trading Post road tests removed), RuntimeChecks 330
+  (5 new: a Trading Post placed with no roads, the host judging another mod's per-building event, the window's drag,
+  the header's room, the road overlay's squares and colors; the 3 checks of the post's far road end removed). Against
+  beta15's DLL the new ones fail.
+
 ## 1.4.0-beta15
 
 **No more land: build anywhere, and two colonies' roads meet only at a Trading Post.** Asked for after

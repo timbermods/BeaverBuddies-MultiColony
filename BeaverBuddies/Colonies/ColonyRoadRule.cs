@@ -51,7 +51,8 @@ namespace BeaverBuddies.Colonies
     ///  - a building whose entrance (the cell outside its door, where its road must be) is on or beside another
     ///    colony's road: the road it needs there would join them.
     /// A Trading Post is the exception, and the only place two colonies' roads meet: one half's entrance on each
-    /// colony's road. It must have both roads when it is placed, from two different colonies, one of them the placer's.
+    /// colony's road. It may be placed anywhere, roads or not; it trades once a different colony's road reaches each
+    /// half (TradingPosts.JoinsTwoColonies), so the roads are what it needs to work, not to be placed.
     /// The game's own placement check already refuses a building that joins two districts' finished roads in the
     /// placing player's interface; this also sees paths still being built, and is what the host judges.
     ///
@@ -104,57 +105,5 @@ namespace BeaverBuddies.Colonies
             return false;
         }
 
-        /// <summary>
-        /// A Trading Post's two roads: the one at this half's entrance and the one at the other half's, which stands
-        /// right behind it. Both must be there, from two different colonies, one of them the placer's.
-        /// </summary>
-        public static ColonyRefusal TradingPost(int slot, ColonyCell nearEntrance, ColonyCell? farEntrance, IColonyRoadMap map,
-            out string detail)
-        {
-            int? near = map.RoadOwnerAt(nearEntrance);
-            int? far = farEntrance == null ? null : map.RoadOwnerAt(farEntrance.Value);
-            if (near == null || far == null || near.Value == far.Value)
-            {
-                detail = $"needs two colonies' roads at its ends (slot {Show(near)} at {nearEntrance}, slot {Show(far)} at {Show(farEntrance)})";
-                return ColonyRefusal.TradingPostRoads;
-            }
-            if (near.Value != slot && far.Value != slot)
-            {
-                detail = $"would join slots {near} and {far}, and neither is slot {slot}";
-                return ColonyRefusal.TradingPostRoads;
-            }
-            detail = null;
-            return ColonyRefusal.None;
-        }
-
-        /// <summary>
-        /// The other half's entrance, from one half's footprint and entrance: straight through the building, as far
-        /// behind the back of this half as its entrance is in front of it. The two halves are placed back to back, each
-        /// as deep as the other. Null when the entrance does not face the footprint.
-        /// </summary>
-        public static ColonyCell? FarEntrance(IReadOnlyList<ColonyCell> footprint, ColonyCell entrance)
-        {
-            for (int i = 1; i < Around.Length; i++)
-            {
-                var (dx, dy) = Around[i];
-                if (!Contains(footprint, entrance.Step(dx, dy))) continue;
-                int depth = 1;
-                while (Contains(footprint, entrance.Step(dx * (depth + 1), dy * (depth + 1)))) depth++;
-                return entrance.Step(dx * (2 * depth + 1), dy * (2 * depth + 1));
-            }
-            return null;
-        }
-
-        private static bool Contains(IReadOnlyList<ColonyCell> cells, ColonyCell cell)
-        {
-            for (int i = 0; i < cells.Count; i++)
-            {
-                if (cells[i].Equals(cell)) return true;
-            }
-            return false;
-        }
-
-        private static string Show(int? slot) => slot?.ToString() ?? "none";
-        private static string Show(ColonyCell? cell) => cell?.ToString() ?? "?";
     }
 }

@@ -117,6 +117,7 @@ DesyncDialogChecks.Run(assembly, Test);
 ReviewFixChecks.Run(assembly, Test);
 DevScienceChecks.Run(assembly, Test);
 RoadRuleChecks.Run(assembly, Path.GetDirectoryName(modPath)!, Path.GetFullPath(args[1]), Test);
+PlaytestFixChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

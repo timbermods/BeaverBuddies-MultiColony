@@ -101,11 +101,11 @@ internal static class ColonyRuntimeChecks
             var refusalType = mod.GetType("BeaverBuddies.Colonies.ColonyRefusal", true)!;
             object refused = Activator.CreateInstance(refusedType, true)!;
             refusedType.GetField("refusedRequestId")!.SetValue(refused, "abcd1234:17");
-            refusedType.GetField("refusal")!.SetValue(refused, Enum.Parse(refusalType, "TradingPostRoads"));
+            refusedType.GetField("refusal")!.SetValue(refused, Enum.Parse(refusalType, "TouchesOtherColony"));
             object again = deserialize.Invoke(null, new object[] { serialize.Invoke(null, new[] { refused })! })!;
             if (again.GetType() != refusedType) throw new Exception("the refusal came back as " + again.GetType().Name);
             if ((string)refusedType.GetField("refusedRequestId")!.GetValue(again)! != "abcd1234:17") throw new Exception("the refused tag was lost");
-            if (refusedType.GetField("refusal")!.GetValue(again)!.ToString() != "TradingPostRoads") throw new Exception("the reason was lost");
+            if (refusedType.GetField("refusal")!.GetValue(again)!.ToString() != "TouchesOtherColony") throw new Exception("the reason was lost");
         });
 
         test("Colony: the host's answers written into events survive the trip through the event JSON", () =>

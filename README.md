@@ -10,11 +10,11 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 [Install](#install) · [Start](#start-a-game) · [Playing](#playing-your-colony) · [Trading](#trading-posts) · [Handover](#when-a-colony-is-handed-over) · [Controls](#controls) · [One shared colony](#one-shared-colony) · [Troubleshooting](#troubleshooting-and-reporting-problems) · [Full rules](TWO-COLONIES.md) · [Changelog](STABILITY-CHANGELOG.md)
 
 > [!WARNING]
-> **Beta.** Hosting, joining over Steam and founding a second colony have been played, and beta12 and beta14 each had
-> a short separate-colonies session (a founding and building, in step at every tick; beta12's one desync, dev mode's
-> science, was fixed in beta14 and did not come back). The rest of this version's model (trading posts and barter, colony handover, the road rule that
-> replaced land in beta15) and most of the desync review's fixes (alpha11 onward) have **not been played yet**; they
-> are covered by automated checks. Since
+> **Beta.** Hosting, joining over Steam and founding a second colony have been played, and beta12, beta14 and beta15
+> each had a short separate-colonies session: a founding and building, in step at every tick (beta12's one desync, dev
+> mode's science, was fixed in beta14), and in beta15 trading posts with exchanges of goods and beavers. The rest of
+> this version's model (colony handover, most of the road rule) and most of the desync review's fixes (alpha11
+> onward) have **not been played yet**; they are covered by automated checks. Since
 > alpha13, in a separate-colonies game, a guest whose colony state differs from the host's stops the tick it happens,
 > so a bug in that check would also stop a healthy game; the log line says which it was. Play on a copy of your save,
 > keep backups, and please report what you find
@@ -98,10 +98,11 @@ verified](#how-it-works)).
 - **You build, mark trees and plant anywhere**, right up to another colony's buildings and roads. The one rule:
   **your roads never join another colony's**, except through a Trading Post. A path may not touch another colony's
   road (finished or still being built), and a building's door may not open onto or beside one; the preview turns red
-  and says why. **Every colony's roads show in its color** while you hold a building, planting, cutting or
-  demolishing tool, and any time with **Ctrl+L**.
+  and says why. **Every colony's roads show as bright squares in its color** while you place a building, and any
+  time with **Ctrl+L**.
 - **You change only your own colony**, whether or not the other player is playing: their buildings, beavers,
-  districts, marks and settings are refused (*That belongs to another colony.*).
+  districts, marks and settings are refused (*That belongs to another colony.*), and so are the settings other mods
+  add to a building (MixedStorage's warehouse and pile goods).
 - **Your beavers work only for your colony:**
   - builders build and demolish only for your colony;
   - lumberjacks cut only trees you marked;
@@ -118,10 +119,9 @@ verified](#how-it-works)).
 ## Trading posts
 
 Build a **Trading Post** (District Management, next to the District Crossing) **between your road and another
-colony's**: first each of you builds a road up to the spot, with the two road ends in line and two cells between them;
-then either of you places the post in the gap, one half's door on each road. It must have both roads when it is
-placed, one of them yours (otherwise: *A Trading Post needs a road at each end…*). It is the only place two colonies'
-roads may meet. It **costs 10 logs and needs no science**, and looks like a District Crossing. The placer's builders
+colony's**, one half's door on each road. Place it wherever you like, before the roads or after: it trades once your
+road reaches one half and another colony's road the other (until then its panel says *Not trading yet*). It is the
+only place two colonies' roads may meet. It **costs 10 logs and needs no science**, and looks like a District Crossing. The placer's builders
 build it; each colony's beavers run their own half. It only appears in separate-colonies games.
 
 The **District Crossing** is the game's own again, for linking your own districts (import and export settings, its
@@ -160,8 +160,9 @@ that crossed stay crossed.
 **Offer again:** the panel remembers the last exchange at each post and offers it again in one click (a line above
 the form); clicking a row of the post's ledger puts that round's terms into the form.
 
-**All your trading posts at once:** **Ctrl+T**, the square **Trade** button at the top right, or **All posts** on a
-trading post opens a window (drawn like the game's own boxes; close it with its close button, Esc or Ctrl+T) listing
+**All your trading posts at once:** **Ctrl+T**, the square **Trade** button at the top right, or **All Posts** on a
+trading post opens a window (drawn like the game's own boxes; drag its title to move it; close it with its close
+button, Esc or Ctrl+T) listing
 every trading post of your colony, its exchange and its round, with a **Go to** button; and every colony with its
 population, whether its player is playing (and how many days of the host's limit an absent player has missed), its
 **food and water** with the days they last at yesterday's use, what it is **looking for**, and who looks after it.
@@ -214,7 +215,7 @@ handed over then. The player who lost their colony gets a notice and may **found
 | Key | Action |
 |---|---|
 | **Ctrl+K** | Found your colony (a player without one; in a shared game only if the host allows it) |
-| **Ctrl+L** | Show every colony's roads in its color (they also show while you hold a building, planting, cutting or demolishing tool) |
+| **Ctrl+L** | Show every colony's roads as bright squares in its color (they also show while you place a building or found a colony) |
 | **Ctrl+T** | Trading posts and colonies |
 | **Home** | Back to your colony (its biggest district center; in a shared game, the biggest); clicking a name in the connection panel takes your camera to that player instead |
 | **Ctrl+Shift+J** | Write a diagnostics report (also a button in the Ctrl+T window) |
@@ -316,8 +317,8 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   each side counted.
 - **"That would join another colony's roads":** a path of yours would touch their road, or a building's door would
   open onto or beside it. Keep your roads a cell apart from theirs; to link the two, put a Trading Post between them.
-- **"A Trading Post needs a road at each end":** build your road and theirs up to the spot first, in line with two
-  cells between the ends, and place the post in the gap (Ctrl+L shows whose roads are whose).
+- **A Trading Post says *Not trading yet*:** each half needs a different colony's road at its door, yours at one and
+  theirs at the other (Ctrl+L shows whose roads are whose).
 - **Everything is refused right after joining:** the host has not seated you yet; wait a moment. If it persists,
   send the logs.
 - **Diagnostics report:** press **Ctrl+Shift+J** (or *Diagnostics report* in the Ctrl+T window) when something

@@ -33,9 +33,9 @@ their side of the map as you would a teammate.
 
 ## In a separate-colonies game
 
-- **Cursor colors are the player's; colony colors are the colony's.** The colonies' roads (Ctrl+L, or while a tool
-  is in hand), the *(colony N)* beside a name in the connection panel and the colony names in the trading window use
-  the game's own start colors, one per colony. The cursor, name label, selection outline and chat name use the color
+- **Cursor colors are the player's; colony colors are the colony's.** The colonies' roads (Ctrl+L, or while a building
+  is being placed; a brighter version of each color), the *(colony N)* beside a name in the connection panel and the
+  colony names in the trading window use the game's own start colors, one per colony. The cursor, name label, selection outline and chat name use the color
   the player chose (or the one you set for them under **Player cursors**), or, while they have not chosen one, a
   color by player number (see *Settings* below). A player and their colony need not match.
 - **Selection outlines cross colonies.** Selecting another colony's building shows it to everyone as any selection

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace BeaverBuddies.Colonies
 {
@@ -12,8 +13,8 @@ namespace BeaverBuddies.Colonies
         /// <summary>Moves beavers between two districts; both must be the actor's.</summary>
         Migration,
         /// <summary>
-        /// Places a building: the actor's colony must have it unlocked, and it must not join another colony's roads (a
-        /// Trading Post must have two colonies' roads). Anywhere else is fine: there is no land.
+        /// Places a building: the actor's colony must have it unlocked, and it must not join another colony's roads.
+        /// Anywhere else is fine: there is no land.
         /// </summary>
         Placement,
         /// <summary>A list of entities cut down to the ones the actor may act on.</summary>
@@ -128,8 +129,8 @@ namespace BeaverBuddies.Colonies
         bool IsUnlockedFor(int slot, string templateName);
 
         /// <summary>
-        /// Why this slot's colony may not place this building here (it would join another colony's roads, or a Trading
-        /// Post without two colonies' roads), or None. See <see cref="ColonyRoadRule"/>.
+        /// Why this slot's colony may not place this building here (it would join another colony's roads), or None. See
+        /// <see cref="ColonyRoadRule"/>.
         /// </summary>
         ColonyRefusal PlacementConflict(int slot, ColonyPlacement placement, out string detail);
     }
@@ -151,8 +152,6 @@ namespace BeaverBuddies.Colonies
         FoundingConflict,
         /// <summary>Not enough science in the actor's colony.</summary>
         NotEnoughScience,
-        /// <summary>A Trading Post without a road from each of two colonies at its ends, one of them the placer's.</summary>
-        TradingPostRoads,
         /// <summary>The building would join another colony's roads (a path beside them, or an entrance on or beside them).</summary>
         TouchesOtherColony,
         /// <summary>A dev mode shortcut while the host's dev mode is off (host only).</summary>
@@ -198,6 +197,32 @@ namespace BeaverBuddies.Colonies
     {
         /// <summary>The actor may change something owned by <paramref name="owner"/>: its own, or nobody's.</summary>
         public static bool MayChange(int actorSlot, int? owner) => owner == null || owner.Value == actorSlot;
+
+        /// <summary>
+        /// The scope of an event that declares none (another mod's) but names one building in a public string field
+        /// called entityID, as this mod's own events and MixedStorage's do: a change to that building. Null when it has
+        /// no such field.
+        /// </summary>
+        public static ColonyScope ScopeByEntityField(object replayEvent)
+        {
+            if (replayEvent == null) return null;
+            FieldInfo field = EntityFieldOf(replayEvent.GetType());
+            return field == null ? null : ColonyScope.Entities(field.GetValue(replayEvent) as string);
+        }
+
+        private static readonly Dictionary<Type, FieldInfo> entityFields = new Dictionary<Type, FieldInfo>();
+
+        private static FieldInfo EntityFieldOf(Type type)
+        {
+            lock (entityFields)
+            {
+                if (entityFields.TryGetValue(type, out FieldInfo known)) return known;
+                FieldInfo field = type.GetField("entityID", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (field != null && field.FieldType != typeof(string)) field = null;
+                entityFields[type] = field;
+                return field;
+            }
+        }
 
         public static ColonyVerdict Judge(ColonyScope scope, int actorSlot, IColonyWorld world, bool rewrite)
         {

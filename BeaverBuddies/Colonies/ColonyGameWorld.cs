@@ -78,9 +78,9 @@ namespace BeaverBuddies.Colonies
             ColonyScienceService.Instance?.IsUnlockedFor(slot, templateName) ?? true;
 
         /// <summary>
-        /// Whether the building would join another colony's roads (see <see cref="ColonyRoadRule"/>), or, for a Trading
-        /// Post, whether it has the two colonies' roads it needs. Worked out from the game's own positioning of the
-        /// building, as for its preview.
+        /// Whether the building would join another colony's roads (see <see cref="ColonyRoadRule"/>). A Trading Post
+        /// never does: it may go anywhere, and trades once two colonies' roads reach it. Worked out from the game's own
+        /// positioning of the building, as for its preview.
         /// </summary>
         public ColonyRefusal PlacementConflict(int slot, ColonyPlacement colonyPlacement, out string detail)
         {
@@ -113,13 +113,10 @@ namespace BeaverBuddies.Colonies
         public ColonyRefusal RoadConflict(int slot, IReadOnlyList<ColonyCell> footprint, Vector3Int? entrance, bool tradingPost,
             bool pathLike, out string detail)
         {
+            detail = null;
+            // A Trading Post carries no road, and its doors are meant for two colonies' roads.
+            if (tradingPost) return ColonyRefusal.None;
             ColonyCell? door = entrance == null ? (ColonyCell?)null : Cell(entrance.Value);
-            if (tradingPost)
-            {
-                detail = null;
-                if (door == null) return ColonyRefusal.None;
-                return ColonyRoadRule.TradingPost(slot, door.Value, ColonyRoadRule.FarEntrance(footprint, door.Value), this, out detail);
-            }
             return ColonyRoadRule.Conflict(slot, footprint, door, pathLike, this, out detail);
         }
 

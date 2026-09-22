@@ -169,6 +169,9 @@ namespace BeaverBuddies.Colonies
 
             VisualElement header = NativeElements.Row();
             header.style.flexShrink = 0;
+            // Room for the All Posts button's wooden frame, which drew over the top of the scrolling part below it.
+            header.style.minHeight = 30;
+            header.style.marginBottom = 6;
             headerText = RichText(13);
             headerText.style.flexGrow = 1;
             headerText.style.flexShrink = 1;

@@ -1,3 +1,10 @@
+v1.4.0-beta16 (BeaverBuddies MultiColony)
+* A Trading Post can be placed before the roads are there. It starts trading once your road reaches one end and another colony's road the other.
+* Other mods' settings on a building (MixedStorage's warehouse and pile goods) can no longer be changed on another colony's building.
+* The trading posts window can be dragged by its title, and opens where you left it. The All Posts button no longer covers the panel's scroll bar.
+* Ctrl+L now draws each colony's roads as bright squares in its color, easy to see by day or night. They show by themselves while you place a building.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta15 (BeaverBuddies MultiColony)
 * No more land or borders in separate colonies: build and mark anywhere, right next to another colony's buildings. The one rule left: your roads never join another colony's, except through a Trading Post.
 * A Trading Post now needs a road at each end when you place it: yours at one, another colony's at the other. Build both roads up to the spot first.

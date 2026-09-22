@@ -432,12 +432,27 @@ static class ColonyChecks
         yield return ("Colony: building needs the unlock, and must not join another colony's roads", () =>
         {
             var w = new FakeWorld().Locked(1, "Observatory")
-                .Conflict("TradingPost", ColonyRefusal.TradingPostRoads).Conflict("Path", ColonyRefusal.TouchesOtherColony);
+                .Conflict("Path", ColonyRefusal.TouchesOtherColony);
             Check(ColonyRules.Judge(ColonyScope.Place(Place("House")), 1, w, true).IsAllowed);
             Equal(ColonyRefusal.Locked, ColonyRules.Judge(ColonyScope.Place(Place("Observatory")), 1, w, true).Refusal);
             Check(ColonyRules.Judge(ColonyScope.Place(Place("Observatory")), 0, w, true).IsAllowed);
-            Equal(ColonyRefusal.TradingPostRoads, ColonyRules.Judge(ColonyScope.Place(Place("TradingPost")), 1, w, true).Refusal);
             Equal(ColonyRefusal.TouchesOtherColony, ColonyRules.Judge(ColonyScope.Place(Place("Path")), 1, w, true).Refusal);
+        });
+
+        yield return ("Colony: another mod's event naming a building in entityID is judged as a change to that building", () =>
+        {
+            // MixedStorage's StorageAllocationEvent declares no scope; it sets one warehouse's or pile's goods.
+            var w = new FakeWorld().Own("warehouseB", 1).Own("warehouseA", 0);
+            ColonyScope scope = ColonyRules.ScopeByEntityField(new OtherModEvent { entityID = "warehouseB" });
+            Check(scope != null && scope.Kind == ColonyScopeKind.Entities, "no scope from its entityID");
+            Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(scope, 0, w, true).Refusal);
+            Check(ColonyRules.Judge(scope, 1, w, true).IsAllowed);
+            Check(ColonyRules.Judge(ColonyRules.ScopeByEntityField(new OtherModEvent { entityID = "warehouseA" }), 0, w, true).IsAllowed);
+            // A building nobody owns, or none named: the event handles it itself, as this mod's own do.
+            Check(ColonyRules.Judge(ColonyRules.ScopeByEntityField(new OtherModEvent { entityID = null }), 0, w, true).IsAllowed);
+            // No such field, or one that is not a name: no scope (allowed, as before).
+            Check(ColonyRules.ScopeByEntityField(new OtherModEventWithoutBuilding()) == null, "a scope from nothing");
+            Check(ColonyRules.ScopeByEntityField(new OtherModEventWithNumber()) == null, "a scope from a number");
         });
 
         yield return ("Colony: a list of things is cut down to yours and nobody's, in order", () =>
@@ -747,41 +762,6 @@ static class ColonyChecks
             Equal(ColonyRefusal.TouchesOtherColony, ColonyRoadRule.Conflict(1, Cells((5, 5)), null, true, map, out _));
             Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(0, Cells((5, 5)), null, true, map, out _));
             Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(1, Cells((5, 6)), null, true, map, out _));
-        });
-
-        yield return ("Colony: a Trading Post needs a road from each of two colonies at its ends, one of them the placer's", () =>
-        {
-            // One half three wide at y = 6 with its entrance at (1, 5); the other half behind it at y = 7, entrance (1, 8).
-            var half = Cells((0, 6), (1, 6), (2, 6));
-            var near = new ColonyCell(1, 5, 0);
-            ColonyCell? far = ColonyRoadRule.FarEntrance(half, near);
-            Equal((ColonyCell?)new ColonyCell(1, 8, 0), far);
-            var roads = new FakeRoads().Road(0, (1, 3), (1, 4), (1, 5)).Road(1, (1, 8), (1, 9));
-            Equal(ColonyRefusal.None, ColonyRoadRule.TradingPost(0, near, far, roads, out _));
-            Equal(ColonyRefusal.None, ColonyRoadRule.TradingPost(1, near, far, roads, out _));
-            // A third colony may not put one between two others.
-            Equal(ColonyRefusal.TradingPostRoads, ColonyRoadRule.TradingPost(2, near, far, roads, out _));
-            // Both roads one colony's: refused (it would trade with nobody).
-            Equal(ColonyRefusal.TradingPostRoads, ColonyRoadRule.TradingPost(1, near, far, new FakeRoads().Road(1, (1, 5)).Road(1, (1, 8)), out _));
-            // One road only: refused until the other colony's road reaches its other end.
-            Equal(ColonyRefusal.TradingPostRoads, ColonyRoadRule.TradingPost(0, near, far, new FakeRoads().Road(0, (1, 5)), out string detail));
-            Check(detail.Contains("none"), detail);
-            // A road beside an end is not at it.
-            Equal(ColonyRefusal.TradingPostRoads, ColonyRoadRule.TradingPost(0, near, far, new FakeRoads().Road(0, (1, 5)).Road(1, (2, 8)), out _));
-        });
-
-        yield return ("Colony: a Trading Post is judged the same from either half, in any direction", () =>
-        {
-            // The other half: its entrance's far end is this half's entrance.
-            Equal((ColonyCell?)new ColonyCell(1, 5, 0), ColonyRoadRule.FarEntrance(Cells((0, 7), (1, 7), (2, 7)), new ColonyCell(1, 8, 0)));
-            // Turned: a half standing in a column with its entrance to the west.
-            Equal((ColonyCell?)new ColonyCell(8, 1, 0), ColonyRoadRule.FarEntrance(Cells((6, 0), (6, 1), (6, 2)), new ColonyCell(5, 1, 0)));
-            // Two cells high: the height of the entrance is the one that counts.
-            var tall = new[] { new ColonyCell(0, 6, 0), new ColonyCell(1, 6, 0), new ColonyCell(2, 6, 0),
-                new ColonyCell(0, 6, 1), new ColonyCell(1, 6, 1), new ColonyCell(2, 6, 1) };
-            Equal((ColonyCell?)new ColonyCell(1, 8, 0), ColonyRoadRule.FarEntrance(tall, new ColonyCell(1, 5, 0)));
-            // An entrance that does not face the footprint has no far end.
-            Equal((ColonyCell?)null, ColonyRoadRule.FarEntrance(Cells((0, 6)), new ColonyCell(5, 5, 0)));
         });
 
         // ---- exchanges at a trading post ----
@@ -1133,6 +1113,11 @@ static class ColonyChecks
     };
 
     static ColonyPlacement Place(string template) => new ColonyPlacement { TemplateName = template };
+
+    // Other mods' events, as they reach the host: public fields, no colony scope.
+    sealed class OtherModEvent { public string entityID; public string goods = "Log"; }
+    sealed class OtherModEventWithoutBuilding { public string goods = "Log"; }
+    sealed class OtherModEventWithNumber { public int entityID = 7; }
 
     sealed class FakeWorld : IColonyWorld
     {

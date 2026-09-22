@@ -28,8 +28,9 @@ namespace BeaverBuddies.Colonies
     /// Each colony's row also shows its food and water (with the days they last), what it is looking for (its player
     /// sets that here, from the game's goods grid), how close an absent player's colony is to a hand-over, and who
     /// looks after it: a player asks another to look after their colony here, and a steward switches into it and back.
-    /// It opens and closes with Ctrl+T, the square Trade button at the top right, or "All posts" on a Trading Post, and
-    /// closes with its close button or Esc. It does not pause the game (pausing is shared in co-op). Display and buttons
+    /// It opens and closes with Ctrl+T, the square Trade button at the top right, or "All Posts" on a Trading Post, and
+    /// closes with its close button or Esc; its title or frame drags it anywhere on screen. It does not pause the game
+    /// (pausing is shared in co-op). Display and buttons
     /// only: each button sends an ordinary action.
     /// </summary>
     public class TradeOverviewPanel : IPostLoadableSingleton, IUpdatableSingleton, IInputProcessor
@@ -227,6 +228,8 @@ namespace BeaverBuddies.Colonies
             title.AddToClassList("capsule-header__text");
             header.Add(title);
             box.Add(header);
+            // Moved by its title badge or its frame, not by its lists and buttons.
+            MakeDraggable(header, title);
 
             var close = new Button(Close);
             close.AddToClassList("close-button");
@@ -301,7 +304,65 @@ namespace BeaverBuddies.Colonies
         private void FitToScreen()
         {
             float screen = window.panel?.visualTree.worldBound.height ?? 0;
-            if (screen > 0 && !float.IsNaN(screen)) box.style.maxHeight = Mathf.Max(220, screen - Top - BottomMargin);
+            if (screen > 0 && !float.IsNaN(screen)) box.style.maxHeight = Mathf.Max(220, screen - Top - dragOffset.y - BottomMargin);
+        }
+
+        // ---- moving the box ----
+
+        // How far the player dragged the box from its place (centred under the top bar). Kept while the game runs, so
+        // the box opens where it was left.
+        private Vector2 dragOffset;
+        private Vector2 dragOffsetAtStart;
+        private Vector3 dragStart;
+        private bool dragging;
+
+        /// <summary>
+        /// Drags the box by <paramref name="grips"/> and by its own frame (the box itself, where no list, text or button
+        /// is): a press there, moved, moves the box; anything inside it keeps its own clicks.
+        /// </summary>
+        private void MakeDraggable(params VisualElement[] grips)
+        {
+            var handles = new HashSet<VisualElement>(grips) { box };
+            box.RegisterCallback<PointerDownEvent>(e =>
+            {
+                if (e.button != 0 || !(e.target is VisualElement target) || !handles.Contains(target)) return;
+                dragging = true;
+                dragStart = e.position;
+                dragOffsetAtStart = dragOffset;
+                box.CapturePointer(e.pointerId);
+                e.StopPropagation();
+            });
+            box.RegisterCallback<PointerMoveEvent>(e =>
+            {
+                if (!dragging || !box.HasPointerCapture(e.pointerId)) return;
+                Vector3 moved = e.position - dragStart;
+                dragOffset = dragOffsetAtStart + new Vector2(moved.x, moved.y);
+                PlaceBox();
+            });
+            box.RegisterCallback<PointerUpEvent>(e =>
+            {
+                if (!dragging) return;
+                dragging = false;
+                if (box.HasPointerCapture(e.pointerId)) box.ReleasePointer(e.pointerId);
+            });
+            box.RegisterCallback<PointerCaptureOutEvent>(e => dragging = false);
+        }
+
+        /// <summary>
+        /// Moves the box by the dragged offset, kept on the screen: its title never under the screen's top edge, and
+        /// enough of it left in view to take hold of again.
+        /// </summary>
+        private void PlaceBox()
+        {
+            Rect screen = window.panel?.visualTree.worldBound ?? Rect.zero;
+            if (screen.width > 0 && screen.height > 0 && !float.IsNaN(screen.width) && !float.IsNaN(screen.height))
+            {
+                float side = Mathf.Max(0, screen.width / 2 - 80);
+                dragOffset.x = Mathf.Clamp(dragOffset.x, -side, side);
+                dragOffset.y = Mathf.Clamp(dragOffset.y, 10 - Top, Mathf.Max(10 - Top, screen.height - Top - 80));
+            }
+            box.style.translate = new Translate(dragOffset.x, dragOffset.y, 0);
+            FitToScreen();
         }
 
         // ---- the lists ----

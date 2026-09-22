@@ -36,14 +36,13 @@ colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode
 7. **A trading post.** Open District Management: after the District Crossing there is a **Trading Post** (the
    crossing's model, its own icon; hover it: 10 logs, no science). The District Crossing shows the game's own price
    and science. Try to place a District Crossing with one half's door on colony 2's road: red, *That would join
-   another colony's roads*. Bring a road from each district so the two road ends are in line with two cells between
-   them (flip to colony 2 to build colony 2's road). Hover a **Trading Post** over the gap while only colony 1's road
-   is there: red, *A Trading Post needs a road at each end…* With both roads: place it, one half's door on each road.
-   Colony 1's builders build both halves; each colony's beavers staff their own half. Remove the piece of colony 2's
-   road at its half's door and select the post: *Not trading yet*, and why; put the road back.
+   another colony's roads*. Place a **Trading Post** where the two colonies will meet, before either road is there:
+   it is placed. Bring a road from each district to one half's door each (flip to colony 2 to build colony 2's road).
+   Colony 1's builders build both halves; each colony's beavers staff their own half. Before colony 2's road reaches
+   its half, select the post: *Not trading yet*, and why.
 8. **The panel.** Select colony 1's half. The panel is titled **Trading Post** and describes a trading post; there
    is no *Imported goods* box beside it (no **Manage distribution**), no stock list and no *No goods in stock* box. At
-   the bottom: *Trading with Colony 2* in its color with **All posts**; a **You give** and a **You get** card, each
+   the bottom: *Trading with Colony 2* in its color with **All Posts**; a **You give** and a **You get** card, each
    with a good (the one that colony has most of), *You have …* / *Colony 2 has …*, **−**, an amount box and **+**; a
    **Rounds** card with **−**, a box and **+**, and **Repeat until cancelled**; a line reading the offer back; **Make
    offer**; the **Ledger** (*No round has crossed here yet*); and *Traded with Colony 2* (screenshot please: it should
@@ -84,17 +83,18 @@ colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode
     science bar shows how much colony 1 can spare, and the science moves between the top bars' pools **only when the
     berries are in**, not before. Offer **1 beaver** for 30 berries: the beaver moves to the other colony only when the
     berries are in, and colony 2's notification journal (bottom left) says *… joined the colony from Colony 1 through a
-    Trading Post*. Press **Ctrl+T**, the square **Trade** button at the top right, or **All posts**: a box like the
+    Trading Post*. Press **Ctrl+T**, the square **Trade** button at the top right, or **All Posts**: a box like the
     game's own (a title badge, a red close button) lists every trading post of your colony with its exchange, round and
     **Go to**, and both colonies with their population; the game keeps running behind it. Close it with its close
-    button, then open it and press Esc, then Ctrl+T: each closes it. Press **Ctrl+L**: each colony's roads show in its
-    color, and hide again.
+    button, then open it and press Esc, then Ctrl+T: each closes it. Drag it by its title to one side, close it and
+    open it again: it opens where it was left. Press **Ctrl+L**: each colony's roads show in its color, and hide
+    again.
 15. **Two colonies' roads joined.** As colony 1, lay a path, then as colony 2 try a path on the tile beside its end:
     red, *That would join another colony's roads…*, also while colony 1's path is still a construction site. If you manage to join the two roads anyway (place both at the same moment, each
     fine alone), the game **keeps running** and the notice *Two districts' roads are joined…* shows; remove one
     path and it goes.
-16. **A Trading Post between one colony's roads.** Place a Trading Post with colony 1's road at both ends: red,
-    *A Trading Post needs a road at each end…*, and **neither half** appears. Then remove a post that trades between colonies 1 and
+16. **A Trading Post between one colony's roads.** Place a Trading Post with colony 1's road at both ends: it is
+    placed and built, and its panel says *Not trading yet*; nothing crosses it. Then remove a post that trades between colonies 1 and
     2 while flipped to a colony 3 (found one, or flip past 2): refused; as colony 1 or 2: allowed.
 17. **Gates.** Place a gate on one of your paths and close and open it (by hand, then with a switch): it opens within a
     moment and never shows the conflict mark. While it opens, hover a path preview across it with the tool: the
@@ -194,7 +194,7 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     label and chat name are orange on the guest's screen, and the guest's are blue on the host's; a chat message is
     in the panel's normal color with only the name colored. Under Options, Player cursors, *Their color* shows the
     same color. One player sets a Ping Color: theirs changes everywhere, the other's does not. In the trading window
-    and the road overlay (Ctrl+L) the colony colors are the game's own, not these.
+    and the road overlay (Ctrl+L) the colony colors are the colonies' own (brighter on the roads), not these.
 8k. **Speed boost (beta5).** At speed 1, the host clicks **+** in the chat box's top row once: the row shows +0.5
     and *= 1.5x* on both computers, the game's speed buttons show *x1.5* on the last one, and the panel's *Speed*
     line says 1.5x. The guest types 2 in the box and presses Enter: both run at 3x. Pick the fastest button: 9x;
@@ -270,17 +270,25 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     games** and **Allow founding colonies in a shared game**: each tooltip is two lines, all on screen. From the
     tooltips alone, does the friend (who has not read this) know which one to use for a new game with a colony each,
     and which one to split a shared save? Report anything they would still get wrong.
-8aa. **A Trading Post between two roads (beta15).** In separate colonies, each player builds a road towards the
-    other so the two road ends are in line with two cells between them. The friend hovers the Trading Post over the
-    gap: green only with one half's door on each road; with only the friend's road there, or with the friend's road
-    at both ends, red: *A Trading Post needs a road at each end…* The friend places it: the friend's builders build
-    both halves, each colony's beavers staff their own half, and an exchange works (Script A line 10). A screenshot
-    of each case helps.
+8aa. **A Trading Post between two roads (beta15, beta16).** In separate colonies, the friend places a Trading Post
+    where the two colonies will meet, before either road is there: it is placed (beta16). Each player then builds a
+    road to one half's door: the post says *Not trading yet* until both are there; then an exchange works (Script A
+    line 10). The friend's builders build both halves; each colony's beavers staff their own half.
 8ab. **Build anywhere, roads never join (beta15).** Build right next to each other's buildings (houses, farms, a
     warehouse against the other's): no refusals. Try a path touching the other colony's path, a house whose door
     faces the other colony's road right beside it, and a path on the cell in front of the other colony's building's
     door: each is red, *That would join another colony's roads…* Press Ctrl+L: each colony's paths show in its color.
     Play ten minutes: no desync.
+8ac. **Another mod's settings (beta16).** With MixedStorage on both computers, the friend selects the host's
+    warehouse or pile and changes its goods in the MixedStorage menu: refused with *That belongs to another colony.*,
+    and nothing changes on either screen. On the friend's own warehouse it works.
+8ad. **The trading posts window (beta16).** Open it (Ctrl+T or **All Posts**) and drag it by its title to the side:
+    it moves, and stays on screen however far you drag it. Close it and open it again: it opens where it was left.
+    On a Trading Post, the **All Posts** button sits above the scrolling part, clear of its scroll bar.
+8ae. **Whose roads are whose (beta16).** At night and by day, press **Ctrl+L**: every road cell of each colony shows as
+    a bright square in its color (colony 1 red, colony 2 green-teal), easy to tell apart on grass and on the paths
+    themselves; a district center's and stairs' squares lie on the ground, none float inside them. Pick a building:
+    the squares show while it is in hand, and not with the planting or cutting tools. A screenshot helps.
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*
@@ -341,6 +349,6 @@ per colony: population, exchanges).
 4. A player leaves for the rest of the evening: from the next day their colony shows as away in Ctrl+T, and it is
    handed over after the set number of days, with the host's detailed logging on or off (only a host testing alone,
    with nobody connected, plays every colony).
-4a. **A Trading Post half refused.** A third colony tries to place a post between colony 1's and colony 2's roads: neither half
-    appears. A third player tries to remove a post between the other two: refused.
+4a. **A Trading Post between two others.** A third player tries to remove a post between colony 1 and colony 2:
+    refused.
 5. Send every `Player.log` and your notes on the tick rate and frame rates.

@@ -2,12 +2,13 @@
 using System.Collections;
 using System.IO.Compression;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Nodes;
 
 // The road rule (1.4.0-beta15), against the game's assemblies and the built mod: there is no land, and two colonies'
 // roads meet only at a Trading Post, one colony's road at each of its ends. These fail if the game stops putting a
-// building's road where the rule looks for it, or places a Trading Post's second half somewhere else.
+// building's road where the rule looks for it, or changes what carries a road.
 internal static class RoadRuleChecks
 {
     const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
@@ -59,17 +60,6 @@ internal static class RoadRuleChecks
                 throw new Exception("the rules no longer see paths still being built");
         });
 
-        test("Roads: the game places a Trading Post's second half turned round, straight behind the first", () =>
-        {
-            Type area = Assembly.Load("Timberborn.AreaSelectionSystem").GetTypes()
-                .FirstOrDefault(t => t.GetMethod("HalvesCoordinates", all) != null) ?? throw new Exception("the game's halves layout is gone");
-            var halves = Methods(area).Where(m => m.Name == "HalvesCoordinates" || m.DeclaringType!.Name.Contains("HalvesCoordinates")).ToList();
-            if (!Calls(halves, "Timberborn.Coordinates.OrientationExtensions", "Flip"))
-                throw new Exception("the second half is no longer turned round");
-            if (!Calls(halves, "Timberborn.BlockSystem.BlockObjectSpec", "get_Size"))
-                throw new Exception("the second half is no longer placed by the building's size");
-        });
-
         test("Roads: the game's paths, stairs, bridges, gates and district centers carry a road (PathSpec); a Trading Post does not", () =>
         {
             // The rule counts as a road whatever carries the game's PathSpec (its own IsPath test), finished or not, and
@@ -97,32 +87,24 @@ internal static class RoadRuleChecks
                 throw new Exception("the game no longer finds paths in the cell's path layer");
         });
 
-        foreach (string faction in new[] { "Folktails", "IronTeeth" })
+        test("Roads: a Trading Post may be placed with no roads at all; it needs them to trade, not to stand", () =>
         {
-            test($"Roads: the {faction} Trading Post's other road end is where the game puts the other half's", () =>
-            {
-                string file = Path.Combine(modDirectory, "Buildings", "DistrictManagement", "MultiColonyTradingPost",
-                    $"MultiColonyTradingPost.{faction}.blueprint.json");
-                JsonNode post = JsonNode.Parse(File.ReadAllText(file))!;
-                JsonNode block = post["BlockObjectSpec"]!;
-                int sizeX = block["Size"]!["X"]!.GetValue<int>(), sizeY = block["Size"]!["Y"]!.GetValue<int>();
-                int ex = block["Entrance"]!["Coordinates"]!["X"]!.GetValue<int>(), ey = block["Entrance"]!["Coordinates"]!["Y"]!.GetValue<int>();
-                if (post["PlaceableBlockObjectSpec"]!["Layout"]!.GetValue<string>() != "Half") throw new Exception("it is not placed as two halves");
-                if (ey >= 0 && ey < sizeY && ex >= 0 && ex < sizeX) throw new Exception("its entrance cell is inside it");
-                // The game's second half (HalvesCoordinates): at (size.x - 1, 2 * size.y - 1), turned round, so its cell
-                // (a, b) is the first half's (size.x - 1 - a, 2 * size.y - 1 - b).
-                (int x, int y) partner = (sizeX - 1 - ex, 2 * sizeY - 1 - ey);
-
-                Type cellType = mod.GetType("BeaverBuddies.Colonies.ColonyCell", true)!;
-                object Cell(int x, int y) => Activator.CreateInstance(cellType, x, y, 0)!;
-                var footprint = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(cellType))!;
-                for (int x = 0; x < sizeX; x++)
-                    for (int y = 0; y < sizeY; y++) footprint.Add(Cell(x, y));
-                MethodInfo far = mod.GetType("BeaverBuddies.Colonies.ColonyRoadRule", true)!.GetMethod("FarEntrance", all)!;
-                object? found = far.Invoke(null, new[] { footprint, Cell(ex, ey) });
-                if (found == null || !found.Equals(Cell(partner.x, partner.y)))
-                    throw new Exception($"the rule looks for the other road at {found ?? "nowhere"}, the game puts it at {partner}");
-            });
-        }
+            // The rule is not asked about a Trading Post: RoadConflict answers None before reading the map (here there is
+            // none: the world is empty and unset).
+            Type worldType = mod.GetType("BeaverBuddies.Colonies.ColonyGameWorld", true)!;
+            object world = RuntimeHelpers.GetUninitializedObject(worldType);
+            Type cellType = mod.GetType("BeaverBuddies.Colonies.ColonyCell", true)!;
+            var footprint = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(cellType))!;
+            footprint.Add(Activator.CreateInstance(cellType, 1, 6, 0)!);
+            Type vector = Assembly.Load("UnityEngine.CoreModule").GetType("UnityEngine.Vector3Int", true)!;
+            object entrance = Activator.CreateInstance(vector, 1, 5, 0)!;
+            var args = new object?[] { 0, footprint, entrance, true, false, null };
+            object refusal = worldType.GetMethod("RoadConflict", all)!.Invoke(world, args)!;
+            if (refusal.ToString() != "None") throw new Exception("a Trading Post is refused: " + refusal);
+            // What it needs to trade: its two halves in two different colonies' districts.
+            Type posts = mod.GetType("BeaverBuddies.Colonies.TradingPosts", true)!;
+            if (!Calls(new[] { posts.GetMethod("IsTradingPost", all)! }, "BeaverBuddies.Colonies.TradingPosts", "JoinsTwoColonies"))
+                throw new Exception("a Trading Post no longer trades only when it joins two colonies");
+        });
     }
 }

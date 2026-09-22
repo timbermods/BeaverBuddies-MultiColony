@@ -8,8 +8,7 @@ namespace BeaverBuddies.Colonies
 {
     /// <summary>
     /// Marks a building's preview invalid, with the reason, where the colony rules would refuse it: where it would join
-    /// another colony's roads, a Trading Post without two colonies' roads at its ends, or (the founding tool) where a
-    /// colony may not be founded. It checks the same blocks and entrance the host does. So the refusal shows before the
+    /// another colony's roads, or (the founding tool) where a colony may not be founded. It checks the same blocks and entrance the host does. So the refusal shows before the
     /// click.
     /// Previews only, and never while events replay: the game also checks validity inside a replayed placement, on
     /// every computer, and the answer there must not depend on who is looking. The host's verdict still decides; this
