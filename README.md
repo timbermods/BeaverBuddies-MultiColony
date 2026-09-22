@@ -315,8 +315,12 @@ not to the original BeaverBuddies project.
   its connection: a guest saying another Steam ID is refused, and one whose game could not read its own Steam ID is
   seated by the proved one. A guest who joins **by IP (direct connection)** proves nothing, so the host takes the id
   it says: someone who copies another player's id (every player's id is shared with the session and kept in the
-  save) can take that player's colony. Use Steam invites, or play by IP only with people you trust. Either way a
-  guest can't say hello a second time as someone else.
+  save) can take that player's colony, and someone who rejoins under new ids while the host waits at the start can
+  reserve the free colonies. The direct-IP port (**25565**) is open whenever you host, **Steam invites or not**:
+  anyone who can reach it (on your network, through a forwarded port, or over IPv6 if your firewall lets them in)
+  joins unverified. Forward that port, or let it through your firewall, only while you play by IP with people you
+  trust. Either way a guest can't say hello a second time as someone else, and an id with a line break or a `|` in
+  it (no id the mod makes has one) is refused.
 - **Ownership is saved**: on district centers, on every building (the colony that placed it) and on map marks. Land
   is worked out from the buildings standing. Beavers' choices of work read only these, identically on every computer.
 - **Guests take the host's answers.** Whether a placement is still possible when it is played, what a founded colony

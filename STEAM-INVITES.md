@@ -26,7 +26,9 @@ you host, so Hamachi / port forwarding / direct IP keep working exactly as befor
   computer is used instead. If your Steam account changes, you join as a new player and the host hands your old
   colony to you from the **Ctrl+T** window. When you join through a Steam invite the host checks your Steam ID
   against the Steam connection, so nobody joining over Steam can take your colony by saying your ID; over a direct
-  IP connection the host has only the guest's word for it.
+  IP connection the host has only the guest's word for it. The host listens for direct IP joins as well while it
+  hosts, even in a game you invite friends to over Steam, so anyone who can reach its port joins unverified (see the
+  README, *Which joins are verified*).
 
 Nobody can join once the game has started, or once the host changed anything while it waited paused. An old
 invite then says the host already started (or already changed the game), instead of hanging; the host saves,
