@@ -24,7 +24,7 @@
     </a>
     <nav class="nav" aria-label="Main">
       <a href="index.html" aria-current="page">Overview</a>
-      <a href="#new">New in beta8</a>
+      <a href="#new">New in beta9</a>
       <a href="#features">Features</a>
       <a href="#trading">Trading</a>
       <a href="install.html">Install</a>
@@ -41,13 +41,13 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta8</span> &middot; beta</span></div>
+      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta9</span> &middot; beta</span></div>
       <h1>One map.<br>A colony each.</h1>
       <p class="lede">Play Timberborn with friends without sharing a colony. Each player runs their own districts, land, beavers, stock and science on one shared map, and the colonies meet only at <b>trading posts</b>, where they barter. Co-op, not a race: nobody wins, and everyone can help.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.4.0-beta8</span></span>
+          <span>Download <span data-release="version">1.4.0-beta9</span></span>
         </a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
         <a class="btn btn-secondary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules</a>
@@ -134,7 +134,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.4.0-beta8</span></b><span>Latest pre-release</span></li>
+      <li><b><span data-release="version">1.4.0-beta9</span></b><span>Latest pre-release</span></li>
       <li><b>Up to 4 colonies</b><span>More players help the host's</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built against</span></li>
       <li><b>Steam invites</b><span>No port forwarding</span></li>
@@ -143,38 +143,38 @@
   </div>
 </div>
 
-<!-- ============ new in beta8 ============ -->
+<!-- ============ new in beta9 ============ -->
 <section class="tint" id="new">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">New in 1.4.0-beta8</div>
-      <h2>Who may take a colony, and what the network may create</h2>
-      <p>Seven reviewed pull requests: the host checks a Steam guest's identity, a network frame can only create the mod's own actions, and each player's journal and founding notices are their own. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta8">beta8 release notes</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
+      <div class="eyebrow">New in 1.4.0-beta9</div>
+      <h2>The four things beta8 left</h2>
+      <p>A guest missing a mod no longer stops everyone, the host refuses only what it can't read, another colony's death stays out of your alerts, and a desync's lists line up. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta9">beta9 release notes</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
     </div>
     <div class="grid grid-3">
       <article class="card">
-        <h3 style="margin-top:0">Your colony stays yours</h3>
-        <p><b>beta8.</b> Over Steam the host checks a guest's Steam ID against the connection Steam proved before it seats them, so nobody can take your colony by claiming your id. Direct IP joins are still taken at their word.</p>
+        <h3 style="margin-top:0">One guest leaves, the game goes on</h3>
+        <p><b>beta9.</b> A guest that can't read the host's action (from a mod only the host has) leaves on its own, with a message saying nothing was played and how to join again. The host and the others play on; before, everyone stopped.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">Frames create actions, nothing else</h3>
-        <p><b>beta8.</b> A multiplayer frame can only create the mod's actions and what they carry. An action a guest can't read (from a mod only the host has) stops the session with its name instead of drifting out of step; the host refuses one and says so.</p>
+        <h3 style="margin-top:0">Only the unreadable action is refused</h3>
+        <p><b>beta9.</b> The host keeps a guest's readable actions of the same moment, in order, and refuses only the one it can't read. Every computer plays what the host kept.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">Your journal, your notices</h3>
-        <p><b>beta8.</b> Each player's journal lists only their colony's entries, deaths and reloads included, and only the founder hears how a founding went. On a desync every computer logs its last 256 colony changes, to find the one that differed.</p>
+        <h3 style="margin-top:0">Your alerts, your colony</h3>
+        <p><b>beta9.</b> Another colony's beaver that died tragically is no longer in your alert panel, and its death no longer makes your alert row blink. On a desync, every computer's list of colony changes starts at the same number.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">From beta7: a shared game is the Stability Fork's</h3>
-        <p>With <i>Separate colonies for new games</i> off, none of the colony model runs; founding in a shared save is the host's choice, off by default; District Crossings hold the game's 30 again. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta7">beta7 release notes</a></p>
+        <h3 style="margin-top:0">From beta8: your colony stays yours</h3>
+        <p>Over Steam the host checks who a guest is before seating them, network frames can only create the mod's own actions, and each journal and founding notice is its player's. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta8">beta8 release notes</a></p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">From beta2 to beta6</h3>
-        <p>Your own chat color, a speed boost past the fastest button, a color for every player (Stability Fork 1.1.11), tooltips that fit, and beta2's nine conveniences: looking after a friend's colony, go-to-player and <kbd>Home</kbd>, wishlists, counter-offers and more. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">Release notes</a></p>
+        <h3 style="margin-top:0">From beta2 to beta7</h3>
+        <p>A shared game that is the Stability Fork's, your own chat color, a speed boost past the fastest button, a color for every player, and beta2's conveniences: looking after a friend's colony, go-to-player and <kbd>Home</kbd>, wishlists, counter-offers. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">Release notes</a></p>
       </article>
       <article class="card">
         <h3 style="margin-top:0">Still unplayed</h3>
-        <p>588 automated checks cover all of it (48 new in beta8, among them the frame rules for every action the mod sends), and this build has not been played yet. The test scripts' lines B1a, B8o and B8a are the ones to try first.</p>
+        <p>592 automated checks cover all of it (4 new in beta9, among them one that nothing in the game but the alert panel hears the alert's blink), and this build has not been played yet. The test scripts' lines B8p, B8o and B8a are the ones to try first.</p>
       </article>
     </div>
   </div>
@@ -399,7 +399,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta8</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta9</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>
