@@ -130,11 +130,17 @@ internal static class PlantingLevelChecks
         bool Targets(CustomAttributeData a, string method) => a.AttributeType.FullName == "HarmonyLib.HarmonyPatch"
             && a.ConstructorArguments.Count == 2
             && Equals(a.ConstructorArguments[0].Value, areaServiceType) && Equals(a.ConstructorArguments[1].Value, method);
-        int? DeclaredPriority(MemberInfo member) => member.GetCustomAttributesData()
-            .Where(a => a.AttributeType.FullName == "HarmonyLib.HarmonyPriority")
-            .Select(a => (int?)(int)a.ConstructorArguments[0].Value!).FirstOrDefault();
-        // Harmony's own default, Priority.Normal, when neither the prefix nor its class names one.
-        int Priority(MethodInfo prefix) => DeclaredPriority(prefix) ?? DeclaredPriority(prefix.DeclaringType!) ?? 400;
+        // The priority Harmony itself patches the prefix with, not a model of it: PatchAll merges the class's attributes
+        // with the method's (the higher priority wins when both name one), and a priority of -1 (none named) becomes
+        // Priority.Normal (400) when the patch is made.
+        object Harmony(string name, params object[] args) => Assembly.Load("0Harmony")
+            .GetType("HarmonyLib.HarmonyMethodExtensions", true)!.GetMethod(name)!.Invoke(null, args)!;
+        int Priority(MethodInfo prefix)
+        {
+            object merged = Harmony("Merge", Harmony("GetMergedFromType", prefix.DeclaringType!), Harmony("GetMergedFromMethod", prefix));
+            int priority = (int)merged.GetType().GetField("priority")!.GetValue(merged)!;
+            return priority == -1 ? 400 : priority;
+        }
 
         test("Planting: the levelling override lets other mods' prefixes run first (Priority.Last)", () =>
         {
