@@ -396,6 +396,11 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.WorkSystemUI.WorkingHoursPanel", "Timberborn.WorkSystemUI", "_decreaseHoursButton"),
             ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "_districtMap"),
             ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "_districtConflictDetector"),
+            // Frame-to-tick fixes (Fixes/FrameToTickFixes): the gate detector swapped for one on the real graph, the
+            // crossing provider's two snapshot caches.
+            ("Timberborn.AutomationBuildings.GateUpdater", "Timberborn.AutomationBuildings", "_gateConflictDetector"),
+            ("Timberborn.DistributionSystem.DistrictDistributableGoodProvider", "Timberborn.DistributionSystem", "_importCache"),
+            ("Timberborn.DistributionSystem.DistrictDistributableGoodProvider", "Timberborn.DistributionSystem", "_exportCache"),
             ("Timberborn.Population.PopulationService", "Timberborn.Population", "_populationDataCollector"),
             ("Timberborn.ConstructionSitesUI.ConstructionSiteDebugFragment", "Timberborn.ConstructionSitesUI", "_constructionSite"),
         })

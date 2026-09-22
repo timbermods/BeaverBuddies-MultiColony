@@ -276,7 +276,8 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   (Its "place finished" and "don't recover goods" keys, both Ctrl, are off in co-op.)
 - While a co-op game is paused, what was just built or removed updates its district (the district badge and highlight,
   and which district's builders a new construction site waits for) when the game resumes, at the same moment on every
-  computer.
+  computer. Gates open and close, and automation reacts to a changed input, at the tick rather than the frame, for
+  the same reason: at most a tick later than in single player.
 - Placing is judged by the placing player's own tool: the check against joining two districts' roads is not repeated
   in the multiplayer replay, where it read state that differs between computers. Whether the spot is still free when
   the placement is played is checked by the host alone; guests take its answer.

@@ -5,6 +5,35 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha14
+
+**The alpha10 review's Appendix B: the baseline's own per-frame state.** The last section of the review. Each is
+somewhere the game itself changes or caches simulation state once per frame, or from what the local player is
+hovering, and a tick is spread over a different number of frames on each computer.
+
+- **Gates open and close at the tick, judged on the real roads.** The game opens and closes gates once per frame,
+  and decides whether a gate may open (it must not join two districts) from the preview road graph and district
+  map: the real ones plus whatever the local player is hovering with a tool. In co-op the gates are now updated at
+  the start of each tick, and the question is answered with the game's own walk over the real road graph and
+  district map (`Fixes/FrameToTickFixes`), so no computer's hovering and no frame boundary can open a gate on one
+  computer only.
+- **Automation is evaluated in the tick only.** The game also evaluates automation whose inputs changed once per
+  frame, between two buckets of a tick, so a switch's effect landed mid-tick at a point that differed per computer.
+  In co-op only the tick's own evaluations run (start and end of each tick): a change shows at the end of the tick
+  it was made in, the same everywhere.
+- **The crossing panel no longer freezes the workers' snapshot.** A District Crossing's import icons ask the same
+  provider the workers' export decision reads, and whoever asks first fills a cache kept until a setting or the
+  storage changes: a panel open on one computer froze a snapshot taken at a frame boundary that the other
+  computer's simulation took at its tick. In co-op an ask from outside the simulation gets its answer but leaves the
+  cache as the simulation left it.
+- **Two district centers on the same tiles in one tick** no longer stop the session: a district center's placement
+  gets the block check (from the spec, no preview copy), so the second is skipped everywhere.
+- Closed already by alpha11: the Terrain Block replay check, which read the local tool's preview blocks, now runs on
+  the host alone and guests take its answer.
+- Reviewed, no change: `Ruins.Shuffle` re-selects, on the computer where it was selected, the ruin that replaces
+  one; selection is this computer's own and reaches nothing the simulation reads.
+- Checks: StabilityTests 263; RuntimeChecks 229 (the game members the gate, automation and snapshot fixes rely on).
+
 ## 1.4.0-alpha13
 
 **A colony desync is caught the tick it happens, not the day some beaver's random draw changed.** The alpha10 review's

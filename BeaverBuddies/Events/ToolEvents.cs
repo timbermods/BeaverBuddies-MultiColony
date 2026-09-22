@@ -58,9 +58,7 @@ namespace BeaverBuddies.Events
             var placer = context.GetSingleton<BlockObjectPlacerService>().GetMatchingPlacer(blockObjectSpec);
             Placement placement = new Placement(coordinates, orientation,
                 isFlipped ? FlipMode.Flipped : FlipMode.Unflipped);
-            // Skip validation for district centers - the preview object interferes with nav mesh
-            bool isDistrictCenter = prefabName != null && prefabName.StartsWith("DistrictCenter.");
-            if (!isDistrictCenter && !MayPlace(context, placement, buildingSpec))
+            if (!MayPlace(context, placement, buildingSpec))
             {
                 Plugin.LogWarning($"Invalid placement for {prefabName} at {coordinates}");
                 return;
@@ -105,7 +103,9 @@ namespace BeaverBuddies.Events
             // A guest takes the host's answer when it has one. Without one (an event the host has not played, which
             // only a file replay of an old recording gives), it checks for itself as before.
             if (placed.HasValue && EventIO.Get() is ClientEventIO) return placed.Value;
-            bool valid = IsPlacementValid(context, placement, spec);
+            // A district center gets the block check only (below): its preview copy interferes with the nav mesh. It
+            // used to get no check at all, so two placed on the same tiles in one tick threw and stopped the session.
+            bool valid = IsPlacementValid(context, placement, spec, blocksOnly: prefabName != null && prefabName.StartsWith("DistrictCenter."));
             placed = valid;
             return valid;
         }
@@ -116,12 +116,12 @@ namespace BeaverBuddies.Events
         // objects at every replayed placement (Unity destroys it with the scene, and it is made again).
         private static GameObject checkParent;
 
-        private static bool IsPlacementValid(IReplayContext context, Placement placement, BuildingSpec spec)
+        private static bool IsPlacementValid(IReplayContext context, Placement placement, BuildingSpec spec, bool blocksOnly = false)
         {
             long started = Colonies.ColonyProfiler.Start();
             try
             {
-                return IsPlacementValidTimed(context, placement, spec);
+                return IsPlacementValidTimed(context, placement, spec, blocksOnly);
             }
             finally
             {
@@ -129,11 +129,12 @@ namespace BeaverBuddies.Events
             }
         }
 
-        private static bool IsPlacementValidTimed(IReplayContext context, Placement placement, BuildingSpec spec)
+        private static bool IsPlacementValidTimed(IReplayContext context, Placement placement, BuildingSpec spec, bool blocksOnly)
         {
             // The blocks themselves first (the spot was taken since the click, the usual reason): the game's own
             // check, from the spec, without an instance. Only a placement that passes it needs the full check below.
             if (!context.GetSingleton<BlockValidator>().BlocksValid(spec.GetSpec<BlockObjectSpec>(), placement)) return false;
+            if (blocksOnly) return true;
             var templateInstantiator = context.GetSingleton<TemplateInstantiator>();
             if (checkParent == null) checkParent = new GameObject("BeaverBuddies_PlacementChecks");
             // It's a bit wasteful to instantiate the object just to check if it's valid,

@@ -65,6 +65,8 @@ namespace BeaverBuddies
             containerDefinition.Bind<ModMismatchWarningService>().AsSingleton();
             containerDefinition.Bind<DevModeCoopWarning>().AsSingleton();
             containerDefinition.Bind<TickOnceCoopNotice>().AsSingleton();
+            containerDefinition.Bind<GateTickRunner>().AsSingleton();
+            containerDefinition.Bind<RealGateConflict>().AsSingleton();
             containerDefinition.Bind<BeaverBuddies.Latency.PendingActions>().AsSingleton();
             // We can safely add this regardless of whether tracing is enabled
             // because it will only trace if the config is set to do so.
