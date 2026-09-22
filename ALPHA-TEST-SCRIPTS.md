@@ -150,8 +150,13 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 
 1. The friend is seated (log: `[Colony] Player 1 (…) plays slot 1`). The connection panel shows each name with its
    colony, e.g. *Alex (colony 2)*.
+1a. **Seating checks the Steam connection.** The friend who joined over Steam is seated as above, and the host's log
+    has no `[Colony] Refused PlayerHelloEvent` line. If a third player can, they join **by IP** (direct connection):
+    also seated, with no refusal. After **Save and Rehost** (line 7) each gets their own colony again.
 2. On a standard map or an existing save: once the host unpauses, the friend sees the offer to place a district
-   center and founds their colony. (Before that, Ctrl+K says the game has not started yet.)
+   center and founds their colony. (Before that, Ctrl+K says the game has not started yet.) The friend's notice is
+   *A new colony has been founded.*; the host's is a plain notice, not a warning: *A new colony has been founded:
+   Alex.* If the spot changed before it could be founded, only the friend is told to try again.
 3. Each player tries Script A line 3 against the other's colony: refused. Then one player leaves; the other tries
    again: still refused.
 4. Build a trading post between the two colonies and run an exchange (Script A lines 7 to 11, one player per side;
@@ -170,7 +175,10 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 8a. **Every tick compared (alpha13).** Play a quarter of an hour at speed 1 to 3 with building, marking and an
     exchange, across a day change. Expect **no** desync dialog. If one appears and the log says `Colony state differs
     from the host's at tick …` (not `Random state mismatch`), that is this build's digest disagreeing, not your game:
-    send both `Player.log` files; the two change counts in that line say which side counted one more.
+    send both `Player.log` files; the two change counts in that line say which side counted one more, and each log's
+    `Colony changes here as … desynced` list (that computer's last 256 changes), lined up by change number `#n`,
+    shows the first one that differs, unless the host's list already starts after the guest's change count (the host
+    logs a tick or more later; a large mark counts a change per tile).
 8b. **Refusals a guest sees (alpha12).** A guest who is not seated in a colony (a helper: join a game with every
     colony taken) changes the working hours: refused, and the panel goes back to the colony's hours. With the host's
     dev mode off, the guest Ctrl-clicks a locked building: the tool does **not** open; the host's refusal notice
@@ -209,6 +217,11 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     `[Colony] Separate colonies switched on: slot 1 founded a colony in a shared game` and `[Colony] The shared
     colony's N buildings are colony 0's` with the same N. Play ten more minutes without a desync (the colony digest
     is compared from now on); save, reload and host again: both colonies keep their land and buildings.
+8o. **Each journal is its colony's.** Wait until a beaver of the host's colony dies (old age, drowning, thirst) and a
+    child grows up in it: the host's notification journal (bottom left) lists both, the friend's lists neither. Then
+    the same the other way round. Save, reload and host again, the friend joins: once the friend's log says
+    `[Colony] This computer plays slot 1`, the friend's journal holds only colony 2's entries and the host's only
+    colony 1's (a dead beaver's body is gone after a day: its entry stays in its own colony's journal).
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*

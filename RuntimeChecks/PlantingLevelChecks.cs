@@ -125,6 +125,31 @@ internal static class PlantingLevelChecks
             finally { recorded.SetValue(null, null); }
         });
 
+        // The override replaces the game's levelling while an event is played. A prefix that skips the original runs
+        // after every other mod's prefix on the same method, as the Stability Fork's port of this fix does.
+        bool Targets(CustomAttributeData a, string method) => a.AttributeType.FullName == "HarmonyLib.HarmonyPatch"
+            && a.ConstructorArguments.Count == 2
+            && Equals(a.ConstructorArguments[0].Value, areaServiceType) && Equals(a.ConstructorArguments[1].Value, method);
+        // The priority Harmony itself patches the prefix with, not a model of it: PatchAll merges the class's attributes
+        // with the method's (the higher priority wins when both name one), and a priority of -1 (none named) becomes
+        // Priority.Normal (400) when the patch is made.
+        object Harmony(string name, params object[] args) => Assembly.Load("0Harmony")
+            .GetType("HarmonyLib.HarmonyMethodExtensions", true)!.GetMethod(name)!.Invoke(null, args)!;
+        int Priority(MethodInfo prefix)
+        {
+            object merged = Harmony("Merge", Harmony("GetMergedFromType", prefix.DeclaringType!), Harmony("GetMergedFromMethod", prefix));
+            int priority = (int)merged.GetType().GetField("priority")!.GetValue(merged)!;
+            return priority == -1 ? 400 : priority;
+        }
+
+        test("Planting: the levelling override lets other mods' prefixes run first (Priority.Last)", () =>
+        {
+            var prefix = overrideType.GetMethod("Prefix", all)!;
+            if (!overrideType.GetCustomAttributesData().Any(a => Targets(a, "InMapLeveledCoordinates")))
+                throw new Exception("the override does not patch TerrainAreaService.InMapLeveledCoordinates");
+            if (Priority(prefix) != 0) throw new Exception($"the override's priority is {Priority(prefix)}, not Priority.Last (0)");
+        });
+
         test("Planting: colony rules judge and trim the recorded tiles", () =>
         {
             object e = Activator.CreateInstance(eventType, true)!;

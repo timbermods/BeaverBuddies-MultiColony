@@ -19,6 +19,13 @@ connection panel model, player cursor preferences and animation patch source. St
 Steam client is required. Animation tests model a forward-only path cursor and
 invalid visual coordinates, not a running Unity water simulation.
 
+GitHub Actions runs these checks and the Python snapshot tests below on every push and
+pull request (`.github/workflows/tests.yml`, Windows, .NET 8). A few checks time real threads
+against the wall clock and miss their deadlines on a shared runner's few cores; the workflow
+names them, and there their failure is a warning instead of a red build. Run the whole suite
+locally before a release. RuntimeChecks needs the installed game's assemblies, so it runs only
+on a computer with the game.
+
 `dotnet run --project StabilityTests -- --ping-report` prints how the ping shown over Steam
 depends on the players' frame length, with Steam served once per frame and with it also served
 between the ticks of a frame. It runs the real transport, server, client and ping tracker over a
@@ -34,8 +41,12 @@ fixture, verifies identical results across six registration orders after the
 ordering fix, and checks water diagnostic snapshots and field hashes:
 
 ```
-dotnet run --project RuntimeChecks -- /path/to/BeaverBuddies.dll /path/to/Timberborn_Data/Managed /path/to/Harmony-directory
+dotnet run --project RuntimeChecks -- /path/to/BeaverBuddies.dll /path/to/Timberborn_Data/Managed /path/to/Harmony-directory /path/to/ModSettings/version-1.1/Scripts
 ```
+
+Run it on the build output (`bin`), which has MonoMod and Newtonsoft.Json beside the mod. The
+folders after the game's Managed folder are searched for the mod's other dependencies: Harmony
+(Workshop item 3284904751) and ModSettings (Workshop item 3283831040, its `version-1.1/Scripts`).
 
 RuntimeChecks also checks which types a multiplayer frame may create. Frames are read with
 Newtonsoft's `TypeNameHandling.All`, so every `$type` in one names a type to create, and the

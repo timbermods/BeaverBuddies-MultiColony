@@ -45,5 +45,6 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/WishlistTerms.cs" Link="WishlistTerms.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/SupplyDays.cs" Link="SupplyDays.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/HostStartRules.cs" Link="HostStartRules.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/JournalFilter.cs" Link="JournalFilter.cs" />
   </ItemGroup>
 </Project>

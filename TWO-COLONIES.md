@@ -275,6 +275,15 @@ district); alerts; the notification journal. Selecting another colony's building
 figures alone. Still whole-map: the *Global* history graphs in F9/F10 and in a good's tooltip, which the game
 records for the whole map.
 
+The journal goes by the colony an entry's beaver is in now; a beaver that has died, or lives in no district (cut
+off, or its district center deleted), goes by the colony it was last in. The save keeps that only for a beaver the
+journal has an entry about: after a reload, the death of any other beaver still in no district is in nobody's
+journal. A beaver moved through a Trading Post takes
+its earlier entries to its new colony. The save keeps whose each entry is, so after a reload it is still your
+colony's (it is listed again once you are seated). An entry saved by an earlier build whose beaver is gone is
+hidden, since nothing says whose it was. The game's own journal, which the save holds, is not changed: alone, you
+see every colony's entries.
+
 ## Road networks
 
 The game refuses to place a road, building or tubeway that would join two districts' roads, so two colonies' roads
@@ -358,9 +367,14 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - In a separate-colonies game, every tick the host's heartbeat carries a running digest of every colony state change (owners, marks, science,
   exchanges, the ledger, land, presence, hand-overs, working hours), and each guest compares it with its own at the
   same point: a difference stops that guest with the desync dialog that tick, with both digests and the number of
-  changes each side counted in the log. Once a day the host also sends its full colony check with the day's presence,
-  and a guest that differs stops too. Colony code draws no random numbers, so without these a difference showed only
-  once it changed a beaver's random draw, or never.
+  changes each side counted in the log. As any player desyncs, every computer also logs its last 256 colony changes
+  (`Colony changes here as …`, each with its number and the digest it left). Line two players' lists up by change
+  number (`#n`): the first number whose line differs is the change their computers did not make alike. The host logs
+  its list only when word of the desync arrives, a tick or more later, and one large mark can count hundreds of
+  changes (one per tile), so the host's list may already start after the change count the guest reported; then it
+  has moved on too far to show the diverging change. Once a day the host also sends its full colony
+  check with the day's presence, and a guest that differs stops too. Colony code draws no random numbers, so without
+  these a difference showed only once it changed a beaver's random draw, or never.
 - Two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest from the
   connection panel.
 - The days of food and water in the Ctrl+T window are an estimate from yesterday's use (today's, scaled, before a
@@ -378,12 +392,23 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   or drops it (logged as `[Colony] Refused …`). Guests never judge, so the computers cannot disagree. What the host
   decides while playing an action travels in the action too: whether a building could still be placed, what a
   founded colony starts with, the day's presence and colony check. A Trading Post's two halves are judged together.
+- **Seating checks the connection where it can.** A guest's hello says its stable id. Over Steam the host holds it to
+  the Steam ID Steam proved for the connection (`TimberServer.VerifiedIdOf`): a hello saying another Steam ID is
+  refused, and a guest whose own Steam ID could not be read (it says a local id) is seated by the proved one. A
+  direct (IP) connection proves nothing, so its hello is taken at its word; a guest there who says another player's
+  id takes that player's colony, and one who rejoins under new ids at tick 0 takes the free slots. The host always
+  listens for direct connections too, Steam invites or not. Over either, a connection already seated can't say hello
+  again as someone else, an id the slot table can't hold as it is (a line break or `|`, over 64 characters) is
+  refused, and so is a hello the host could not stamp with a guest's number (a connection it no longer knows).
+  (`ColonySlotTable.SeatHello` and `CheckHello`; a refused hello is logged as `[Colony] Refused PlayerHelloEvent …`.)
 - **Joining** closes at the first tick, or at the first action played while the host still waits paused, since a
   later joiner is sent the save the host started from. The join check covers the mod's own files (`Buildings`,
   `TemplateCollections`) as well as the game and mod versions.
 - **Every colony state change** (owners, marks, science and unlocks, exchanges and their ledger, land, traded
   beavers, presence, hand-overs, working hours) made inside a tick or a replayed action folds into a running digest.
-  The host sends it with every heartbeat; a guest whose own differs stops that tick. A shared game has none.
+  The host sends it with every heartbeat; a guest whose own differs stops that tick. The last 256 changes are kept
+  (`ColonyDigest.Recent`) and logged by every computer as a player desyncs; nothing kept is hashed or sent. A shared
+  game has none.
 - **Ownership is saved**: on the district centers, on every building (the colony that placed it, from its first
   moment as a construction site) and on map marks. Land is worked out from the buildings standing, the same on every
   computer. Beavers choose their work from these only, so every computer's beavers choose alike. A shared game

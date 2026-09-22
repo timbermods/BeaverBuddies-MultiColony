@@ -591,6 +591,40 @@ static class SteamLinkChecks
                 rig.Game.Run(() => { server.Close(); client.Close(); });
             }
         });
+        yield return ("The host knows a Steam guest by the Steam ID its connection proved, even after it leaves", () =>
+        {
+            using var rig = new Rig();
+            var listener = new SteamLinkListener(rig.Host, rig.Game.Run, _ => true);
+            var server = new TimberServer(listener, () => Task.FromResult(Pattern(1000)), null) { CompatibilityIdentity = "same" };
+            var client = new TimberClient(rig.ConnectGuestAfterListen(server)) { CompatibilityIdentity = "same" };
+            bool mapped = false; client.OnMapReceived += _ => mapped = true;
+            try
+            {
+                rig.Game.Run(() => client.Start());
+                Check(SpinWait.SpinUntil(() => { server.Update(); client.Update(); Thread.Sleep(1); return mapped; }, 4000), "the save never arrived");
+                // In the form of the game's own stable id (LocalPlayerIdentity), so a hello can be compared with it.
+                Equal<string>(BeaverBuddies.Colonies.ColonySlotTable.SteamIdPrefix + GuestId, server.VerifiedIdOf(1));
+                Equal<string>(null, server.VerifiedIdOf(0));
+                Equal<string>(null, server.VerifiedIdOf(2));
+                // A hello played just after its sender left is still held to who it was.
+                rig.Game.Run(() => client.Close());
+                Check(SpinWait.SpinUntil(() => { server.Update(); Thread.Sleep(1); return server.ConnectedPlayerIds.Count == 0; }, 4000),
+                    "the host never saw the guest leave");
+                // The host forgets a gone guest the next time it sends (SendEventToClients drops it, RemoveActivity with
+                // it): send one event, so that has happened before asking.
+                server.DoUserInitiatedEvent(new JObject { [TimberNetBase.TYPE_KEY] = "Heartbeat", [TimberNetBase.TICKS_KEY] = 1 });
+                Equal(0, server.ClientCount);
+                Equal<string>(BeaverBuddies.Colonies.ColonySlotTable.SteamIdPrefix + GuestId, server.VerifiedIdOf(1));
+            }
+            finally { rig.Game.Run(() => { server.Close(); client.Close(); }); }
+        });
+        yield return ("A Steam connection without a Steam ID proves nothing", () =>
+        {
+            var socket = new SteamLinkSocket(new FakeBackend(new FakeNet(), 9), 1, 0, "nobody", () => 0, true);
+            Equal<string>(null, socket.VerifiedPlayerId);
+            var known = new SteamLinkSocket(new FakeBackend(new FakeNet(), 9), 1, GuestId, "guest", () => 0, true);
+            Equal<string>("steam:" + GuestId, known.VerifiedPlayerId);
+        });
         yield return ("Steam end reasons are described in plain language", () =>
         {
             Check(SteamEndReasons.Describe(5003, "x").Contains("timed out"));

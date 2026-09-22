@@ -327,6 +327,10 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.StatusSystem.StatusAggregator", "Timberborn.StatusSystem", "IsVisible"),
             ("Timberborn.StatusSystem.DynamicStatusAggregator", "Timberborn.StatusSystem", "IsVisible"),
             ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "AddNotification"),
+            // A dying beaver's colony is read before the game takes it out of its district (ColonyJournal).
+            ("Timberborn.Characters.Character", "Timberborn.Characters", "KillCharacter"),
+            // And the colony any beaver leaves, for one that dies in no district (ColonyJournal).
+            ("Timberborn.GameDistricts.Citizen", "Timberborn.GameDistricts", "UnassignDistrict"),
             // Separate science and unlocks.
             ("Timberborn.ScienceSystem.ScienceService", "Timberborn.ScienceSystem", "get_SciencePoints"),
             ("Timberborn.ScienceSystem.ScienceService", "Timberborn.ScienceSystem", "AddPoints"),
@@ -459,6 +463,11 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.DistributionSystem.DistrictDistributableGoodProvider", "Timberborn.DistributionSystem", "_exportCache"),
             ("Timberborn.Population.PopulationService", "Timberborn.Population", "_populationDataCollector"),
             ("Timberborn.ConstructionSitesUI.ConstructionSiteDebugFragment", "Timberborn.ConstructionSitesUI", "_constructionSite"),
+            // The journal is listed again, through the colony filter, once this player is seated (ColonyJournal).
+            ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "_notifications"),
+            ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "_notificationView"),
+            ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "_latestNotification"),
+            ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "_latestNotificationElement"),
         })
         {
             test($"Colony: the game still has the field {typeName.Split('.').Last()}.{field}", () =>
@@ -544,6 +553,98 @@ internal static class ColonyRuntimeChecks
             var calls = MethodsCalled(instantiator.GetMethod("Instantiate", all)!).Select(m => m.Name).ToList();
             int made = calls.IndexOf("InstantiateInactive"), initialized = calls.IndexOf("Invoke");
             if (made < 0 || initialized < 0 || made > initialized) throw new Exception("it now calls: " + string.Join(", ", calls));
+        });
+
+        // Each player's journal judges a death by the colony the beaver died in, read in a prefix on KillCharacter
+        // (ColonyJournal). These fail if the game posts the death before it kills the beaver, or no longer takes the
+        // beaver out of its district on its Died event (then the prefix would not be needed, or not be enough).
+        test("Colony: the game kills a beaver before it posts the death, and its Died event takes it out of its district", () =>
+        {
+            var mortal = Assembly.Load("Timberborn.MortalSystem").GetType("Timberborn.MortalSystem.Mortal", true)!;
+            var calls = MethodsCalled(mortal.GetMethod("DieIfItIsTime", all)!).Select(m => m.DeclaringType!.Name + "." + m.Name).ToList();
+            int kill = calls.IndexOf("Character.KillCharacter"), post = calls.IndexOf("NotificationBus.Post");
+            if (kill < 0 || post < 0 || kill > post) throw new Exception("DieIfItIsTime now calls: " + string.Join(", ", calls));
+            var citizen = Assembly.Load("Timberborn.GameDistricts").GetType("Timberborn.GameDistricts.Citizen", true)!;
+            if (!MethodsCalled(citizen.GetMethod("OnDied", all)!).Any(m => m.Name == "RemoveFromDistrictsAssignment"))
+                throw new Exception("Citizen.OnDied no longer takes the beaver out of its district");
+            if (!MethodsCalled(citizen.GetMethod("Awake", all)!).Any(m => m.Name == "add_Died"))
+                throw new Exception("Citizen no longer listens to Character.Died");
+        });
+
+        // A beaver can die in no district (cut off from it, or its district center deleted); the journal then goes by
+        // the colony it last left, read in a prefix on Citizen.UnassignDistrict. This fails if a way out of a district
+        // no longer goes through it.
+        test("Colony: every way a beaver leaves its district goes through Citizen.UnassignDistrict", () =>
+        {
+            var citizen = Assembly.Load("Timberborn.GameDistricts").GetType("Timberborn.GameDistricts.Citizen", true)!;
+            foreach (string way in new[] { "RemoveFromDistrictsAssignment", "UnassignDistrictIfCutOff", "AssignDistrict" })
+                if (!MethodsCalled(citizen.GetMethod(way, all)!).Any(m => m.Name == "UnassignDistrict"))
+                    throw new Exception($"Citizen.{way} no longer calls UnassignDistrict");
+            var setters = citizen.GetMethods(all | BindingFlags.DeclaredOnly).Where(m => m.Name != "UnassignDistrict" && m.Name != "AssignDistrict")
+                .Where(m => MethodsCalled(m).Any(c => c.Name == "set_AssignedDistrict")).Select(m => m.Name).ToList();
+            if (setters.Count > 0) throw new Exception("AssignedDistrict is now also set in " + string.Join(", ", setters));
+        });
+
+        // The journal is display only: its prefixes let the game's methods run, it asks the game and this mod only
+        // questions (and the save and the panel it lists), the rule StabilityTests checks is the one it uses, and the
+        // recording and the listing again are still wired up.
+        test("Colony: the journal only reads the game, and decides by the rule StabilityTests checks", () =>
+        {
+            var journal = mod.GetType("BeaverBuddies.Colonies.ColonyJournal", true)!;
+            var death = mod.GetType("BeaverBuddies.Colonies.ColonyJournalDeathPatcher", true)!;
+            var leave = mod.GetType("BeaverBuddies.Colonies.ColonyJournalLeavePatcher", true)!;
+            foreach (Type patcher in new[] { death, leave })
+                if (patcher.GetMethod("Prefix", all)!.ReturnType != typeof(void))
+                    throw new Exception($"{patcher.Name}'s prefix can skip the game's method");
+            const BindingFlags declared = all | BindingFlags.DeclaredOnly;
+            var ours = new[] { journal, death, leave };
+            var called = ours
+                .SelectMany(t => new[] { t }.Concat(t.GetNestedTypes(all)))
+                .SelectMany(t => t.GetMethods(declared).Cast<MethodBase>().Concat(t.GetConstructors(declared)))
+                .SelectMany(MethodsCalled)
+                .ToList();
+            // Of this mod it may only ask too: nothing that changes a colony (an owner, the digest, a stamp).
+            var modAllowed = new HashSet<string> { "DistrictOwner.OwnerOf", "Plugin.LogWarning", "SingletonManager.GetSingleton", "RegisteredSingleton..ctor" };
+            var modChanges = called
+                .Where(m => m.DeclaringType!.Namespace?.StartsWith("BeaverBuddies") == true && m.DeclaringType.Name != "JournalFilter")
+                .Where(m => !ours.Contains(m.DeclaringType) && !ours.Contains(m.DeclaringType!.DeclaringType))
+                .Where(m => !m.Name.StartsWith("get_"))
+                .Select(m => m.DeclaringType!.Name + "." + m.Name)
+                .Where(n => !modAllowed.Contains(n))
+                .Distinct().OrderBy(n => n).ToList();
+            if (modChanges.Count > 0) throw new Exception("calls into this mod " + string.Join(", ", modChanges));
+            foreach (var (type, method, target, name) in new[]
+            {
+                (death, "Prefix", "ColonyJournal", "RecordDeath"),
+                (leave, "Prefix", "ColonyJournal", "RecordLeaving"),
+                (journal, "RecordDeath", "Dictionary`2", "set_Item"),
+                (journal, "RecordLeaving", "Dictionary`2", "set_Item"),
+                (journal, "Load", "NotificationBus", "add_NotificationPosted"),
+                (journal, "UpdateSingleton", "ColonyJournal", "ListAgain"),
+                (journal, "ListAgain", "NotificationPanel", "AddNotification"),
+            })
+            {
+                if (!MethodsCalled(type.GetMethod(method, all)!).Any(m => m.DeclaringType!.Name == target && m.Name == name))
+                    throw new Exception($"{type.Name}.{method} no longer calls {target}.{name}");
+            }
+            var calls = called
+                .Where(m => m.DeclaringType!.Namespace?.StartsWith("Timberborn") == true || m.DeclaringType.Namespace == "UnityEngine")
+                .Select(m => m.DeclaringType!.Name + "." + m.Name)
+                .Distinct().OrderBy(n => n).ToList();
+            var asks = new[] { "GetComponent", "GetEntity", "TryGetSingleton", "Has", "Get" };
+            var allowed = new HashSet<string>
+            {
+                "NotificationBus.add_NotificationPosted", "NotificationPanel.AddNotification", "ISingletonSaver.GetSingleton",
+                "IObjectSaver.Set",
+            };
+            var changes = calls.Where(c => !c.Split('.')[1].StartsWith("get_") && !asks.Contains(c.Split('.')[1]) && !allowed.Contains(c))
+                .ToList();
+            if (changes.Count > 0) throw new Exception("calls " + string.Join(", ", changes));
+            var view = mod.GetType("BeaverBuddies.Colonies.ColonyViewNotificationPatcher", true)!;
+            if (!MethodsCalled(view.GetMethod("Prefix", all)!).Any(m => m.DeclaringType == journal && m.Name == "ShouldShow"))
+                throw new Exception("the journal's filter no longer asks ColonyJournal");
+            if (!MethodsCalled(journal.GetMethod("ShouldShow", all)!).Any(m => m.DeclaringType!.Name == "JournalFilter" && m.Name == "ShouldShow"))
+                throw new Exception("ColonyJournal no longer decides by JournalFilter");
         });
 
         // A shared-colony game's save holds only what the Stability Fork's does. Every colony service that writes into a
@@ -634,6 +735,18 @@ internal static class ColonyRuntimeChecks
                 "ColonyScienceService.get_DisplaySlot" };
             var found = forbidden.Where(calls.Contains).ToList();
             if (found.Count > 0) throw new Exception("calls " + string.Join(", ", found));
+        });
+
+        // MC6: every computer that plays a ClientDesyncedEvent logs its last colony changes, in a separate-colonies game
+        // only (a shared game keeps none), and before anything else the event does, so nothing below can stop it.
+        test("Colony: a desync logs the last colony changes first, only with separate colonies", () =>
+        {
+            var desynced = mod.GetType("BeaverBuddies.Events.ClientDesyncedEvent", true)!;
+            var calls = MethodsCalled(desynced.GetMethod("Replay", all)!).Select(m => m.DeclaringType!.Name + "." + m.Name).ToList();
+            int asks = calls.IndexOf("ColonyModeService.get_IsSeparateColonies"), described = calls.IndexOf("ColonyDigest.DescribeRecent");
+            int logged = calls.IndexOf("Plugin.LogWarning"), reset = calls.IndexOf("MultiplayerInputRecovery.RequestReset");
+            if (asks < 0 || described < 0 || logged < 0 || reset < 0 || !(asks < described && described < logged && logged < reset))
+                throw new Exception("it now calls: " + string.Join(", ", calls));
         });
     }
 

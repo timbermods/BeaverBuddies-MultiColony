@@ -252,6 +252,138 @@ static class ColonyChecks
             Equal(0, ColonySlotTable.Decode("garbage\n|x").Count);
         });
 
+        // ---- who a player says they are ----
+        // A guest says hello with its stable id. A Steam connection proves who is at the other end, so the host holds
+        // the hello to that; a direct (TCP) connection proves nothing, so its hello is taken at its word.
+
+        yield return ("Colony: a hello claiming another Steam ID than its connection proved is refused", () =>
+        {
+            HelloCheck lie = ColonySlotTable.CheckHello("steam:2", "steam:1", null);
+            Check(!lie.IsAllowed, $"a guest whose connection is steam:1 was seated as {lie.SeatId}");
+            Check(lie.Refusal.Contains("steam:2") && lie.Refusal.Contains("steam:1"), "the refusal should name both ids: " + lie.Refusal);
+            HelloCheck honest = ColonySlotTable.CheckHello("steam:1", "steam:1", null);
+            Check(honest.IsAllowed, "refused: " + honest.Refusal);
+            Equal("steam:1", honest.SeatId);
+        });
+
+        yield return ("Colony: a connection already seated can't say hello again as someone else", () =>
+        {
+            Check(!ColonySlotTable.CheckHello("steam:3", null, "steam:2").IsAllowed, "a second hello re-seated steam:2's connection as steam:3");
+            Check(!ColonySlotTable.CheckHello("local:b", null, "local:a").IsAllowed, "a second hello re-seated local:a's connection as local:b");
+            // Seated without an id (a helper): it can't take one later either.
+            Check(!ColonySlotTable.CheckHello("steam:1", null, "").IsAllowed, "a second hello gave an id to a connection seated without one");
+            // The same hello again changes nothing, so it is let through.
+            HelloCheck again = ColonySlotTable.CheckHello("steam:2", null, "steam:2");
+            Check(again.IsAllowed, "refused: " + again.Refusal);
+            Equal("steam:2", again.SeatId);
+        });
+
+        yield return ("Colony: a refused hello leaves the slot table as it was", () =>
+        {
+            var table = new ColonySlotTable();
+            table.Resolve("steam:1", "Host");
+            Check(!table.SeatHello("steam:2", "steam:3", null, "Mallory").IsAllowed, "a guest proved to be steam:3 was seated as steam:2");
+            Equal<int?>(1, table.SeatHello("steam:4", null, null, "Guest").Slot);
+            // A seated guest saying hello again and again with new ids: each one used to take and save a free slot.
+            for (int i = 0; i < 10; i++) Check(!table.SeatHello("junk" + i, null, "steam:4", "Guest").IsAllowed, "a re-hello was seated");
+            Equal(2, table.Entries.Count);
+            Equal<int?>(null, table.SlotOf("steam:2"));
+            Equal<int?>(null, table.SlotOf("steam:3"));
+            Equal<int?>(null, table.SlotOf("junk0"));
+        });
+
+        yield return ("Colony: a Steam guest whose own Steam ID could not be read is seated by the one its connection proved", () =>
+        {
+            // Its game fell back to the id kept on its computer (Steam's API threw when asked), but it joined over
+            // Steam, so the host knows who it is. Seated by that, it gets the colony saved under its Steam ID rather
+            // than being refused (it says hello once a session, so it would stay unseated) or given a new colony.
+            var table = new ColonySlotTable();
+            table.Set(new[] { new ColonySlotEntry("steam:1", 0, "Host"), new ColonySlotEntry("steam:7", 2, "Friend") });
+            HelloCheck check = table.SeatHello("local:abc", "steam:7", null, "Friend");
+            Check(check.IsAllowed, "refused: " + check.Refusal);
+            Equal("steam:7", check.SeatId);
+            Equal<int?>(2, check.Slot);
+            Equal(2, table.Entries.Count);
+            Equal<int?>(null, table.SlotOf("local:abc"));
+            // Nor can a Steam guest take a direct player's colony by saying that player's local id.
+            Equal<int?>(1, table.Resolve("local:direct", "Direct"));
+            HelloCheck borrowed = table.SeatHello("local:direct", "steam:8", null, "Mallory");
+            Equal("steam:8", borrowed.SeatId);
+            Equal<int?>(3, borrowed.Slot);
+        });
+
+        yield return ("Colony: a direct (TCP) join proves nothing and is seated by the id it says", () =>
+        {
+            Equal("local:abc", ColonySlotTable.CheckHello("local:abc", null, null).SeatId);
+            // The known limit the README states: over a direct connection even a Steam ID is taken at its word.
+            HelloCheck steam = ColonySlotTable.CheckHello("steam:9", null, null);
+            Check(steam.IsAllowed, "refused: " + steam.Refusal);
+            Equal("steam:9", steam.SeatId);
+            // A direct connection's transport proves no identity to the real server.
+            using var s = new ActivityTransportChecks.Session(1);
+            Equal<string>(null, s.Host.VerifiedIdOf(1));
+            Equal<string>(null, s.Host.VerifiedIdOf(0));
+        });
+
+        yield return ("Colony: a hello whose id would break the slot table is refused, and its refusal is one log line", () =>
+        {
+            // The table and the players list are "slot|id|name" lines, and only the name was cleaned: a direct guest
+            // whose id held a line break wrote extra rows, reserving (and saving) every free colony at once.
+            var table = new ColonySlotTable();
+            table.Resolve("steam:1", "Host");
+            HelloCheck injected = table.SeatHello("local:x\n2|steam:99|Ghost\n3|steam:98|Ghost2", null, null, "Mallory");
+            Check(!injected.IsAllowed, $"an id with line breaks was seated as {injected.SeatId}");
+            Check(!injected.Refusal.Contains('\n') && !injected.Refusal.Contains('\r'), "the refusal spans lines: " + injected.Refusal);
+            Check(!table.SeatHello("local:x|y", null, null, "Mallory").IsAllowed, "an id with a '|' was seated");
+            Check(!table.SeatHello("local:x\u2028y", null, null, "Mallory").IsAllowed, "an id with a Unicode line separator was seated");
+            Check(!table.SeatHello("local:" + new string('a', ColonySlotTable.MaxIdLength), null, null, "Mallory").IsAllowed,
+                "an id longer than any the mod makes was seated");
+            Equal(1, table.Entries.Count);
+            Equal(1, ColonySlotTable.Decode(ColonySlotTable.Encode(table.Entries)).Count);
+            // Every id the mod makes still passes, and no id (a helper) too.
+            Check(ColonySlotTable.IsWellFormedId(ColonySlotTable.SteamIdPrefix + ulong.MaxValue), "a Steam ID was judged malformed");
+            Check(ColonySlotTable.IsWellFormedId("local:" + Guid.NewGuid().ToString("N")), "a local id was judged malformed");
+            Check(ColonySlotTable.IsWellFormedId(null) && ColonySlotTable.IsWellFormedId(""), "no id was judged malformed");
+            // Over Steam the proved id is what is seated, so a malformed local claim changes nothing; a malformed Steam ID
+            // claim is refused as a lie, and its refusal is on one line too.
+            Equal("steam:7", ColonySlotTable.CheckHello("local:x\n0|local:evil", "steam:7", null).SeatId);
+            HelloCheck lie = ColonySlotTable.CheckHello("steam:7\n0|local:evil", "steam:8", null);
+            Check(!lie.IsAllowed, "a malformed Steam ID claim was seated");
+            Check(!lie.Refusal.Contains('\n'), "the refusal spans lines: " + lie.Refusal);
+            Check(!ColonySlotTable.ForLog(new string('x', 1000)).Contains(new string('x', ColonySlotTable.MaxIdLength + 1)),
+                "a long id was logged in full");
+        });
+
+        yield return ("Colony: only a hello from a guest the host has numbered is seated, by what its connection was seated as", () =>
+        {
+            // The whole host decision (ColonySlotService.HostSeat hands it its session tables as they are).
+            var table = new ColonySlotTable();
+            table.Resolve("steam:1", "Host");
+            var session = new SortedDictionary<int, int> { [0] = 0 };
+            var ids = new SortedDictionary<int, string> { [0] = "steam:1" };
+            // -1: a connection the host no longer numbers (it left while its hello was on the way), so it can't be
+            // held to its Steam ID; 0 is the host, which never says hello.
+            Check(!table.SeatHello(-1, "steam:2", null, session, ids, "Late").IsAllowed, "a hello from connection -1 was seated");
+            Check(!table.SeatHello(0, "steam:2", null, session, ids, "Host?").IsAllowed, "a hello from the host's number was seated");
+            Equal(1, table.Entries.Count);
+
+            Equal<string>(null, ColonySlotTable.SeatedIdOf(1, session, ids));
+            HelloCheck first = table.SeatHello(1, "steam:2", "steam:2", session, ids, "Guest");
+            Check(first.IsAllowed, "refused: " + first.Refusal);
+            Equal<int?>(1, first.Slot);
+            session[1] = 1; ids[1] = "steam:2";
+            Equal("steam:2", ColonySlotTable.SeatedIdOf(1, session, ids));
+            Check(!table.SeatHello(1, "steam:3", null, session, ids, "Guest").IsAllowed, "a seated guest came back as steam:3");
+            Check(table.SeatHello(1, "steam:2", "steam:2", session, ids, "Guest").IsAllowed, "the same hello again was refused");
+            // Seated as a helper without an id: in the session, with no id (or a null one).
+            session[2] = 0;
+            Equal("", ColonySlotTable.SeatedIdOf(2, session, ids));
+            ids[2] = null!;
+            Equal("", ColonySlotTable.SeatedIdOf(2, session, ids));
+            Check(!table.SeatHello(2, "local:new", null, session, ids, "Helper").IsAllowed, "a helper took an id with a second hello");
+            Equal(2, table.Entries.Count);
+        });
+
         // ---- who may change what ----
 
         yield return ("Colony: your own things, and things in no district, are yours to change", () =>
@@ -372,6 +504,63 @@ static class ColonyChecks
             Equal(0L, ColonyDigest.Of(null));
         });
 
+        yield return ("Colony: the colony digest keeps its last 256 changes in order, from load, only those it counted, allocating nothing", () =>
+        {
+            ColonyDigest.Gate = () => true;
+            ColonyDigest.Reset();
+            Equal(0, ColonyDigest.Recent().Length);
+            for (int i = 1; i <= 300; i++) ColonyDigest.Note(i % 2 == 0 ? "stamp" : "land", i, -i, i * 10L, long.MaxValue - i);
+            var recent = ColonyDigest.Recent();
+            Equal(256, ColonyDigest.RecentSize); Equal(256, recent.Length); Equal(300, ColonyDigest.Changes);
+            for (int k = 0; k < recent.Length; k++)
+            {
+                int i = 45 + k;
+                Equal(i, recent[k].Number); Equal(i % 2 == 0 ? "stamp" : "land", recent[k].What);
+                Equal((long)i, recent[k].A); Equal((long)-i, recent[k].B); Equal(i * 10L, recent[k].C); Equal(long.MaxValue - i, recent[k].D);
+            }
+            // The newest carries the digest it left, the one a heartbeat would carry now.
+            Equal(ColonyDigest.Value, recent[255].After);
+            Check(recent[254].After != recent[255].After, "each change carries the digest after it");
+            // Printed oldest first, a change a line, to set two players' logs side by side. The same text whatever the
+            // computer's culture: Swedish writes a negative number with U+2212, not '-'.
+            string text;
+            var culture = System.Globalization.CultureInfo.CurrentCulture;
+            try
+            {
+                System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("sv-SE");
+                text = ColonyDigest.DescribeRecent();
+            }
+            finally { System.Globalization.CultureInfo.CurrentCulture = culture; }
+            Check(text.Contains($"#45 land 45 -45 450 {long.MaxValue - 45} -> {recent[0].After:x16}"), "the oldest change kept is printed");
+            Check(text.IndexOf("#45 ") < text.IndexOf("#300 "), "oldest first");
+            Check(!text.Contains("#44 "), "a change pushed out is not printed");
+            // A change costs no allocation once it is full. The best of five passes counts, so that the runtime's own
+            // work landing on this thread by chance (the loop compiled again mid-way) cannot fail it.
+            long least = long.MaxValue;
+            for (int pass = 0; pass < 5 && least > 0; pass++)
+            {
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                for (int i = 0; i < 1000; i++) ColonyDigest.Note("science", 1, i, i);
+                least = Math.Min(least, GC.GetAllocatedBytesForCurrentThread() - before);
+            }
+            Equal(0L, least);
+            // A load clears it.
+            ColonyDigest.Reset();
+            Equal(0, ColonyDigest.Recent().Length);
+            Check(!ColonyDigest.DescribeRecent().Contains("#"), "nothing printed after a reset");
+            // Outside the simulation nothing is kept either.
+            ColonyDigest.Note("stamp", 1, 1);
+            ColonyDigest.Gate = () => false;
+            ColonyDigest.Note("owner", 2, 2);
+            ColonyDigest.Gate = () => true;
+            ColonyDigest.Note("land", 3, 3);
+            recent = ColonyDigest.Recent();
+            Equal(2, recent.Length);
+            Equal("stamp", recent[0].What); Equal(1, recent[0].Number);
+            Equal("land", recent[1].What); Equal(2, recent[1].Number);
+            ColonyDigest.Reset();
+        });
+
         yield return ("Colony: a Trading Post is removed by either of its partners, and by nobody else", () =>
         {
             var w = new FakeWorld().Crossing("post", 0, 1).Own("post", 0);
@@ -437,6 +626,45 @@ static class ColonyChecks
             Equal(ColonyRefusal.FoundingConflict, ColonyRules.JudgeFounding(true, false, true, true, true).Refusal);
             Equal(ColonyRefusal.OtherColonyArea, ColonyRules.JudgeFounding(true, false, true, true, false, onOtherColonyLand: true).Refusal);
             Equal(ColonyRefusal.TooCloseToColony, ColonyRules.JudgeFounding(true, false, true, true, false, tooCloseToColony: true).Refusal);
+        });
+
+        yield return ("Colony: only the founder hears how a founding went; the others hear only that a colony was founded", () =>
+        {
+            // Every computer plays the founding at its tick. Slot 1 asked for it; the host (slot 0) and a third player
+            // did not, and a spot that changed ("try again with Ctrl+K") is not theirs to hear about.
+            Equal(FoundingNotice.None, ColonyRules.FoundingNoticeFor(localSlot: 0, founderSlot: 1, founded: false));
+            Equal(FoundingNotice.None, ColonyRules.FoundingNoticeFor(2, 1, false));
+            Equal(FoundingNotice.Founded, ColonyRules.FoundingNoticeFor(0, 1, true));
+            Equal(FoundingNotice.Founded, ColonyRules.FoundingNoticeFor(2, 1, true));
+            // A guest the host has not seated yet (-1) is not the founder either.
+            Equal(FoundingNotice.None, ColonyRules.FoundingNoticeFor(-1, 1, false));
+            Equal(FoundingNotice.Founded, ColonyRules.FoundingNoticeFor(-1, 1, true));
+            // The founder: whether it worked, or that the spot changed.
+            Equal(FoundingNotice.Done, ColonyRules.FoundingNoticeFor(1, 1, true));
+            Equal(FoundingNotice.Failed, ColonyRules.FoundingNoticeFor(1, 1, false));
+            Equal(FoundingNotice.Done, ColonyRules.FoundingNoticeFor(0, 0, true));
+        });
+
+        yield return ("Colony: a founding notice is a warning only for the founder's failed try, and names the colony for the others", () =>
+        {
+            // The founder's retry hint is the one notice that asks for something; a founding that worked is news.
+            Equal<string>(null, ColonyRules.FoundingNoticeKey(FoundingNotice.None));
+            Equal("BeaverBuddies.Colony.Founding.Done", ColonyRules.FoundingNoticeKey(FoundingNotice.Done));
+            Equal("BeaverBuddies.Colony.Founding.Failed", ColonyRules.FoundingNoticeKey(FoundingNotice.Failed));
+            Equal("BeaverBuddies.Colony.Founding.Other", ColonyRules.FoundingNoticeKey(FoundingNotice.Founded));
+            Equal(false, ColonyRules.FoundingNoticeWarns(FoundingNotice.Done));
+            Equal(true, ColonyRules.FoundingNoticeWarns(FoundingNotice.Failed));
+            Equal(false, ColonyRules.FoundingNoticeWarns(FoundingNotice.Founded));
+            // The others' notice names the colony ({0}); the founder's own texts take no name.
+            string root = AppContext.BaseDirectory;
+            while (root != null && !File.Exists(Path.Combine(root, "BeaverBuddies.sln"))) root = Path.GetDirectoryName(root);
+            Check(root != null, "could not find the repository root");
+            var english = File.ReadAllLines(Path.Combine(root!, "BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv"))
+                .Select(line => line.Split(new[] { ',' }, 2)).Where(parts => parts.Length == 2)
+                .GroupBy(parts => parts[0]).ToDictionary(group => group.Key, group => group.First()[1]);
+            Check(english[ColonyRules.FoundingNoticeKey(FoundingNotice.Founded)].Contains("{0}"), "the others' founding notice does not name the colony");
+            Check(!english[ColonyRules.FoundingNoticeKey(FoundingNotice.Done)].Contains("{0}"), "the founder's founding notice expects a name");
+            Check(!english[ColonyRules.FoundingNoticeKey(FoundingNotice.Failed)].Contains("{0}"), "the founder's failed founding notice expects a name");
         });
 
         // ---- automatic migration ----
@@ -877,6 +1105,73 @@ static class ColonyChecks
             Check(forward.OthersReachNear(1, new[] { (45, 45) }), "beside the shared colony");
             Check(!forward.OthersReachNear(1, new[] { (90, 10) }), "far from it");
             Check(!forward.MayUse(1, 20, 50) && forward.MayUse(1, 90, 10));
+        });
+
+        // ---- each player's notification journal ----
+
+        yield return ("Colony: a beaver of the other colony who dies stays out of this player's journal", () =>
+        {
+            // The game unassigns a dead beaver's district before it posts the death, so the live owner is gone; the
+            // colony recorded as it died decides.
+            Check(!JournalFilter.ShouldShow(true, 0, false, true, null, 1), "slot 1's death shows in slot 0's journal");
+            Check(JournalFilter.ShouldShow(true, 1, false, true, null, 1), "slot 1's death is missing from slot 1's journal");
+            // After a reload the body is gone: the saved owner decides.
+            Check(!JournalFilter.ShouldShow(true, 0, false, false, null, 1), "a gone subject of slot 1 shows to slot 0");
+            Check(JournalFilter.ShouldShow(true, 1, false, false, null, 1), "a gone subject of slot 1 is missing for slot 1");
+        });
+
+        yield return ("Colony: the journal shows a living subject by its colony now, and everyone's entries to everyone", () =>
+        {
+            Check(JournalFilter.ShouldShow(true, 0, false, true, 0, null));
+            Check(!JournalFilter.ShouldShow(true, 0, false, true, 1, null));
+            // A beaver who moved through a Trading Post is the receiving colony's, whatever was recorded before.
+            Check(JournalFilter.ShouldShow(true, 1, false, true, 1, 0));
+            Check(!JournalFilter.ShouldShow(true, 0, false, true, 1, 0));
+            // Something in no district, and an entry about nothing, are shown to everyone.
+            Check(JournalFilter.ShouldShow(true, 0, false, true, null, null));
+            Check(JournalFilter.ShouldShow(true, 1, true, false, null, null));
+            // Alone, or before this player is seated, the journal is the game's.
+            Check(JournalFilter.ShouldShow(false, 0, false, true, 1, 1));
+            Check(JournalFilter.ShouldShow(false, -1, false, false, null, null));
+        });
+
+        yield return ("Colony: an entry about something gone whose colony nobody recorded is hidden while each sees their own", () =>
+        {
+            // A save from an earlier build: its journal may hold the other colony's deaths.
+            Check(!JournalFilter.ShouldShow(true, 0, false, false, null, null), "an unknown gone subject is shown");
+        });
+
+        yield return ("Colony: a living beaver keeps its last colony when the journal's record is trimmed", () =>
+        {
+            // A beaver cut off from its district, or whose district center was deleted, lives in none: if it dies, the
+            // colony it last lived in decides. Only what is gone and out of the journal is forgotten.
+            var inJournal = new Guid("aaaaaaaa-0000-0000-0000-000000000001");
+            var living = new Guid("aaaaaaaa-0000-0000-0000-000000000002");
+            var gone = new Guid("aaaaaaaa-0000-0000-0000-000000000003");
+            var goneInJournal = new Guid("aaaaaaaa-0000-0000-0000-000000000004");
+            var forgotten = JournalFilter.Forgettable(new[] { inJournal, living, gone, goneInJournal },
+                new HashSet<Guid> { inJournal, goneInJournal }, subject => subject == inJournal || subject == living);
+            Check(!forgotten.Contains(living), "a living beaver's last colony is forgotten");
+            Check(!forgotten.Contains(inJournal) && !forgotten.Contains(goneInJournal), "a journal entry's colony is forgotten");
+            Equal(1, forgotten.Count);
+            Equal(gone, forgotten[0]);
+        });
+
+        yield return ("Colony: the journal's recorded colonies come back from a save, and a damaged entry is skipped", () =>
+        {
+            var a = new Guid("0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0");
+            var b = new Guid("11111111-2222-3333-4444-555555555555");
+            string text = JournalFilter.Encode(new[] { new KeyValuePair<Guid, int>(a, 1), new KeyValuePair<Guid, int>(b, 0) });
+            var back = JournalFilter.Decode(text);
+            Equal(2, back.Count);
+            Equal(a, back[0].Key); Equal(1, back[0].Value);
+            Equal(b, back[1].Key); Equal(0, back[1].Value);
+            Equal(0, JournalFilter.Decode("").Count);
+            Equal(0, JournalFilter.Decode(null).Count);
+            // Only a subject with a slot a colony can have is kept.
+            var damaged = JournalFilter.Decode($"nonsense,{a:N}:{ColonySlotTable.MaxSlots},{a:N}:-1,{b:N}:x,:1,{b:N}:3");
+            Equal(1, damaged.Count);
+            Equal(b, damaged[0].Key); Equal(3, damaged[0].Value);
         });
 
         yield return ("Mod Settings: every tooltip fits the screen, and both colony choices are explained", () =>

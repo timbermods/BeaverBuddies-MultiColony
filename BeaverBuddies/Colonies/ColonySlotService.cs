@@ -25,7 +25,7 @@ namespace BeaverBuddies.Colonies
             {
                 if (SteamOverlayConnectionService.IsSteamEnabled)
                 {
-                    try { return "steam:" + SteamUser.GetSteamID().m_SteamID; }
+                    try { return ColonySlotTable.SteamIdPrefix + SteamUser.GetSteamID().m_SteamID; }
                     catch (Exception error) { Plugin.LogWarning("[Colony] Steam ID unavailable: " + error.Message); }
                 }
                 string id = null;
@@ -116,7 +116,8 @@ namespace BeaverBuddies.Colonies
         }
 
         private bool helloSent;
-        // The id this computer said hello with: its own seat is found by it, even if Steam started meanwhile.
+        // The id this computer said hello with, then the one the host seated it by: its own seat is found by it, even if
+        // Steam started meanwhile.
         private string sentPlayerId;
 
         public void UpdateSingleton()
@@ -134,7 +135,7 @@ namespace BeaverBuddies.Colonies
 
         public IEnumerable<KeyValuePair<int, int>> Session => session;
 
-        /// <summary>The stable id this computer's player is known by this session (the one it said hello with).</summary>
+        /// <summary>The stable id this computer's player is known by this session (the one it was seated by).</summary>
         public string LocalPlayerId =>
             EventIO.Get() is ServerEventIO ? hostPlayerId ?? LocalPlayerIdentity.Id : sentPlayerId ?? LocalPlayerIdentity.Id;
 
@@ -161,21 +162,32 @@ namespace BeaverBuddies.Colonies
         private string EncodePlayers() => string.Join("\n", playerIds.Select(p =>
             $"{p.Key}|{p.Value}|{(playerNames.TryGetValue(p.Key, out string name) ? name : "").Replace("\n", " ").Replace("|", "/")}"));
 
-        /// <summary>Host only, before a hello is replayed: seat the player and write the tables into the event.</summary>
-        public void HostSeat(PlayerHelloEvent hello)
+        /// <summary>
+        /// Host only, before a hello is replayed: seat the player and write the tables into the event. False refuses the
+        /// hello (<paramref name="why"/> says why) and changes nothing (ColonySlotTable.SeatHello and CheckHello decide).
+        /// <paramref name="verifiedId"/> is who the guest's connection proved to be (TimberServer.VerifiedIdOf), null for
+        /// a direct connection. A player may be seated by that rather than the id the hello says; the hello keeps what
+        /// it said, so the guest still finds its own, and every computer takes the seated id from the tables.
+        /// </summary>
+        public bool HostSeat(PlayerHelloEvent hello, string verifiedId, out string why)
         {
+            HelloCheck check = Table.SeatHello(hello.player, hello.playerId, verifiedId, session, playerIds, hello.playerName);
+            why = check.Refusal;
+            if (!check.IsAllowed) return false;
             int hostSlot = SlotOfPlayer(ColonySession.HostPlayer);
-            int? slot = Table.Resolve(hello.playerId, hello.playerName);
-            int seat = slot ?? Math.Max(0, hostSlot);
+            int seat = check.Slot ?? Math.Max(0, hostSlot);
             session[hello.player] = seat;
-            playerIds[hello.player] = hello.playerId;
+            playerIds[hello.player] = check.SeatId;
             playerNames[hello.player] = hello.playerName ?? "";
             hello.table = ColonySlotTable.Encode(Table.Entries);
             hello.session = string.Join(",", session.Select(p => $"{p.Key}:{p.Value}"));
             hello.players = EncodePlayers();
-            Plugin.Log(slot.HasValue
-                ? $"[Colony] Player {hello.player} ({hello.playerName}) plays slot {seat}"
-                : $"[Colony] Player {hello.player} ({hello.playerName}) joins as a helper of slot {seat}: every slot is taken");
+            if (check.SeatId != hello.playerId)
+                Plugin.Log($"[Colony] Player {hello.player} said hello as {ColonySlotTable.ForLog(hello.playerId)}; seated as {check.SeatId}, the Steam ID its connection proved");
+            Plugin.Log(check.Slot.HasValue
+                ? $"[Colony] Player {hello.player} ({ColonySlotTable.ForLog(hello.playerName)}) plays slot {seat}"
+                : $"[Colony] Player {hello.player} ({ColonySlotTable.ForLog(hello.playerName)}) joins as a helper of slot {seat}: every slot is taken");
+            return true;
         }
 
         /// <summary>Every computer, as a hello replays: take the host's tables.</summary>
@@ -204,6 +216,11 @@ namespace BeaverBuddies.Colonies
             if (hello.playerId == (sentPlayerId ?? LocalPlayerIdentity.Id) && !(EventIO.Get() is ServerEventIO))
             {
                 LocalPlayer = hello.player;
+                // The host may have seated this computer by the Steam ID its connection proved rather than the id it
+                // said (its own Steam ID could not be read, see HostSeat): from now on it goes by the seated one, as the
+                // tables do.
+                if (playerIds.TryGetValue(hello.player, out string seatedId) && !string.IsNullOrEmpty(seatedId))
+                    sentPlayerId = seatedId;
                 Plugin.Log($"[Colony] This computer plays slot {SlotOfPlayer(LocalPlayer)}");
                 ColonyScienceService.Instance?.RefreshToolLocks();
                 // A player without a colony is offered to found one now.
@@ -214,7 +231,9 @@ namespace BeaverBuddies.Colonies
 
     /// <summary>
     /// A guest says who it is, right after joining. The host seats it (see ColonySlotService.HostSeat) and the event,
-    /// carrying the host's tables, is replayed everywhere so every computer knows every seat.
+    /// carrying the host's tables, is replayed everywhere so every computer knows every seat. Over Steam the host holds
+    /// what a guest says to the Steam ID its connection proved, and refuses a hello that says another one; over a direct
+    /// connection it has only the guest's word.
     /// </summary>
     [Serializable]
     public class PlayerHelloEvent : ReplayEvent

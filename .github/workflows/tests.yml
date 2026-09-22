@@ -1,0 +1,47 @@
+# The checks that need no game files, on every push and pull request. RuntimeChecks reads the installed game's
+# assemblies, which a runner does not have: run it locally (see StabilityTests/README.md).
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      DOTNET_NOLOGO: "1"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: StabilityTests
+        shell: pwsh
+        run: |
+          # These checks time real threads against the wall clock (two sessions of busy game loops at once, loopback
+          # sockets with deadlines). On a shared runner's few cores they miss their deadlines although nothing is
+          # wrong. They still run and show here, but when one of them fails it is a warning, not a red build: run
+          # the whole suite locally before a release. Any other failure, or a build error, fails the build.
+          $timing = @(
+            "A guest's ping over Steam grows with the players' frame length, and pumping between ticks removes that",
+            "Status traffic never changes the hash, the event script or tick progress"
+          )
+          dotnet run --project StabilityTests | Tee-Object -Variable output
+          $code = $LASTEXITCODE
+          $failed = @($output | Where-Object { "$_".StartsWith("FAIL ") })
+          $tolerated = @($failed | Where-Object { $line = "$_"; @($timing | Where-Object { $line.StartsWith("FAIL ${_}: ") }).Count -gt 0 })
+          foreach ($line in $tolerated) { Write-Output "::warning title=Timing check on the runner::$line" }
+          if ($failed.Count -gt $tolerated.Count) { exit 1 }
+          # A run that ends without its summary line crashed or did not build: that fails whatever was tolerated.
+          $summary = @($output | Where-Object { "$_" -match '^\d+/\d+ passed$' })
+          if ($code -ne 0 -and ($failed.Count -eq 0 -or $summary.Count -eq 0)) { exit $code }
+          exit 0
+      - name: Water snapshot comparison (Python)
+        if: ${{ !cancelled() }}
+        run: python -m unittest discover -s RuntimeChecks -p test_water_snapshots.py
