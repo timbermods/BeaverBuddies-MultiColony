@@ -18,5 +18,12 @@ namespace BeaverBuddies.Util
         {
             return SingletonManager.GetSingleton<RegisteredLocalizationService>().ILoc.T(key);
         }
+
+        /// <summary>A text with {0}-style placeholders, filled in a fixed culture (as the connection panel does).</summary>
+        public static string T(string key, params object[] args)
+        {
+            string text = T(key);
+            return args == null || args.Length == 0 ? text : string.Format(System.Globalization.CultureInfo.InvariantCulture, text, args);
+        }
     }
 }

@@ -40,6 +40,51 @@ namespace BeaverBuddies.IO
         // We only support a static map; see note above
         public void Start(byte[] mapBytes)
         {
+            StartServer(() =>
+            {
+                // TODO: Probably don't need to hold it in memory after the first tick...
+                Task<byte[]> task = new Task<byte[]>(() => mapBytes);
+                task.Start();
+                return task;
+            }, null);
+        }
+
+        /// <summary>
+        /// Hosts a new game's waiting room (BeaverBuddies.Lobby): the same listeners as hosting a save, but guests wait in
+        /// <paramref name="room"/> until the host has made and saved the world (TimberServer.ReleaseLobby). Not installed
+        /// as EventIO until that save is loaded (LobbySession), so the scene that makes the world is a single-player one.
+        /// </summary>
+        public void StartLobby(LobbyRoom room)
+        {
+            StartServer(() => Task.FromException<byte[]>(new InvalidOperationException("A waiting room sends the saved world it is given.")), room);
+        }
+
+        /// <summary>
+        /// The host pressed Start in the waiting room: nobody new comes in, for good, and the game that follows never
+        /// waits for joiners (no "Joining: open", no "Start the game?", founding at once). Those in the room still come in
+        /// (TimberServer lets them through <c>StartQueuing</c>), so the server's own error message is not set.
+        /// </summary>
+        public void CloseLobby(string message)
+        {
+            if (stoppedAccepting) return;
+            stoppedAccepting = true;
+            Plugin.Log("[Lobby] Closed to newcomers: the host started the game");
+            NetBase?.CloseLobbyToNewcomers(message);
+            try
+            {
+                (SocketListener as MultiSocketListener)?.GetListener<SteamListener>()?.CloseToNewGuests();
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("Could not close the Steam lobby to new guests: " + error.Message);
+            }
+        }
+
+        /// <summary>The Steam listener, when this host is reachable over Steam (for Invite Friends).</summary>
+        public SteamListener SteamListener => (SocketListener as MultiSocketListener)?.GetListener<SteamListener>();
+
+        private void StartServer(Func<Task<byte[]>> mapProvider, LobbyRoom room)
+        {
             // Seats for separate colonies are fixed for the whole session, like the other host choices.
             BeaverBuddies.Colonies.ColonySession.BeginHostSession();
             try
@@ -57,17 +102,8 @@ namespace BeaverBuddies.IO
                     }
                 }
                 SocketListener = new MultiSocketListener(listeners.ToArray());
-                NetBase = new TimberServer(
-                    SocketListener,
-                    () =>
-                    {
-                        // TODO: Probably don't need to hold it in memory after the first tick...
-                        Task<byte[]> task = new Task<byte[]>(() => mapBytes);
-                        task.Start();
-                        return task;
-                    },
-                    CreateInitEvent()
-                );
+                NetBase = new TimberServer(SocketListener, mapProvider, CreateInitEvent());
+                if (room != null) NetBase.OpenLobby(room);
             }
             catch (Exception e)
             {

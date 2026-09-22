@@ -27,21 +27,40 @@ namespace BeaverBuddies.Colonies
         /// <summary>Debug only: how many slots the host's own actions are shifted by, to test other colonies alone.</summary>
         public static int HostSlotShift { get; private set; }
 
+        private static volatile bool joiningClosedAtStart;
+
+        /// <summary>
+        /// This session began with joining already closed: the host started it from a new game's waiting room
+        /// (BeaverBuddies.Lobby), where everyone came in before the world was made. Nobody can join late, so nothing waits
+        /// for the first tick on their account (ColonyRules.WaitsForStart). Set by the host when it presses Start; told to
+        /// guests in the host's first message. Read from any thread (the init event is built on a network thread).
+        /// </summary>
+        public static bool JoiningClosedAtStart => joiningClosedAtStart;
+
         /// <summary>The host starts hosting: its settings are fixed for the whole session.</summary>
         public static void BeginHostSession()
         {
             HostAllowsFounding = Settings.FoundingInSharedGamesAllowed;
             HostSeparateScience = Settings.SeparateScienceForNewColonies;
             HostSlotShift = 0;
+            joiningClosedAtStart = false;
             Plugin.Log($"[Colony] Hosting; founding a colony in a shared game {(HostAllowsFounding ? "allowed" : "off")}");
         }
 
+        /// <summary>The host pressed Start in a new game's waiting room: this session never waits for late joiners.</summary>
+        public static void CloseJoiningAtStart()
+        {
+            joiningClosedAtStart = true;
+            Plugin.Log("[Colony] This session started from a waiting room: joining is closed from the start");
+        }
+
         /// <summary>A guest learns the host's choice from the host's first message.</summary>
-        public static void AdoptHostChoice(bool hostAllowsFounding, bool hostSeparateScience)
+        public static void AdoptHostChoice(bool hostAllowsFounding, bool hostSeparateScience, bool hostClosedJoiningAtStart)
         {
             HostAllowsFounding = hostAllowsFounding;
             HostSeparateScience = hostSeparateScience;
             HostSlotShift = 0;
+            joiningClosedAtStart = hostClosedJoiningAtStart;
         }
 
         private static ColonySlotService Slots => ColonySlotService.Instance;

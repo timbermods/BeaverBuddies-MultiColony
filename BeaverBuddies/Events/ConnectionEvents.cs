@@ -34,12 +34,15 @@ namespace BeaverBuddies.Events
         public bool separateScience;
         // The session's speed boost (SpeedBoost) as this player joins. Absent from an older host, which reads as 0.
         public float speedBoost;
+        // The host started this session from a new game's waiting room: nobody joins late, so founding and the rest
+        // don't wait for the first tick (ColonySession.JoiningClosedAtStart).
+        public bool joiningClosedAtStart;
 
         public override void Replay(IReplayContext context)
         {
             //context.GetSingleton<ReplayService>().SetServerMapName(mapName);
             LargeColonySpeedLimit.AdoptHostChoice(removeLargeColonySpeedLimit);
-            ColonySession.AdoptHostChoice(foundingInSharedGame, separateScience);
+            ColonySession.AdoptHostChoice(foundingInSharedGame, separateScience, joiningClosedAtStart);
             context.GetSingleton<ReplayService>().SetBoost(speedBoost);
             string warningMessage = null;
             if (serverGameVersion != GameVersions.CurrentVersion.ToString())
@@ -75,6 +78,7 @@ namespace BeaverBuddies.Events
                 foundingInSharedGame = ColonySession.HostAllowsFounding,
                 separateScience = ColonySession.HostSeparateScience,
                 speedBoost = ReplayService.SessionBoost,
+                joiningClosedAtStart = ColonySession.JoiningClosedAtStart,
                 //mapName = mapName,
             };
             return message;

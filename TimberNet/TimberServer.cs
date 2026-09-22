@@ -201,14 +201,17 @@ namespace TimberNet
             lobbySave?.TrySetCanceled();
         }
 
-        /// <summary>The host removes a guest from the room: it is told, then closed. False if it isn't waiting there.</summary>
-        public bool RemoveFromLobby(int playerNumber)
+        /// <summary>
+        /// Takes a guest out of the room (the host removed it, or it could not be sent the world): it is told why, then
+        /// closed. False if it isn't waiting there.
+        /// </summary>
+        public bool RemoveFromLobby(int playerNumber, LobbyEndReason reason = LobbyEndReason.Removed, string? detail = null)
         {
             LobbyMember? member = lobby?.Find(playerNumber);
             if (member == null || member.inGame) return false;
             lock (lobbyPumpGate)
             {
-                WriteLobbyFrame(member, MessageToBuffer(LobbyFrames.End(LobbyEndReason.Removed, null)));
+                WriteLobbyFrame(member, MessageToBuffer(LobbyFrames.End(reason, detail)));
                 LeaveLobby(member);
             }
             RequestLobbyPump();

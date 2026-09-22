@@ -42,6 +42,8 @@ namespace BeaverBuddies
 
             MultiStartConfigurator.Configure(containerDefinition);
             BeaverBuddies.Colonies.ColonyConfigurator.Configure(containerDefinition);
+            // A new game's waiting room makes its world in a single-player scene, then loads it as the hosted game.
+            containerDefinition.Bind<BeaverBuddies.Lobby.LobbyWorldMaker>().AsSingleton();
 
             // EventIO gets set before load, so if it's null, this is a regular
             // game, so don't initialize these services.
@@ -89,6 +91,8 @@ namespace BeaverBuddies
             // This will be called if the player exits to the main menu,
             // so it's best to reset everything.
             SingletonManager.Reset();
+            // A new game's waiting room left over from a scene the flow did not expect (its guests are told why).
+            BeaverBuddies.Lobby.LobbySession.EndStale("the host went back to the main menu");
             EventIO.Reset();
 
             Plugin.Log($"Registering Main Menu Services");

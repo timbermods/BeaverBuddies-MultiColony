@@ -198,6 +198,43 @@ static class LobbyChecks
             Check(!LobbyFrames.IsWellFormedId("") && !LobbyFrames.IsWellFormedId(new string('a', 65)) && LobbyFrames.IsWellFormedId("steam:76561198000000000"));
         }));
 
+        yield return ("Waiting-room rules: the start question, the status lines, the starts to fill, the watchdog and the save name", () =>
+        {
+            LobbyPlayer host = new(0, "Kyler", true, true, false, 1);
+            LobbyPlayer anna = new(1, "Anna", true, false, false, 2), bob = new(2, "Bob", false, false, false, 3);
+            LobbyPlayer joining = new(3, "Player", false, false, true, 4);
+            Check(BeaverBuddies.Lobby.LobbyRules.StartConfirm(new[] { host }) == BeaverBuddies.Lobby.StartQuestion.Alone);
+            Check(BeaverBuddies.Lobby.LobbyRules.StartConfirm(new[] { host, anna }) == BeaverBuddies.Lobby.StartQuestion.None);
+            Check(BeaverBuddies.Lobby.LobbyRules.StartConfirm(new[] { host, anna, bob }) == BeaverBuddies.Lobby.StartQuestion.NotReady);
+            // A guest still joining is not ready, even if it said it was before its hello.
+            LobbyPlayer readyButJoining = new(4, "Player", true, false, true, 0);
+            Check(BeaverBuddies.Lobby.LobbyRules.StartConfirm(new[] { host, readyButJoining }) == BeaverBuddies.Lobby.StartQuestion.NotReady);
+            string Key(IReadOnlyList<LobbyPlayer> players, LobbyStage stage = LobbyStage.Open) =>
+                BeaverBuddies.Lobby.LobbyRules.HostStatus(players, stage).Key.Replace(BeaverBuddies.Lobby.LobbyRules.KeyPrefix, "");
+            Check(Key(new[] { host }) == "Status.Empty");
+            Check(Key(new[] { host, anna }) == "Status.AllReady");
+            var one = BeaverBuddies.Lobby.LobbyRules.HostStatus(new[] { host, anna, bob }, LobbyStage.Open);
+            Check(one.Key.EndsWith("Status.OneNotReady") && (string)one.Args[0] == "Bob");
+            Check(Key(new[] { host, anna, joining }) == "Status.OneJoining", "a joining guest was named");
+            var some = BeaverBuddies.Lobby.LobbyRules.HostStatus(new[] { host, bob, joining }, LobbyStage.Open);
+            Check(some.Key.EndsWith("Status.SomeNotReady") && (int)some.Args[0] == 2);
+            Check(Key(new[] { host, bob }, LobbyStage.CreatingWorld) == "Status.Starting");
+            Check(BeaverBuddies.Lobby.LobbyRules.GuestStatus(false, LobbyStage.Open, "Kyler").Key.EndsWith("GuestNotReady"));
+            Check(BeaverBuddies.Lobby.LobbyRules.GuestStatus(true, LobbyStage.Open, "Kyler").Key.EndsWith("GuestReady"));
+            Check(BeaverBuddies.Lobby.LobbyRules.GuestStatus(true, LobbyStage.Starting, "Kyler").Key.EndsWith("CreatingWorld"));
+            Check(BeaverBuddies.Lobby.LobbyRules.GuestStatus(true, LobbyStage.SendingWorld, "Kyler").Key.EndsWith("SendingWorld"));
+            Check(BeaverBuddies.Lobby.LobbyRules.StartsToFill(4, 1) == 2 && BeaverBuddies.Lobby.LobbyRules.StartsToFill(2, 3) == 2
+                && BeaverBuddies.Lobby.LobbyRules.StartsToFill(4, 0) == 1 && BeaverBuddies.Lobby.LobbyRules.StartsToFill(8, 6) == 4);
+            Check(BeaverBuddies.Lobby.LobbyRules.WatchdogDue(0, 120000, LobbyStage.Open));
+            Check(!BeaverBuddies.Lobby.LobbyRules.WatchdogDue(0, 119000, LobbyStage.Open));
+            Check(!BeaverBuddies.Lobby.LobbyRules.WatchdogDue(0, 500000, LobbyStage.SendingWorld), "asked while the save arrived");
+            Check(BeaverBuddies.Lobby.LobbyRules.SaveName("2026-09-22 20h31m, Day 1-1") == "2026-09-22 20h31m Day 1-1 Co-op start");
+            Check(BeaverBuddies.Lobby.LobbyRules.Tag(host)!.Value.Key.EndsWith("Tag.HostColony"));
+            Check(BeaverBuddies.Lobby.LobbyRules.Tag(new LobbyPlayer(5, "H", true, false, false, 0))!.Value.Key.EndsWith("Tag.Helper"));
+            Check(BeaverBuddies.Lobby.LobbyRules.Tag(new LobbyPlayer(0, "K", true, true, false, null))!.Value.Key.EndsWith("Tag.Host"));
+            Check(BeaverBuddies.Lobby.LobbyRules.Tag(new LobbyPlayer(1, "A", true, false, false, null)) == null, "a shared-game guest got a tag");
+        });
+
         yield return ("Waiting-room frames round-trip, and bad ones are refused", () =>
         {
             var summary = new LobbySummary("Folktails", "Diorama", "NewGameMode.Hard", "Beaverton", "Kyler", true);
