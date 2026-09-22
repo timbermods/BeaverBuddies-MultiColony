@@ -24,7 +24,7 @@
     </a>
     <nav class="nav" aria-label="Main">
       <a href="index.html" aria-current="page">Overview</a>
-      <a href="#new">New in beta7</a>
+      <a href="#new">New in beta8</a>
       <a href="#features">Features</a>
       <a href="#trading">Trading</a>
       <a href="install.html">Install</a>
@@ -41,13 +41,13 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta7</span> &middot; beta</span></div>
+      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta8</span> &middot; beta</span></div>
       <h1>One map.<br>A colony each.</h1>
       <p class="lede">Play Timberborn with friends without sharing a colony. Each player runs their own districts, land, beavers, stock and science on one shared map, and the colonies meet only at <b>trading posts</b>, where they barter. Co-op, not a race: nobody wins, and everyone can help.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.4.0-beta7</span></span>
+          <span>Download <span data-release="version">1.4.0-beta8</span></span>
         </a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
         <a class="btn btn-secondary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules</a>
@@ -134,7 +134,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.4.0-beta7</span></b><span>Latest pre-release</span></li>
+      <li><b><span data-release="version">1.4.0-beta8</span></b><span>Latest pre-release</span></li>
       <li><b>Up to 4 colonies</b><span>More players help the host's</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built against</span></li>
       <li><b>Steam invites</b><span>No port forwarding</span></li>
@@ -143,38 +143,38 @@
   </div>
 </div>
 
-<!-- ============ new in beta7 ============ -->
+<!-- ============ new in beta8 ============ -->
 <section class="tint" id="new">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">New in 1.4.0-beta7</div>
-      <h2>One shared colony, exactly as in the Stability Fork</h2>
-      <p>With <b>Separate colonies for new games</b> off, none of the colony model runs any more, so a shared game plays, checks itself and saves as the Stability Fork does. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta7">beta7 release notes</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
+      <div class="eyebrow">New in 1.4.0-beta8</div>
+      <h2>Who may take a colony, and what the network may create</h2>
+      <p>Seven reviewed pull requests: the host checks a Steam guest's identity, a network frame can only create the mod's own actions, and each player's journal and founding notices are their own. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta8">beta8 release notes</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
     </div>
     <div class="grid grid-3">
       <article class="card">
-        <h3 style="margin-top:0">A shared game is the Stability Fork's</h3>
-        <p><b>beta7.</b> No land, owners or colony check, no Trading Post (not even in dev mode), and a save with nothing of this mod's in it. What stays is what MultiColony adds to co-op in general: its desync fixes, the performance pass, the start prompt, the speed boost.</p>
+        <h3 style="margin-top:0">Your colony stays yours</h3>
+        <p><b>beta8.</b> Over Steam the host checks a guest's Steam ID against the connection Steam proved before it seats them, so nobody can take your colony by claiming your id. Direct IP joins are still taken at their word.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">Splitting a shared save is the host's choice</h3>
-        <p><b>beta7.</b> A new setting, <i>Allow founding colonies in a shared game</i>, off by default, decides whether a player may found their own colony in a shared save, which splits it for good. <i>Separate colonies for new games</i> now decides new games only.</p>
+        <h3 style="margin-top:0">Frames create actions, nothing else</h3>
+        <p><b>beta8.</b> A multiplayer frame can only create the mod's actions and what they carry. An action a guest can't read (from a mod only the host has) stops the session with its name instead of drifting out of step; the host refuses one and says so.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">District Crossings hold 30 again</h3>
-        <p><b>beta7.</b> Every District Crossing holds the game's 30 of a good, in every game; only a Trading Post half holds 100. <kbd>Home</kbd> works in a shared game too, and picking the old speed after a desync works again.</p>
+        <h3 style="margin-top:0">Your journal, your notices</h3>
+        <p><b>beta8.</b> Each player's journal lists only their colony's entries, deaths and reloads included, and only the founder hears how a founding went. On a desync every computer logs its last 256 colony changes, to find the one that differed.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">From beta3 to beta6</h3>
-        <p>Your own chat name in a color you pick, a speed boost past the fastest button, a color for every player on their cursor and in the chat (from Stability Fork 1.1.11), and Mod Settings tooltips that fit on the screen. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">Release notes</a></p>
+        <h3 style="margin-top:0">From beta7: a shared game is the Stability Fork's</h3>
+        <p>With <i>Separate colonies for new games</i> off, none of the colony model runs; founding in a shared save is the host's choice, off by default; District Crossings hold the game's 30 again. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta7">beta7 release notes</a></p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">From beta2: nine conveniences</h3>
-        <p>Food and water days in the trading window, asking a friend to look after your colony, a click on a player to go to them and <kbd>Home</kbd> to return, a warning before a hand-over, offer again and counter-offers, a wishlist per colony, <i>Keep at least</i> on standing deals, and the host asked before joining closes. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta2">beta2 release notes</a></p>
+        <h3 style="margin-top:0">From beta2 to beta6</h3>
+        <p>Your own chat color, a speed boost past the fastest button, a color for every player (Stability Fork 1.1.11), tooltips that fit, and beta2's nine conveniences: looking after a friend's colony, go-to-player and <kbd>Home</kbd>, wishlists, counter-offers and more. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">Release notes</a></p>
       </article>
       <article class="card">
         <h3 style="margin-top:0">Still unplayed</h3>
-        <p>540 automated checks cover all of it (8 new in beta7, among them one that every colony saver asks for separate colonies first), and this build has not been played yet. The test scripts' lines A22, A22f, A22g, B8m and B8n are the ones to try first.</p>
+        <p>588 automated checks cover all of it (48 new in beta8, among them the frame rules for every action the mod sends), and this build has not been played yet. The test scripts' lines B1a, B8o and B8a are the ones to try first.</p>
       </article>
     </div>
   </div>
@@ -399,7 +399,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta7</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta8</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>
