@@ -150,6 +150,9 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 
 1. The friend is seated (log: `[Colony] Player 1 (…) plays slot 1`). The connection panel shows each name with its
    colony, e.g. *Alex (colony 2)*.
+1a. **Seating checks the Steam connection.** The friend who joined over Steam is seated as above, and the host's log
+    has no `[Colony] Refused PlayerHelloEvent` line. If a third player can, they join **by IP** (direct connection):
+    also seated, with no refusal. After **Save and Rehost** (line 7) each gets their own colony again.
 2. On a standard map or an existing save: once the host unpauses, the friend sees the offer to place a district
    center and founds their colony. (Before that, Ctrl+K says the game has not started yet.)
 3. Each player tries Script A line 3 against the other's colony: refused. Then one player leaves; the other tries

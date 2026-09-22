@@ -24,7 +24,9 @@ you host, so Hamachi / port forwarding / direct IP keep working exactly as befor
 - **Your colony follows your Steam account** in a separate-colonies game (MultiColony): the save remembers each
   player by their Steam ID, so you get the same colony every time, whoever hosts. Without Steam an id kept on your
   computer is used instead. If your Steam account changes, you join as a new player and the host hands your old
-  colony to you from the **Ctrl+T** window.
+  colony to you from the **Ctrl+T** window. When you join through a Steam invite the host checks your Steam ID
+  against the Steam connection, so nobody joining over Steam can take your colony by saying your ID; over a direct
+  IP connection the host has only the guest's word for it.
 
 Nobody can join once the game has started, or once the host changed anything while it waited paused. An old
 invite then says the host already started (or already changed the game), instead of hanging; the host saves,

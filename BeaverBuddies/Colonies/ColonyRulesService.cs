@@ -42,8 +42,9 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// Host only, just before an event is replayed. Writes the actor's slot into the event (every computer's
-        /// replay then uses it), seats a player saying hello, and judges the action. False means refuse: do not
-        /// replay it and do not send it on. A list event may be shortened in place to what the actor may change.
+        /// replay then uses it), seats a player saying hello (or refuses a hello its connection contradicts, see
+        /// ColonySlotTable.CheckHello), and judges the action. False means refuse: do not replay it and do not send
+        /// it on. A list event may be shortened in place to what the actor may change.
         /// <paramref name="refusal"/> says why, for the player told (see ActionRefusedEvent).
         /// </summary>
         public static bool AllowOnHost(ReplayEvent replayEvent, out ColonyRefusal refusal)
@@ -55,7 +56,15 @@ namespace BeaverBuddies.Colonies
             {
                 if (replayEvent is PlayerHelloEvent hello)
                 {
-                    ColonySlotService.Instance?.HostSeat(hello);
+                    // Who the guest's connection proved to be: a Steam connection's Steam ID; nothing over direct TCP.
+                    string verifiedId = (EventIO.Get() as ServerEventIO)?.NetBase?.VerifiedIdOf(hello.player);
+                    ColonySlotService slots = ColonySlotService.Instance;
+                    if (slots != null && !slots.HostSeat(hello, verifiedId, out string helloWhy))
+                    {
+                        Plugin.LogWarning($"[Colony] Refused {replayEvent.type} from player {replayEvent.player} ({hello.playerName}): {helloWhy}");
+                        refusal = ColonyRefusal.HostRefused;
+                        return false;
+                    }
                 }
                 replayEvent.slot = ColonySession.SlotOfPlayer(replayEvent.player);
             }

@@ -18,4 +18,15 @@ namespace TimberNet
     {
         string? FailureReason { get; }
     }
+
+    /// <summary>
+    /// Optional. A transport that knows who is at the other end because the network proved it (a Steam
+    /// connection: Steam authenticates both ends), not because the other end said so. A direct TCP
+    /// connection proves nothing and does not implement this.
+    /// </summary>
+    public interface IVerifiedIdentity
+    {
+        /// <summary>The other end's stable player id (for Steam, "steam:" and the Steam ID), or null if unknown.</summary>
+        string? VerifiedPlayerId { get; }
+    }
 }

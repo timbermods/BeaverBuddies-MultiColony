@@ -252,6 +252,79 @@ static class ColonyChecks
             Equal(0, ColonySlotTable.Decode("garbage\n|x").Count);
         });
 
+        // ---- who a player says they are ----
+        // A guest says hello with its stable id. A Steam connection proves who is at the other end, so the host holds
+        // the hello to that; a direct (TCP) connection proves nothing, so its hello is taken at its word.
+
+        yield return ("Colony: a hello claiming another Steam ID than its connection proved is refused", () =>
+        {
+            HelloCheck lie = ColonySlotTable.CheckHello("steam:2", "steam:1", null);
+            Check(!lie.IsAllowed, $"a guest whose connection is steam:1 was seated as {lie.SeatId}");
+            Check(lie.Refusal.Contains("steam:2") && lie.Refusal.Contains("steam:1"), "the refusal should name both ids: " + lie.Refusal);
+            HelloCheck honest = ColonySlotTable.CheckHello("steam:1", "steam:1", null);
+            Check(honest.IsAllowed, "refused: " + honest.Refusal);
+            Equal("steam:1", honest.SeatId);
+        });
+
+        yield return ("Colony: a connection already seated can't say hello again as someone else", () =>
+        {
+            Check(!ColonySlotTable.CheckHello("steam:3", null, "steam:2").IsAllowed, "a second hello re-seated steam:2's connection as steam:3");
+            Check(!ColonySlotTable.CheckHello("local:b", null, "local:a").IsAllowed, "a second hello re-seated local:a's connection as local:b");
+            // Seated without an id (a helper): it can't take one later either.
+            Check(!ColonySlotTable.CheckHello("steam:1", null, "").IsAllowed, "a second hello gave an id to a connection seated without one");
+            // The same hello again changes nothing, so it is let through.
+            HelloCheck again = ColonySlotTable.CheckHello("steam:2", null, "steam:2");
+            Check(again.IsAllowed, "refused: " + again.Refusal);
+            Equal("steam:2", again.SeatId);
+        });
+
+        yield return ("Colony: a refused hello leaves the slot table as it was", () =>
+        {
+            var table = new ColonySlotTable();
+            table.Resolve("steam:1", "Host");
+            Check(!table.SeatHello("steam:2", "steam:3", null, "Mallory").IsAllowed, "a guest proved to be steam:3 was seated as steam:2");
+            Equal<int?>(1, table.SeatHello("steam:4", null, null, "Guest").Slot);
+            // A seated guest saying hello again and again with new ids: each one used to take and save a free slot.
+            for (int i = 0; i < 10; i++) Check(!table.SeatHello("junk" + i, null, "steam:4", "Guest").IsAllowed, "a re-hello was seated");
+            Equal(2, table.Entries.Count);
+            Equal<int?>(null, table.SlotOf("steam:2"));
+            Equal<int?>(null, table.SlotOf("steam:3"));
+            Equal<int?>(null, table.SlotOf("junk0"));
+        });
+
+        yield return ("Colony: a Steam guest whose own Steam ID could not be read is seated by the one its connection proved", () =>
+        {
+            // Its game fell back to the id kept on its computer (Steam's API threw when asked), but it joined over
+            // Steam, so the host knows who it is. Seated by that, it gets the colony saved under its Steam ID rather
+            // than being refused (it says hello once a session, so it would stay unseated) or given a new colony.
+            var table = new ColonySlotTable();
+            table.Set(new[] { new ColonySlotEntry("steam:1", 0, "Host"), new ColonySlotEntry("steam:7", 2, "Friend") });
+            HelloCheck check = table.SeatHello("local:abc", "steam:7", null, "Friend");
+            Check(check.IsAllowed, "refused: " + check.Refusal);
+            Equal("steam:7", check.SeatId);
+            Equal<int?>(2, check.Slot);
+            Equal(2, table.Entries.Count);
+            Equal<int?>(null, table.SlotOf("local:abc"));
+            // Nor can a Steam guest take a direct player's colony by saying that player's local id.
+            Equal<int?>(1, table.Resolve("local:direct", "Direct"));
+            HelloCheck borrowed = table.SeatHello("local:direct", "steam:8", null, "Mallory");
+            Equal("steam:8", borrowed.SeatId);
+            Equal<int?>(3, borrowed.Slot);
+        });
+
+        yield return ("Colony: a direct (TCP) join proves nothing and is seated by the id it says", () =>
+        {
+            Equal("local:abc", ColonySlotTable.CheckHello("local:abc", null, null).SeatId);
+            // The known limit the README states: over a direct connection even a Steam ID is taken at its word.
+            HelloCheck steam = ColonySlotTable.CheckHello("steam:9", null, null);
+            Check(steam.IsAllowed, "refused: " + steam.Refusal);
+            Equal("steam:9", steam.SeatId);
+            // A direct connection's transport proves no identity to the real server.
+            using var s = new ActivityTransportChecks.Session(1);
+            Equal<string>(null, s.Host.VerifiedIdOf(1));
+            Equal<string>(null, s.Host.VerifiedIdOf(0));
+        });
+
         // ---- who may change what ----
 
         yield return ("Colony: your own things, and things in no district, are yours to change", () =>
