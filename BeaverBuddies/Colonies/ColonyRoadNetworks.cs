@@ -15,8 +15,10 @@ namespace BeaverBuddies.Colonies
 {
     /// <summary>
     /// Keeps road networks apart: two district centers may never share one, so two players' colonies only meet through
-    /// a District Crossing. The game's placement tool already refuses a building whose roads would join two districts
-    /// (checked in the placing player's own interface); this closes the gaps a two-player game opens:
+    /// a Trading Post (and a colony's own districts through a District Crossing). The game's placement tool already
+    /// refuses a building whose roads would join two districts (checked in the placing player's own interface), and
+    /// the colony rules refuse one that would join another colony's roads, finished or still being built
+    /// (<see cref="ColonyRoadRule"/>); this closes the gaps a two-player game opens:
     ///  - a zipline link is judged by the host alone, before anyone plays it (the game's check reads state that
     ///    differs between computers, so judging it in the replay could connect on one computer and not the other);
     ///  - founding a colony must not put its district center on another district's roads (checked from the

@@ -21,7 +21,7 @@ namespace BeaverBuddies.Colonies
 
     /// <summary>
     /// What happens to a colony whose player can't run it any more. A colony handed over becomes another colony's: its
-    /// district centers, buildings, land, marks, stock and science pool (its unlocks are shared, not taken away). Its
+    /// district centers, buildings, marks, stock and science pool (its unlocks are shared, not taken away). Its
     /// player, left with no colony, may found a new one at once (Ctrl+K).
     ///
     /// - A colony with no beavers or bots left for a whole day goes to the nearest living colony. Decided in the
@@ -189,17 +189,15 @@ namespace BeaverBuddies.Colonies
         {
             try
             {
-                ColonyReach reach = ColonyReach.Instance;
-                var (counted, unstamped) = reach?.Counts ?? (0, 0);
+                int unstamped = ColonyStamps.Instance?.Unstamped ?? 0;
                 int exchanges = _entityComponentRegistry.GetEnabled<DistrictCrossing>()
                     .Count(half => ColonyExchangeService.Of(half)?.IsActive == true && ColonyExchangeService.Of(half).ProposedHere);
                 for (int slot = 0; slot < ColonySlotTable.MaxSlots; slot++)
                 {
                     if (!OwnsDistrict(slot)) continue;
-                    Plugin.Log($"[Colony] Day {day}: slot {slot} has {PopulationOf(slot)} beavers and bots, {reach?.LandSize(slot) ?? 0} tiles of land, "
-                        + $"its player missed {awayDays[slot]} days");
+                    Plugin.Log($"[Colony] Day {day}: slot {slot} has {PopulationOf(slot)} beavers and bots, its player missed {awayDays[slot]} days");
                 }
-                Plugin.Log($"[Colony] Day {day}: {counted} buildings counted for land ({unstamped} waiting for a colony), {exchanges} exchanges running");
+                Plugin.Log($"[Colony] Day {day}: {unstamped} buildings waiting for a colony, {exchanges} exchanges running");
             }
             catch (Exception error)
             {
@@ -362,7 +360,6 @@ namespace BeaverBuddies.Colonies
                 ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
                 if (stamp != null && stamp.Slot == from) stamp.Stamp(to);
             }
-            ColonyReach.Instance?.Transfer(from, to);
             ColonyMarks.Instance?.Transfer(from, to);
             ColonyScienceService.Instance?.Transfer(from, to);
             ColonyDigest.Note("handover", from, to, (int)reason);
@@ -412,7 +409,7 @@ namespace BeaverBuddies.Colonies
     /// <summary>
     /// The host, once a day: which colonies' players are in the game. Kept so absence can be counted. It also carries
     /// the host's colony check for the day (ColonyDiagnostics.Fingerprint), taken as the host plays it, and every
-    /// guest takes its own at the same point and compares: colony state (owners, marks, science, exchanges, land) draws
+    /// guest takes its own at the same point and compares: colony state (owners, marks, science, exchanges) draws
     /// no random numbers, so a difference in it would otherwise show only once it changed some beaver's random draw,
     /// possibly days later and far from its cause, and might never show at all.
     /// </summary>

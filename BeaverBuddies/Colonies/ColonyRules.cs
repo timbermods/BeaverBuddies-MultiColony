@@ -12,16 +12,14 @@ namespace BeaverBuddies.Colonies
         /// <summary>Moves beavers between two districts; both must be the actor's.</summary>
         Migration,
         /// <summary>
-        /// Places a building: the actor's colony must have it unlocked, and it must neither stand where another colony
-        /// works nor touch another colony's roads.
+        /// Places a building: the actor's colony must have it unlocked, and it must not join another colony's roads (a
+        /// Trading Post must have two colonies' roads). Anywhere else is fine: there is no land.
         /// </summary>
         Placement,
         /// <summary>A list of entities cut down to the ones the actor may act on.</summary>
         List,
         /// <summary>Founds a colony for a player who has none yet.</summary>
         Founding,
-        /// <summary>Marks map tiles (trees to cut, crops to plant): cut down to the tiles the actor's colony may use.</summary>
-        Tiles,
     }
 
     /// <summary>Where a building would go, in the event's own terms. The world turns it into what it needs.</summary>
@@ -36,7 +34,7 @@ namespace BeaverBuddies.Colonies
 
     /// <summary>
     /// A list in an event that the rules may shorten in place, keeping the order of what is left. Each item is judged
-    /// by a key: an entity id, or a map tile.
+    /// by a key: an entity id.
     /// </summary>
     public interface IColonyList<TKey>
     {
@@ -56,8 +54,6 @@ namespace BeaverBuddies.Colonies
         public IReadOnlyList<string> EntityIds { get; private set; } = Array.Empty<string>();
         public ColonyPlacement Placement { get; private set; }
         public IColonyList List { get; private set; }
-        /// <summary>The tiles of a <see cref="ColonyScopeKind.Tiles"/> scope.</summary>
-        public IColonyList<ColonyTile> TileList { get; private set; }
         /// <summary>
         /// A trading post belongs to its two partners: either may remove it. Set on demolition actions only; running a
         /// half (workers, priority) stays with its district's owner, and a crossing between one colony's own districts
@@ -84,14 +80,6 @@ namespace BeaverBuddies.Colonies
 
         public static ColonyScope Found(ColonyPlacement placement) =>
             new ColonyScope { Kind = ColonyScopeKind.Founding, Placement = placement };
-
-        /// <summary>
-        /// Marking map tiles (trees to cut, crops to plant): only where the actor's colony may work, which is where it
-        /// reaches or where no other colony does. <paramref name="tileOf"/> gives an item's tile. Judged as tiles, not
-        /// names: a dragged area is hundreds of items, judged on the marker's computer and twice more on the host.
-        /// </summary>
-        public static ColonyScope Tiles<T>(List<T> items, Func<T, ColonyTile> tileOf) =>
-            new ColonyScope { Kind = ColonyScopeKind.Tiles, TileList = new ColonyList<T, ColonyTile>(items, tileOf) };
 
         public static ColonyScope EntityList<T>(List<T> items, Func<T, string> entityIdOf, bool demolition = false) =>
             new ColonyScope { Kind = ColonyScopeKind.List, List = new ColonyList<T>(items, entityIdOf), CrossingsNeutral = demolition };
@@ -139,11 +127,9 @@ namespace BeaverBuddies.Colonies
         /// <summary>Whether this slot's colony may build this building (always true without separate science).</summary>
         bool IsUnlockedFor(int slot, string templateName);
 
-        /// <summary>Whether this slot's colony may mark or build on a tile: it reaches it, or no other colony does.</summary>
-        bool MayUseTile(int slot, ColonyTile tile);
-
         /// <summary>
-        /// Why this slot's colony may not place this building here (another colony's area or roads), or None.
+        /// Why this slot's colony may not place this building here (it would join another colony's roads, or a Trading
+        /// Post without two colonies' roads), or None. See <see cref="ColonyRoadRule"/>.
         /// </summary>
         ColonyRefusal PlacementConflict(int slot, ColonyPlacement placement, out string detail);
     }
@@ -165,12 +151,10 @@ namespace BeaverBuddies.Colonies
         FoundingConflict,
         /// <summary>Not enough science in the actor's colony.</summary>
         NotEnoughScience,
-        /// <summary>The spot is where another colony works (near its buildings and paths).</summary>
-        OtherColonyArea,
-        /// <summary>The building would touch another colony's roads (and so join or block them).</summary>
+        /// <summary>A Trading Post without a road from each of two colonies at its ends, one of them the placer's.</summary>
+        TradingPostRoads,
+        /// <summary>The building would join another colony's roads (a path beside them, or an entrance on or beside them).</summary>
         TouchesOtherColony,
-        /// <summary>A new colony here would have its land run straight into another's: no room for either to grow.</summary>
-        TooCloseToColony,
         /// <summary>A dev mode shortcut while the host's dev mode is off (host only).</summary>
         DevModeOff,
         /// <summary>Refused by the host for a reason of its own (not seated yet, a zipline the game refuses...).</summary>
@@ -203,10 +187,10 @@ namespace BeaverBuddies.Colonies
     /// <summary>
     /// Decides whether a player may do an action. What belongs to a colony is what its districts hold (a district
     /// center carries its owner's slot; beavers belong to their district; buildings to their district, or else to the
-    /// colony that placed them), and the land it works: tiles near its buildings and paths. A player changes only their
-    /// own colony's things and things nobody owns, builds and marks only where no other colony works (where two
-    /// colonies' land overlaps, near a trading post, both may), and never touches another colony's roads. Whether the
-    /// other player is playing makes no difference: colonies meet only at trading posts.
+    /// colony that placed them), and the marks it made. A player changes only their own colony's things and things
+    /// nobody owns. There is no land: a player builds and marks anywhere, as long as nothing they build joins another
+    /// colony's roads (<see cref="ColonyRoadRule"/>). Whether the other player is playing makes no difference: colonies
+    /// meet only at trading posts.
     ///
     /// Reads only: it changes a list event only when <c>rewrite</c> is true (the host, before replaying it).
     /// </summary>
@@ -254,9 +238,6 @@ namespace BeaverBuddies.Colonies
                 case ColonyScopeKind.List:
                     return JudgeList(scope.List, scope.CrossingsNeutral, actorSlot, world, rewrite);
 
-                case ColonyScopeKind.Tiles:
-                    return JudgeTiles(scope.TileList, actorSlot, world, rewrite);
-
                 case ColonyScopeKind.Founding:
                     // Judged by the founding service, which knows who has a colony already.
                     return ColonyVerdict.Allow;
@@ -275,9 +256,6 @@ namespace BeaverBuddies.Colonies
                 || MayChange(actorSlot, world.OwnerOf(id));
             return Keep(list, keep, actorSlot, rewrite);
         }
-
-        private static ColonyVerdict JudgeTiles(IColonyList<ColonyTile> tiles, int actorSlot, IColonyWorld world, bool rewrite) =>
-            Keep(tiles, tile => world.MayUseTile(actorSlot, tile), actorSlot, rewrite);
 
         private static ColonyVerdict Keep<TKey>(IColonyList<TKey> list, Func<TKey, bool> keep, int actorSlot, bool rewrite)
         {
@@ -305,19 +283,16 @@ namespace BeaverBuddies.Colonies
         /// Whether a player may found a colony now. Once per player: only a player whose slot owns no district center
         /// yet. The save must be a separate-colonies game, or the host must allow it this session (founding turns a
         /// shared game into one). The spot must be free, and the new district center must not join another colony's
-        /// roads, stand on its land, or stand so close that the two colonies' land would meet at once (it must be at
-        /// least 20 tiles from another colony's buildings and paths, so both have room to grow).
+        /// roads. Anywhere else will do: there is no land, and no distance to keep from other colonies.
         /// </summary>
         public static ColonyVerdict JudgeFounding(bool actorHasSlot, bool actorOwnsDistrict, bool foundingAllowed,
-            bool blocksValid, bool touchesOtherDistrict, bool onOtherColonyLand = false, bool tooCloseToColony = false)
+            bool blocksValid, bool touchesOtherDistrict)
         {
             if (!actorHasSlot) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "a helper plays another player's colony");
             if (actorOwnsDistrict) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "this player already has a colony");
             if (!foundingAllowed) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the host has not allowed founding in a shared game");
             if (!blocksValid) return ColonyVerdict.Refuse(ColonyRefusal.Blocked, "the spot is taken or unsuitable");
             if (touchesOtherDistrict) return ColonyVerdict.Refuse(ColonyRefusal.FoundingConflict, "it would join another district's roads");
-            if (onOtherColonyLand) return ColonyVerdict.Refuse(ColonyRefusal.OtherColonyArea, "it would stand on another colony's land");
-            if (tooCloseToColony) return ColonyVerdict.Refuse(ColonyRefusal.TooCloseToColony, "its land would run into another colony's");
             return ColonyVerdict.Allow;
         }
 

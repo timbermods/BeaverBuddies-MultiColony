@@ -33,8 +33,8 @@ their side of the map as you would a teammate.
 
 ## In a separate-colonies game
 
-- **Cursor colors are the player's; colony colors are the colony's.** The land outlines (Ctrl+L, or while a tool is
-  in hand), the *(colony N)* beside a name in the connection panel and the colony names in the trading window use
+- **Cursor colors are the player's; colony colors are the colony's.** The colonies' roads (Ctrl+L, or while a tool
+  is in hand), the *(colony N)* beside a name in the connection panel and the colony names in the trading window use
   the game's own start colors, one per colony. The cursor, name label, selection outline and chat name use the color
   the player chose (or the one you set for them under **Player cursors**), or, while they have not chosen one, a
   color by player number (see *Settings* below). A player and their colony need not match.
@@ -174,4 +174,4 @@ game.
    clear within about three seconds.
 8. In a separate-colonies game: select the other colony's building (the outline shows on their screen, in your
    cursor color); try to change it: refused, and on their screen **Editing** shows for at most three seconds with
-   nothing changed; press Ctrl+L and check the land outlines are the colonies' colors, not the cursors'.
+   nothing changed; press Ctrl+L and check the roads are drawn in the colonies' colors, not the cursors'.

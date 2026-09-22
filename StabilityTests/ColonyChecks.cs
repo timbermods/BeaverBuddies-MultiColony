@@ -3,7 +3,7 @@ using BeaverBuddies.Colonies;
 using Newtonsoft.Json.Linq;
 using TimberNet;
 
-// Separate colonies: who sent an action, who owns which land, and what the host allows. The rules are written
+// Separate colonies: who sent an action, who owns what, and what the host allows. The rules are written
 // against small interfaces so they run here with a fake world; the real server stamps events over fake sockets.
 static class ColonyChecks
 {
@@ -429,32 +429,15 @@ static class ColonyChecks
             Equal(ColonyRefusal.OtherColony, ColonyRules.Judge(ColonyScope.Migration("dcA", "dcB"), 1, w, true).Refusal);
         });
 
-        yield return ("Colony: building needs the unlock, and a spot off another colony's land and roads", () =>
+        yield return ("Colony: building needs the unlock, and must not join another colony's roads", () =>
         {
             var w = new FakeWorld().Locked(1, "Observatory")
-                .Conflict("Dam", ColonyRefusal.OtherColonyArea).Conflict("Path", ColonyRefusal.TouchesOtherColony);
+                .Conflict("TradingPost", ColonyRefusal.TradingPostRoads).Conflict("Path", ColonyRefusal.TouchesOtherColony);
             Check(ColonyRules.Judge(ColonyScope.Place(Place("House")), 1, w, true).IsAllowed);
             Equal(ColonyRefusal.Locked, ColonyRules.Judge(ColonyScope.Place(Place("Observatory")), 1, w, true).Refusal);
             Check(ColonyRules.Judge(ColonyScope.Place(Place("Observatory")), 0, w, true).IsAllowed);
-            Equal(ColonyRefusal.OtherColonyArea, ColonyRules.Judge(ColonyScope.Place(Place("Dam")), 1, w, true).Refusal);
+            Equal(ColonyRefusal.TradingPostRoads, ColonyRules.Judge(ColonyScope.Place(Place("TradingPost")), 1, w, true).Refusal);
             Equal(ColonyRefusal.TouchesOtherColony, ColonyRules.Judge(ColonyScope.Place(Place("Path")), 1, w, true).Refusal);
-        });
-
-        yield return ("Colony: marking map tiles keeps only the tiles the colony may work", () =>
-        {
-            Func<(int x, int y, int z), ColonyTile> key = t => new ColonyTile(t.x, t.y);
-            var w = new FakeWorld().OthersTile(new ColonyTile(99, 99));
-            var tiles = new List<(int x, int y, int z)> { (1, 1, 1), (99, 99, 1), (2, 2, 1) };
-            // Judged on the player's own computer: nothing changes, one tile would go.
-            var local = ColonyRules.Judge(ColonyScope.Tiles(tiles, key), 1, w, false);
-            Check(local.IsAllowed); Equal(1, local.Removed); Equal(3, tiles.Count);
-            // Judged by the host: the tile on another colony's land is taken out, the rest keep their order.
-            var host = ColonyRules.Judge(ColonyScope.Tiles(tiles, key), 1, w, true);
-            Check(host.IsAllowed); Equal(1, host.Removed);
-            Check(tiles.SequenceEqual(new[] { (1, 1, 1), (2, 2, 1) }));
-            // Only another colony's land: nothing is marked.
-            var theirs = new List<(int x, int y, int z)> { (99, 99, 1) };
-            Equal(ColonyRefusal.NothingOwn, ColonyRules.Judge(ColonyScope.Tiles(theirs, key), 1, w, true).Refusal);
         });
 
         yield return ("Colony: a list of things is cut down to yours and nobody's, in order", () =>
@@ -669,8 +652,6 @@ static class ColonyChecks
             Equal(ColonyRefusal.CannotFound, ColonyRules.JudgeFounding(true, false, false, true, false).Refusal);
             Equal(ColonyRefusal.Blocked, ColonyRules.JudgeFounding(true, false, true, false, false).Refusal);
             Equal(ColonyRefusal.FoundingConflict, ColonyRules.JudgeFounding(true, false, true, true, true).Refusal);
-            Equal(ColonyRefusal.OtherColonyArea, ColonyRules.JudgeFounding(true, false, true, true, false, onOtherColonyLand: true).Refusal);
-            Equal(ColonyRefusal.TooCloseToColony, ColonyRules.JudgeFounding(true, false, true, true, false, tooCloseToColony: true).Refusal);
         });
 
         yield return ("Colony: only the founder hears how a founding went; the others hear only that a colony was founded", () =>
@@ -721,179 +702,86 @@ static class ColonyChecks
             Check(ColonyModeState.SameOwner(null, 1));
         });
 
-        // ---- the land each colony works ----
+        // ---- the road rule: no land, and two colonies' roads meet only at a Trading Post (1.4.0-beta15) ----
 
-        yield return ("Colony: a colony reaches every tile within 10 of its buildings, and no further", () =>
+        yield return ("Colony: there is no land: a building may stand right beside another colony's roads and buildings", () =>
         {
-            var grid = new ColonyReachGrid(100, 100);
-            grid.Apply(0, new[] { (50, 50) }, +1);
-            Check(grid.Reaches(0, 50, 50));
-            Check(grid.Reaches(0, 60, 50), "10 tiles away");
-            Check(grid.Reaches(0, 56, 58), "6 and 8 away: 10 as the crow flies");
-            Check(!grid.Reaches(0, 61, 50), "11 tiles away");
-            Check(!grid.Reaches(0, 58, 58), "8 and 8 away: more than 10");
-            Check(!grid.Reaches(1, 50, 50), "only the building's own colony");
-            // At the edge of the map nothing breaks, and nothing outside is reached.
-            grid.Apply(1, new[] { (0, 0), (99, 99) }, +1);
-            Check(grid.Reaches(1, 0, 10)); Check(!grid.Reaches(1, -1, 0)); Check(!grid.Reaches(1, 100, 99));
+            // Colony 0's road runs along y = 5.
+            var map = new FakeRoads().Road(0, (0, 5), (1, 5), (2, 5), (3, 5));
+            // Colony 1's house right beside it, its entrance on the far side, where colony 1's own road will be.
+            Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(1, Cells((1, 6), (2, 6)), new ColonyCell(1, 7, 0), false, map, out _));
+            // A building without an entrance (a tank, a platform) anywhere beside it.
+            Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(1, Cells((0, 4), (1, 4)), null, false, map, out _));
+            // Colony 0's own path carrying on its own road.
+            Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(0, Cells((4, 5)), null, true, map, out _));
         });
 
-        yield return ("Colony: a tile is the land of the colony that reached it first", () =>
+        yield return ("Colony: a path on or beside another colony's road would join them, and is refused", () =>
         {
-            var grid = new ColonyReachGrid(100, 100);
-            grid.Apply(0, new[] { (20, 50) }, +1);
-            grid.Apply(1, new[] { (35, 50) }, +1);
-            // Both reach 25..30; colony 0 got there first, so it is colony 0's.
-            Check(grid.Reaches(1, 28, 50));
-            Equal<int?>(0, grid.Owner(28, 50));
-            Check(grid.MayUse(0, 28, 50)); Check(!grid.MayUse(1, 28, 50));
-            // Colony 1's own land, and land nobody holds.
-            Equal<int?>(1, grid.Owner(40, 50));
-            Check(!grid.MayUse(0, 40, 50)); Check(grid.MayUse(1, 40, 50));
-            Equal<int?>(null, grid.Owner(80, 80));
-            Check(grid.MayUse(0, 80, 80)); Check(grid.MayUse(1, 80, 80));
+            var map = new FakeRoads().Road(0, (0, 5), (1, 5), (2, 5));
+            Equal(ColonyRefusal.TouchesOtherColony, ColonyRoadRule.Conflict(1, Cells((3, 5)), null, true, map, out string detail));
+            Check(detail.Contains("slot 0"), detail);
+            Equal(ColonyRefusal.TouchesOtherColony, ColonyRoadRule.Conflict(1, Cells((1, 6)), null, true, map, out _));
+            // Corner to corner, roads do not join; nor at another height (stairs are paths and judged the same way).
+            Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(1, Cells((3, 6)), null, true, map, out _));
+            Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(1, new[] { new ColonyCell(1, 6, 1) }, null, true, map, out _));
+            // Every cell of a longer piece counts.
+            Equal(ColonyRefusal.TouchesOtherColony, ColonyRoadRule.Conflict(1, Cells((5, 8), (5, 7), (3, 6)), null, true,
+                new FakeRoads().Road(0, (3, 5)), out _));
         });
 
-        yield return ("Colony: a colony cannot build its way into another colony's land", () =>
+        yield return ("Colony: a building whose entrance is on or beside another colony's road would join it, and is refused", () =>
         {
-            var grid = new ColonyReachGrid(100, 100);
-            grid.Apply(0, new[] { (20, 50) }, +1);
-            // Colony 1 lays a path towards colony 0, one tile at a time, wherever it may.
-            int x = 60;
-            grid.Apply(1, new[] { (x, 50) }, +1);
-            while (x > 0 && grid.MayUse(1, x - 1, 50))
-            {
-                x--;
-                grid.Apply(1, new[] { (x, 50) }, +1);
-            }
-            Equal(31, x);
-            // Colony 0's land is still all colony 0's, right up to its edge.
-            for (int tx = 10; tx <= 30; tx++) Equal<int?>(0, grid.Owner(tx, 50));
+            var map = new FakeRoads().Road(0, (0, 5), (1, 5), (2, 5));
+            var house = Cells((1, 7), (2, 7));
+            // Its entrance beside colony 0's road: the road it needs there would join them.
+            Equal(ColonyRefusal.TouchesOtherColony, ColonyRoadRule.Conflict(1, house, new ColonyCell(1, 6, 0), false, map, out _));
+            Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(0, house, new ColonyCell(1, 6, 0), false, map, out _));
+            // Its entrance facing away: fine, however near the road.
+            Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(1, Cells((1, 6), (2, 6)), new ColonyCell(1, 7, 0), false, map, out _));
         });
 
-        yield return ("Colony: land passes on only when its colony no longer reaches it, and saved owners come back", () =>
+        yield return ("Colony: a path at another colony's building's entrance is refused: that building would join the placer's roads", () =>
         {
-            var grid = new ColonyReachGrid(100, 100);
-            grid.Apply(0, new[] { (20, 50) }, +1);
-            grid.Apply(1, new[] { (35, 50) }, +1);
-            // What saving keeps: the tiles both reach, with their owner.
-            var contested = grid.ContestedTiles().ToList();
-            Check(contested.Count > 0 && contested.All(t => t.slot == 0 && t.x >= 25 && t.x <= 30));
-            // Built again in the other order, the shared tiles would be colony 1's; the saved owners put them back.
-            var rebuilt = new ColonyReachGrid(100, 100);
-            rebuilt.Apply(1, new[] { (35, 50) }, +1);
-            rebuilt.Apply(0, new[] { (20, 50) }, +1);
-            Equal<int?>(1, rebuilt.Owner(28, 50));
-            foreach (var (tx, ty, slot) in contested) rebuilt.RestoreOwner(tx, ty, slot);
-            Equal<int?>(0, rebuilt.Owner(28, 50));
-            // Colony 0 takes its building down: the tiles colony 1 still reaches become colony 1's, the rest nobody's.
-            grid.Apply(0, new[] { (20, 50) }, -1);
-            Equal<int?>(1, grid.Owner(28, 50));
-            Equal<int?>(null, grid.Owner(15, 50));
+            var map = new FakeRoads().Entrance(0, 5, 5);
+            Equal(ColonyRefusal.TouchesOtherColony, ColonyRoadRule.Conflict(1, Cells((5, 5)), null, true, map, out _));
+            Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(0, Cells((5, 5)), null, true, map, out _));
+            Equal(ColonyRefusal.None, ColonyRoadRule.Conflict(1, Cells((5, 6)), null, true, map, out _));
         });
 
-        yield return ("Colony: a colony handed over gives its land and reach to the new owner", () =>
+        yield return ("Colony: a Trading Post needs a road from each of two colonies at its ends, one of them the placer's", () =>
         {
-            var grid = new ColonyReachGrid(100, 100);
-            grid.Apply(0, new[] { (20, 50) }, +1);
-            grid.Apply(1, new[] { (35, 50) }, +1);
-            grid.Apply(2, new[] { (80, 80) }, +1);
-            int before = grid.LandSize(1) + grid.LandSize(2);
-            grid.Transfer(2, 1);
-            // Colony 2's land and reach are colony 1's now; colony 0 keeps the shared tiles it got first.
-            Equal<int?>(1, grid.Owner(80, 80));
-            Check(grid.Reaches(1, 80, 80)); Check(!grid.Reaches(2, 80, 80));
-            Equal(0, grid.LandSize(2));
-            Equal(before, grid.LandSize(1));
-            Equal<int?>(0, grid.Owner(28, 50));
-            // Taking the building down later takes the reach from the new owner.
-            grid.Apply(1, new[] { (80, 80) }, -1);
-            Equal<int?>(null, grid.Owner(80, 80));
+            // One half three wide at y = 6 with its entrance at (1, 5); the other half behind it at y = 7, entrance (1, 8).
+            var half = Cells((0, 6), (1, 6), (2, 6));
+            var near = new ColonyCell(1, 5, 0);
+            ColonyCell? far = ColonyRoadRule.FarEntrance(half, near);
+            Equal((ColonyCell?)new ColonyCell(1, 8, 0), far);
+            var roads = new FakeRoads().Road(0, (1, 3), (1, 4), (1, 5)).Road(1, (1, 8), (1, 9));
+            Equal(ColonyRefusal.None, ColonyRoadRule.TradingPost(0, near, far, roads, out _));
+            Equal(ColonyRefusal.None, ColonyRoadRule.TradingPost(1, near, far, roads, out _));
+            // A third colony may not put one between two others.
+            Equal(ColonyRefusal.TradingPostRoads, ColonyRoadRule.TradingPost(2, near, far, roads, out _));
+            // Both roads one colony's: refused (it would trade with nobody).
+            Equal(ColonyRefusal.TradingPostRoads, ColonyRoadRule.TradingPost(1, near, far, new FakeRoads().Road(1, (1, 5)).Road(1, (1, 8)), out _));
+            // One road only: refused until the other colony's road reaches its other end.
+            Equal(ColonyRefusal.TradingPostRoads, ColonyRoadRule.TradingPost(0, near, far, new FakeRoads().Road(0, (1, 5)), out string detail));
+            Check(detail.Contains("none"), detail);
+            // A road beside an end is not at it.
+            Equal(ColonyRefusal.TradingPostRoads, ColonyRoadRule.TradingPost(0, near, far, new FakeRoads().Road(0, (1, 5)).Road(1, (2, 8)), out _));
         });
 
-        yield return ("Colony: the land's outline, and room to found a colony", () =>
+        yield return ("Colony: a Trading Post is judged the same from either half, in any direction", () =>
         {
-            var grid = new ColonyReachGrid(100, 100);
-            grid.Apply(0, new[] { (50, 50) }, +1);
-            var outline = grid.BorderTiles(0).ToList();
-            Check(outline.Contains((60, 50)) && outline.Contains((40, 50)) && outline.Contains((50, 60)));
-            Check(!outline.Contains((50, 50)), "the middle is not outline");
-            Check(outline.All(t => grid.Owner(t.x, t.y) == 0));
-            // A colony founded under 20 tiles from colony 0's building would have land touching colony 0's at once.
-            Check(grid.OthersReachNear(1, new[] { (69, 50) }), "19 tiles from the building");
-            Check(!grid.OthersReachNear(1, new[] { (71, 50) }), "21 tiles from the building");
-            Check(!grid.OthersReachNear(0, new[] { (55, 50) }), "its own colony does not count");
-        });
-
-        yield return ("Colony: a building nobody stamped and no road reaches takes the land it stands on, if it is one colony's", () =>
-        {
-            var grid = new ColonyReachGrid(100, 100);
-            grid.Apply(0, new[] { (20, 50) }, +1);
-            grid.Apply(1, new[] { (35, 50) }, +1);
-            // A 2 by 3 pump at the edge of colony 0's land, partly over land nobody holds: colony 0's.
-            Equal<int?>(0, grid.SoleOwner(new[] { (20, 59), (21, 59), (20, 60), (21, 60), (20, 61), (21, 61) }));
-            Equal<int?>(null, grid.Owner(20, 61));
-            // Wholly on colony 1's land.
-            Equal<int?>(1, grid.SoleOwner(new[] { (40, 50), (41, 50) }));
-            // Across the line between the two: nobody's to decide, so it keeps waiting.
-            Equal<int?>(null, grid.SoleOwner(new[] { (30, 50), (31, 50) }));
-            // On nobody's land, or no tiles at all.
-            Equal<int?>(null, grid.SoleOwner(new[] { (80, 80) }));
-            Equal<int?>(null, grid.SoleOwner(Array.Empty<(int, int)>()));
-        });
-
-        yield return ("Colony: land stays quick at the size of a big game", () =>
-        {
-            // A 256 by 256 map, four colonies of 5000 building tiles each (paths and buildings).
-            var grid = new ColonyReachGrid(256, 256);
-            var random = new Random(4);
-            var buildings = new List<(int slot, (int, int)[] tiles)>();
-            var watch = System.Diagnostics.Stopwatch.StartNew();
-            for (int slot = 0; slot < 4; slot++)
-            {
-                int cx = 64 + (slot % 2) * 128, cy = 64 + (slot / 2) * 128;
-                for (int i = 0; i < 5000; i++)
-                {
-                    var tile = new[] { (cx + random.Next(-50, 51), cy + random.Next(-50, 51)) };
-                    grid.Apply(slot, tile, +1);
-                    buildings.Add((slot, tile));
-                }
-            }
-            long build = watch.ElapsedMilliseconds;
-            watch.Restart();
-            for (int i = 0; i < 500; i++) grid.Apply(buildings[i].slot, buildings[i].tiles, -1);
-            for (int slot = 0; slot < 4; slot++) grid.BorderTiles(slot).Count();
-            for (int i = 0; i < 1000; i++) grid.MayUse(i % 4, random.Next(256), random.Next(256));
-            long work = watch.ElapsedMilliseconds;
-            Console.WriteLine($"      Land for 20000 building tiles: {build} ms to build; removals, outlines and lookups {work} ms");
-            Check(build < 5000, $"building the land took {build} ms");
-            Check(work < 2000, $"changes and outlines took {work} ms");
-        });
-
-        yield return ("Colony: reach follows the buildings standing now, whatever order they came and went in", () =>
-        {
-            var a = new ColonyReachGrid(60, 60);
-            a.Apply(0, new[] { (10, 10), (11, 10) }, +1);
-            a.Apply(1, new[] { (30, 30) }, +1);
-            a.Apply(0, new[] { (40, 40) }, +1);
-            a.Apply(0, new[] { (10, 10), (11, 10) }, -1);
-            var b = new ColonyReachGrid(60, 60);
-            b.Apply(0, new[] { (40, 40) }, +1);
-            b.Apply(1, new[] { (30, 30) }, +1);
-            for (int x = 0; x < 60; x++)
-            {
-                for (int y = 0; y < 60; y++)
-                {
-                    for (int slot = 0; slot < 2; slot++)
-                        Check(a.Reaches(slot, x, y) == b.Reaches(slot, x, y), $"slot {slot} at {x},{y}");
-                }
-            }
-            // Two buildings next to each other: removing one keeps the other's land.
-            var c = new ColonyReachGrid(60, 60);
-            c.Apply(0, new[] { (20, 20) }, +1);
-            c.Apply(0, new[] { (21, 20) }, +1);
-            c.Apply(0, new[] { (21, 20) }, -1);
-            Check(c.Reaches(0, 30, 20)); Check(!c.Reaches(0, 31, 20));
+            // The other half: its entrance's far end is this half's entrance.
+            Equal((ColonyCell?)new ColonyCell(1, 5, 0), ColonyRoadRule.FarEntrance(Cells((0, 7), (1, 7), (2, 7)), new ColonyCell(1, 8, 0)));
+            // Turned: a half standing in a column with its entrance to the west.
+            Equal((ColonyCell?)new ColonyCell(8, 1, 0), ColonyRoadRule.FarEntrance(Cells((6, 0), (6, 1), (6, 2)), new ColonyCell(5, 1, 0)));
+            // Two cells high: the height of the entrance is the one that counts.
+            var tall = new[] { new ColonyCell(0, 6, 0), new ColonyCell(1, 6, 0), new ColonyCell(2, 6, 0),
+                new ColonyCell(0, 6, 1), new ColonyCell(1, 6, 1), new ColonyCell(2, 6, 1) };
+            Equal((ColonyCell?)new ColonyCell(1, 8, 0), ColonyRoadRule.FarEntrance(tall, new ColonyCell(1, 5, 0)));
+            // An entrance that does not face the footprint has no far end.
+            Equal((ColonyCell?)null, ColonyRoadRule.FarEntrance(Cells((0, 6)), new ColonyCell(5, 5, 0)));
         });
 
         // ---- exchanges at a trading post ----
@@ -1125,33 +1013,6 @@ static class ColonyChecks
             Check(missing.Count == 0, "no English line for " + string.Join(", ", missing));
         });
 
-        // ---- a shared game (1.4.0-beta7) ----
-
-        yield return ("Colony: one colony's land has no contested tiles, and a founding is refused beside it", () =>
-        {
-            // ColonyReach.SharedLand counts every building as colony 0's, in whatever order the game lists them. With one
-            // colony a tile is its or nobody's, so the order cannot matter (the grid's rule, pinned here); and a founder's
-            // district center on it, or within 10 tiles of it, is refused.
-            var buildings = new[] { new[] { (20, 50), (21, 50) }, new[] { (40, 40) }, new[] { (30, 70), (30, 71), (31, 70) } };
-            var forward = new ColonyReachGrid(100, 100);
-            foreach (var tiles in buildings) forward.Apply(0, tiles, +1);
-            var backward = new ColonyReachGrid(100, 100);
-            foreach (var tiles in Enumerable.Reverse(buildings)) backward.Apply(0, tiles, +1);
-            for (int x = 0; x < 100; x++)
-            {
-                for (int y = 0; y < 100; y++)
-                {
-                    Equal(forward.Owner(x, y), backward.Owner(x, y));
-                    Equal(forward.MayUse(1, x, y), backward.MayUse(1, x, y));
-                }
-            }
-            Equal(0, forward.ContestedTiles().Count());
-            // A founder's district center right beside the shared colony is refused, one far away is not.
-            Check(forward.OthersReachNear(1, new[] { (45, 45) }), "beside the shared colony");
-            Check(!forward.OthersReachNear(1, new[] { (90, 10) }), "far from it");
-            Check(!forward.MayUse(1, 20, 50) && forward.MayUse(1, 90, 10));
-        });
-
         // ---- each player's notification journal ----
 
         yield return ("Colony: a beaver of the other colony who dies stays out of this player's journal", () =>
@@ -1278,24 +1139,41 @@ static class ColonyChecks
         readonly Dictionary<string, int> owners = new();
         readonly Dictionary<string, int[]> crossings = new();
         readonly HashSet<(int, string)> locked = new();
-        readonly HashSet<ColonyTile> othersTiles = new();
         readonly Dictionary<string, ColonyRefusal> conflicts = new();
 
         public FakeWorld Own(string id, int slot) { owners[id] = slot; return this; }
         public FakeWorld Crossing(string id, params int[] partners) { crossings[id] = partners; return this; }
         public FakeWorld Locked(int slot, string template) { locked.Add((slot, template)); return this; }
-        public FakeWorld OthersTile(ColonyTile tile) { othersTiles.Add(tile); return this; }
         public FakeWorld Conflict(string template, ColonyRefusal refusal) { conflicts[template] = refusal; return this; }
 
         public int? OwnerOf(string entityId) => owners.TryGetValue(entityId, out int slot) ? slot : null;
         public bool IsCrossingOf(int slot, string entityId) =>
             crossings.TryGetValue(entityId, out int[] partners) && (partners.Length == 0 || partners.Contains(slot));
         public bool IsUnlockedFor(int slot, string templateName) => !locked.Contains((slot, templateName));
-        public bool MayUseTile(int slot, ColonyTile tile) => !othersTiles.Contains(tile);
         public ColonyRefusal PlacementConflict(int slot, ColonyPlacement placement, out string detail)
         {
             detail = null;
             return conflicts.TryGetValue(placement.TemplateName, out ColonyRefusal refusal) ? refusal : ColonyRefusal.None;
         }
+    }
+
+    static List<ColonyCell> Cells(params (int x, int y)[] tiles) => tiles.Select(t => new ColonyCell(t.x, t.y, 0)).ToList();
+
+    // Roads and building entrances by colony, all at height 0.
+    sealed class FakeRoads : IColonyRoadMap
+    {
+        readonly Dictionary<ColonyCell, int> roads = new();
+        readonly Dictionary<ColonyCell, int> entrances = new();
+
+        public FakeRoads Road(int slot, params (int x, int y)[] tiles)
+        {
+            foreach (var (x, y) in tiles) roads[new ColonyCell(x, y, 0)] = slot;
+            return this;
+        }
+
+        public FakeRoads Entrance(int slot, int x, int y) { entrances[new ColonyCell(x, y, 0)] = slot; return this; }
+
+        public int? RoadOwnerAt(ColonyCell cell) => roads.TryGetValue(cell, out int slot) ? slot : null;
+        public int? EntranceOwnerAt(ColonyCell cell) => entrances.TryGetValue(cell, out int slot) ? slot : null;
     }
 }

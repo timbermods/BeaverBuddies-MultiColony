@@ -150,8 +150,9 @@ namespace BeaverBuddies.Colonies
             if (!Enabled) Plugin.Log($"[Colony] Separate colonies switched on: {how}");
             Enabled = true;
             StartingSettings ??= startingSettings;
-            // Land is kept from now on. A shared game being split: its buildings are all the first colony's.
-            if (!wasEnabled) ColonyReach.Instance?.Begin(splittingSharedGame: !newGame);
+            // Buildings are stamped with their colony from now on. A shared game being split: its buildings are all the
+            // first colony's.
+            if (!wasEnabled) ColonyStamps.Instance?.Begin(splittingSharedGame: !newGame);
             if (!wasEnabled && separateScience) ColonyScienceService.Instance?.Enable(newGame);
             // Display: from now on the toolbar's locks follow the local player's colony (RefreshToolLocks did nothing before).
             if (!wasEnabled) ColonyScienceService.Instance?.RefreshToolLocks();

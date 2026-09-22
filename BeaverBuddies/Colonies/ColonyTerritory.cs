@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BeaverBuddies.Colonies
 {
-    /// <summary>A map tile in X and Y only; height never decides who owns land.</summary>
+    /// <summary>A map tile in X and Y only (the land-split alphas' territory is by column).</summary>
     public readonly struct ColonyTile : IEquatable<ColonyTile>
     {
         public readonly int X;
@@ -22,7 +22,10 @@ namespace BeaverBuddies.Colonies
     }
 
     /// <summary>
-    /// Who owns which land in a separate-colonies game. With two colonies the border is one straight line along the
+    /// Legacy: how the land-split alphas (1.2.0-two-colony-alpha1 to 5) divided the map. Nothing builds by it any more
+    /// (there is no land); it is only read to give such a save's district centers their owners (DistrictOwner).
+    ///
+    /// Who owned which land in those saves. With two colonies the border is one straight line along the
     /// map grid, halfway between the two starts, across the axis on which they are further apart: a District Crossing
     /// is three tiles wide and needs a straight piece of border, which a slanted border between two diagonal starts
     /// never has. With any other number of starts every tile belongs to the nearest start (squared distance). Both

@@ -5,6 +5,61 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta15
+
+**No more land: build anywhere, and two colonies' roads meet only at a Trading Post.** Asked for after
+playing beta14. Land (every tile within 10 tiles of a colony's buildings, first come) was more trouble than help: a Trading
+Post had to sit exactly where two colonies' land met, and a post could still be placed with the same colony's road at
+both ends (a screenshot showed one between two of one player's roads). The mod is played with friends, so it no
+longer guards where anyone builds. What is left is the one rule that keeps the game's districts working: two
+colonies' roads never join, except through a Trading Post. **Wire change** (the colony digest and the daily check
+changed), and a save change: land is no longer saved, and an older save's land is ignored.
+
+- **No land.** `ColonyReach` and `ColonyReachGrid` are gone, with everything that read them:
+  - the placement refusal on another colony's land (`OtherColonyArea`) and the refusal next to another colony's
+    buildings;
+  - founding's 20 tiles from other colonies (`TooCloseToColony`): a colony may be founded anywhere its district
+    center's roads would not join another colony's;
+  - marking only where a colony may work (the `Tiles` scope): planting and tree cutting are marked anywhere, and a
+    tile another colony marked stays theirs as before;
+  - the land fallbacks in the simulation: wild bushes, ruins, piles and recovered goods that nobody marked go to
+    whichever colony's workers get there first (`ColonySeparation.MayTake`, `NaturalOwnerOf`; the recovered-goods
+    patch is removed);
+  - the land outlines, the `land=` part of the daily check, the report's land lines and the `land` digest notes.
+- **Kept:** who placed each building (`ColonyStamp`), now in `ColonyStamps`, which still gives a building nobody
+  placed as an action the owner of its district or of the road at its entrance (no longer of the land under it).
+  Ownership is unchanged: a player changes only their own colony's buildings, districts and marks.
+- **The road rule** (`ColonyRoadRule`, pure and tested headlessly; the game side in `ColonyGameWorld`, as the host
+  judges it and as the preview shows it). Refused, with *That would join another colony's roads. Colonies' roads meet
+  only at a Trading Post.*:
+  - a path, stairs or anything else that carries a road (the game's `PathSpec`: also bridges, gates, tubeways, zipline
+    stations and district centers) on or beside another colony's road, finished or still being built;
+  - a path on the cell in front of another colony's building's door (that building would join the placer's roads);
+  - a building whose entrance cell (where its road goes) is on or beside another colony's road.
+  Anything else may stand right beside another colony's buildings and roads. The game's own check still refuses
+  whatever would join two districts' finished roads, and zipline links to another colony's tower are refused as
+  before.
+- **A Trading Post needs two colonies' roads when it is placed**: one at each half's entrance, from two different
+  colonies, one of them the placer's (`TradingPostRoads`: *A Trading Post needs a road at each end: yours at one,
+  another colony's at the other. Build both roads up to it first.*). The other half's entrance is worked out from the
+  half being judged (straight through the post, where the game's `HalvesCoordinates` puts it), so each half, the
+  preview and the host give the same answer. Both halves are still judged together.
+- **The game's names for a building's door, checked:** its `PositionedEntrance.Coordinates` is the cell outside the
+  door where the road must be; its `DoorstepCoordinates` is the building's own cell inside. The rule reads the first.
+- **Ctrl+L shows colonies' roads** (`ColonyRoadOverlay`): each colony's paths in its color, while any tool other than
+  the default is in hand, and at any time with the key (now *Show colonies' roads*). The debug seat switch
+  (Ctrl+Shift+K) moved with it.
+- Founding's own check as it is played still reads only the tick-updated district map; the new check for another
+  colony's paths still being built runs in the host's judgement and the preview only, so every computer's replay
+  gives the same answer.
+- Texts: the founding prompt, the refusals, the handover notices (no more "land"), the Trading Post's description
+  and the overview's empty line.
+- Checks: StabilityTests 356 (6 new for the road rule, 11 land tests removed), RuntimeChecks 328 (6 new: the game puts
+  a building's road at its entrance cell; the rules read that cell and see paths still being built; the game places a
+  Trading Post's second half turned round behind the first; its paths, stairs, bridges, gates and district centers
+  carry `PathSpec` and the Trading Post does not; each faction's post has its other road end where the rule looks for
+  it. 5 game methods the rule reads are listed; the recovered-goods patch's is dropped).
+
 ## 1.4.0-beta14
 
 **Dev mode's *Add 1000 Science* is shared, so buying a building with it no longer desyncs a co-op game.** Found

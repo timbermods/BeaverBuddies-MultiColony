@@ -22,16 +22,19 @@ BeaverBuddies MultiColony (beta): co-op with a colony each
 
 Play Timberborn together, each with your own colony, on one map.
 
-**Each player runs their own colony:** their own districts, land, beavers, stock, working hours and (if the host
-chooses) science and unlocks. Your screen shows your colony; your beavers work for your colony only; nobody can change
-anyone else's colony.
+**Each player runs their own colony:** their own districts, beavers, stock, working hours and (if the host chooses)
+science and unlocks. Your screen shows your colony; your beavers work for your colony only; nobody can change anyone
+else's colony.
 
-**Colonies meet at trading posts:** a building of its own (10 logs, no science), placed where two colonies' land
-meets. Offer "100 logs for 25 gears, 4 rounds" (or science, or beavers, or a gift), the other player accepts, and
-both colonies' beavers carry it out: each side's goods wait on its own half and cross all at once when both are in.
-Standing deals repeat by themselves, with a reserve so they never starve you; ending one early takes both players.
-Say what your colony is looking for, see at a glance how many days of food and water each colony has, and offer the
-last exchange again in one click.
+**No borders:** build and plant anywhere, right up to another colony's buildings. The one rule: two colonies' roads
+never join, except through a trading post. Ctrl+L shows each colony's roads in its color.
+
+**Colonies meet at trading posts:** a building of its own (10 logs, no science), placed between two colonies' roads,
+one road end on each side. Offer "100 logs for 25 gears, 4 rounds" (or science, or beavers, or a gift), the other
+player accepts, and both colonies' beavers carry it out: each side's goods wait on its own half and cross all at
+once when both are in. Standing deals repeat by themselves, with a reserve so they never starve you; ending one early
+takes both players. Say what your colony is looking for, see at a glance how many days of food and water each colony
+has, and offer the last exchange again in one click.
 
 **Away for the evening?** Ask a friend to look after your colony: they switch into it and back, and it is not handed
 over while they are in the game.

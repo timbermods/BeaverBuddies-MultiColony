@@ -64,11 +64,11 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyRoadNetworks>().AsSingleton();
             containerDefinition.Bind<ColonyTradeLedger>().AsSingleton();
             containerDefinition.Bind<ColonyExchangeService>().AsSingleton();
-            containerDefinition.Bind<ColonyReach>().AsSingleton();
+            containerDefinition.Bind<ColonyStamps>().AsSingleton();
             containerDefinition.Bind<ColonyMarks>().AsSingleton();
             containerDefinition.Bind<ColonyWorkingHours>().AsSingleton();
             containerDefinition.Bind<ColonyLifecycle>().AsSingleton();
-            containerDefinition.Bind<ColonyLandOverlay>().AsSingleton();
+            containerDefinition.Bind<ColonyRoadOverlay>().AsSingleton();
             containerDefinition.Bind<TradeOverviewPanel>().AsSingleton();
             containerDefinition.Bind<ColonyDiagnostics>().AsSingleton();
             containerDefinition.Bind<ColonyStewards>().AsSingleton();

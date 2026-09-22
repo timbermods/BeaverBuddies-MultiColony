@@ -33,7 +33,7 @@ namespace BeaverBuddies.Colonies
     /// button in the Ctrl+T window) and by itself when this computer desyncs. It is saved next to Player.log, in
     /// BeaverBuddies-Reports, and copied to the clipboard, ready to paste into a bug report.
     ///
-    /// Once a day, every computer also logs a one-line fingerprint of the colony state (owners, land, marks, science,
+    /// Once a day, every computer also logs a one-line fingerprint of the colony state (owners, marks, science,
     /// exchanges, population...). The simulation is the same everywhere, so two players' fingerprints for the same day
     /// must match; the first part that differs shows where their computers stopped agreeing.
     ///
@@ -194,17 +194,14 @@ namespace BeaverBuddies.Colonies
                         stock += Hash(entity) * (ColonyDigest.Of(good.GoodId) * 7 + good.Amount);
                 }
             }
-            ColonyReach reach = ColonyReach.Instance;
-            string land = reach == null ? "-"
-                : string.Join("/", Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(reach.LandSize)) + $":{(uint)reach.ContestedHash():x}";
             ColonyModeService mode = ColonyModeService.Instance;
             string flags = $"{(mode?.Enabled == true ? "sep" : "shared")}/{(ColonyScienceService.IsEnabled ? "sci" : "-")}"
                 + $"/{(uint)ColonyDigest.Of(mode?.StartingSettings?.ToString()):x}";
             // Not the table of who plays which colony: that is the host's bookkeeping, which it changes as it loads (its own
             // seat, SeatHost) and hands to everyone only inside the next hello. A guest whose hello was refused kept the
             // save's table and was stopped at its next daily check, although no guest simulates anything from it.
-            string phases = $"{reach?.Ticks ?? 0}/{ColonyExchangeService.Instance?.Ticks ?? 0}";
-            return $"owners={(uint)owners:x} stamps={(uint)stamps:x} districts={(uint)districts:x} land={land} people={string.Join("/", population)} "
+            string phases = $"{ColonyStamps.Instance?.Ticks ?? 0}/{ColonyExchangeService.Instance?.Ticks ?? 0}";
+            return $"owners={(uint)owners:x} stamps={(uint)stamps:x} districts={(uint)districts:x} people={string.Join("/", population)} "
                 + $"exchanges={(uint)exchanges:x} stock={(uint)stock:x} totals={(uint)(ColonyTradeLedger.Instance?.Fingerprint() ?? 0):x} "
                 + $"marks=[{ColonyMarks.Instance?.Fingerprint()}] science=[{ColonyScienceService.Instance?.Fingerprint()}] "
                 + $"hours=[{ColonyWorkingHours.Instance?.Fingerprint()}] away=[{ColonyLifecycle.Instance?.Fingerprint()}] "
@@ -387,7 +384,7 @@ namespace BeaverBuddies.Colonies
                 string state = lifecycle == null ? "" : lifecycle.PopulationOf(slot) == 0 ? "no beavers"
                     : present.Contains(slot) ? "playing" : $"away (missed {lifecycle.DaysAway(slot)} days)";
                 r.AppendLine($"{ColonyExchangeService.ColonyName(slot)} (slot {slot}): {state} | {districts.Count} districts | "
-                    + $"homeless {homeless}, adults without a job {jobless} | land {ColonyReach.Instance?.LandSize(slot) ?? 0} tiles | "
+                    + $"homeless {homeless}, adults without a job {jobless} | "
                     + $"{buildings} buildings and paths ({unfinished} unfinished) | working hours {ColonyWorkingHours.Instance?.HoursOf(slot)}");
                 foreach (DistrictCenter districtCenter in districts)
                 {
@@ -401,8 +398,7 @@ namespace BeaverBuddies.Colonies
             }
             int noDistrict = _entityRegistry.Entities.Count(e => e.GetComponent<Citizen>() is Citizen c && !c.AssignedDistrict);
             r.AppendLine($"Beavers and bots in no district: {noDistrict}");
-            var (counted, unstamped) = ColonyReach.Instance?.Counts ?? (0, 0);
-            r.AppendLine($"Land: {counted} buildings counted, {unstamped} waiting for a colony");
+            r.AppendLine($"Buildings waiting for a colony: {ColonyStamps.Instance?.Unstamped ?? 0}");
         }
 
         private void TradingPostReport(StringBuilder r)

@@ -6,7 +6,7 @@ new lines, take them from enUS_BeaverBuddie.csv (grep for the prefixes above) an
 
 Here is a localization CSV snippet for enUS:
 
-BeaverBuddies.Colony.Founding.Prompt,"You can found your own colony. Place your district center at least 20 tiles from other colonies (their land shows as coloured outlines): it appears finished, with starting beavers, food and water, and it is yours. Cancel to keep playing together for now; press Ctrl+K whenever you are ready.",""
+BeaverBuddies.Colony.Founding.Prompt,"You can found your own colony. Place your district center anywhere its roads won't join another colony's (their roads show in their colours): it appears finished, with starting beavers, food and water, and it is yours. Cancel to keep playing together for now; press Ctrl+K whenever you are ready.",""
 BeaverBuddies.Colony.Refused.OtherColony,"That belongs to another colony.",""
 BeaverBuddies.Colony.Refused.NotStartedYet,"Not before the game starts: players can still join. Ask the host to unpause first.",""
 BeaverBuddies.Colony.PanelName,"{0} (colony {1})",""

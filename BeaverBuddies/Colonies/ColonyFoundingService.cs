@@ -240,11 +240,21 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// Whether a district center here would join the roads of an existing district. Founding must not merge two
-        /// colonies' road networks; see ColonyRoadNetworks.
+        /// colonies' road networks; see ColonyRoadNetworks. Before it is played (the host's judgement, the preview), in
+        /// a separate-colonies game, also another colony's paths still being built (the district map knows only
+        /// finished roads; see <see cref="ColonyRoadRule"/>). Not as it is played: that reads the frame's road map, and
+        /// the check every computer makes then must read only what is the same on all of them.
         /// </summary>
-        private bool TouchesAnotherDistrict(Placement placement) =>
-            ColonyRoadNetworks.Instance?.WouldJoinAnyDistrict(
-                _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>(), placement) ?? false;
+        private bool TouchesAnotherDistrict(int actorSlot, Placement placement, bool atReplay)
+        {
+            BlockObjectSpec spec = _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>();
+            if (ColonyRoadNetworks.Instance?.WouldJoinAnyDistrict(spec, placement) == true) return true;
+            ColonyGameWorld world = SingletonManager.GetSingleton<ColonyRulesService>()?.World;
+            if (atReplay || !ColonyModeService.IsSeparateColonies || world == null || spec == null) return false;
+            var cells = Footprint(placement).Select(ColonyGameWorld.Cell).ToList();
+            return world.RoadConflict(actorSlot, cells, ColonyGameWorld.EntranceOf(spec, placement), tradingPost: false, pathLike: false,
+                out _) != ColonyRefusal.None;
+        }
 
         /// <param name="checkBlocks">
         /// Also check that the ground is free and allows the building. Previews skip it: the game checks those itself.
@@ -256,42 +266,14 @@ namespace BeaverBuddies.Colonies
         public ColonyVerdict Judge(int actorSlot, Placement placement, bool checkBlocks = true, bool atReplay = false)
         {
             bool foundingAllowed = atReplay || FoundingAllowed;
-            // At the founding's tick, a shared game's land is worked out afresh on every computer (the founder's may
-            // hold the one its preview used).
-            if (atReplay) ColonyReach.Instance?.ForgetSharedLand();
             bool blocksValid = !checkBlocks || _blockValidator.BlocksValid(
                 _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>(), placement);
-            // The land questions only once founding is allowed: in a shared game they work its land out first.
             return ColonyRules.JudgeFounding(
                 actorHasSlot: actorSlot >= 0 && actorSlot < ColonySlotTable.MaxSlots,
                 actorOwnsDistrict: actorSlot >= 0 && SlotOwnsDistrict(actorSlot),
                 foundingAllowed: foundingAllowed,
                 blocksValid: blocksValid,
-                touchesOtherDistrict: TouchesAnotherDistrict(placement),
-                onOtherColonyLand: foundingAllowed && OnOtherColonyLand(actorSlot, placement),
-                tooCloseToColony: foundingAllowed && TooCloseToColony(actorSlot, placement));
-        }
-
-        /// <summary>
-        /// Whether the district center would stand where another colony works (near its buildings and paths). Read from
-        /// <see cref="ColonyReach"/>, which is the same on every computer, so the replay's answer is too. In a shared
-        /// game, the shared colony's land.
-        /// </summary>
-        private bool OnOtherColonyLand(int actorSlot, Placement placement)
-        {
-            ColonyReach reach = ColonyReach.Instance;
-            return reach != null && reach.OnOthersLand(actorSlot, Footprint(placement));
-        }
-
-        /// <summary>
-        /// Whether another colony reaches within 10 tiles of the new district center: the two colonies' land would meet
-        /// at once and neither could grow that way. Read from <see cref="ColonyReach"/>, the same on every computer. In
-        /// a shared game, the shared colony.
-        /// </summary>
-        private bool TooCloseToColony(int actorSlot, Placement placement)
-        {
-            ColonyReach reach = ColonyReach.Instance;
-            return reach != null && reach.OthersReachNear(actorSlot, Footprint(placement));
+                touchesOtherDistrict: TouchesAnotherDistrict(actorSlot, placement, atReplay));
         }
 
         private List<Vector3Int> Footprint(Placement placement)

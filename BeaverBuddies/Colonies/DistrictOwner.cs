@@ -50,12 +50,12 @@ namespace BeaverBuddies.Colonies
                 slot = PendingSlot.Value;
                 return;
             }
-            // A save from the land-split alphas: the colony whose land the district center stands on.
+            // A save from the land-split alphas (1 to 5): the colony whose half of the map the district center stands on.
             ColonyTerritory legacy = ColonyModeService.Instance?.LegacyTerritory;
             BlockObject blockObject = GetComponent<BlockObject>();
             if (legacy != null && blockObject != null)
             {
-                slot = System.Math.Max(0, legacy.OwnerOf(ColonyGameWorld.TileOf(blockObject.Coordinates)) - 1);
+                slot = System.Math.Max(0, legacy.OwnerOf(blockObject.Coordinates.x, blockObject.Coordinates.y) - 1);
                 return;
             }
             // Older saves and the game's own starting building, in a separate-colonies game: the first player's. A shared

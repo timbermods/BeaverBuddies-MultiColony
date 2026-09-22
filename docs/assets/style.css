@@ -304,7 +304,6 @@ details.q .answer > :last-child { margin-bottom: 0; }
   --map-water-edge: #6fb3c0;
   --map-path: #cdbd9c;
   --map-roof: #6b4a2e;
-  --map-overlap: #d9c7a5;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -314,14 +313,13 @@ details.q .answer > :last-child { margin-bottom: 0; }
     --map-water-edge: #3c8797;
     --map-path: #4e4232;
     --map-roof: #c9a074;
-    --map-overlap: #4a3a24;
   }
 }
 .map-figure { margin: 0; width: min(100%, 560px); justify-self: end; }
 .map { display: block; width: 100%; height: auto; border-radius: 18px; box-shadow: var(--shadow); border: 1px solid var(--line); }
-.map .land { stroke-width: 2.5; stroke-dasharray: 7 5; }
-.map .land-1 { fill: color-mix(in srgb, var(--accent) 20%, transparent); stroke: var(--accent); }
-.map .land-2 { fill: color-mix(in srgb, var(--water) 22%, transparent); stroke: var(--water); }
+.map .road { fill: none; stroke-width: 12; stroke-linecap: butt; stroke-linejoin: miter; }
+.map .road-1 { stroke: color-mix(in srgb, var(--accent) 50%, var(--map-path)); }
+.map .road-2 { stroke: color-mix(in srgb, var(--water) 50%, var(--map-path)); }
 .map .b1 { fill: var(--accent); }
 .map .b2 { fill: var(--water); }
 .map .b1 circle, .map .b2 circle { opacity: .55; }

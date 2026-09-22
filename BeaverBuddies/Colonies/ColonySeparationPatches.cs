@@ -22,12 +22,12 @@ namespace BeaverBuddies.Colonies
     /// <summary>
     /// Keeps each colony's beavers to their own colony's work. The game hands out some work map-wide, to any beaver
     /// who can walk there: trees to cut, bushes and crops to harvest, ruins to scavenge, planting spots, construction
-    /// sites, things to demolish and piles of recovered goods. Near a trading post two colonies' beavers can walk to the
-    /// same places, so each of those is checked against the worker's colony here.
+    /// sites, things to demolish and piles of goods. Two colonies' beavers can walk to the same places, so what a colony
+    /// marked or placed is its own workers' alone. What nobody marked or placed (a wild bush, a ruin, a pile) is there
+    /// for whichever colony's workers get to it: there is no land.
     ///
-    /// Everything these read is the same on every computer (districts, saved owners and marks, <see cref="ColonyReach"/>),
-    /// and they run inside the simulation, so every computer makes the same choices. With separate colonies off they
-    /// do nothing.
+    /// Everything these read is the same on every computer (districts, saved owners and marks), and they run inside
+    /// the simulation, so every computer makes the same choices. With separate colonies off they do nothing.
     /// </summary>
     public static class ColonySeparation
     {
@@ -44,19 +44,19 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// Whose a thing with no district is (trees, bushes, crops, ruins, piles): the colony whose planting or cutting
-        /// mark it stands on, else the only colony reaching its tile, else nobody's.
+        /// mark it stands on, else nobody's.
         /// </summary>
         public static int? NaturalOwnerOf(BlockObject blockObject)
         {
             if (!blockObject) return null;
             Vector3Int tile = blockObject.Coordinates;
             ColonyMarks marks = ColonyMarks.Instance;
-            return marks?.PlantingOwner(tile) ?? marks?.CuttingOwner(tile) ?? ColonyReach.Instance?.Owner(tile);
+            return marks?.PlantingOwner(tile) ?? marks?.CuttingOwner(tile);
         }
 
         /// <summary>
         /// Whether colony <paramref name="slot"/>'s workers may take this tree, bush, crop or ruin: every mark on its
-        /// tile must be the colony's own, and an unmarked one must stand where the colony may work.
+        /// tile must be the colony's own. An unmarked one is anyone's.
         /// </summary>
         public static bool MayTake(int slot, BaseComponent resource)
         {
@@ -67,9 +67,7 @@ namespace BeaverBuddies.Colonies
             int? planted = marks?.PlantingOwner(tile);
             if (planted != null && planted.Value != slot) return false;
             int? marked = marks?.CuttingOwner(tile);
-            if (marked != null && marked.Value != slot) return false;
-            if (planted != null || marked != null) return true;
-            return ColonyReach.Instance?.MayUse(slot, tile) ?? true;
+            return marked == null || marked.Value == slot;
         }
 
         internal static void FilterYielders(Inventory receivingInventory, ref IEnumerable<Yielder> yielders)
@@ -115,7 +113,7 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    // Foresters and farmhouses plant only on their own colony's planting marks.
+    // Foresters and farmhouses plant only on their own colony's planting marks (and on marks of nobody's, from before).
     [HarmonyPatch(typeof(PlantingSpotFinder), "CanPlantAt")]
     static class ColonyPlantingSpotPatcher
     {
@@ -125,9 +123,7 @@ namespace BeaverBuddies.Colonies
             int? slot = ColonySeparation.SimOwnerOf(__instance);
             if (slot == null) return;
             int? owner = ColonyMarks.Instance?.PlantingOwner(plantingSpot.Coordinates);
-            __result = owner != null
-                ? owner.Value == slot.Value
-                : ColonyReach.Instance?.MayUse(slot.Value, plantingSpot.Coordinates) ?? true;
+            __result = owner == null || owner.Value == slot.Value;
         }
     }
 
@@ -138,7 +134,7 @@ namespace BeaverBuddies.Colonies
         if (!_constructionSite.IsOn || !district || !workplaceAccessible.FindRoadToTerrainPath(...)) ...
      */
     // A colony's builders build only their own colony's sites, so nobody spends goods on another colony's buildings.
-    // A Trading Post is built by the colony that placed it (both halves stand side by side, within its reach).
+    // A Trading Post is built by the colony that placed it (both halves are stamped with it).
     [HarmonyPatch(typeof(ConstructionJob), nameof(ConstructionJob.StartConstructionJob))]
     static class ColonyConstructionJobPatcher
     {
@@ -182,8 +178,8 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    // Log piles and other good stacks (left by lumberjacks and gatherers) are collected only by the colony that may
-    // work where they lie: the behavior walks the map-wide list.
+    // Log piles and other good stacks (left by lumberjacks and gatherers) are collected only by the colony whose marks
+    // they lie on, if any: the behavior walks the map-wide list.
     [HarmonyPatch(typeof(GoodStackRetrieverBehavior), "RetrieveGoodStack")]
     static class ColonyGoodStackPatcher
     {
@@ -197,19 +193,5 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    // Recovered goods (left where something was demolished) are picked up only where the builder's colony may work.
-    [HarmonyPatch(typeof(RecoverGoodStackJobProvider), "IsStackRecoverable")]
-    static class ColonyRecoveredGoodsPatcher
-    {
-        static bool Prefix(RecoveredGoodStack recoveredGoodStack, Accessible start, ref bool __result)
-        {
-            if (!ColonySeparation.Active || !recoveredGoodStack || !start) return true;
-            int? builder = DistrictOwner.OwnerOfDistrict(start.GetComponent<DistrictBuilding>()?.District);
-            BlockObject blockObject = recoveredGoodStack.GetComponent<BlockObject>();
-            if (builder == null || !blockObject || ColonyReach.Instance?.MayUse(builder.Value, blockObject.Coordinates) != false)
-                return true;
-            __result = false;
-            return false;
-        }
-    }
+    // Recovered goods (left where something was demolished) are anyone's: whichever colony's builders get to them.
 }

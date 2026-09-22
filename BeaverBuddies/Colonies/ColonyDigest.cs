@@ -4,7 +4,7 @@ using System.Text;
 namespace BeaverBuddies.Colonies
 {
     /// <summary>
-    /// A running 64-bit digest of every change to colony state: ownership, marks, science, exchanges, the ledger, land,
+    /// A running 64-bit digest of every change to colony state: ownership, marks, science, exchanges, the ledger,
     /// absence, working hours. Colony code draws no random numbers, so a colony state that differed between two
     /// computers showed only once it changed some beaver's random draw, possibly days later and far from its cause,
     /// or never. The host writes this digest into every heartbeat, and a guest whose own differs at that tick stops

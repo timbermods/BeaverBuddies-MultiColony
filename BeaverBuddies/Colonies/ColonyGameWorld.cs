@@ -8,17 +8,18 @@ using Timberborn.DistributionSystem;
 using Timberborn.EntitySystem;
 using Timberborn.GameDistricts;
 using Timberborn.Navigation;
+using Timberborn.PathSystem;
 using UnityEngine;
 
 namespace BeaverBuddies.Colonies
 {
     /// <summary>
     /// The rules' view of the running game. Reads only: entities are looked up in the registry and owners found
-    /// through their districts, the colony that placed them, or the land they stand on. Nothing here touches the random
-    /// state, posts an event or fills a cache the simulation reads (district roads are read from the game's instant map,
-    /// the one its placement tools use), so the host can judge an action without changing anything.
+    /// through their districts or the colony that placed them. Nothing here touches the random state, posts an event
+    /// or fills a cache the simulation reads (district roads are read from the game's instant map, the one its
+    /// placement tools use), so the host can judge an action without changing anything.
     /// </summary>
-    public class ColonyGameWorld : IColonyWorld
+    public class ColonyGameWorld : IColonyWorld, IColonyRoadMap
     {
         private readonly EntityRegistry _entityRegistry;
         private readonly BuildingService _buildingService;
@@ -39,10 +40,7 @@ namespace BeaverBuddies.Colonies
         private EntityComponent Entity(string entityId) =>
             Guid.TryParse(entityId, out Guid guid) ? _entityRegistry.GetEntity(guid) : null;
 
-        /// <summary>
-        /// A building, district or beaver by its colony; a tree, crop, bush, ruin or pile by the mark it stands on, or
-        /// else by the only colony whose land it is on.
-        /// </summary>
+        /// <summary>A building, district or beaver by its colony; a tree, crop or bush by the mark it stands on.</summary>
         public int? OwnerOf(string entityId)
         {
             EntityComponent entity = Entity(entityId);
@@ -79,14 +77,10 @@ namespace BeaverBuddies.Colonies
         public bool IsUnlockedFor(int slot, string templateName) =>
             ColonyScienceService.Instance?.IsUnlockedFor(slot, templateName) ?? true;
 
-        public bool MayUseTile(int slot, ColonyTile tile) =>
-            ColonyReach.Instance?.MayUse(slot, new Vector3Int(tile.X, tile.Y, 0)) ?? true;
-
         /// <summary>
-        /// A building may not stand on another colony's land, and neither it nor its doorstep may touch another
-        /// colony's roads, which would join it to that colony or block it. A Trading Post links two colonies at the edge
-        /// of their lands: it needs only to touch the placer's own land (or free land). A District Crossing is an
-        /// ordinary building here: it joins a colony's own districts, not two colonies.
+        /// Whether the building would join another colony's roads (see <see cref="ColonyRoadRule"/>), or, for a Trading
+        /// Post, whether it has the two colonies' roads it needs. Worked out from the game's own positioning of the
+        /// building, as for its preview.
         /// </summary>
         public ColonyRefusal PlacementConflict(int slot, ColonyPlacement colonyPlacement, out string detail)
         {
@@ -95,118 +89,92 @@ namespace BeaverBuddies.Colonies
             BlockObjectSpec spec = building?.GetSpec<BlockObjectSpec>();
             if (spec == null) return ColonyRefusal.None;
             Placement placement = ToPlacement(colonyPlacement);
-            // The game's own positioning, as for its preview.
-            var tiles = spec.GetBlocks(placement).Select(block => block.Coordinates).ToList();
-            Vector3Int? doorstep = spec.Entrance != null && spec.Entrance.HasEntrance
-                ? PositionedEntrance.From(spec.GetBlocks(), spec.Entrance, placement)?.DoorstepCoordinates
-                : null;
-            ColonyRefusal refusal = TilesConflict(slot, tiles, doorstep, TradingPosts.IsTradingPostTemplate(building), out detail);
+            List<ColonyCell> cells = spec.GetBlocks(placement).Select(block => Cell(block.Coordinates)).ToList();
+            ColonyRefusal refusal = RoadConflict(slot, cells, EntranceOf(spec, placement), TradingPosts.IsTradingPostTemplate(building),
+                building.HasSpec<PathSpec>(), out detail);
             if (detail != null) detail = colonyPlacement.TemplateName + " " + detail;
             return refusal;
         }
 
         /// <summary>
-        /// The check itself, for a building's blocks and doorstep: none on another colony's land, and none on or beside
-        /// another colony's roads. A Trading Post needs only one block on the placer's own or free land.
+        /// Where a building's road must be: the cell outside its door (the game's PositionedEntrance.Coordinates, the one
+        /// its path connection checks; the game's "doorstep" is the building's own cell inside the door). Null for a
+        /// building without an entrance.
         /// </summary>
-        public ColonyRefusal TilesConflict(int slot, IEnumerable<Vector3Int> footprint, Vector3Int? doorstep, bool crossing,
-            out string detail)
-        {
-            detail = null;
-            ColonyReach reach = ColonyReach.Instance;
-            if (reach == null) return ColonyRefusal.None;
-            // The preview asks every frame, for every block of what is being placed: the footprint is read as given
-            // (the callers pass a list), and no copies of it are made.
-            IReadOnlyList<Vector3Int> tiles = footprint as IReadOnlyList<Vector3Int> ?? footprint.ToList();
-            if (crossing)
-            {
-                if (tiles.Count == 0) return ColonyRefusal.None;
-                for (int i = 0; i < tiles.Count; i++)
-                {
-                    if (reach.MayUse(slot, tiles[i])) return ColonyRefusal.None;
-                }
-                detail = $"at {tiles[0]} is on slot {reach.Owner(tiles[0])}'s land";
-                return ColonyRefusal.OtherColonyArea;
-            }
-            for (int i = 0; i < tiles.Count; i++)
-            {
-                if (!reach.MayUse(slot, tiles[i]))
-                {
-                    detail = $"at {tiles[i]} is on slot {reach.Owner(tiles[i])}'s land";
-                    return ColonyRefusal.OtherColonyArea;
-                }
-            }
-            for (int i = 0; i < tiles.Count; i++)
-            {
-                ColonyRefusal touching = Touches(slot, tiles[i], out detail);
-                if (touching != ColonyRefusal.None) return touching;
-            }
-            return doorstep != null ? Touches(slot, doorstep.Value, out detail) : ColonyRefusal.None;
-        }
-
-        // The tile itself and its four neighbours.
-        private static readonly Vector3Int[] Around = { Vector3Int.zero, Vector3Int.right, Vector3Int.left, Vector3Int.up, Vector3Int.down };
-
-        /// <summary>Another colony's road, building or path on this tile or beside it.</summary>
-        private ColonyRefusal Touches(int slot, Vector3Int tile, out string detail)
-        {
-            detail = null;
-            for (int i = 0; i < Around.Length; i++)
-            {
-                Vector3Int near = tile + Around[i];
-                int? owner = OtherColonyRoadAt(slot, near);
-                if (owner != null)
-                {
-                    detail = $"would touch slot {owner}'s road at {near}";
-                    return ColonyRefusal.TouchesOtherColony;
-                }
-                owner = OtherColonyBlockAt(slot, near);
-                if (owner != null)
-                {
-                    detail = $"would touch slot {owner}'s building or path at {near}";
-                    return ColonyRefusal.TouchesOtherColony;
-                }
-            }
-            return ColonyRefusal.None;
-        }
+        public static Vector3Int? EntranceOf(BlockObjectSpec spec, Placement placement) =>
+            spec.Entrance != null && spec.Entrance.HasEntrance
+                ? PositionedEntrance.From(spec.GetBlocks(), spec.Entrance, placement)?.Coordinates
+                : null;
 
         /// <summary>
-        /// The colony, other than <paramref name="slot"/>, that placed a building or path standing on this tile, finished
-        /// or not. The district map above only knows finished roads, brought up to date at the tick: another colony's
-        /// path still being built, or one finished just before a pause, was invisible to it, and a path laid beside
-        /// it joined the two colonies' roads once both were done. A Trading Post half is nobody's here (the other
-        /// colony's half stands right behind one's own).
+        /// The road rule for a building's blocks and entrance, as the host judges it and a preview shows it.
+        /// <paramref name="pathLike"/>: it carries a road itself (a path, stairs...).
         /// </summary>
-        private int? OtherColonyBlockAt(int slot, Vector3Int tile)
+        public ColonyRefusal RoadConflict(int slot, IReadOnlyList<ColonyCell> footprint, Vector3Int? entrance, bool tradingPost,
+            bool pathLike, out string detail)
         {
-            foreach (BlockObject blockObject in _blockService.GetObjectsAt(tile))
+            ColonyCell? door = entrance == null ? (ColonyCell?)null : Cell(entrance.Value);
+            if (tradingPost)
             {
-                if (!blockObject || blockObject.IsPreview) continue;
-                ColonyStamp stamp = blockObject.GetComponent<ColonyStamp>();
-                if (stamp == null || !stamp.IsStamped || stamp.Slot == slot) continue;
-                if (TradingPosts.IsTradingPostBuilding(blockObject.GetComponent<EntityComponent>())) continue;
-                return stamp.Slot;
+                detail = null;
+                if (door == null) return ColonyRefusal.None;
+                return ColonyRoadRule.TradingPost(slot, door.Value, ColonyRoadRule.FarEntrance(footprint, door.Value), this, out detail);
             }
-            return null;
+            return ColonyRoadRule.Conflict(slot, footprint, door, pathLike, this, out detail);
         }
 
-        /// <summary>The colony, other than <paramref name="slot"/>, whose district has a road on this tile, or null.</summary>
-        private int? OtherColonyRoadAt(int slot, Vector3Int tile)
+        public static ColonyCell Cell(Vector3Int coordinates) => new ColonyCell(coordinates.x, coordinates.y, coordinates.z);
+
+        private static Vector3Int Tile(ColonyCell cell) => new Vector3Int(cell.X, cell.Y, cell.Z);
+
+        /// <summary>
+        /// A path (or stairs...) on this cell, finished or still being built, by the colony that placed it; else the
+        /// colony whose district has a finished road here. The district map only knows finished roads, brought up to
+        /// date at the tick: another colony's path still being built was invisible to it, and a path laid beside it
+        /// joined the two colonies' roads once both were done.
+        /// </summary>
+        public int? RoadOwnerAt(ColonyCell cell)
         {
+            Vector3Int tile = Tile(cell);
+            BlockObject path = _blockService.GetPathObjectAt(tile);
+            if (path && !path.IsPreview && path.HasComponent<PathSpec>())
+            {
+                int? owner = DistrictOwner.OwnerOf(path);
+                if (owner != null) return owner;
+            }
             Vector3 position = CoordinateSystem.GridToWorldCentered(tile);
             foreach (DistrictCenter districtCenter in _districtCenterRegistry.FinishedDistrictCenters)
             {
-                int? owner = DistrictOwner.OwnerOfDistrict(districtCenter);
-                if (owner == null || owner.Value == slot || districtCenter.District == null) continue;
-                if (_districtService.IsOnInstantDistrictRoad(districtCenter.District, position)) return owner;
+                if (districtCenter.District == null) continue;
+                if (_districtService.IsOnInstantDistrictRoad(districtCenter.District, position))
+                    return DistrictOwner.OwnerOfDistrict(districtCenter);
             }
             return null;
         }
 
-        // ---- tiles in events ----
+        // The four neighbours at the same height.
+        private static readonly Vector3Int[] Sides = { Vector3Int.right, Vector3Int.left, Vector3Int.up, Vector3Int.down };
 
-        /// <summary>An event's tile for the rules (land is by column, so the height plays no part).</summary>
-        public static ColonyTile TileOf(Vector3Int coordinates) => new ColonyTile(coordinates.x, coordinates.y);
+        /// <summary>
+        /// The colony of a building, finished or not, whose entrance is this cell: its door faces the cell from beside.
+        /// A Trading Post's halves are left out: each half's entrance takes its own colony's road.
+        /// </summary>
+        public int? EntranceOwnerAt(ColonyCell cell)
+        {
+            Vector3Int tile = Tile(cell);
+            for (int i = 0; i < Sides.Length; i++)
+            {
+                foreach (BlockObject blockObject in _blockService.GetObjectsAt(tile + Sides[i]))
+                {
+                    if (!blockObject || blockObject.IsPreview || !blockObject.HasEntrance) continue;
+                    if (blockObject.PositionedEntrance.Coordinates != tile) continue;
+                    if (TradingPosts.IsTradingPostBuilding(blockObject.GetComponent<EntityComponent>())) continue;
+                    int? owner = DistrictOwner.OwnerOf(blockObject);
+                    if (owner != null) return owner;
+                }
+            }
+            return null;
+        }
 
         public static Placement ToPlacement(ColonyPlacement placement) =>
             new Placement(new Vector3Int(placement.X, placement.Y, placement.Z), (Orientation)placement.Orientation,

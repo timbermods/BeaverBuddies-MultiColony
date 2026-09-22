@@ -141,8 +141,8 @@ Sarah: on it
   messages carried. A very dark color is lightened so it can be read on the dark panel. Names are the same
   **Ping Display Name** as cursors and pings. Chat lines have no "(Host)" or "(P2)" tag, so two players who
   both keep the default name are told apart by their colors. In a separate-colonies game the colony
-  colors (the land outlines, the *(colony N)* beside a name, the trading window) are a different set, the
-  game's own start colors: a player's cursor color and their colony's color need not match.
+  colors (the colonies' roads under Ctrl+L, the *(colony N)* beside a name, the trading window) are a different
+  set, the game's own start colors: a player's cursor color and their colony's color need not match.
 - **One order for everyone.** The host numbers every message and sends it to every player,
   the sender included, so everyone sees the same conversation in the same order. Your own
   message appears when the host has it, normally at once.

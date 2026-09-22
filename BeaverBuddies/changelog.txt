@@ -1,3 +1,9 @@
+v1.4.0-beta15 (BeaverBuddies MultiColony)
+* No more land or borders in separate colonies: build and mark anywhere, right next to another colony's buildings. The one rule left: your roads never join another colony's, except through a Trading Post.
+* A Trading Post now needs a road at each end when you place it: yours at one, another colony's at the other. Build both roads up to the spot first.
+* Ctrl+L (and any building tool) now shows each colony's roads in its color instead of land outlines. Founding no longer has to keep 20 tiles away.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta14 (BeaverBuddies MultiColony)
 * Dev mode's "Add 1000 Science" is now shared in multiplayer (while the host has dev mode on), so buying a building with that science no longer desyncs the game. The science goes to the colony of the player who clicked.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.

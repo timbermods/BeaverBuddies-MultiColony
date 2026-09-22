@@ -10,9 +10,6 @@ internal static class PlantingLevelChecks
 {
     const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
-    // Bound to the mod's ColonyTile at run time (see below): keeps the tiles in column x = 1.
-    private static bool KeepColumnOne<T>(T tile) => (int)typeof(T).GetField("X")!.GetValue(tile)! == 1;
-
     public static void Run(Assembly mod, Action<string, Action> test)
     {
         var unity = Assembly.Load("UnityEngine.CoreModule");
@@ -150,32 +147,18 @@ internal static class PlantingLevelChecks
             if (Priority(prefix) != 0) throw new Exception($"the override's priority is {Priority(prefix)}, not Priority.Last (0)");
         });
 
-        test("Planting: colony rules judge and trim the recorded tiles", () =>
+        test("Planting: marks are made anywhere, with nothing trimmed; the recorded tiles are what the replay marks", () =>
         {
+            // There is no land (1.4.0-beta15): no colony rule trims a planting action. A tile another colony marked stays
+            // theirs as it is played (ColonyMarks), on every computer alike.
             object e = Activator.CreateInstance(eventType, true)!;
             eventType.GetField("prefabName")!.SetValue(e, "Carrot");
-            IList input = NewList(new[] { (1, 1, 2), (2, 1, 2), (3, 1, 2) });
-            eventType.GetField("inputBlocks")!.SetValue(e, input);
-            object Scope() => eventType.GetMethod("GetColonyScope")!.Invoke(e, null)!;
-            object ListOf(object scope) =>
-                (scope.GetType().GetField("TileList", all)?.GetValue(scope) ?? scope.GetType().GetProperty("TileList", all)!.GetValue(scope))!;
-            int Count(object list) => (int)list.GetType().GetProperty("Count")!.GetValue(list)!;
-
-            // Older event: the dragged blocks, as before.
-            if (Count(ListOf(Scope())) != 3) throw new Exception("an older event was not judged by its dragged blocks");
-
             IList coordinates = NewList(new[] { (1, 1, 3), (2, 1, 3) });
             eventType.GetField("coordinates")!.SetValue(e, coordinates);
-            object list = ListOf(Scope());
-            if (Count(list) != 2) throw new Exception("the recorded tiles were not the ones judged");
-            // The host removes the tiles the actor may not use from the list it judged: the list the replay marks.
-            // The tiles are judged as the mod's own ColonyTile (a column: x and y), not as names.
-            Type tileType = eventType.Assembly.GetType("BeaverBuddies.Colonies.ColonyTile")!;
-            Delegate keepX1 = Delegate.CreateDelegate(typeof(Func<,>).MakeGenericType(tileType, typeof(bool)),
-                typeof(PlantingLevelChecks).GetMethod(nameof(KeepColumnOne), BindingFlags.Static | BindingFlags.NonPublic)!.MakeGenericMethod(tileType));
-            list.GetType().GetMethod("Filter")!.Invoke(list, new object[] { keepX1 });
-            if (Show(Tiles(coordinates)) != Show(new[] { (1, 1, 3) })) throw new Exception($"recorded tiles left {Show(Tiles(coordinates))}");
-            if (input.Count != 3) throw new Exception("the dragged blocks were trimmed instead");
+            object scope = eventType.GetMethod("GetColonyScope")!.Invoke(e, null)!;
+            string kind = scope.GetType().GetProperty("Kind")!.GetValue(scope)!.ToString()!;
+            if (kind != "Global") throw new Exception("a planting action is judged as " + kind);
+            if (Show(Tiles(coordinates)) != Show(new[] { (1, 1, 3), (2, 1, 3) })) throw new Exception($"recorded tiles changed to {Show(Tiles(coordinates))}");
         });
 
         test("Planting: a replay that fails leaves no recorded tiles behind", () =>

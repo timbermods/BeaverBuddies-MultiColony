@@ -18,8 +18,7 @@ namespace BeaverBuddies.Colonies
     /// plant only on its own marks, its lumberjacks cut only the trees it marked, and its harvesters take only what grows
     /// on its own marks. A player changes only their own colony's marks.
     ///
-    /// Marks made before this existed have no colony: they count for whichever colonies may use the tile (see
-    /// <see cref="ColonyReach.MayUse"/>).
+    /// Marks made before this existed have no colony: they count for every colony.
     /// </summary>
     public class ColonyMarks : RegisteredSingleton, ISaveableSingleton, ILoadableSingleton
     {
@@ -78,8 +77,7 @@ namespace BeaverBuddies.Colonies
             cutting.TryGetValue(tile, out int slot) && _treeCuttingArea.IsInCuttingArea(tile) ? slot : (int?)null;
 
         /// <summary>Whether <paramref name="slot"/> may change a mark whose owner is <paramref name="owner"/>.</summary>
-        public static bool MayChangeMark(int slot, int? owner, Vector3Int tile) =>
-            owner != null ? owner.Value == slot : ColonyReach.Instance?.MayUse(slot, tile) ?? true;
+        public static bool MayChangeMark(int slot, int? owner) => owner == null || owner.Value == slot;
 
         internal void SetPlanting(Vector3Int tile, int slot)
         {
@@ -136,7 +134,7 @@ namespace BeaverBuddies.Colonies
         public void MarkCutting(List<Vector3Int> tiles, int slot, bool add)
         {
             // Marking also leaves alone trees growing on another colony's planting marks.
-            var mine = tiles.Where(tile => MayChangeMark(slot, CuttingOwner(tile), tile)
+            var mine = tiles.Where(tile => MayChangeMark(slot, CuttingOwner(tile))
                 && (!add || PlantingOwner(tile) == null || PlantingOwner(tile) == slot)).ToList();
             if (add)
             {
@@ -171,7 +169,7 @@ namespace BeaverBuddies.Colonies
                 .Select(m => $"{m.Key.x}|{m.Key.y}|{m.Key.z}|{m.Value}").ToList();
     }
 
-    // A player's planting action changes only marks their colony may change: its own, and free tiles it may use.
+    // A player's planting action changes only marks their colony may change: its own, and marks of nobody's.
     [HarmonyPatch(typeof(PlantingService), nameof(PlantingService.SetPlantingCoordinates))]
     static class ColonyPlantingMarkSetPatcher
     {
@@ -179,7 +177,7 @@ namespace BeaverBuddies.Colonies
         {
             int? acting = ColonyMarks.ActingSlot;
             if (acting == null || ColonyMarks.Instance == null) return true;
-            return ColonyMarks.MayChangeMark(acting.Value, ColonyMarks.Instance.PlantingOwner(coordinates), coordinates);
+            return ColonyMarks.MayChangeMark(acting.Value, ColonyMarks.Instance.PlantingOwner(coordinates));
         }
 
         static void Postfix(Vector3Int coordinates, bool __runOriginal)
@@ -197,7 +195,7 @@ namespace BeaverBuddies.Colonies
         {
             int? acting = ColonyMarks.ActingSlot;
             if (acting == null || ColonyMarks.Instance == null) return true;
-            return ColonyMarks.MayChangeMark(acting.Value, ColonyMarks.Instance.PlantingOwner(coordinates), coordinates);
+            return ColonyMarks.MayChangeMark(acting.Value, ColonyMarks.Instance.PlantingOwner(coordinates));
         }
 
         // Also when the game removes a mark itself (a building placed over it, the ground changing).

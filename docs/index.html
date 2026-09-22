@@ -7,7 +7,7 @@
   <meta name="description" content="A Timberborn co-op mod where each player runs their own colony on one shared map and the colonies trade through trading posts. Steam friend invites, a live connection panel, teammates' cursors. Beta, free and open source.">
   <meta name="theme-color" content="#b9530f">
   <meta property="og:title" content="BeaverBuddies MultiColony">
-  <meta property="og:description" content="Timberborn co-op with a colony each: your own land, beavers and science, trading posts between colonies, Steam friend invites and a live connection panel.">
+  <meta property="og:description" content="Timberborn co-op with a colony each: your own districts, beavers and science, no borders, trading posts between colonies, Steam friend invites and a live connection panel.">
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/style.css">
@@ -24,7 +24,7 @@
     </a>
     <nav class="nav" aria-label="Main">
       <a href="index.html" aria-current="page">Overview</a>
-      <a href="#new">New in beta14</a>
+      <a href="#new">New in beta15</a>
       <a href="#features">Features</a>
       <a href="#trading">Trading</a>
       <a href="install.html">Install</a>
@@ -41,13 +41,13 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta14</span> &middot; beta</span></div>
+      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta15</span> &middot; beta</span></div>
       <h1>One map.<br>A colony each.</h1>
-      <p class="lede">Play Timberborn with friends without sharing a colony. Each player runs their own districts, land, beavers, stock and science on one shared map, and the colonies meet only at <b>trading posts</b>, where they barter. Co-op, not a race: nobody wins, and everyone can help.</p>
+      <p class="lede">Play Timberborn with friends without sharing a colony. Each player runs their own districts, beavers, stock and science on one shared map, with no borders, and the colonies' roads meet only at <b>trading posts</b>, where they barter. Co-op, not a race: nobody wins, and everyone can help.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.4.0-beta14</span></span>
+          <span>Download <span data-release="version">1.4.0-beta15</span></span>
         </a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
         <a class="btn btn-secondary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules</a>
@@ -55,12 +55,12 @@
       <p class="hero-note">Free and open source. Built against Timberborn 1.1.2.4 on Windows with the Steam version. Needs Harmony and Mod Settings.</p>
       <div class="callout warn" role="note">
         <strong class="label">Beta</strong>
-        <p>The colony model is covered by <b>679 automated checks</b> and has had <b>only one short playtest</b>. Play on a copy of your save, keep backups, and <a href="#status">see exactly what is and isn't tested</a>.</p>
+        <p>The colony model is covered by <b>684 automated checks</b> and has had <b>only two short playtests</b>. Play on a copy of your save, keep backups, and <a href="#status">see exactly what is and isn't tested</a>.</p>
       </div>
     </div>
 
     <figure class="map-figure">
-      <svg class="map" viewBox="0 0 560 400" role="img" aria-label="Illustration: a map with two colonies. Colony 1's land, in amber, on the left with a district center, houses and a path; Colony 2's land, in teal, on the right. A river runs between them. Where the two lands meet, a trading post with one half on each side; logs cross one way and gears the other.">
+      <svg class="map" viewBox="0 0 560 400" role="img" aria-label="Illustration: a map with two colonies and no border between them. Colony 1, in amber, on the left with a district center, houses and its roads; Colony 2, in teal, on the right with its own. Each colony's main road runs to the middle and ends at one half of a trading post, so the two colonies' roads meet only there; logs cross one way and gears the other. A river runs along the bottom.">
         <defs>
           <pattern id="tiles" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="var(--map-grid)" stroke-width="1"/></pattern>
           <clipPath id="mapclip"><rect x="0" y="0" width="560" height="400" rx="18"/></clipPath>
@@ -69,64 +69,60 @@
           <rect width="560" height="400" fill="var(--map-ground)"/>
           <rect width="560" height="400" fill="url(#tiles)"/>
           <!-- river -->
-          <path d="M292 -10 C270 60 320 110 300 170 S250 260 275 320 S320 380 300 420" fill="none" stroke="var(--map-water)" stroke-width="30" stroke-linecap="round" opacity=".9"/>
-          <path d="M292 -10 C270 60 320 110 300 170 S250 260 275 320 S320 380 300 420" fill="none" stroke="var(--map-water-edge)" stroke-width="2" stroke-dasharray="6 8" opacity=".6"/>
-          <!-- colony 1 land -->
-          <path class="land land-1" d="M48 84 C90 40 170 40 206 74 C246 108 250 160 236 210 C222 262 250 292 232 330 C200 366 120 366 76 334 C36 300 26 244 40 190 C48 150 22 118 48 84 Z"/>
-          <!-- colony 2 land -->
-          <path class="land land-2" d="M352 96 C392 56 470 50 512 82 C550 112 546 170 530 214 C520 256 546 296 524 332 C494 372 416 374 376 340 C336 306 330 258 344 214 C356 176 330 128 352 96 Z"/>
-          <!-- contested strip: where both reach, first come -->
-          <path d="M236 210 C222 262 250 292 232 330 L262 330 C282 300 262 250 270 210 Z" fill="var(--map-overlap)" opacity=".6"/>
+          <path d="M-10 368 C90 338 170 394 270 366 S450 336 570 362" fill="none" stroke="var(--map-water)" stroke-width="30" stroke-linecap="round" opacity=".9"/>
+          <path d="M-10 368 C90 338 170 394 270 366 S450 336 570 362" fill="none" stroke="var(--map-water-edge)" stroke-width="2" stroke-dasharray="6 8" opacity=".6"/>
 
-          <!-- paths colony 1 -->
-          <g stroke="var(--map-path)" stroke-width="7" stroke-linecap="round" fill="none">
-            <path d="M120 206 H176 V262 H240 V300 H262"/>
-            <path d="M120 206 V150 H150"/>
+          <!-- roads colony 1, in its color -->
+          <g class="road road-1">
+            <path d="M108 210 H260"/>
+            <path d="M160 210 V110 H204"/>
+            <path d="M184 210 V300 H120"/>
           </g>
-          <!-- paths colony 2 -->
-          <g stroke="var(--map-path)" stroke-width="7" stroke-linecap="round" fill="none">
-            <path d="M444 190 H400 V262 H336 V300 H312"/>
-            <path d="M444 190 V130 H420"/>
+          <!-- roads colony 2, in its color -->
+          <g class="road road-2">
+            <path d="M300 210 H452"/>
+            <path d="M392 210 V110 H350"/>
+            <path d="M420 210 V290 H474"/>
           </g>
 
           <!-- buildings colony 1 -->
           <g class="b1">
-            <rect x="96" y="182" width="48" height="36" rx="4"/><path d="M92 184 L120 162 L148 184 Z"/><rect x="118" y="150" width="4" height="14"/><path d="M122 150 h12 l-3 4 3 4 h-12z"/>
-            <rect x="150" y="138" width="24" height="18" rx="3"/><rect x="176" y="240" width="22" height="16" rx="3"/><rect x="204" y="240" width="22" height="16" rx="3"/><rect x="150" y="266" width="22" height="16" rx="3"/>
-            <circle cx="72" cy="132" r="9"/><circle cx="90" cy="118" r="7"/><circle cx="60" cy="156" r="7"/><circle cx="82" cy="262" r="8"/><circle cx="106" cy="290" r="7"/>
+            <rect x="60" y="192" width="48" height="36" rx="4"/><path d="M56 194 L84 172 L112 194 Z"/><rect x="82" y="160" width="4" height="14"/><path d="M86 160 h12 l-3 4 3 4 h-12z"/>
+            <rect x="128" y="124" width="22" height="16" rx="3"/><rect x="172" y="84" width="22" height="16" rx="3"/><rect x="204" y="182" width="22" height="16" rx="3"/><rect x="200" y="224" width="22" height="16" rx="3"/><rect x="144" y="252" width="22" height="16" rx="3"/>
+            <circle cx="56" cy="122" r="9"/><circle cx="76" cy="106" r="7"/><circle cx="44" cy="148" r="7"/><circle cx="70" cy="272" r="8"/><circle cx="96" cy="298" r="7"/>
           </g>
           <!-- buildings colony 2 -->
           <g class="b2">
-            <rect x="420" y="166" width="48" height="36" rx="4"/><path d="M416 168 L444 146 L472 168 Z"/><rect x="442" y="134" width="4" height="14"/><path d="M446 134 h12 l-3 4 3 4 h-12z"/>
-            <rect x="396" y="118" width="24" height="18" rx="3"/><rect x="376" y="240" width="22" height="16" rx="3"/><rect x="348" y="240" width="22" height="16" rx="3"/><rect x="404" y="266" width="22" height="16" rx="3"/>
-            <circle cx="500" cy="120" r="9"/><circle cx="486" cy="102" r="7"/><circle cx="512" cy="150" r="7"/><circle cx="486" cy="280" r="8"/><circle cx="466" cy="306" r="7"/>
+            <rect x="452" y="192" width="48" height="36" rx="4"/><path d="M448 194 L476 172 L504 194 Z"/><rect x="474" y="160" width="4" height="14"/><path d="M478 160 h12 l-3 4 3 4 h-12z"/>
+            <rect x="406" y="126" width="22" height="16" rx="3"/><rect x="356" y="84" width="22" height="16" rx="3"/><rect x="334" y="182" width="22" height="16" rx="3"/><rect x="340" y="224" width="22" height="16" rx="3"/><rect x="432" y="240" width="22" height="16" rx="3"/><rect x="440" y="302" width="22" height="16" rx="3"/>
+            <circle cx="504" cy="112" r="9"/><circle cx="488" cy="96" r="7"/><circle cx="518" cy="142" r="7"/><circle cx="504" cy="272" r="8"/><circle cx="490" cy="300" r="7"/>
           </g>
 
-          <!-- trading post: two halves on the river bank -->
+          <!-- trading post: one half at the end of each colony's road -->
           <g class="post">
-            <rect x="262" y="286" width="24" height="28" rx="3" class="half-1"/>
-            <rect x="288" y="286" width="24" height="28" rx="3" class="half-2"/>
-            <path d="M258 288 L287 274 L316 288 Z" fill="var(--map-roof)"/>
-            <line x1="287" y1="286" x2="287" y2="314" stroke="var(--map-ground)" stroke-width="2"/>
+            <rect x="260" y="180" width="20" height="60" rx="3" class="half-1"/>
+            <rect x="280" y="180" width="20" height="60" rx="3" class="half-2"/>
+            <path d="M254 184 L280 164 L306 184 Z" fill="var(--map-roof)"/>
+            <line x1="280" y1="184" x2="280" y2="240" stroke="var(--map-ground)" stroke-width="2"/>
           </g>
           <!-- goods crossing -->
           <g class="flow">
-            <path d="M232 268 C250 250 300 250 330 262" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="5 6"/>
-            <path d="M326 258 l6 4 -7 3z" fill="var(--accent)"/>
-            <path d="M342 342 C320 358 270 358 246 344" fill="none" stroke="var(--water)" stroke-width="2.5" stroke-dasharray="5 6"/>
-            <path d="M250 348 l-6 -4 7 -3z" fill="var(--water)"/>
+            <path d="M226 164 C250 136 310 136 334 164" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="5 6"/>
+            <path d="M336 167 l-8 -3.5 6 -5.2z" fill="var(--accent)"/>
+            <path d="M334 262 C310 290 250 290 226 262" fill="none" stroke="var(--water)" stroke-width="2.5" stroke-dasharray="5 6"/>
+            <path d="M224 260 l8 3 -6 5z" fill="var(--water)"/>
           </g>
         </g>
         <!-- labels -->
         <g class="lbl">
-          <text x="60" y="66" class="t1">Colony 1</text>
-          <text x="440" y="60" class="t2" text-anchor="middle">Colony 2</text>
-          <text x="262" y="244" text-anchor="middle" class="tg">100 logs</text>
-          <text x="294" y="376" text-anchor="middle" class="tw">25 gears</text>
-          <text x="287" y="332" text-anchor="middle" class="tp">Trading Post</text>
+          <text x="40" y="60" class="t1">Colony 1</text>
+          <text x="520" y="60" class="t2" text-anchor="end">Colony 2</text>
+          <text x="280" y="130" text-anchor="middle" class="tg">100 logs</text>
+          <text x="280" y="306" text-anchor="middle" class="tw">25 gears</text>
+          <text x="280" y="258" text-anchor="middle" class="tp">Trading Post</text>
         </g>
       </svg>
-      <figcaption class="demo-caption">Each colony's land is the ground within 10 tiles of its buildings and paths. The colonies never share a road; they meet at a Trading Post, one half on each side.</figcaption>
+      <figcaption class="demo-caption">No borders: each colony builds where it likes. Two colonies' roads never join, except at a Trading Post placed between them, one colony's road at each end. Ctrl+L shows each colony's roads in its color.</figcaption>
     </figure>
   </div>
 </div>
@@ -134,7 +130,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.4.0-beta14</span></b><span>Latest pre-release</span></li>
+      <li><b><span data-release="version">1.4.0-beta15</span></b><span>Latest pre-release</span></li>
       <li><b>Up to 4 colonies</b><span>More players help the host's</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built against</span></li>
       <li><b>Steam invites</b><span>No port forwarding</span></li>
@@ -143,15 +139,23 @@
   </div>
 </div>
 
-<!-- ============ new in beta14 ============ -->
+<!-- ============ new in beta15 ============ -->
 <section class="tint" id="new">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">New in 1.4.0-beta14</div>
-      <h2>Dev mode's science shared, and clearer colony settings</h2>
-      <p>beta14 shares dev mode's <b>Add 1000 Science</b> with every player; it desynced the first beta12 session. beta13 rewrote the tooltips of the two colony settings so they can't be mixed up. beta12 went over everything that keeps the players' games in step, and fixed what it found: Wonders on the tick, deletions the same for everyone, players who follow a host that slows down, and a direct player whose connection dies no longer freezing the rest. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta12">beta12 release notes</a>, the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/design/REVIEW-FINDINGS-1.4.0-beta11.md">review report</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
+      <div class="eyebrow">New in 1.4.0-beta15</div>
+      <h2>No borders: colonies' roads meet only at a Trading Post</h2>
+      <p>beta15 removes colony land: no borders, no outlines and no distance to keep when founding. Build, plant and cut anywhere; the one rule left is that two colonies' roads never join, except through a Trading Post, which now goes between two road ends. The rules are in <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">TWO-COLONIES.md</a>. beta14 shares dev mode's <b>Add 1000 Science</b> with every player; it desynced the first beta12 session. beta13 rewrote the tooltips of the two colony settings so they can't be mixed up. beta12 went over everything that keeps the players' games in step, and fixed what it found: Wonders on the tick, deletions the same for everyone, players who follow a host that slows down, and a direct player whose connection dies no longer freezing the rest. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta12">beta12 release notes</a>, the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/design/REVIEW-FINDINGS-1.4.0-beta11.md">review report</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
     </div>
     <div class="grid grid-3">
+      <article class="card">
+        <h3 style="margin-top:0">No borders</h3>
+        <p><b>beta15.</b> Colonies no longer have land. Build, plant, cut and found anywhere, right up to another colony's buildings and roads, as long as your roads don't join theirs: keep your paths a cell away from their roads and district center and off the cell at their buildings' doors, and don't put a building's entrance on or beside their road. <kbd>Ctrl</kbd>+<kbd>L</kbd> shows each colony's roads in its color.</p>
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0">Trading Posts between two roads</h3>
+        <p><b>beta15.</b> A Trading Post is the one place two colonies' roads meet, so it needs both when it is placed: your road at one end, another colony's at the other. Each player builds a road up to the spot, the two ends 3 cells apart in a line, then either places the post between them. It still costs 10 logs, and exchanges work as before.</p>
+      </article>
       <article class="card">
         <h3 style="margin-top:0">Dev mode's science, shared</h3>
         <p><b>beta14.</b> <b>Add 1000 Science</b> in the dev panel added the science on one computer only, so buying a building with it desynced the game. It is now played for everyone, into the colony of the player who clicked, while the host has dev mode on.</p>
@@ -165,17 +169,8 @@
         <p><b>beta12.</b> The Earth Repopulator's plane launch and every Wonder's animation ran on each player's frames, so a launch desynced the game. They now advance once per tick, the same for everyone (the Stability Fork's tick-driven Wonders, ported).</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">Everyone at the host's pace</h3>
-        <p><b>beta12.</b> When the host slows down for a slow player, the others now follow its pace instead of stopping and starting at every tick. At boosted speeds with a high ping, the host speeds back up again.</p>
-      </article>
-      <article class="card">
-        <h3 style="margin-top:0">One lost link, not a frozen game</h3>
-        <p><b>beta12.</b> A direct (IP) player whose connection dies no longer freezes the host and everyone else; they are dropped after 30 seconds, as over Steam. Messages are read on threads of their own, even when the game keeps every core busy.</p>
-      </article>
-      <article class="card">
-      <article class="card">
         <h3 style="margin-top:0">Barely played</h3>
-        <p>679 automated checks cover all of it (4 new in beta14; 49 in beta12, among them the game's own Wonder code at three frame rates and a player who stops receiving). beta12 has had one short session: a founding and a few minutes of building stayed in step until dev mode's science. The test scripts' lines B8t to B8z, B9a and C1b are the ones to try first.</p>
+        <p>684 automated checks cover all of it (StabilityTests 356 and RuntimeChecks 328; beta15 replaced the land checks with checks of the road rule). beta15 has not been played yet. beta12 and beta14 each had one short session: a founding and building stayed in step, and beta12's one desync (dev mode's science) did not come back in beta14. The test scripts' lines B8aa and B8ab are the ones to try first, then B9a, B8t to B8z and C1b.</p>
       </article>
     </div>
   </div>
@@ -200,11 +195,11 @@
       </li>
       <li>
         <h3>Found your colony</h3>
-        <p>A message offers you a district center. Place it at least 20 tiles from other colonies (their land shows as outlines): it appears already built, with beavers, food and water.</p>
+        <p>A message offers you a district center. Place it anywhere its roads won't join another colony's: it appears already built, with beavers, food and water.</p>
       </li>
       <li>
         <h3>Build, grow, trade</h3>
-        <p>Your land grows with your buildings and stops where another colony's begins. When two lands meet, put a Trading Post across the edge and make an offer.</p>
+        <p>Build anywhere, right up to your neighbors, but keep your roads apart from theirs. To trade, each of you builds a road up to one spot; either then puts a Trading Post between the two ends and makes an offer.</p>
       </li>
     </ol>
   </div>
@@ -225,13 +220,13 @@
       </article>
       <article class="card">
         <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
-        <h3>Land that grows with you</h3>
-        <p>Every tile within 10 of your buildings and paths, first come. Others can't build or mark there; you can't on theirs. Outlines in each colony's color show where things stand, any time with <kbd>Ctrl</kbd>+<kbd>L</kbd>.</p>
+        <h3>Build anywhere</h3>
+        <p>No land and no borders: build and mark wherever you like, right up to another colony's buildings. The one rule is that two colonies' roads never join, except through a Trading Post. Each colony's roads show in its color while you hold a tool, or any time with <kbd>Ctrl</kbd>+<kbd>L</kbd>.</p>
       </article>
       <article class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4"/></svg></div>
         <h3>Trading posts</h3>
-        <p>The one place colonies meet. Offer goods, science or beavers, or a gift; the other player accepts; the beavers do the carrying. Say what you are looking for, keep a reserve on a standing deal, offer the last exchange again in one click. <a href="#trading">How an exchange works</a></p>
+        <p>The one place colonies' roads meet. Offer goods, science or beavers, or a gift; the other player accepts; the beavers do the carrying. Say what you are looking for, keep a reserve on a standing deal, offer the last exchange again in one click. <a href="#trading">How an exchange works</a></p>
       </article>
       <article class="card">
         <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l1 4h3l-2 5 2 6H5l2-6-2-5h3z"/><path d="M10 14h4"/></svg></div>
@@ -342,7 +337,7 @@
       </article>
       <article class="card">
         <h3 style="margin-top:0">Ownership is saved</h3>
-        <p>Who owns each district, building and mark is in the save, the same on every computer. Land is worked out from the buildings standing. Beavers choose their work from these only.</p>
+        <p>Who owns each district, building and mark is in the save, the same on every computer. Beavers choose their work from these only.</p>
       </article>
       <article class="card">
         <h3 style="margin-top:0">A desync is caught the tick it happens</h3>
@@ -366,8 +361,8 @@
         <thead><tr><th>Part</th><th>Status</th><th>Notes</th></tr></thead>
         <tbody>
           <tr><td>Steam invites, connection panel, cursors, the fork's desync fixes</td><td><span class="chip ok">Confirmed</span></td><td>Played for hours with two players in large colonies (Stability Fork 1.1.10; 1.1.11's player colors as well; 1.1.12's fuller desync check in one short beta12 session).</td></tr>
-          <tr><td>Hosting, joining, founding a second colony and building in it</td><td><span class="chip ok">Confirmed</span></td><td>Played in the early land-split alphas.</td></tr>
-          <tr><td>Land, ownership, per-colony work and science</td><td><span class="chip tested">Tested</span></td><td>StabilityTests 361 and RuntimeChecks 318, which read the game's own assemblies.</td></tr>
+          <tr><td>Hosting, joining, founding a second colony and building in it</td><td><span class="chip ok">Confirmed</span></td><td>Played in the early alphas.</td></tr>
+          <tr><td>Ownership, per-colony work and science</td><td><span class="chip tested">Tested</span></td><td>StabilityTests 356 and RuntimeChecks 328, which read the game's own assemblies. beta15's road rule has not been played yet.</td></tr>
           <tr><td>Trading posts and exchanges</td><td><span class="chip tested">Tested</span></td><td>Every rule of a round is checked headlessly; the panel has not been seen in a game.</td></tr>
           <tr><td>The every-tick colony check</td><td><span class="chip ok">Confirmed</span></td><td>Once, briefly: a beta12 session stayed in step through a founding and 268 ticks of building, then the check caught dev mode's science (fixed in beta14) and named what differed. A bug in the check itself would stop a healthy game; the log line says what differed. The first thing to try: <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/ALPHA-TEST-SCRIPTS.md">Script B, line 8a</a>.</td></tr>
         </tbody>
@@ -400,7 +395,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta14</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta15</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>

@@ -259,12 +259,9 @@ namespace BeaverBuddies.Events
     [Serializable]
     class PlantingAreaMarkedEvent : ReplayEvent
     {
-        // Marking plants only where the actor's colony may work; unmarking only ever removes the actor's own marks
-        // (checked tile by tile when it is played, see ColonyMarks). The host trims the list judged here, so it is the
-        // list the replay marks.
-        public override ColonyScope GetColonyScope() => prefabName == UNMARK
-            ? ColonyScope.Global
-            : ColonyScope.Tiles(coordinates ?? inputBlocks, Colonies.ColonyGameWorld.TileOf);
+        // Marking plants anywhere (there is no land); a tile another colony marked stays theirs, and unmarking only ever
+        // removes the actor's own marks (both checked tile by tile when it is played, see ColonyMarks).
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
 
         public List<Vector3Int> inputBlocks;
         public Ray ray;
@@ -479,10 +476,8 @@ namespace BeaverBuddies.Events
     [Serializable]
     class TreeCuttingAreaEvent : ReplayEvent
     {
-        // Marking only where the actor's colony may work; unmarking only ever removes the actor's own marks.
-        public override ColonyScope GetColonyScope() => wasAdded
-            ? ColonyScope.Tiles(coordinates, Colonies.ColonyGameWorld.TileOf)
-            : ColonyScope.Global;
+        // Marking anywhere (there is no land); unmarking only ever removes the actor's own marks (see ColonyMarks).
+        public override ColonyScope GetColonyScope() => ColonyScope.Global;
 
         public List<Vector3Int> coordinates;
         public bool wasAdded;

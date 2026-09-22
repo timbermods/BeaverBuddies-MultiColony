@@ -452,7 +452,7 @@ namespace BeaverBuddies.Colonies
 
     // A relic's reward is paid whenever it is deleted fully demolished, not only by its demolisher: a tunnel's blast
     // or a collapse can delete one that stands at 100 %. Then no beaver names the colony, so the relic does: the
-    // colony whose mark or land it stands on, else the first. A demolisher's own context, when there is one, stays.
+    // colony whose mark it stands on, else the first. A demolisher's own context, when there is one, stays.
     [HarmonyPatch(typeof(DemolishableScienceReward), nameof(DemolishableScienceReward.DeleteEntity))]
     static class ColonyScienceRelicRewardPatcher
     {

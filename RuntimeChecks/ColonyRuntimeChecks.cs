@@ -50,17 +50,18 @@ internal static class ColonyRuntimeChecks
                 .Select(t => t.Name).ToList();
             // Printed so a reviewer sees what either player may do regardless of colony.
             Console.WriteLine("      Shared by both colonies: " + string.Join(", ", shared));
-            // Map areas (planting, tree cutting) are shared on purpose: resources near another colony are contested.
-            // Unmarking trees (an empty tree event unmarks) only ever removes the actor's own marks, and working hours
-            // are set for the actor's own colony: both are checked when played, not here. Presence and handovers are
+            // Marking map areas (planting, tree cutting) is shared: there is no land (1.4.0-beta15). Marking or unmarking
+            // only ever changes the actor's own marks and marks of nobody's, and working hours are set for the actor's
+            // own colony: both are checked when played, not here. Presence and handovers are
             // refused from anyone but the host (ColonyRulesService), and so is telling a guest its action was refused.
             // Looking after a colony (grants, switching) is judged by the host against ColonyStewardRules; a wishlist is
             // only ever the actor's own colony's (the stamped slot), like working hours. So is dev mode's Add 1000 Science,
             // which the host also refuses while its dev mode is off.
             var expected = new[] { "ActAsColonyEvent", "ActionRefusedEvent", "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
                 "ColonyHandoverEvent", "ColonyPresenceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
-                "PlayerHelloEvent", "ScienceAddedEvent", "ShowOptionsMenuEvent", "SpeedBoostEvent", "SpeedSetEvent", "StewardGrantedEvent",
-                "StewardRevokedEvent", "TraceLoggedForTickEvent", "TreeCuttingAreaEvent", "WishlistChangedEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
+                "PlantingAreaMarkedEvent", "PlayerHelloEvent", "ScienceAddedEvent", "ShowOptionsMenuEvent", "SpeedBoostEvent",
+                "SpeedSetEvent", "StewardGrantedEvent", "StewardRevokedEvent", "TraceLoggedForTickEvent", "TreeCuttingAreaEvent",
+                "WishlistChangedEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };
             if (!shared.SequenceEqual(expected))
                 throw new Exception("The shared list changed; review it and update this check: " + string.Join(", ", shared));
         });
@@ -100,11 +101,11 @@ internal static class ColonyRuntimeChecks
             var refusalType = mod.GetType("BeaverBuddies.Colonies.ColonyRefusal", true)!;
             object refused = Activator.CreateInstance(refusedType, true)!;
             refusedType.GetField("refusedRequestId")!.SetValue(refused, "abcd1234:17");
-            refusedType.GetField("refusal")!.SetValue(refused, Enum.Parse(refusalType, "OtherColonyArea"));
+            refusedType.GetField("refusal")!.SetValue(refused, Enum.Parse(refusalType, "TradingPostRoads"));
             object again = deserialize.Invoke(null, new object[] { serialize.Invoke(null, new[] { refused })! })!;
             if (again.GetType() != refusedType) throw new Exception("the refusal came back as " + again.GetType().Name);
             if ((string)refusedType.GetField("refusedRequestId")!.GetValue(again)! != "abcd1234:17") throw new Exception("the refused tag was lost");
-            if (refusedType.GetField("refusal")!.GetValue(again)!.ToString() != "OtherColonyArea") throw new Exception("the reason was lost");
+            if (refusedType.GetField("refusal")!.GetValue(again)!.ToString() != "TradingPostRoads") throw new Exception("the reason was lost");
         });
 
         test("Colony: the host's answers written into events survive the trip through the event JSON", () =>
@@ -381,7 +382,6 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.Forestry.TreeCuttingArea", "Timberborn.Forestry", "RemoveCoordinates"),
             ("Timberborn.ConstructionSites.ConstructionJob", "Timberborn.ConstructionSites", "StartConstructionJob"),
             ("Timberborn.Demolishing.DemolishJob", "Timberborn.Demolishing", "CanStartJob"),
-            ("Timberborn.RecoveredGoodSystem.RecoverGoodStackJobProvider", "Timberborn.RecoveredGoodSystem", "IsStackRecoverable"),
             ("Timberborn.WorkSystem.WorkerWorkingHours", "Timberborn.WorkSystem", "get_AreWorkingHours"),
             ("Timberborn.WorkSystem.WorkplaceWorkingHours", "Timberborn.WorkSystem", "get_AreWorkingHours"),
             ("Timberborn.AutomationBuildings.Chronometer", "Timberborn.AutomationBuildings", "Sample"),
@@ -396,8 +396,14 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.Navigation.DistrictConflictDetector", "Timberborn.Navigation", "AreDistrictsInConflict"),
             ("Timberborn.Navigation.DistrictService", "Timberborn.Navigation", "IsOnDistrictRoad"),
             ("Timberborn.GameDistrictsUI.DistrictPreviewsValidator", "Timberborn.GameDistrictsUI", "IsValid"),
-            // Land: a building nobody stamped takes the owner of the road at its entrance.
+            // Stamps: a building nobody stamped takes the owner of the road at its entrance.
             ("Timberborn.Buildings.BuildingAccessible", "Timberborn.Buildings", "CalculateAccess"),
+            // The road rule: whose road is on a cell (a path, finished or not), and where a building's road must be.
+            ("Timberborn.BlockSystem.IBlockService", "Timberborn.BlockSystem", "GetPathObjectAt"),
+            ("Timberborn.BlockSystem.IBlockService", "Timberborn.BlockSystem", "GetObjectsAt"),
+            ("Timberborn.BlockSystem.PositionedEntrance", "Timberborn.BlockSystem", "get_Coordinates"),
+            ("Timberborn.BlockSystem.PositionedEntrance", "Timberborn.BlockSystem", "From"),
+            ("Timberborn.Navigation.IDistrictService", "Timberborn.Navigation", "IsOnInstantDistrictRoad"),
             ("Timberborn.ScienceSystem.UnlockableOnceSpec", "Timberborn.ScienceSystem", "GetSpec"),
             // Dev mode's shortcuts that are played on every computer.
             ("Timberborn.BuildingTools.BuildingToolLocker", "Timberborn.BuildingTools", "UnlockIgnoringScienceCost"),
@@ -658,7 +664,6 @@ internal static class ColonyRuntimeChecks
             {
                 ["ColonyModeService"] = "its own Enabled is the mode",
                 ["ColonyScienceService"] = "on only in a separate-colonies game with separate science",
-                ["ColonyReach"] = "keeps land only from Begin, which only a separate-colonies game calls",
             };
             var savers = mod.GetTypes()
                 .Where(t => t.Namespace == "BeaverBuddies.Colonies" && t.GetInterfaces().Any(i => i.Name == "ISaveableSingleton" || i.Name == "IPersistentEntity"))
@@ -702,8 +707,8 @@ internal static class ColonyRuntimeChecks
         });
 
         // A building placed before the game was hosted carries no colony. While it is a construction site it has no
-        // district either, so ColonyReach reads the road at its entrance: the point the game finds a construction
-        // site's builders by. These fail if the game stops using that point, or the land code reads anything that
+        // district either, so ColonyStamps reads the road at its entrance: the point the game finds a construction
+        // site's builders by. These fail if the game stops using that point, or the stamping code reads anything that
         // differs between computers.
         test("Colony: the game finds a construction site's builders by the road at BuildingAccessible.CalculateAccess", () =>
         {
@@ -714,13 +719,13 @@ internal static class ColonyRuntimeChecks
                 throw new Exception("it now calls: " + string.Join(", ", calls));
         });
 
-        test("Colony: land bookkeeping reads the entrance on the tick-updated district map, and nothing that differs between computers", () =>
+        test("Colony: stamping reads the entrance on the tick-updated district map, and nothing that differs between computers", () =>
         {
-            var reach = mod.GetType("BeaverBuddies.Colonies.ColonyReach", true)!;
+            var stamps = mod.GetType("BeaverBuddies.Colonies.ColonyStamps", true)!;
             var stamp = mod.GetType("BeaverBuddies.Colonies.ColonyStamp", true)!;
             // Their own methods and their lambdas' (compiled into nested types).
             const BindingFlags declared = all | BindingFlags.DeclaredOnly;
-            var calls = new[] { reach, stamp }
+            var calls = new[] { stamps, stamp }
                 .SelectMany(t => new[] { t }.Concat(t.GetNestedTypes(all)))
                 .SelectMany(t => t.GetMethods(declared).Cast<MethodBase>().Concat(t.GetConstructors(declared)))
                 .SelectMany(MethodsCalled)

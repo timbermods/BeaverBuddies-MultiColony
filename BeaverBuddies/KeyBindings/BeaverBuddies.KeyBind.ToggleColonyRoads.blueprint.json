@@ -1,8 +1,8 @@
 {
   "KeyBindingSpec": {
-    "Id": "BeaverBuddies.KeyBind.ToggleColonyLand",
+    "Id": "BeaverBuddies.KeyBind.ToggleColonyRoads",
     "GroupId": "KeyBindingGroup.BeaverBuddies",
-    "LocKey": "BeaverBuddies.KeyBindings.ToggleColonyLand",
+    "LocKey": "BeaverBuddies.KeyBindings.ToggleColonyRoads",
     "Order": 6,
     "AllowOtherModifiers": false,
     "DevModeOnly": false
