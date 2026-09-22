@@ -146,8 +146,8 @@ namespace BeaverBuddies.Lobby
             SteamListener steam = session.IO.SteamListener;
             page.Invite.ToggleDisplayStyle(steam != null);
             page.Invite.SetEnabled(steam != null && steam.LobbyID.IsValid());
+            if (session.Room.Version == shownVersion) return;
             LobbySnapshot snapshot = session.Room.Snapshot();
-            if (snapshot.Version == shownVersion) return;
             shownVersion = snapshot.Version;
             page.SetPlayers(snapshot.Players, 0, hostPage: true, canChange: snapshot.Stage == LobbyStage.Open, faction?.Logo.Asset);
             page.SetStatus(LobbyRules.HostStatus(snapshot.Players, snapshot.Stage));

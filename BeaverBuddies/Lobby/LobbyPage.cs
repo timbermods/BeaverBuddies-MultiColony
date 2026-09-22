@@ -184,12 +184,11 @@ namespace BeaverBuddies.Lobby
                     row = new Row(this, player.Number, own: !hostPage && player.Number == you, removable: hostPage && !player.IsHost);
                     rows[player.Number] = row;
                 }
+                // Kept in the room's order.
                 if (board.contentContainer.IndexOf(row.Root) != index)
                 {
                     row.Root.RemoveFromHierarchy();
-                    board.Add(row.Root);
-                    // Kept in the room's order.
-                    board.contentContainer.Insert(Math.Min(index, board.contentContainer.childCount - 1), row.Root);
+                    board.contentContainer.Insert(Math.Min(index, board.contentContainer.childCount), row.Root);
                 }
                 row.Show(player, own: !hostPage && player.Number == you, canChange, factionLogo);
             }
@@ -228,6 +227,7 @@ namespace BeaverBuddies.Lobby
             private LobbyPlayer player;
             private bool own;
             private bool canChange;
+            private bool shownReady;
 
             public Row(LobbyPage page, int number, bool own, bool removable)
             {
@@ -287,7 +287,7 @@ namespace BeaverBuddies.Lobby
                 toggle.RegisterValueChangedCallback(changed =>
                 {
                     if (this.own && canChange) page.OwnReadyToggled?.Invoke(changed.newValue);
-                    else toggle.SetValueWithoutNotify(player?.Ready == true);
+                    else toggle.SetValueWithoutNotify(shownReady);
                 });
                 SetLive(own);
             }
@@ -298,6 +298,7 @@ namespace BeaverBuddies.Lobby
                 this.canChange = canChange;
                 if (this.own != own) SetLive(own);
                 bool ready = shown.IsHost || (shown.Ready && !shown.Joining);
+                shownReady = ready;
                 toggle.SetValueWithoutNotify(ready);
                 toggle.SetEnabled(!own || canChange);
                 if (factionLogo != null) icon.sprite = factionLogo;

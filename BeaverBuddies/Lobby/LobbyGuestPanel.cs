@@ -81,6 +81,8 @@ namespace BeaverBuddies.Lobby
             }
             if (!shown)
             {
+                // A page still waiting to come off the stack is not opened again on top of itself.
+                if (popWhenOnTop) return;
                 if (!(EventIO.Get() is ClientEventIO current) || current.NetBase == null || current.NetBase.IsStopped) return;
                 LobbyView welcome = current.NetBase.Lobby.View();
                 if (welcome.Welcomed && !welcome.Ended) Open(current, welcome);
@@ -120,6 +122,7 @@ namespace BeaverBuddies.Lobby
             hostName = view.Summary?.HostName ?? "";
             ready = false;
             shownVersion = -1;
+            asking = false;
             watchdogFromMs = RttTracker.NowMs;
             _clientConnectionService.CloseConnectingBox();
             net.SendLobbyHello(LocalPlayerIdentity.Id, LocalPlayerIdentity.Name);

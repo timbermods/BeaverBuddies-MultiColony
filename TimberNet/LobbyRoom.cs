@@ -29,9 +29,11 @@ namespace TimberNet
         public string? StableId => VerifiedId ?? ClaimedId;
         public bool Connected => Stream.Connected;
 
-        // Set under lock(Stream) as the save is about to go out: from then on the stream belongs to the game, and nothing
-        // of the waiting room is written to it (see TimberServer.WriteLobbyFrame).
+        // Set as the save is about to go out: from then on the stream belongs to the game, and nothing of the waiting room
+        // is written to it (see TimberServer.WriteLobbyFrame).
         internal volatile bool inGame;
+        /// <summary>What the room says to this guest, written in order on a thread of its own (never waiting for it).</summary>
+        internal SendLane? Lane;
         public bool InGame => inGame;
     }
 

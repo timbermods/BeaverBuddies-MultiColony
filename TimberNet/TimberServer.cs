@@ -171,11 +171,21 @@ namespace TimberNet
         public void ReleaseLobby(byte[] save)
         {
             if (lobby == null) return;
-            // Off the caller's thread (the host's game thread must never wait on a guest's connection), and the guests
-            // hear the new stage before their save.
+            // Off the caller's thread (the host's game thread must never wait on a guest's connection). The guests hear
+            // the new stage before their save: it is posted, and given a moment to go out, before the joins go on.
             Task.Run(() =>
             {
-                try { lock (lobbyPumpGate) PumpLobbyOnce(); }
+                try
+                {
+                    List<LobbyMember> waiting;
+                    lock (lobbyPumpGate)
+                    {
+                        PumpLobbyOnce();
+                        waiting = lobby.Members().Where(m => !m.inGame).ToList();
+                    }
+                    long deadline = SendLane.NowMs + AbortFlushMs;
+                    foreach (LobbyMember member in waiting) member.Lane?.WaitUntilEmpty((int)Math.Max(0, deadline - SendLane.NowMs));
+                }
                 catch (Exception e) { Log("The waiting room could not update its guests: " + e.Message); }
                 lobbySave?.TrySetResult(save);
             });
@@ -184,36 +194,46 @@ namespace TimberNet
         /// <summary>Every guest of the room has been queued for the game (its save is on its way) or has gone.</summary>
         public bool LobbyGuestsQueued => lobby == null || lobby.Members().All(m => m.inGame || !m.Connected);
 
-        /// <summary>Ends the room for everyone still waiting in it: each is told why, then closed.</summary>
+        /// <summary>
+        /// Ends the room for everyone still waiting in it: each is told why, then closed. Waits at most
+        /// <see cref="AbortFlushMs"/> for the word to go out (a guest that takes nothing is closed anyway).
+        /// </summary>
         public void CancelLobby(LobbyEndReason reason, string? detail)
         {
             if (lobby == null) return;
             byte[] end = MessageToBuffer(LobbyFrames.End(reason, detail));
+            List<LobbyMember> waiting;
             lock (lobbyPumpGate)
             {
-                foreach (LobbyMember member in lobby.Members())
+                waiting = lobby.Members().Where(m => !m.inGame).ToList();
+                foreach (LobbyMember member in waiting)
                 {
-                    if (member.inGame) continue;
-                    WriteLobbyFrame(member, end);
-                    LeaveLobby(member);
+                    ForgetLobbyMember(member);
+                    member.Lane?.Post(end, LobbyFrames.EndType, 0);
                 }
             }
             lobbySave?.TrySetCanceled();
+            long deadline = SendLane.NowMs + AbortFlushMs;
+            foreach (LobbyMember member in waiting) member.Lane?.WaitUntilEmpty((int)Math.Max(0, deadline - SendLane.NowMs));
+            foreach (LobbyMember member in waiting) CloseLobbyMember(member);
         }
 
         /// <summary>
-        /// Takes a guest out of the room (the host removed it, or it could not be sent the world): it is told why, then
-        /// closed. False if it isn't waiting there.
+        /// Takes a guest out of the room (the host removed it, or it could not be sent the world): it leaves the roster at
+        /// once, is told why, then closed (on its own lane: this never waits for its connection). False if it isn't
+        /// waiting there.
         /// </summary>
         public bool RemoveFromLobby(int playerNumber, LobbyEndReason reason = LobbyEndReason.Removed, string? detail = null)
         {
             LobbyMember? member = lobby?.Find(playerNumber);
             if (member == null || member.inGame) return false;
-            lock (lobbyPumpGate)
+            lock (lobbyPumpGate) ForgetLobbyMember(member);
+            member.Lane?.Post(MessageToBuffer(LobbyFrames.End(reason, detail)), LobbyFrames.EndType, 0);
+            Task.Run(() =>
             {
-                WriteLobbyFrame(member, MessageToBuffer(LobbyFrames.End(reason, detail)));
-                LeaveLobby(member);
-            }
+                member.Lane?.WaitUntilEmpty(AbortFlushMs);
+                CloseLobbyMember(member);
+            });
             RequestLobbyPump();
             return true;
         }
@@ -230,13 +250,16 @@ namespace TimberNet
                 {
                     int number = Interlocked.Increment(ref lastPlayerId);
                     string? verified = (client as IVerifiedIdentity)?.VerifiedPlayerId;
-                    member = new LobbyMember(number, client, string.IsNullOrEmpty(verified) ? null : verified);
+                    var admitted = new LobbyMember(number, client, string.IsNullOrEmpty(verified) ? null : verified);
+                    // Everything the room says to this guest goes through a lane of its own, so no thread ever waits for
+                    // its connection (a direct link can block), and its welcome is the lane's first frame.
+                    admitted.Lane = new SendLane($"waiting-room guest {number}", (wire, type, tick) => WriteLobbyFrame(admitted, wire));
+                    admitted.Lane.Post(MessageToBuffer(LobbyFrames.Welcome(number, room.Summary)), LobbyFrames.WelcomeType, 0);
                     playerIds[client] = number;
-                    if (member.VerifiedId != null) verifiedIds[number] = member.VerifiedId;
-                    lobbyMembers[client] = member;
-                    room.Add(member);
-                    // Its welcome goes before any roster (the pump waits for this lock).
-                    WriteLobbyFrame(member, MessageToBuffer(LobbyFrames.Welcome(number, room.Summary)));
+                    if (admitted.VerifiedId != null) verifiedIds[number] = admitted.VerifiedId;
+                    lobbyMembers[client] = admitted;
+                    room.Add(admitted);
+                    member = admitted;
                 }
             }
             if (member == null)
@@ -251,13 +274,26 @@ namespace TimberNet
             return member;
         }
 
-        private void LeaveLobby(LobbyMember member)
+        // Off the roster and out of the room's books; its connection is closed separately.
+        private void ForgetLobbyMember(LobbyMember member)
         {
             if (member.inGame) return;
             lobbyMembers.TryRemove(member.Stream, out _);
             playerIds.TryRemove(member.Stream, out _);
             if (lobby?.Remove(member) == true) Log($"Player {member.Number} left the waiting room");
+        }
+
+        private static void CloseLobbyMember(LobbyMember member)
+        {
+            member.Lane?.Close();
             member.Stream.Close();
+        }
+
+        private void LeaveLobby(LobbyMember member)
+        {
+            if (member.inGame) return;
+            ForgetLobbyMember(member);
+            CloseLobbyMember(member);
         }
 
         protected override bool IsInWaitingRoom(ISocketStream source) =>
@@ -293,7 +329,8 @@ namespace TimberNet
         }
 
         // Every guest still waiting gets the roster and the room's state: on every change, and every LobbyIntervalMs as a
-        // keep-alive (the host's game thread may be busy making the world, so this runs on a timer thread).
+        // keep-alive (the host's game thread may be busy making the world, so this runs on a timer thread). It only posts
+        // to each guest's lane, so it never waits for a connection.
         private void PumpLobby()
         {
             if (!Monitor.TryEnter(lobbyPumpGate)) { Volatile.Write(ref lobbyPumpRequested, 1); return; }
@@ -309,24 +346,43 @@ namespace TimberNet
             finally { Monitor.Exit(lobbyPumpGate); }
         }
 
+        /// <summary>How much may wait for one waiting-room guest before it is taken out (it has stopped reading).</summary>
+        public static long MaxLobbyQueuedBytes = 1024 * 1024;
+
         private void PumpLobbyOnce()
         {
             LobbyRoom? room = lobby;
             if (room == null || IsStopped) return;
+            long now = SendLane.NowMs;
             foreach (LobbyMember member in room.Members())
             {
-                if (!member.inGame && !member.Connected) LeaveLobby(member);
+                if (member.inGame) continue;
+                if (!member.Connected) LeaveLobby(member);
+                else if (member.Lane != null && member.Lane.IsStalled(now, SendStallLimitMs, MaxLobbyQueuedBytes))
+                {
+                    Log($"Waiting-room guest {member.Number} took nothing for {SendStallLimitMs / 1000} seconds; taking it out");
+                    LeaveLobby(member);
+                }
+            }
+            // Once the world has gone out to every guest, the room has nobody left to keep alive.
+            if (lobbySave != null && lobbySave.Task.IsCompleted && room.Members().All(m => m.inGame || !m.Connected))
+            {
+                try { lobbyTimer?.Dispose(); } catch (Exception) { }
+                lobbyTimer = null;
+                return;
             }
             LobbySnapshot snapshot = room.Snapshot();
             byte[] roster = MessageToBuffer(LobbyFrames.Roster(snapshot.Players));
             byte[] state = MessageToBuffer(LobbyFrames.State(++lobbySequence, snapshot.Stage));
             foreach (LobbyMember member in room.Members())
             {
-                WriteLobbyFrame(member, roster);
-                WriteLobbyFrame(member, state);
+                if (member.inGame) continue;
+                member.Lane?.Post(roster, LobbyFrames.RosterType, 0);
+                member.Lane?.Post(state, LobbyFrames.StateType, 0);
             }
         }
 
+        // On the guest's lane thread.
         private void WriteLobbyFrame(LobbyMember member, byte[] body)
         {
             ISocketStream stream = member.Stream;
@@ -336,7 +392,8 @@ namespace TimberNet
             {
                 lock (stream)
                 {
-                    // Once its save is going out the stream is the game's (StartQueuing sets this under this lock).
+                    // Once its save is going out the stream is the game's (StartQueuing sets this before it writes the
+                    // save, which takes this lock).
                     if (member.inGame || !stream.Connected) return;
                     SendLength(stream, LobbyFrames.Sentinel);
                     SendDataWithLength(stream, body);
@@ -344,10 +401,9 @@ namespace TimberNet
             }
             catch (Exception e)
             {
-                // Not HandleConnectionFailure: that would come back here for the roster of those left.
                 Log($"Lost waiting-room guest {member.Number}: {e.Message}");
                 LeaveLobby(member);
-                Volatile.Write(ref lobbyPumpRequested, 1);
+                RequestLobbyPump();
             }
         }
 
@@ -470,9 +526,14 @@ namespace TimberNet
                     string? verified = (client as IVerifiedIdentity)?.VerifiedPlayerId;
                     if (!string.IsNullOrEmpty(verified)) verifiedIds[player] = verified!;
                     trackers[client] = new RttTracker(RttTracker.NowMs);
-                    // From here the stream belongs to the save: the waiting room writes nothing more to it (checked
-                    // under the same lock, WriteLobbyFrame).
-                    if (fromWaitingRoom) lock (client) member!.inGame = true;
+                    // From here the stream belongs to the save: the waiting room writes nothing more to it. A lobby frame
+                    // being written now holds the stream's lock, which the save waits for; one written later sees this
+                    // (WriteLobbyFrame). Nothing here waits for the guest's connection.
+                    if (fromWaitingRoom)
+                    {
+                        member!.inGame = true;
+                        member.Lane?.Close();
+                    }
                     return;
                 }
             }
@@ -855,6 +916,7 @@ namespace TimberNet
             // Guests still in a waiting room are in no other list: without this they would wait for a save forever.
             foreach (var pair in lobbyMembers)
             {
+                pair.Value.Lane?.Close();
                 if (!pair.Value.inGame) pair.Key.Close();
             }
             lobbySave?.TrySetCanceled();

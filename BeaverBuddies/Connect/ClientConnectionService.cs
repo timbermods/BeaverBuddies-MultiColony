@@ -118,6 +118,8 @@ namespace BeaverBuddies.Connect
         private bool TryToConnect(ISocketStream socket)
         {
             Plugin.Log("Connecting client");
+            // Only a waiting room this join enters names the loading screen.
+            lobbyHostName = null;
             client = ClientEventIO.Create(socket, LoadMap, (error) =>
             {
                 // Only reached while joining, before the host's game has loaded (see ClientEventIO): once a game

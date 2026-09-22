@@ -154,6 +154,41 @@ static class LobbyChecks
             Check(Until(() => a.Lobby.View().Players.Count == 3 && a.Lobby.View().Players[2].Colony == 3), "the roster did not follow");
         }));
 
+        yield return ("A waiting guest that stops reading holds up nobody: the others keep hearing, the host's calls return, and it is taken out", () =>
+        {
+            int previousStall = TimberServer.SendStallLimitMs, previousFlush = TimberServer.AbortFlushMs;
+            TimberServer.SendStallLimitMs = 600;
+            TimberServer.AbortFlushMs = 300;
+            try
+            {
+                WithRoom(rig =>
+                {
+                    var a = rig.Join();
+                    var stuck = new StallingStream();
+                    var b = rig.Join(wrap: stuck.Wrap);
+                    Check(Until(() => a.Lobby.View().Welcomed && b.Lobby.View().Welcomed));
+                    stuck.Stall();
+                    // The pump keeps writing to everyone else while one write to the stuck guest never returns.
+                    Thread.Sleep(400);
+                    Check(RttTracker.NowMs - a.Lobby.View().LastFrameAtMs < 250, "the other guest stopped hearing the host");
+                    var clock = System.Diagnostics.Stopwatch.StartNew();
+                    rig.Host.SetLobbyStage(LobbyStage.Open);
+                    Check(clock.ElapsedMilliseconds < 100, "the host's call waited for the stuck guest");
+                    // Taken out once its lane has been stuck past the limit.
+                    Check(Until(() => rig.Host.Lobby!.Snapshot().Players.Count == 2), "the stuck guest stayed");
+                    clock.Restart();
+                    rig.Host.CancelLobby(LobbyEndReason.Cancelled, null);
+                    Check(clock.ElapsedMilliseconds < 1000, "ending the room waited " + clock.ElapsedMilliseconds + " ms");
+                    Check(Until(() => a.Lobby.View().Ended));
+                });
+            }
+            finally
+            {
+                TimberServer.SendStallLimitMs = previousStall;
+                TimberServer.AbortFlushMs = previousFlush;
+            }
+        });
+
         yield return ("The host keeps a waiting guest's line alive while nothing else happens", () => WithRoom(rig =>
         {
             var a = rig.Join();
@@ -358,10 +393,11 @@ static class LobbyChecks
             Host.Start();
         }
 
-        public TimberClient Join(ThreadRecorder? recorder = null)
+        public TimberClient Join(ThreadRecorder? recorder = null, Func<ISocketStream, ISocketStream>? wrap = null)
         {
             var (hostSide, guestSide) = PipeStream.Pair();
-            listener.Add(recorder == null ? hostSide : recorder.Wrap(hostSide));
+            ISocketStream served = recorder == null ? hostSide : recorder.Wrap(hostSide);
+            listener.Add(wrap == null ? served : wrap(served));
             var guest = new TimberClient(guestSide) { CompatibilityIdentity = "same" };
             guests.Add(guest);
             guest.Start();
@@ -393,6 +429,34 @@ static class LobbyChecks
         public void Start() { }
         public ISocketStream AcceptClient() => pending.Take();
         public void Stop() => pending.CompleteAdding();
+    }
+
+    /// <summary>A guest's connection that stops taking data when told (its game froze): writes wait until it is closed.</summary>
+    sealed class StallingStream
+    {
+        volatile bool stalled;
+        public void Stall() => stalled = true;
+        public ISocketStream Wrap(ISocketStream inner) => new Stream(inner, this);
+
+        sealed class Stream : ISocketStream
+        {
+            readonly ISocketStream inner;
+            readonly StallingStream owner;
+            public Stream(ISocketStream inner, StallingStream owner) { this.inner = inner; this.owner = owner; }
+            public bool Connected => inner.Connected;
+            public string? Name => inner.Name;
+            public int MaxChunkSize => inner.MaxChunkSize;
+            public int MaxBytesPerSecond => inner.MaxBytesPerSecond;
+            public int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+            public void Write(byte[] buffer, int offset, int count)
+            {
+                while (owner.stalled && inner.Connected) Thread.Sleep(10);
+                if (!inner.Connected) throw new IOException("closed");
+                inner.Write(buffer, offset, count);
+            }
+            public void Close() => inner.Close();
+            public Task ConnectAsync() => inner.ConnectAsync();
+        }
     }
 
     /// <summary>Records which threads write large chunks (the save) to a guest.</summary>
