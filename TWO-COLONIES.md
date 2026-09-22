@@ -28,13 +28,15 @@ in that check would stop a healthy game too; the log line says which. Play on a 
 
 ## Starting
 
-**Host settings** (Mod Settings → BeaverBuddies), read when hosting starts (the days before a hand-over, below, is
-read each day, so it can be changed during a game):
+**Host settings** (Mod Settings → BeaverBuddies):
 
 | Setting | Default | What it does |
 |---|---|---|
-| **Separate colonies (beta)** | on | Players run their own colonies. Off: one shared colony, as in the Stability Fork (except that every District Crossing holds 100 of a good). |
-| **Separate science and unlocks per colony (beta)** | on | Each colony earns and spends its own science and unlocks its own buildings. Chosen when a separate-colonies game begins and kept for the life of the save. |
+| **Separate colonies for new games (beta)** | on | Read when a new game is made: players run their own colonies. Off: one shared colony, as in the Stability Fork (see *A shared-colony game*). A save keeps the mode it was started in. |
+| **Allow founding colonies in a shared game (beta)** | off | Read when hosting starts: a player without a colony may found one in a shared save, which makes it a separate-colonies game for good (step 3 below). Off: a shared game stays shared. |
+| **Separate science and unlocks per colony (beta)** | on | Each colony earns and spends its own science and unlocks its own buildings. Chosen when a separate-colonies game begins (or a shared one is split) and kept for the life of the save. |
+
+The days before a hand-over (below) are read each day, so they can be changed during a game.
 
 **Who plays which colony** is remembered by the save: each player is known by their Steam ID (or, without Steam, by
 an id kept on their computer). The first time a player joins a save they take the next free colony; after that they
@@ -51,8 +53,8 @@ first change while joining is open is held and the host is asked (**Start the ga
 joining, or **Keep waiting**, which drops it), and a guest's change while the host waits is refused with the same
 notice as a founding. The connection panel shows the host *Joining: open* until then.
 
-**Any other game** (a standard map, or any existing save): the district centers already there are the host's
-colony's. Every other player **founds** their colony once:
+**Any other separate-colonies game** (a new game on a standard map, or a separate-colonies save): the district
+centers already there are the host's colony's. Every other player **founds** their colony once:
 
 1. Once the host has unpaused, a message offers to place a district center. (If you cancel, **Ctrl+K** opens the
    same tool.) Not before: while the game is paused at the start, other players can still join, and a player who
@@ -62,7 +64,19 @@ colony's. Every other player **founds** their colony once:
    both colonies have room to grow. It is free, needs no science, and appears **already built**, yours, with starting
    beavers, food and water (the new game's, or for a save that did not record them the host's Normal difficulty:
    the host writes them into the founding, so a mod changing the difficulty on one computer changes nothing).
-3. Founding in a shared game turns it into a separate-colonies game. The existing districts stay the host's.
+3. A shared save (one colony: made with *Separate colonies for new games* off, or in the Stability Fork) stays
+   shared unless the host ticks **Allow founding colonies in a shared game** before hosting. Then the first founding
+   in it makes it a separate-colonies game for good: every building already there becomes the host's colony's, on
+   every computer at that tick, and the new colony must stand 20 tiles from them like any other.
+
+## A shared-colony game
+
+With separate colonies off (a new game with *Separate colonies for new games* unticked, a shared save, or a save
+from the Stability Fork) the game is the Stability Fork's shared co-op: one colony that every player builds
+together. Nothing on the rest of this page applies. There is no land, no owners and no Trading Post (not even in
+dev mode); District Crossings hold the game's 30 of a good; nothing of the colony model is kept, compared on the
+heartbeat or checked once a day; and the save holds nothing of this mod's. What does apply is what MultiColony adds
+to co-op in general (the README's *One shared colony*).
 
 ## Trading posts
 
@@ -341,7 +355,7 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   answer. Two district centers placed on the same tiles in one tick: the second is skipped everywhere.
 - A District Crossing's panel, open on one computer, no longer changes what that computer's crossing workers export:
   the snapshot the workers read is taken in the tick only.
-- Every tick the host's heartbeat carries a running digest of every colony state change (owners, marks, science,
+- In a separate-colonies game, every tick the host's heartbeat carries a running digest of every colony state change (owners, marks, science,
   exchanges, the ledger, land, presence, hand-overs, working hours), and each guest compares it with its own at the
   same point: a difference stops that guest with the desync dialog that tick, with both digests and the number of
   changes each side counted in the log. Once a day the host also sends its full colony check with the day's presence,
@@ -369,10 +383,11 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   `TemplateCollections`) as well as the game and mod versions.
 - **Every colony state change** (owners, marks, science and unlocks, exchanges and their ledger, land, traded
   beavers, presence, hand-overs, working hours) made inside a tick or a replayed action folds into a running digest.
-  The host sends it with every heartbeat; a guest whose own differs stops that tick.
+  The host sends it with every heartbeat; a guest whose own differs stops that tick. A shared game has none.
 - **Ownership is saved**: on the district centers, on every building (the colony that placed it, from its first
   moment as a construction site) and on map marks. Land is worked out from the buildings standing, the same on every
-  computer. Beavers choose their work from these only, so every computer's beavers choose alike.
+  computer. Beavers choose their work from these only, so every computer's beavers choose alike. A shared game
+  saves none of it: its save is the Stability Fork's.
 - **Science** keeps one pool and one unlock set per colony in the save. Simulation code that earns, spends or reads
   science names the colony of the building doing it; everything else is display.
 - **Exchanges** are saved on the two halves of the Trading Post, with each round's goods waiting on their half (held

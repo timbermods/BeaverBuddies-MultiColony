@@ -94,7 +94,7 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// True when this computer's player may found a colony now: in a session, seated, with no district center of
-        /// their own, and founding allowed (a separate-colonies game, or the host allows it).
+        /// their own, and founding allowed (a separate-colonies game, or a shared game whose host allows founding in it).
         /// </summary>
         public static bool LocalPlayerMayFound
         {
@@ -255,31 +255,38 @@ namespace BeaverBuddies.Colonies
         /// </param>
         public ColonyVerdict Judge(int actorSlot, Placement placement, bool checkBlocks = true, bool atReplay = false)
         {
+            bool foundingAllowed = atReplay || FoundingAllowed;
+            // At the founding's tick, a shared game's land is worked out afresh on every computer (the founder's may
+            // hold the one its preview used).
+            if (atReplay) ColonyReach.Instance?.ForgetSharedLand();
             bool blocksValid = !checkBlocks || _blockValidator.BlocksValid(
                 _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>(), placement);
+            // The land questions only once founding is allowed: in a shared game they work its land out first.
             return ColonyRules.JudgeFounding(
                 actorHasSlot: actorSlot >= 0 && actorSlot < ColonySlotTable.MaxSlots,
                 actorOwnsDistrict: actorSlot >= 0 && SlotOwnsDistrict(actorSlot),
-                foundingAllowed: atReplay || FoundingAllowed,
+                foundingAllowed: foundingAllowed,
                 blocksValid: blocksValid,
                 touchesOtherDistrict: TouchesAnotherDistrict(placement),
-                onOtherColonyLand: OnOtherColonyLand(actorSlot, placement),
-                tooCloseToColony: TooCloseToColony(actorSlot, placement));
+                onOtherColonyLand: foundingAllowed && OnOtherColonyLand(actorSlot, placement),
+                tooCloseToColony: foundingAllowed && TooCloseToColony(actorSlot, placement));
         }
 
         /// <summary>
         /// Whether the district center would stand where another colony works (near its buildings and paths). Read from
-        /// <see cref="ColonyReach"/>, which is the same on every computer, so the replay's answer is too.
+        /// <see cref="ColonyReach"/>, which is the same on every computer, so the replay's answer is too. In a shared
+        /// game, the shared colony's land.
         /// </summary>
         private bool OnOtherColonyLand(int actorSlot, Placement placement)
         {
             ColonyReach reach = ColonyReach.Instance;
-            return reach != null && Footprint(placement).Any(tile => !reach.MayUse(actorSlot, tile));
+            return reach != null && reach.OnOthersLand(actorSlot, Footprint(placement));
         }
 
         /// <summary>
         /// Whether another colony reaches within 10 tiles of the new district center: the two colonies' land would meet
-        /// at once and neither could grow that way. Read from <see cref="ColonyReach"/>, the same on every computer.
+        /// at once and neither could grow that way. Read from <see cref="ColonyReach"/>, the same on every computer. In
+        /// a shared game, the shared colony.
         /// </summary>
         private bool TooCloseToColony(int actorSlot, Placement placement)
         {

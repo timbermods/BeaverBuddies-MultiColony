@@ -203,7 +203,7 @@
         <summary>A desync: "A connected player desynced and cannot continue playing"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>The players' games have drifted apart. Every copy of the game must make exactly the same decisions, and something made one of them differ. Known causes are removed, but none of that is a promise. In MultiColony the log says which check caught it: <code>Random state mismatch</code> (the game's random state at an action) or <code>Colony state differs</code> (the colony check, every tick or daily; a difference there may be a bug in the check itself, so send both players' logs).</p>
+          <p>The players' games have drifted apart. Every copy of the game must make exactly the same decisions, and something made one of them differ. Known causes are removed, but none of that is a promise. In MultiColony the log says which check caught it: <code>Random state mismatch</code> (the game's random state at an action) or <code>Colony state differs</code> (the colony check, every tick or daily, in a separate-colonies game; a difference there may be a bug in the check itself, so send both players' logs).</p>
           <p class="sub">Try this</p>
           <ol>
             <li>The host chooses <b>Save and Rehost</b>.</li>

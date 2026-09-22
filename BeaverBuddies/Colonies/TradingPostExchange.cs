@@ -224,6 +224,8 @@ namespace BeaverBuddies.Colonies
 
         public void Save(IEntitySaver entitySaver)
         {
+            // Separate colonies only (a shared game's District Crossings save only what the game's do).
+            if (!ColonyModeService.IsSeparateColonies) return;
             if (!IsOpen && Serial == 0 && ledger.Count == 0 && LastTerms == null) return;
             IObjectSaver saver = entitySaver.GetComponent(ExchangeKey);
             saver.Set(SerialKey, Serial);

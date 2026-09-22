@@ -58,7 +58,15 @@
       <details class="q">
         <summary>What is BeaverBuddies MultiColony?</summary>
         <div class="answer">
-          <p>It is a multiplayer co-op mod for Timberborn in which each player runs <b>their own colony</b> on one shared map: their own districts, land, beavers, stock, working hours and science. Colonies meet only at trading posts, where they barter. It is built on the BeaverBuddies Stability Fork and on the original <a href="https://github.com/thomaswp/BeaverBuddies">BeaverBuddies</a> by thomaswp and contributors, and keeps everything they do, including ordinary shared-colony co-op (turn <b>Separate colonies</b> off). It is a beta.</p>
+          <p>It is a multiplayer co-op mod for Timberborn in which each player runs <b>their own colony</b> on one shared map: their own districts, land, beavers, stock, working hours and science. Colonies meet only at trading posts, where they barter. It is built on the BeaverBuddies Stability Fork and on the original <a href="https://github.com/thomaswp/BeaverBuddies">BeaverBuddies</a> by thomaswp and contributors, and keeps everything they do, including ordinary shared-colony co-op (turn <b>Separate colonies for new games</b> off). It is a beta.</p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary>Can we play one shared colony, as in the Stability Fork?</summary>
+        <div class="answer">
+          <p>Yes. With <b>Separate colonies for new games</b> off, a new game is one colony that every player builds together, and a shared save (made that way, or in the Stability Fork) loads the same way. None of the colony model runs then: no land or owners, no Trading Post (not even in dev mode), District Crossings holding the game's 30 of a good, no colony check, and nothing of this mod's in the save. A shared save stays shared unless the host ticks <b>Allow founding colonies in a shared game</b>, which lets a player found their own colony and splits the save for good.</p>
+          <p>What does apply is what MultiColony adds to co-op in general: its desync fixes, the performance pass, the start prompt, the speed boost, going to a player, your own chat color. Every player needs MultiColony: it and the Stability Fork cannot join each other's games.</p>
         </div>
       </details>
 
@@ -146,7 +154,7 @@
       <details class="q">
         <summary>What happens if the game desyncs?</summary>
         <div class="answer">
-          <p>The game tells you. The host chooses <b>Save and Rehost</b>, and guests reconnect (Steam guests accept a fresh invite). Colony state is compared with the host's every tick, so a MultiColony desync is caught the tick it happens; the log says whether it was the game's random state or the colony check that differed (a difference in the check itself is a bug in the mod, and worth reporting with both logs). Keep backups of your saves. See <a href="troubleshooting.html#desync">Troubleshooting</a>.</p>
+          <p>The game tells you. The host chooses <b>Save and Rehost</b>, and guests reconnect (Steam guests accept a fresh invite). In a separate-colonies game, colony state is compared with the host's every tick, so a MultiColony desync is caught the tick it happens; the log says whether it was the game's random state or the colony check that differed (a difference in the check itself is a bug in the mod, and worth reporting with both logs). Keep backups of your saves. See <a href="troubleshooting.html#desync">Troubleshooting</a>.</p>
         </div>
       </details>
     </section>

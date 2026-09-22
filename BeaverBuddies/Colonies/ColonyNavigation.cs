@@ -12,7 +12,7 @@ namespace BeaverBuddies.Colonies
 {
     /// <summary>
     /// Getting around a shared map: the Home key brings the camera back to this player's own colony (its biggest
-    /// district center, the one the batch control window opens on), and a click on a player's name in the connection
+    /// district center, the one the batch control window opens on; in a shared game, the biggest), and a click on a player's name in the connection
     /// panel takes the camera to where that player is (their cursor, or what they have selected). Display only: the
     /// camera is each computer's own.
     /// </summary>

@@ -851,6 +851,55 @@ static class ColonyChecks
             var missing = keys.Where(key => !lines.Contains(key)).ToList();
             Check(missing.Count == 0, "no English line for " + string.Join(", ", missing));
         });
+
+        // ---- a shared game (1.4.0-beta7) ----
+
+        yield return ("Colony: one colony's land has no contested tiles, and a founding is refused beside it", () =>
+        {
+            // ColonyReach.SharedLand counts every building as colony 0's, in whatever order the game lists them. With one
+            // colony a tile is its or nobody's, so the order cannot matter (the grid's rule, pinned here); and a founder's
+            // district center on it, or within 10 tiles of it, is refused.
+            var buildings = new[] { new[] { (20, 50), (21, 50) }, new[] { (40, 40) }, new[] { (30, 70), (30, 71), (31, 70) } };
+            var forward = new ColonyReachGrid(100, 100);
+            foreach (var tiles in buildings) forward.Apply(0, tiles, +1);
+            var backward = new ColonyReachGrid(100, 100);
+            foreach (var tiles in Enumerable.Reverse(buildings)) backward.Apply(0, tiles, +1);
+            for (int x = 0; x < 100; x++)
+            {
+                for (int y = 0; y < 100; y++)
+                {
+                    Equal(forward.Owner(x, y), backward.Owner(x, y));
+                    Equal(forward.MayUse(1, x, y), backward.MayUse(1, x, y));
+                }
+            }
+            Equal(0, forward.ContestedTiles().Count());
+            // A founder's district center right beside the shared colony is refused, one far away is not.
+            Check(forward.OthersReachNear(1, new[] { (45, 45) }), "beside the shared colony");
+            Check(!forward.OthersReachNear(1, new[] { (90, 10) }), "far from it");
+            Check(!forward.MayUse(1, 20, 50) && forward.MayUse(1, 90, 10));
+        });
+
+        yield return ("Mod Settings: every tooltip fits the screen, and both colony choices are explained", () =>
+        {
+            // Mod Settings does not wrap a tooltip: one or two lines of at most 112 characters, or it runs off the screen.
+            string root = AppContext.BaseDirectory;
+            while (root != null && !File.Exists(Path.Combine(root, "BeaverBuddies.sln"))) root = Path.GetDirectoryName(root);
+            Check(root != null, "could not find the repository root");
+            string csv = File.ReadAllText(Path.Combine(root!, "BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv")).Replace("\r\n", "\n");
+            var tooltips = System.Text.RegularExpressions.Regex.Matches(csv, "^(BeaverBuddies\\.Settings\\.[A-Za-z.]+\\.Tooltip),\"([^\"]*)\"",
+                System.Text.RegularExpressions.RegexOptions.Multiline).Cast<System.Text.RegularExpressions.Match>().ToList();
+            Check(tooltips.Count >= 17, "the settings' tooltips were not found: " + tooltips.Count);
+            foreach (var match in tooltips)
+            {
+                string[] lines = match.Groups[2].Value.Split('\n');
+                Check(lines.Length <= 2, match.Groups[1].Value + " has " + lines.Length + " lines");
+                foreach (string line in lines) Check(line.Length <= 112, $"{match.Groups[1].Value}: {line.Length} characters: {line}");
+            }
+            string Tooltip(string key) => tooltips.Single(m => m.Groups[1].Value == key).Groups[2].Value;
+            Check(Tooltip("BeaverBuddies.Settings.SeparateColonies.Tooltip").Contains("new game"), "Separate colonies does not say it is for new games");
+            string founding = Tooltip("BeaverBuddies.Settings.FoundingInSharedGames.Tooltip");
+            Check(founding.Contains("shared game") && founding.Contains("Off:"), "founding in a shared game is not explained: " + founding);
+        });
     }
 
     static JObject TypedGroup(params JObject[] children) => new JObject

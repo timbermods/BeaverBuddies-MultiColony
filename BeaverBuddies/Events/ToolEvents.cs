@@ -75,9 +75,9 @@ namespace BeaverBuddies.Events
             {
                 builder.AddInitComponent(new DuplicationInit(duplicationSource));
             }
-            // A district center belongs to whoever placed it (in a separate-colonies game; otherwise to slot 0). The
-            // slot was written into the event by the host, so every computer gives it the same owner.
-            Colonies.DistrictOwner.PendingSlot = Colonies.ColonyModeService.IsSeparateColonies ? System.Math.Max(0, slot) : 0;
+            // In a separate-colonies game a building belongs to whoever placed it: the slot was written into the event by
+            // the host, so every computer gives it the same owner. A shared game gives it none, as the Stability Fork.
+            if (Colonies.ColonyModeService.IsSeparateColonies) Colonies.DistrictOwner.PendingSlot = System.Math.Max(0, slot);
             try
             {
                 placer.Place(builder, placement);

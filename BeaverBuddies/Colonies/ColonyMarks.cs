@@ -58,6 +58,8 @@ namespace BeaverBuddies.Colonies
 
         public void Save(ISingletonSaver singletonSaver)
         {
+            // Separate colonies only: a shared game's save holds only what the Stability Fork's does.
+            if (!ColonyModeService.IsSeparateColonies) return;
             // Only marks that still stand, in a fixed order.
             List<string> plantingEntries = Write(planting, c => _plantingService.IsResourceAt(c));
             List<string> cuttingEntries = Write(cutting, c => _treeCuttingArea.IsInCuttingArea(c));

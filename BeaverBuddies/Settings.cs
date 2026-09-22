@@ -102,6 +102,10 @@ namespace BeaverBuddies
             new(true, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.SeparateColonies")
                 .SetLocalizedTooltip("BeaverBuddies.Settings.SeparateColonies.Tooltip"));
 
+        public ModSetting<bool> FoundingInSharedGames { get; } =
+            new(false, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.FoundingInSharedGames")
+                .SetLocalizedTooltip("BeaverBuddies.Settings.FoundingInSharedGames.Tooltip"));
+
         public ModSetting<bool> SeparateScience { get; } =
             new(true, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.SeparateScience")
                 .SetLocalizedTooltip("BeaverBuddies.Settings.SeparateScience.Tooltip"));
@@ -202,8 +206,17 @@ namespace BeaverBuddies
         public static bool PlayerActivityEnabled => instance?.PlayerActivity.Value ?? true;
         public static bool RemoveSpeedLimit => instance?.RemoveLargeColonySpeedLimit.Value ?? false;
 
-        /// <summary>New multi-start games get one colony per start, each controlled by one player. Read when the game is created.</summary>
+        /// <summary>
+        /// A new game is a separate-colonies game (one colony per start on a multi-start map; on a one-start map the other
+        /// players found theirs). Read when the game is created; a save keeps the mode it was made with.
+        /// </summary>
         public static bool SeparateColoniesForNewGames => instance?.SeparateColonies.Value ?? true;
+
+        /// <summary>
+        /// Host: players without a colony may found one in a shared game, which turns it into a separate-colonies game for
+        /// good. Off, a shared game stays one shared colony. Fixed when hosting starts.
+        /// </summary>
+        public static bool FoundingInSharedGamesAllowed => instance?.FoundingInSharedGames.Value ?? false;
 
         /// <summary>A new separate-colonies game gives each colony its own science and unlocks. Fixed for the save.</summary>
         public static bool SeparateScienceForNewColonies => instance?.SeparateScience.Value ?? true;

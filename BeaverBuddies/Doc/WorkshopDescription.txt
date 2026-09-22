@@ -14,7 +14,7 @@ Play Timberborn together, each with your own colony, on one map.
 [*] Up to four colonies; more players join as helpers of the host's colony.
 [*] Steam friend invites (no port forwarding), or direct IP.
 [*] A connection panel with chat, teammates' cursors and selections, pings.
-[*] Turn [b]Separate colonies[/b] off for ordinary shared-colony co-op.
+[*] Turn [b]Separate colonies for new games[/b] off and a game is the Stability Fork's shared co-op, with none of the colony model running.
 [/list]
 
 Built on the BeaverBuddies Stability Fork and on BeaverBuddies by thomaswp and contributors. Guides: https://github.com/timbermods/BeaverBuddies-MultiColony

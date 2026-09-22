@@ -154,8 +154,10 @@ namespace BeaverBuddies
                 return;
             }
 
-            // Colony state changes count towards the digest only inside the simulation, once a game is loaded.
-            Colonies.ColonyDigest.Gate = () => ReplayService.IsLoaded && (DeterminismService.IsTicking || ReplayService.IsReplayingEvents);
+            // Colony state changes count towards the digest only in a separate-colonies game, inside the simulation, once
+            // a game is loaded. A shared game counts nothing.
+            Colonies.ColonyDigest.Gate = () => Colonies.ColonyModeService.IsSeparateColonies && ReplayService.IsLoaded
+                && (DeterminismService.IsTicking || ReplayService.IsReplayingEvents);
 
             // apply all harmony patches automatically.
             Harmony harmony = new Harmony(ID);

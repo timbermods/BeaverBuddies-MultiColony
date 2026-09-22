@@ -313,7 +313,7 @@ namespace BeaverBuddies.Colonies
         {
             if (!actorHasSlot) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "a helper plays another player's colony");
             if (actorOwnsDistrict) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "this player already has a colony");
-            if (!foundingAllowed) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the host has not turned on separate colonies");
+            if (!foundingAllowed) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the host has not allowed founding in a shared game");
             if (!blocksValid) return ColonyVerdict.Refuse(ColonyRefusal.Blocked, "the spot is taken or unsuitable");
             if (touchesOtherDistrict) return ColonyVerdict.Refuse(ColonyRefusal.FoundingConflict, "it would join another district's roads");
             if (onOtherColonyLand) return ColonyVerdict.Refuse(ColonyRefusal.OtherColonyArea, "it would stand on another colony's land");

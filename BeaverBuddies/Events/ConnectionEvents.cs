@@ -28,8 +28,8 @@ namespace BeaverBuddies.Events
         public bool isDebugMode;
         // The host's choice for the session. Absent from an older host, which reads as the game's default.
         public bool removeLargeColonySpeedLimit;
-        // Separate colonies: whether the host allows founding colony 2 in this session.
-        public bool separateColonies;
+        // Whether the host allows founding a colony in a shared game this session.
+        public bool foundingInSharedGame;
         // Separate colonies: the host's choice of separate science for a colony founded in this session.
         public bool separateScience;
         // The session's speed boost (SpeedBoost) as this player joins. Absent from an older host, which reads as 0.
@@ -39,7 +39,7 @@ namespace BeaverBuddies.Events
         {
             //context.GetSingleton<ReplayService>().SetServerMapName(mapName);
             LargeColonySpeedLimit.AdoptHostChoice(removeLargeColonySpeedLimit);
-            ColonySession.AdoptHostChoice(separateColonies, separateScience);
+            ColonySession.AdoptHostChoice(foundingInSharedGame, separateScience);
             context.GetSingleton<ReplayService>().SetBoost(speedBoost);
             string warningMessage = null;
             if (serverGameVersion != GameVersions.CurrentVersion.ToString())
@@ -72,7 +72,7 @@ namespace BeaverBuddies.Events
                 serverGameVersion = GameVersions.CurrentVersion.ToString(),
                 isDebugMode = Settings.Debug,
                 removeLargeColonySpeedLimit = LargeColonySpeedLimit.BeginHostSession(),
-                separateColonies = ColonySession.HostAllowsFounding,
+                foundingInSharedGame = ColonySession.HostAllowsFounding,
                 separateScience = ColonySession.HostSeparateScience,
                 speedBoost = ReplayService.SessionBoost,
                 //mapName = mapName,
@@ -158,12 +158,15 @@ namespace BeaverBuddies.Events
         {
             ReplayService replayService = context.GetSingleton<ReplayService>();
             context.GetSingleton<BeaverBuddies.Fixes.MultiplayerInputRecovery>()?.RequestReset();
-            replayService.SetTargetSpeed(0);
+            // Paused, and the pick with it: otherwise picking the old speed again afterwards would be taken for asking for
+            // the speed already picked, and ignored (SpeedChangePatcher).
+            replayService.SetChosenSpeed(0);
             BeaverBuddies.DesyncDetecter.WaterDiagnostics.WriteOnDesync();
             BeaverBuddies.DesyncDetecter.WalkerDiagnostics.WriteOnDesync();
             // The other computers write their colony report too, as the desynced player's arrives: the last colony check
             // in each can then be set side by side. (The desynced computer wrote its own when it stopped.)
-            if (!replayService.IsDesynced) Colonies.ColonyDiagnostics.Instance?.WriteReport("another player desynced");
+            if (!replayService.IsDesynced && Colonies.ColonyModeService.IsSeparateColonies)
+                Colonies.ColonyDiagnostics.Instance?.WriteReport("another player desynced");
             ReportingService reportingService = context.GetSingleton<ReportingService>();
             RehostingService rehostingService = context.GetSingleton<RehostingService>();
             GameSaveRepository repository = context.GetSingleton<GameSaveRepository>();

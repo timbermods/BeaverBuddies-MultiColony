@@ -11,7 +11,7 @@ BeaverBuddies is still enabled, the main menu names it (please check that messag
 
 ## Script A: host alone (about 30 minutes)
 
-Setup: in **Mod Settings → BeaverBuddies** check **Separate colonies (beta)** and **Separate science and unlocks per
+Setup: in **Mod Settings → BeaverBuddies** check **Separate colonies for new games (beta)** and **Separate science and unlocks per
 colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode). Start a **new game** on a
 **standard map**. Save, then **Load Game** → select the save → **Host co-op game**; start without anyone joining.
 
@@ -112,9 +112,11 @@ colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode
     ledger and an exchange under way (with the goods waiting on each half, which nobody carries off after loading) or
     an offer waiting are unchanged. The day's `[Colony] Check day N tick T:` line in the log ends in `digest=…/0`
     right after a load (the count starts again from zero).
-22. **Mode off.** Untick **Separate colonies** and start a new game: one shared colony, no refusals, no Trading Post
-    in District Management, District Crossings trade by import settings as in the game (holding up to 100), science is
-    one pool.
+22. **Mode off (beta7).** Untick **Separate colonies for new games** and start a new game: one shared colony, no
+    refusals, no Trading Post in District Management (turn dev mode on with Alt+Shift+Z: still none), District
+    Crossings trade by import settings as in the game and hold 30 of a good, science is one pool. Host it and play a
+    few minutes: the log says `[Colony] Hosting; founding a colony in a shared game off` and has no
+    `[Colony] Check day` lines. Save: the save (a zip) has no `BeaverBuddies.` entry in its `world.json`.
 22a. **The start prompt (beta2).** Host a save and, while still paused at the start, place a path: a dialog asks
     whether to start the game or keep waiting. **Keep waiting**: nothing is placed, the notice says players can still
     join, and the connection panel still says *Joining: open*. Place again and choose **Start the game**: the path
@@ -135,6 +137,10 @@ colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode
     under **You give**, Enter or click away): the round goes on. Save and reload: the reserve and the last terms are
     still there.
 22e. **Home (beta2).** Scroll far away and press **Home**: the camera returns to your biggest district center.
+22f. **A crossing holds 30, a Trading Post 100 (beta7).** Back in the separate-colonies game, a District Crossing
+    between two of colony 1's districts shows room for 30 of a good in its inventory; a Trading Post half, 100.
+22g. **Home in a shared game (beta7).** In step 22's shared game, press **Home**: the camera goes to the biggest
+    district center.
 23. Send `Player.log`.
 
 ## Script B: two players (about 45 minutes)
@@ -192,6 +198,17 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     your name in the chat changes on your screen within a moment, and not on the other player's. Drag a slider:
     the same. **Reset**: back to the default. Restart the game and host again: the color is remembered. The other
     player's card still has Size and Transparency; yours does not.
+8m. **A shared game stays shared (beta7).** The host leaves **Allow founding colonies in a shared game** unticked and
+    hosts a shared save (made with **Separate colonies for new games** off, or a Stability Fork save). The friend
+    joins; after the host unpauses no founding message appears, and **Ctrl+K** says *This is one shared colony*. Both
+    build anywhere, next to each other's buildings, for a quarter of an hour at speed 1 to 3: no refusals, no
+    desync. **Home** takes each player to the biggest district center.
+8n. **Founding splits a shared game (beta7).** The host ticks **Allow founding colonies in a shared game** and
+    hosts the same shared save again. After the host unpauses, the friend is offered to found a colony: within 20
+    tiles of the shared colony's buildings the preview is red; farther away it is placed. Both logs have
+    `[Colony] Separate colonies switched on: slot 1 founded a colony in a shared game` and `[Colony] The shared
+    colony's N buildings are colony 0's` with the same N. Play ten more minutes without a desync (the colony digest
+    is compared from now on); save, reload and host again: both colonies keep their land and buildings.
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*

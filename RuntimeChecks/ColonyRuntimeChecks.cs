@@ -412,6 +412,9 @@ internal static class ColonyRuntimeChecks
             // Tick once (the pause key while paused) bypasses TickBuckets, so it is refused in co-op.
             ("Timberborn.TickSystem.Ticker", "Timberborn.TickSystem", "TickOnce"),
             ("Timberborn.TimeSystemUI.SpeedControlPanel", "Timberborn.TimeSystemUI", "PauseOrTickOnce"),
+            // Dev mode turns every tool on; the Trading Post's button still stays hidden in a shared game.
+            ("Timberborn.ToolButtonSystem.ToolButton", "Timberborn.ToolButtonSystem", "get_ToolEnabled"),
+            ("Timberborn.DistributionSystem.DistrictCrossingInventoryInitializer", "Timberborn.DistributionSystem", "Initialize"),
         })
         {
             test($"Colony: the game still has {typeName.Split('.').Last()}.{method}", () =>
@@ -475,8 +478,10 @@ internal static class ColonyRuntimeChecks
             Assembly.Load("Timberborn.BlockSystem").GetType("Timberborn.BlockSystem.IBlockObjectValidator", true);
         });
 
-        // A trading post buffers 100 of each good. The mod rewrites the one place the game reads its fixed 30; if the
-        // game ever reads the number elsewhere, or not at all, these fail instead of crossings silently keeping 30.
+        // A Trading Post half buffers 100 of each good; a District Crossing keeps the game's 30. The mod passes the one
+        // place the game reads its fixed 30 through CapacityFor; if the game ever reads the number elsewhere, or not at
+        // all, or makes the inventory where the half's blueprint is not yet known, these fail instead of a Trading Post
+        // silently keeping 30 (or every crossing getting 100).
         var initializer = Assembly.Load("Timberborn.DistributionSystem")
             .GetType("Timberborn.DistributionSystem.DistrictCrossingInventoryInitializer", true)!;
         var capacityField = initializer.GetField("DistrictCrossingCapacity", all)!;
@@ -489,19 +494,87 @@ internal static class ColonyRuntimeChecks
                 throw new Exception("read by: " + string.Join(", ", readers));
         });
 
-        test("Colony: the buffer patch turns that read into 100", () =>
+        var capacityPatcher = mod.GetType("BeaverBuddies.Colonies.TradingPostCapacityPatcher", true)!;
+        var capacityFor = capacityPatcher.GetMethod("CapacityFor", all)!;
+        test("Colony: the buffer patch keeps the game's read and passes it through CapacityFor", () =>
         {
             var codeType = Assembly.Load("0Harmony").GetType("HarmonyLib.CodeInstruction", true)!;
             var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(codeType))!;
             list.Add(Activator.CreateInstance(codeType, OpCodes.Ldsfld, capacityField)!);
             list.Add(Activator.CreateInstance(codeType, OpCodes.Ret, null)!);
-            var transpiler = mod.GetType("BeaverBuddies.Colonies.TradingPostCapacityPatcher", true)!.GetMethod("Transpiler", all)!;
+            var transpiler = mod.GetType("BeaverBuddies.Colonies.TradingPostCapacityTranspiler", true)!.GetMethod("Transpiler", all)!;
             var result = ((IEnumerable)transpiler.Invoke(null, new object[] { list })!).Cast<object>().ToList();
-            var opcode = (OpCode)codeType.GetField("opcode")!.GetValue(result[0])!;
-            object operand = codeType.GetField("operand")!.GetValue(result[0]);
-            if (opcode != OpCodes.Ldc_I4 || !(operand is int value) || value != 100)
-                throw new Exception($"got {opcode} {operand}");
-            if (result.Count != 2) throw new Exception("instructions were added or lost");
+            if (result.Count != 3) throw new Exception($"expected 3 instructions, got {result.Count}");
+            OpCode Op(int i) => (OpCode)codeType.GetField("opcode")!.GetValue(result[i])!;
+            object? Operand(int i) => codeType.GetField("operand")!.GetValue(result[i]);
+            if (Op(0) != OpCodes.Ldsfld || !Equals(Operand(0), capacityField)) throw new Exception($"the game's read became {Op(0)} {Operand(0)}");
+            if (Op(1) != OpCodes.Call || !Equals(Operand(1), capacityFor)) throw new Exception($"then {Op(1)} {Operand(1)}");
+            if (Op(2) != OpCodes.Ret) throw new Exception("the rest changed");
+        });
+        test("Colony: a District Crossing keeps the game's 30; only a Trading Post half gets 100", () =>
+        {
+            var flag = capacityPatcher.GetField("tradingPost", all)!;
+            try
+            {
+                flag.SetValue(null, false);
+                if ((int)capacityFor.Invoke(null, new object[] { 30 })! != 30) throw new Exception("a District Crossing did not keep 30");
+                flag.SetValue(null, true);
+                if ((int)capacityFor.Invoke(null, new object[] { 30 })! != 100) throw new Exception("a Trading Post half did not get 100");
+            }
+            finally
+            {
+                flag.SetValue(null, false);
+            }
+        });
+        test("Colony: the game makes a half's inventory in Initialize(subject, decorator), which reads the 30", () =>
+        {
+            var initialize = initializer.GetMethod("Initialize", all) ?? throw new Exception("Initialize is gone");
+            var parameters = initialize.GetParameters();
+            // The patch's Prefix takes the half by this name.
+            if (parameters.Length != 2 || parameters[0].Name != "subject" || parameters[0].ParameterType.Name != "DistrictCrossingInventory")
+                throw new Exception("its parameters are now: " + string.Join(", ", parameters.Select(p => $"{p.ParameterType.Name} {p.Name}")));
+            if (!MethodsCalled(initialize).Any(m => m.Name == "AllowEveryGoodAsTakeable"))
+                throw new Exception("it no longer calls AllowEveryGoodAsTakeable");
+        });
+        test("Colony: a Trading Post half is known by its blueprint's spec before its inventory is made", () =>
+        {
+            // TemplateInstantiator.Instantiate: every component (specs included) is made, and the entity's component cache
+            // filled, before any decorator's initializer runs.
+            var instantiator = Assembly.Load("Timberborn.TemplateInstantiation").GetType("Timberborn.TemplateInstantiation.TemplateInstantiator", true)!;
+            var calls = MethodsCalled(instantiator.GetMethod("Instantiate", all)!).Select(m => m.Name).ToList();
+            int made = calls.IndexOf("InstantiateInactive"), initialized = calls.IndexOf("Invoke");
+            if (made < 0 || initialized < 0 || made > initialized) throw new Exception("it now calls: " + string.Join(", ", calls));
+        });
+
+        // A shared-colony game's save holds only what the Stability Fork's does. Every colony service that writes into a
+        // save asks for separate colonies before it asks the saver for anything; the few that decide by something else
+        // are named here, with why. (An IL order check: it cannot tell that the answer is used, only that it is asked.)
+        test("Colony: every colony saver asks for separate colonies before it writes", () =>
+        {
+            var decidedOtherwise = new Dictionary<string, string>
+            {
+                ["ColonyModeService"] = "its own Enabled is the mode",
+                ["ColonyScienceService"] = "on only in a separate-colonies game with separate science",
+                ["ColonyReach"] = "keeps land only from Begin, which only a separate-colonies game calls",
+            };
+            var savers = mod.GetTypes()
+                .Where(t => t.Namespace == "BeaverBuddies.Colonies" && t.GetInterfaces().Any(i => i.Name == "ISaveableSingleton" || i.Name == "IPersistentEntity"))
+                .ToList();
+            if (savers.Count < 10) throw new Exception($"only {savers.Count} savers found; the check lost them");
+            bool AsksFirst(Type t)
+            {
+                var calls = MethodsCalled(t.GetMethod("Save", all)!).Select(m => m.Name).ToList();
+                int asks = calls.IndexOf("get_IsSeparateColonies");
+                int writes = calls.FindIndex(name => name == "GetSingleton" || name == "GetComponent");
+                return asks >= 0 && (writes < 0 || asks < writes);
+            }
+            var ungated = savers.Where(t => !decidedOtherwise.ContainsKey(t.Name) && !AsksFirst(t)).Select(t => t.Name).ToList();
+            if (ungated.Count > 0) throw new Exception("these save without asking: " + string.Join(", ", ungated));
+            var gone = decidedOtherwise.Keys.Where(name => !savers.Any(t => t.Name == name)).ToList();
+            if (gone.Count > 0) throw new Exception("named but no longer savers: " + string.Join(", ", gone));
+            var owner = mod.GetType("BeaverBuddies.Colonies.DistrictOwner", true)!;
+            if (!MethodsCalled(owner.GetMethod("InitializeEntity", all)!).Any(m => m.Name == "get_IsSeparateColonies"))
+                throw new Exception("DistrictOwner gives district centers a slot without asking for separate colonies");
         });
 
         // In a multiplayer game the "instant" navmesh is brought up to date at the start of each tick instead of at the

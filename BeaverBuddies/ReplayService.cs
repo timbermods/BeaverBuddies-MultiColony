@@ -788,9 +788,15 @@ namespace BeaverBuddies
             {
                 // Add a heartbeat if needed to make sure all ticks have
                 // at least 1 event, so the clients know we're ticking.
-                // It carries the host's colony digest as of now (the end of the last tick): a guest plays the
-                // heartbeat first thing in this tick, at the same point, and compares.
-                EnqueueEventForSending(new HeartbeatEvent { digest = ColonyDigest.Value, changes = ColonyDigest.Changes });
+                // In a separate-colonies game it carries the host's colony digest as of now (the end of the last tick):
+                // a guest plays the heartbeat first thing in this tick, at the same point, and compares. A shared game's
+                // carries none, so nothing but the Stability Fork's own checks can stop it.
+                bool colonies = ColonyModeService.IsSeparateColonies;
+                EnqueueEventForSending(new HeartbeatEvent
+                {
+                    digest = colonies ? ColonyDigest.Value : (ulong?)null,
+                    changes = colonies ? ColonyDigest.Changes : (int?)null,
+                });
             }
             // Replay and send events at the change of a tick always.
             // For the server, sending events allows clients to keep playing.

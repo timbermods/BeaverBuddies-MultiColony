@@ -122,7 +122,9 @@ namespace BeaverBuddies.Colonies
             if (io != null) lastRole = RoleOf(io);
             if (_devModeManager.Enabled) devModeUsed = true;
             ReplayService replay = SingletonManager.GetSingleton<ReplayService>();
-            if (replay != null && replay.IsDesynced && !desyncReported)
+            // Written by itself (and copied) only in a separate-colonies game; in a shared game the Stability Fork's own
+            // desync dialog is all there is, and the key still writes one.
+            if (replay != null && replay.IsDesynced && !desyncReported && ColonyModeService.IsSeparateColonies)
             {
                 desyncReported = true;
                 WriteReport("this computer desynced");
@@ -133,8 +135,8 @@ namespace BeaverBuddies.Colonies
         {
             ticks++;
             ticksThisSecond++;
-            // In every co-op game (a shared game has a digest and marks too), not only with separate colonies.
-            if (EventIO.IsNull) return;
+            // In a separate-colonies co-op game: a shared game has no colony state to check.
+            if (EventIO.IsNull || !ColonyModeService.IsSeparateColonies) return;
             int day = _dayNightCycle.DayNumber;
             if (day == checkedDay) return;
             bool first = checkedDay == int.MinValue;

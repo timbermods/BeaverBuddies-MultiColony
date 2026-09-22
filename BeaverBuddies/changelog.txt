@@ -1,3 +1,9 @@
+v1.4.0-beta7 (BeaverBuddies MultiColony)
+* With separate colonies off, a game plays as in the Stability Fork: no colony bookkeeping, checks or save data, no Trading Post, and District Crossings hold the game's 30 again (a Trading Post half still holds 100).
+* Founding a colony in a shared save is its own host setting, "Allow founding colonies in a shared game", off by default. "Separate colonies for new games" decides new games only.
+* Home goes to the biggest district in a shared game; after a desync, picking the old speed again works.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta6 (BeaverBuddies MultiColony)
 * Options, Player cursors: a card at the top, "You, in the chat", lets you pick the color you see your own name in. Only you see it; others still see your Ping Color, or the color for your player number.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.

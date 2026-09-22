@@ -87,6 +87,8 @@ namespace BeaverBuddies.Colonies
 
         public void Save(ISingletonSaver singletonSaver)
         {
+            // Separate colonies only: a shared game's save holds only what the Stability Fork's does.
+            if (!ColonyModeService.IsSeparateColonies) return;
             IObjectSaver saver = singletonSaver.GetSingleton(LifecycleKey);
             saver.Set(AwayDaysKey, awayDays.ToList());
             saver.Set(DeadSinceKey, deadSince.ToList());

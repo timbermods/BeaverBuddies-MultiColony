@@ -5,6 +5,70 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta7
+
+**With separate colonies off, a game is the Stability Fork's.** A shared-colony game (a new game with the setting
+off, a shared save, a Stability Fork save) still ran parts of the colony model: it kept land and stamped buildings,
+counted them in a digest that could stop a guest, took a daily colony check, saved owners, a lifecycle entry and a
+table of players' ids and names, and its District Crossings held 100 of a good. All of that is now for
+separate-colonies games only, so a shared game plays, checks itself and saves as the Stability Fork does.
+- **Founding in a shared game is its own setting, off by default.** *Separate colonies* did two jobs: whether a new
+  game has a colony per player, and whether a player may found a colony in a shared save, which splits it into
+  colonies for good. At its default (on), hosting an old shared save offered every guest without a district a
+  founding at the first tick. Now **Separate colonies for new games (beta)** (on) decides new games only, and
+  **Allow founding colonies in a shared game (beta)** (off) decides the second: latched when hosting starts and told
+  to guests (`Settings.FoundingInSharedGames`, `ColonySession.HostAllowsFounding`,
+  `InitializeClientEvent.foundingInSharedGame`). A separate-colonies save allows founding whatever it says. Ctrl+K in
+  a shared game that does not allow it says so.
+- **District Crossings hold the game's 30 of a good again**, in every game; only a Trading Post half holds 100
+  (`ExchangeTerms.MaxAmount`). The patch keeps the game's read and passes it through
+  `TradingPostCapacityPatcher.CapacityFor`, which gives 100 only while a half carrying `MultiColonyTradingPostSpec`
+  has its inventory made (the game puts a blueprint's specs on an entity before it initialises any decorator).
+  **A save from an earlier build** whose District Crossing holds more than 30 of a good across its two halves is
+  expected not to load: as it loads, the game reserves room on one half for the other half's goods
+  (`DistrictCrossingInventory.ReserveStock`), and that throws once they no longer fit (traced in the game's code, not
+  tried). Earlier builds' saves are not supported by this release: start a new game, or empty the crossings in the
+  earlier build first. Stability Fork saves are not affected (their crossings held 30).
+- **A shared game keeps no colony state.** No land (`ColonyReach` begins only with separate colonies: a
+  separate-colonies save or new game, or a founding that splits a shared game), no building stamps and no district
+  owners (a shared game's placements, starts and district centers get none), nothing counted in the colony digest
+  (`ColonyDigest.Gate`), no digest on the heartbeat (`HeartbeatEvent.digest` is null), no daily colony check, and no
+  diagnostics report written and copied by itself on a desync (Ctrl+Shift+J still writes one). Its save holds nothing
+  of this mod's: every colony saver asks for separate colonies first (the lifecycle, the seat table, marks, stewards,
+  wishes, working hours, the trade ledger, each crossing's exchange, building stamps and district owners; a shared
+  save from an earlier build that carries stamps or owners loses them at its next save), and the toolbar's locks
+  are the game's own.
+- **Splitting a shared game** (the host allows it and a player founds): on every computer, at the founding's tick,
+  every building standing becomes the first colony's (the stamps one change in the digest, the number of buildings;
+  the land each gives counted as it is added, in the order the game made them, the same on every computer), and land
+  is kept from then on. Before that, the founding is judged against the shared colony's land, worked out afresh from
+  the buildings on every computer at that tick (all colony 0's, so the order does not matter). The founding tool's
+  preview keeps the one it worked out until a building comes or goes. The new colony must still stand 20 tiles
+  from the shared colony.
+- **No Trading Post in a shared game's toolbar in dev mode either.** Dev mode (and the map editor) turns every tool
+  on whatever the disablers say; a postfix on `ToolButton.ToolEnabled` keeps it hidden, so the map editor no longer
+  offers it either (the map editor is never a separate-colonies game).
+- **Home in a shared game** goes to the biggest district center; for a guest it went nowhere.
+- **After a desync, picking the old speed again works.** The pause a desync forces now clears the pick too
+  (`ReplayService.SetChosenSpeed(0)`); before, the pick stayed and choosing it again was ignored as a no-op (a
+  beta5 slip, in every game).
+- Still in a shared game, because it is co-op in general: the desync fixes (gates, automation, planting on sliced
+  views, dev mode's shortcuts, Tick once, joined district roads), the performance pass, a guest's pending actions,
+  the start prompt, the speed boost, going to a player, your own chat color and the diagnostics key. MultiColony and
+  the Stability Fork still cannot join each other's games.
+- Docs: README (a *One shared colony* section), TWO-COLONIES.md, ALPHA-TEST-SCRIPTS.md (A22, A22f, A22g, B8m, B8n),
+  the site, `Doc/ToTestV6.md` and the in-game changelog.
+- Checks: StabilityTests 301 (2 new: one colony's land has no contested tiles and refuses a founding beside it, and
+  every Mod Settings tooltip within two lines of 112 characters, with both colony settings explained); RuntimeChecks
+  239 (6 new: the game's read passed through `CapacityFor`, 30 for a District Crossing and 100 for a Trading Post
+  half, the game making a half's inventory in `Initialize(subject, …)`, after its specs, every colony saver asking
+  for separate colonies before it asks the saver for anything, and the two newly hooked game methods). Both builds,
+  0 warnings. A review of the change before release found the older-save crossing load above (documented, not
+  patched: earlier builds' saves are out of scope), the stamps and owners still written in shared saves from earlier
+  builds, the preview's land being worked out again for every beaver or plant made, and the split's digest wording;
+  all but the first are fixed here.
+- Not seen in a game. Script A line 22 and Script B lines 8m and 8n are this release's.
+
 ## 1.4.0-beta6
 
 **Your own name in the chat, in a color you pick.** The chat colored your own name the way others see it: your Ping

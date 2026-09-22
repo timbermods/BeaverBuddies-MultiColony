@@ -7,20 +7,20 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 
 ![Timberborn 1.1.2.4](https://img.shields.io/badge/Timberborn-1.1.2.4-2a4034?labelColor=172620&style=flat-square) ![Status: beta](https://img.shields.io/badge/status-beta-e0812f?labelColor=172620&style=flat-square) [![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-2a4034?labelColor=172620&style=flat-square)](License.txt)
 
-[Install](#install) · [Start](#start-a-game) · [Playing](#playing-your-colony) · [Trading](#trading-posts) · [Handover](#when-a-colony-is-handed-over) · [Controls](#controls) · [Troubleshooting](#troubleshooting-and-reporting-problems) · [Full rules](TWO-COLONIES.md) · [Changelog](STABILITY-CHANGELOG.md)
+[Install](#install) · [Start](#start-a-game) · [Playing](#playing-your-colony) · [Trading](#trading-posts) · [Handover](#when-a-colony-is-handed-over) · [Controls](#controls) · [One shared colony](#one-shared-colony) · [Troubleshooting](#troubleshooting-and-reporting-problems) · [Full rules](TWO-COLONIES.md) · [Changelog](STABILITY-CHANGELOG.md)
 
 > [!WARNING]
 > **Beta.** Hosting, joining over Steam and founding a second colony have been played. This version's model
 > (colonies with their own land, trading posts and barter, colony handover) and the desync review's fixes (alpha11
-> to beta4) have **not been played yet**; they are covered by automated checks. Since alpha13 a guest whose colony
-> state differs from the host's stops at once, the tick it happens, so a bug in that check would also stop a healthy
+> to beta4) have **not been played yet**; they are covered by automated checks. Since alpha13, in a separate-colonies game, a guest whose
+> colony state differs from the host's stops at once, the tick it happens, so a bug in that check would also stop a healthy
 > game: the log line says which it was. Play on a copy of your save, keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
 
 MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
 (1.1.11), which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything
 those do still works: Steam invites, the connection panel and chat, pings, player cursors, and ordinary
-shared-colony co-op (turn **Separate colonies** off).
+shared-colony co-op, which plays as in the Stability Fork (see [One shared colony](#one-shared-colony)).
 
 ## Install
 
@@ -42,10 +42,13 @@ build cannot join.
 
 ## Start a game
 
-**1. Host: settings.** Main menu → **Mod Settings → BeaverBuddies** (both on by default):
+**1. Host: settings.** Main menu → **Mod Settings → BeaverBuddies**:
 
-- **Separate colonies (beta)**: each player runs their own colony.
-- **Separate science and unlocks per colony (beta)**: each colony earns its own science and unlocks its own
+- **Separate colonies for new games (beta)**, on: a new game gives each player their own colony. Off: one shared
+  colony, as in the Stability Fork. A save keeps the mode it was started in.
+- **Allow founding colonies in a shared game (beta)**, off: lets a player found their own colony in a shared save,
+  which splits it into separate colonies for good.
+- **Separate science and unlocks per colony (beta)**, on: each colony earns its own science and unlocks its own
   buildings. Chosen when a separate-colonies game begins, then fixed for the save.
 - **Hand over a colony after its player is away (days)**: 7 by default, 0 for never (see
   [when a colony is handed over](#when-a-colony-is-handed-over)).
@@ -53,8 +56,11 @@ build cannot join.
 **2. Host: pick a game.** Any save works, new or old, on any map.
 
 - **A new game on a BeaverBuddies multi-start map:** start 1 is the host's colony, start 2 the next player's, and so on.
-- **Anything else** (a standard map, an existing save): the district centers already there are the host's colony.
-  Every other player founds theirs after joining (step 5).
+- **A new game on a standard map, or a separate-colonies save:** the district centers already there are the host's
+  colony. Every other player founds theirs after joining (step 5).
+- **A shared save** (made with **Separate colonies for new games** off, or in the Stability Fork) stays one shared
+  colony, unless the host ticks **Allow founding colonies in a shared game**: then other players may found theirs,
+  and the first founding splits the save into colonies for good.
 
 **3. Host: save, then host.** Save the game. Open **Load Game**, select that save and choose **Host co-op game**
 (instead of Load). Invite your friend with **Invite Friends** (Steam), or give them your IP address (port **25565**).
@@ -158,7 +164,7 @@ you (the count in yellow).
   goods waiting to cross, or the other colony's waiting to be hauled away. Staff both halves, and keep storage room
   for what you receive, and houses for beavers.
 - **Import and export settings don't apply** at a Trading Post. They still move goods between your own districts
-  through District Crossings, as in the game (with the bigger buffer: every crossing holds 100, in every game).
+  through District Crossings, as in the game (a crossing holds the game's 30 of a good).
 - The panel also shows each side's round as a bar, what waits on your half, the post's **ledger** (each round that
   crossed there: when, what you gave, what you got), and what has passed each way between the two colonies.
 - Either of the two colonies trading through a post may remove it; no other colony can. Its two halves are placed as
@@ -195,10 +201,10 @@ handed over then. The player who lost their colony gets a notice and may **found
 
 | Key | Action |
 |---|---|
-| **Ctrl+K** | Found your colony (a player without one) |
+| **Ctrl+K** | Found your colony (a player without one; in a shared game only if the host allows it) |
 | **Ctrl+L** | Show every colony's land (it also shows while you hold a building, planting, cutting or demolishing tool) |
 | **Ctrl+T** | Trading posts and colonies |
-| **Home** | Back to your colony (its biggest district center); clicking a name in the connection panel takes your camera to that player instead |
+| **Home** | Back to your colony (its biggest district center; in a shared game, the biggest); clicking a name in the connection panel takes your camera to that player instead |
 | **Ctrl+Shift+J** | Write a diagnostics report (also a button in the Ctrl+T window) |
 | **Ctrl+Shift+K** | *Debug only:* the host acts as the next colony, for testing alone (needs **Always Use Detailed Logging** and nobody connected) |
 
@@ -223,6 +229,20 @@ connection panel** and **Chat: start typing** are unbound until you set them the
   (population, land, exchanges), which helps with reports from long games.
 - **New text is English only.**
 
+## One shared colony
+
+With **Separate colonies for new games** off, a new game is ordinary shared co-op, as in the Stability Fork: one
+colony that every player builds together. A shared save (made that way, or in the Stability Fork) loads the same
+way and stays shared, unless the host ticks **Allow founding colonies in a shared game**.
+
+Nothing of the colony model runs in a shared game: no land, owners or colony rules, no Trading Post (not even in dev
+mode), District Crossings holding the game's 30 of a good, no colony check on the heartbeat or once a day, and a
+save with nothing of this mod's in it, the same as the Stability Fork's. What does apply is what MultiColony adds to
+co-op in general: its desync fixes (gates, automation, planting on sliced views, dev mode's shortcuts, Tick once,
+joined district roads), the performance pass, a guest's pending actions, the host being asked before joining
+closes, the speed boost, going to a player and **Home**, your own chat color, and the diagnostics report on
+**Ctrl+Shift+J**. Every player still needs MultiColony: it and the Stability Fork cannot join each other's games.
+
 ## Co-op basics
 
 Inherited from the Stability Fork. The full guides are in [STEAM-INVITES.md](STEAM-INVITES.md), [CONNECTION-PANEL.md](CONNECTION-PANEL.md)
@@ -244,8 +264,9 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 - **Mismatched mods** are flagged when someone joins. It's a warning, but a mod that changes the simulation will
   cause desyncs, so match mod lists. This mod's own files are checked, not warned about: a different zip, or a
   missing or edited `Buildings` or `TemplateCollections` folder, is refused at the join.
-- **Desyncs** can still happen. Colony state (owners, marks, science, exchanges, land) is compared with the host's
-  every tick, and in full once a day, so one is caught when it happens. The host uses **Save and Rehost**.
+- **Desyncs** can still happen. In a separate-colonies game, colony state (owners, marks, science, exchanges, land)
+  is compared with the host's every tick, and in full once a day, so one is caught when it happens. The host uses
+  **Save and Rehost**.
 
 ## Troubleshooting and reporting problems
 
@@ -254,8 +275,13 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   `TemplateCollections` files).
 - **"The Host has already changed the game … can no longer be joined":** the host placed or marked something while
   waiting paused. The host saves and rehosts; everyone joins before the host touches anything.
+- **A save from an earlier MultiColony build won't load:** 1.4.0-beta7 gave District Crossings back the game's room
+  for 30 of a good, and a crossing that holds more than that (the earlier builds allowed 100) is expected to stop
+  the save loading (traced in the game's code, not tried).
+  Start a new game, or empty the crossings in the earlier build first. Stability Fork saves load as before.
 - **Ctrl+K says the game has not started yet:** wait until the host unpauses once.
-- **Ctrl+K says the host has turned off Separate colonies:** the host ticks **Separate colonies (beta)** and rehosts.
+- **Ctrl+K says this is one shared colony:** the save is a shared game. To split it into colonies, the host ticks
+  **Allow founding colonies in a shared game (beta)** and rehosts; the first founding makes it separate for good.
 - **A desync dialog with `Colony state differs` in the log:** the every-tick colony check (alpha13) disagreed. It
   may be a bug in the check itself; send both players' `Player.log`: the line has both numbers and how many changes
   each side counted.
@@ -266,7 +292,8 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 - **Diagnostics report:** press **Ctrl+Shift+J** (or *Diagnostics report* in the Ctrl+T window) when something
   looks wrong: slow, stuck beavers, a colony misbehaving. The report is copied to the clipboard, ready to paste into
   a chat or an issue, and saved in `%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\BeaverBuddies-Reports`.
-  It is also written by itself when a computer desyncs: then send **every player's** latest report. It covers the
+  In a separate-colonies game it is also written by itself when a computer desyncs: then send **every player's**
+  latest report. It covers the
   frame and tick rate and the time spent in this mod's code, each colony's districts, homeless and jobless beavers,
   building statuses (such as unreachable) and trading posts (with what is holding an exchange up), the daily check
   of the colony state and the running digest that must match on every computer, and the last colony log lines.
@@ -288,10 +315,11 @@ not to the original BeaverBuddies project.
   is worked out from the buildings standing. Beavers' choices of work read only these, identically on every computer.
 - **Guests take the host's answers.** Whether a placement is still possible when it is played, what a founded colony
   starts with, the day's presence: each is decided once by the host and written into the action every computer
-  plays. Every change to colony state folds into a running digest that the host sends with each heartbeat; a guest
-  whose digest differs stops that tick.
-- The save gets a few small extra entries (the mode, who plays which colony, owners, marks, science, working hours,
-  exchanges, the trade ledger). Shared-colony games save only the building owners.
+  plays. In a separate-colonies game every change to colony state folds into a running digest that the host sends
+  with each heartbeat; a guest whose digest differs stops that tick.
+- A separate-colonies save gets a few small extra entries (the mode, who plays which colony, owners, marks,
+  science, working hours, exchanges, the trade ledger). A shared-colony game's save has none: it is the same as the
+  Stability Fork's.
 
 Design notes and the plans: [design/TRADING-EXCHANGE-PLAN.md](design/TRADING-EXCHANGE-PLAN.md),
 [design/TWO-COLONY-ALPHA-PLAN.md](design/TWO-COLONY-ALPHA-PLAN.md).

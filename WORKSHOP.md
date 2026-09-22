@@ -44,6 +44,9 @@ and its player can found again.
 **Desyncs are caught at once:** colony state is compared with the host's every tick, so a game that drifts stops
 the tick it happens instead of much later.
 
+**Or one shared colony:** turn *Separate colonies for new games* off and a game is the Stability Fork's shared
+co-op, with none of the colony model running.
+
 Up to four colonies. Built on BeaverBuddies by thomaswp and contributors, and on the BeaverBuddies Stability Fork.
 
 **Beta:** please play on a copy of your save and report problems (with every player's Player.log) at

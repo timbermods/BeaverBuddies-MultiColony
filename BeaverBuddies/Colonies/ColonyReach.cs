@@ -22,6 +22,7 @@ namespace BeaverBuddies.Colonies
     /// road is ever cut. A district center carries its owner's from the start. The rest take an owner later (see
     /// <see cref="ColonyReach"/>): buildings from older saves, those the game creates itself, and those placed before
     /// the game was hosted (placed directly, not as an action, so nothing named the placer).
+    /// Separate colonies only: in a shared game no building is stamped, and nothing is saved.
     /// </summary>
     public class ColonyStamp : BaseComponent, IPersistentEntity, IInitializableEntity
     {
@@ -35,6 +36,8 @@ namespace BeaverBuddies.Colonies
 
         public void Save(IEntitySaver entitySaver)
         {
+            // Separate colonies only (a shared save from an earlier build may still carry a stamp: it is not written again).
+            if (!ColonyModeService.IsSeparateColonies) return;
             if (slot >= 0) entitySaver.GetComponent(StampKey).Set(SlotKey, slot);
         }
 
@@ -51,10 +54,12 @@ namespace BeaverBuddies.Colonies
             if (slot < 0 && DistrictOwner.PendingSlot.HasValue) slot = DistrictOwner.PendingSlot.Value;
         }
 
-        internal void Stamp(int newSlot)
+        /// <param name="counted">Counted in the colony digest, one change per building. A shared game being split
+        /// stamps all its buildings at once and counts that as one change instead (ColonyReach.Begin).</param>
+        internal void Stamp(int newSlot, bool counted = true)
         {
             slot = newSlot;
-            ColonyDigest.Note("stamp", GetComponent<EntityComponent>()?.EntityId.GetHashCode() ?? 0, newSlot);
+            if (counted) ColonyDigest.Note("stamp", GetComponent<EntityComponent>()?.EntityId.GetHashCode() ?? 0, newSlot);
         }
     }
 
@@ -65,6 +70,10 @@ namespace BeaverBuddies.Colonies
     /// tick. The owners of tiles two colonies reach depend on that order, so they are saved.
     /// Trading Posts count for nobody: they stand between colonies. A District Crossing is its colony's, like any
     /// building.
+    ///
+    /// Separate colonies only. A shared game keeps no land: nothing is tracked, stamped, counted in the digest or saved,
+    /// as in the Stability Fork, until a separate-colonies game is loaded or made, or a founding splits the shared game
+    /// (<see cref="Begin"/>). Judging a founding in a shared game reads the shared colony's land, worked out when asked.
     /// </summary>
     public class ColonyReach : RegisteredSingleton, ILoadableSingleton, IPostLoadableSingleton, ITickableSingleton, ISaveableSingleton
     {
@@ -86,6 +95,16 @@ namespace BeaverBuddies.Colonies
         public int Ticks => ticks;
 
         private ColonyReachGrid map;
+
+        // Whether land is kept: from Begin (a separate-colonies game) on. Not saved: a save's mode says it again.
+        private bool active;
+
+        // A shared game's land, all the shared colony's (slot 0), for judging a founding in it. Worked out from the
+        // buildings standing when asked (in any order: one colony's land does not depend on it), kept for the founding
+        // tool's preview and dropped whenever a building comes or goes (not for every beaver, plant or stack of goods).
+        // The founding itself is judged on a fresh one (ForgetSharedLand), so every computer reads the same buildings at
+        // that tick. Never stamped, counted or saved; until the founding tool asks, never made at all.
+        private ColonyReachGrid sharedLand;
 
         // Made on first use: by then every service has loaded (entities load after them), so the map's size is known.
         // A map whose size was still unknown is made again, once the size is. Once made, it is returned without
@@ -140,25 +159,67 @@ namespace BeaverBuddies.Colonies
 
         public void PostLoad()
         {
-            // Buildings loaded from the save (tracking twice is harmless: each entity is counted once).
-            foreach (EntityComponent entity in _entityRegistry.Entities.ToList()) Track(entity);
-            // Rebuilding from the buildings cannot tell who reached a shared tile first; the save can.
-            foreach (var (x, y, slot) in savedOwners) grid.RestoreOwner(x, y, slot);
+            if (ColonyModeService.IsSeparateColonies)
+            {
+                // Buildings loaded from the save (a new game's mode may have begun already: tracking twice is harmless,
+                // each entity is counted once).
+                Begin(splittingSharedGame: false);
+                // Rebuilding from the buildings cannot tell who reached a shared tile first; the save can.
+                foreach (var (x, y, slot) in savedOwners) grid.RestoreOwner(x, y, slot);
+            }
             savedOwners.Clear();
+        }
+
+        /// <summary>
+        /// Starts keeping land: a separate-colonies game loaded or made (ColonyModeService), or a shared game split by a
+        /// founding, played on every computer at the same tick. A shared game has one colony, so every building in it is
+        /// that colony's (slot 0): being split, its buildings are stamped so at once, without the usual search, and the
+        /// digest counts the stamps as one change (the number of buildings). The land each gives is counted as it is
+        /// added, in the order the game lists its entities (the order they were made: the same on every computer).
+        /// </summary>
+        internal void Begin(bool splittingSharedGame)
+        {
+            active = true;
+            sharedLand = null;
+            List<EntityComponent> entities = _entityRegistry.Entities.ToList();
+            if (splittingSharedGame)
+            {
+                int stamped = 0;
+                foreach (EntityComponent entity in entities)
+                {
+                    ColonyStamp stamp = LandBuilding(entity);
+                    if (stamp == null || stamp.IsStamped) continue;
+                    stamp.Stamp(0, counted: false);
+                    stamped++;
+                }
+                ColonyDigest.Note("shared colony", stamped);
+                Plugin.Log($"[Colony] The shared colony's {stamped} buildings are colony 0's");
+            }
+            foreach (EntityComponent entity in entities) Track(entity);
         }
 
         public void Save(ISingletonSaver singletonSaver)
         {
+            if (!active) return;
             List<string> contested = grid.ContestedTiles().Select(t => $"{t.x}|{t.y}|{t.slot}").ToList();
             if (contested.Count > 0) singletonSaver.GetSingleton(ReachKey).Set(ContestedKey, contested);
         }
 
         [OnEvent]
-        public void OnEntityInitialized(EntityInitializedEvent entityInitializedEvent) => Track(entityInitializedEvent.Entity);
+        public void OnEntityInitialized(EntityInitializedEvent entityInitializedEvent)
+        {
+            if (active) Track(entityInitializedEvent.Entity);
+            else if (sharedLand != null && entityInitializedEvent.Entity.GetComponent<ColonyStamp>() != null) sharedLand = null;
+        }
 
         [OnEvent]
         public void OnEntityDeleted(EntityDeletedEvent entityDeletedEvent)
         {
+            if (!active)
+            {
+                if (sharedLand != null && entityDeletedEvent.Entity.GetComponent<ColonyStamp>() != null) sharedLand = null;
+                return;
+            }
             EntityComponent entity = entityDeletedEvent.Entity;
             if (added.TryGetValue(entity, out var contribution))
             {
@@ -171,7 +232,7 @@ namespace BeaverBuddies.Colonies
 
         public void Tick()
         {
-            if (unstamped.Count == 0) return;
+            if (!active || unstamped.Count == 0) return;
             // At the first tick as well, so a save's unstamped buildings give their colony its land before anyone can
             // found a colony beside them (founding waits for the first tick).
             if (++ticks != 1 && ticks % UnstampedCheckInterval != 0) return;
@@ -227,14 +288,23 @@ namespace BeaverBuddies.Colonies
             return grid.SoleOwner(blockObject.PositionedBlocks.GetAllCoordinates().Select(c => (c.x, c.y)));
         }
 
+        /// <summary>A placed building that gives its colony land (not a preview, not a Trading Post): its stamp. Else null.</summary>
+        private static ColonyStamp LandBuilding(EntityComponent entity)
+        {
+            if (entity == null) return null;
+            ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
+            if (stamp == null) return null;
+            BlockObject blockObject = entity.GetComponent<BlockObject>();
+            if (blockObject == null || blockObject.IsPreview || !blockObject.Positioned) return null;
+            if (TradingPosts.IsTradingPostBuilding(entity)) return null;
+            return stamp;
+        }
+
         private void Track(EntityComponent entity)
         {
             if (entity == null || added.ContainsKey(entity)) return;
-            ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
+            ColonyStamp stamp = LandBuilding(entity);
             if (stamp == null || unstampedSet.Contains(stamp)) return;
-            BlockObject blockObject = entity.GetComponent<BlockObject>();
-            if (blockObject == null || blockObject.IsPreview || !blockObject.Positioned) return;
-            if (TradingPosts.IsTradingPostBuilding(entity)) return;
             // A district center is its owner's from the moment it is made (saved with it), whether it was founded, a
             // map's start, or the game's own starting building, which no action places.
             DistrictOwner districtOwner = entity.GetComponent<DistrictOwner>();
@@ -252,11 +322,32 @@ namespace BeaverBuddies.Colonies
             BlockObject blockObject = entity ? entity.GetComponent<BlockObject>() : null;
             if (blockObject == null || !blockObject.Positioned || added.ContainsKey(entity)) return;
             long started = ColonyProfiler.Start();
-            var tiles = blockObject.PositionedBlocks.GetAllCoordinates()
-                .Select(c => (c.x, c.y)).Distinct().ToList();
+            var tiles = Footprint(blockObject);
             grid.Apply(slot, tiles, +1);
             added[entity] = (slot, tiles);
             ColonyProfiler.Stop(Bookkeeping, started);
+        }
+
+        private static List<(int, int)> Footprint(BlockObject blockObject) =>
+            blockObject.PositionedBlocks.GetAllCoordinates().Select(c => (c.x, c.y)).Distinct().ToList();
+
+        /// <summary>The land founding is judged against: the colonies' own, or in a shared game the shared colony's.</summary>
+        private ColonyReachGrid FoundingLand => active ? grid : SharedLand();
+
+        /// <summary>A founding is played: its judgement works the shared colony's land out again, as every computer does.</summary>
+        internal void ForgetSharedLand() => sharedLand = null;
+
+        private ColonyReachGrid SharedLand()
+        {
+            if (sharedLand != null && sharedLand.Width > 0) return sharedLand;
+            Vector3Int size = _blockService.Size;
+            var land = new ColonyReachGrid(size.x, size.y);
+            foreach (EntityComponent entity in _entityRegistry.Entities)
+            {
+                if (LandBuilding(entity) == null) continue;
+                land.Apply(0, Footprint(entity.GetComponent<BlockObject>()), +1);
+            }
+            return sharedLand = land;
         }
 
         // ---- questions ----
@@ -274,9 +365,25 @@ namespace BeaverBuddies.Colonies
         /// <summary>A colony may use its own land and land nobody holds.</summary>
         public bool MayUse(int slot, Vector3Int tile) => grid == null || grid.MayUse(slot, tile.x, tile.y);
 
-        /// <summary>Whether another colony reaches within 10 tiles of these: too close to found a colony.</summary>
-        public bool OthersReachNear(int slot, IEnumerable<Vector3Int> tiles) =>
-            grid != null && grid.OthersReachNear(slot, tiles.Select(t => (t.x, t.y)));
+        /// <summary>
+        /// Founding: whether the district center would stand on another colony's land. In a shared game (a founding
+        /// splits it), the shared colony's land.
+        /// </summary>
+        public bool OnOthersLand(int slot, IEnumerable<Vector3Int> tiles)
+        {
+            ColonyReachGrid land = FoundingLand;
+            return land != null && tiles.Any(t => !land.MayUse(slot, t.x, t.y));
+        }
+
+        /// <summary>
+        /// Founding: whether another colony reaches within 10 tiles of these (too close). In a shared game, the shared
+        /// colony.
+        /// </summary>
+        public bool OthersReachNear(int slot, IEnumerable<Vector3Int> tiles)
+        {
+            ColonyReachGrid land = FoundingLand;
+            return land != null && land.OthersReachNear(slot, tiles.Select(t => (t.x, t.y)));
+        }
 
         /// <summary>The outline of a colony's land (display).</summary>
         public IEnumerable<(int x, int y)> BorderTiles(int slot) => grid?.BorderTiles(slot) ?? Enumerable.Empty<(int, int)>();

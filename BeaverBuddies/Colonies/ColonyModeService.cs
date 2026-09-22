@@ -119,7 +119,8 @@ namespace BeaverBuddies.Colonies
 
         public void Save(ISingletonSaver singletonSaver)
         {
-            // A shared-colony game saves nothing, so its save is the same as before this mode existed.
+            // A shared-colony game saves nothing here, nor does any other colony service (see each Save): its save
+            // holds only what the Stability Fork's does.
             if (!Enabled) return;
             IObjectSaver saver = singletonSaver.GetSingleton(ColonyModeKey);
             saver.Set(EnabledKey, Enabled);
@@ -149,8 +150,10 @@ namespace BeaverBuddies.Colonies
             if (!Enabled) Plugin.Log($"[Colony] Separate colonies switched on: {how}");
             Enabled = true;
             StartingSettings ??= startingSettings;
+            // Land is kept from now on. A shared game being split: its buildings are all the first colony's.
+            if (!wasEnabled) ColonyReach.Instance?.Begin(splittingSharedGame: !newGame);
             if (!wasEnabled && separateScience) ColonyScienceService.Instance?.Enable(newGame);
-            // Display: the District Crossing needs no science from now on, and the toolbar locked it while loading.
+            // Display: from now on the toolbar's locks follow the local player's colony (RefreshToolLocks did nothing before).
             if (!wasEnabled) ColonyScienceService.Instance?.RefreshToolLocks();
         }
     }

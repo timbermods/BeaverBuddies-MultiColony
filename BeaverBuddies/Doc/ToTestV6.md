@@ -29,4 +29,7 @@ lines 15 to 19 (joined roads, a refused Trading Post half, gates, automation, th
   dark panel, whether the box gives the keyboard back after Enter or Esc, and where the tick rate settles above
   speed 7 on real computers;
 - the *You, in the chat* card at the top of Player cursors (beta6, Script B line 8l): whether it draws above the
-  players' cards, and whether your own chat name follows a pick there on your screen only.
+  players' cards, and whether your own chat name follows a pick there on your screen only;
+- a shared game (beta7, Script A line 22, Script B lines 8m and 8n): that it plays as the Stability Fork's (no
+  founding offer, no Trading Post, crossings holding 30, a save without `BeaverBuddies.` entries), and that a
+  founding the host allows splits it on both computers alike (the same building count in both logs).

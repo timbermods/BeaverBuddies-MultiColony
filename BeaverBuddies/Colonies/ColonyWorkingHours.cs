@@ -56,6 +56,8 @@ namespace BeaverBuddies.Colonies
 
         public void Save(ISingletonSaver singletonSaver)
         {
+            // Separate colonies only: a shared game's save holds only what the Stability Fork's does.
+            if (!ColonyModeService.IsSeparateColonies) return;
             List<string> entries = Enumerable.Range(0, hours.Length).Where(slot => hours[slot] != null)
                 .Select(slot => $"{slot}|{hours[slot].Value}").ToList();
             if (entries.Count > 0) singletonSaver.GetSingleton(HoursKey).Set(EntriesKey, entries);

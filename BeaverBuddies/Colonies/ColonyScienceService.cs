@@ -320,10 +320,11 @@ namespace BeaverBuddies.Colonies
         /// <summary>
         /// Display: lock and unlock the toolbar for the local player's colony. The game sets tool locks once, while
         /// loading; the local slot is known later (a guest is seated after joining) and can change (debug), so this
-        /// sets them again.
+        /// sets them again. A shared game keeps the game's own locks, as the Stability Fork.
         /// </summary>
         public void RefreshToolLocks()
         {
+            if (!ColonyModeService.IsSeparateColonies) return;
             // Display code that also runs inside replays (a hello, a founding, a handover): it names the local
             // player's colony itself, since nothing unnamed is the local player's there (see ActingSlot).
             int? previous = Context;

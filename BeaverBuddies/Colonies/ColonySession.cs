@@ -12,8 +12,9 @@ namespace BeaverBuddies.Colonies
         public const int HostPlayer = 0;
 
         /// <summary>
-        /// The host has separate colonies on for this session: a player without a colony may found one in any save.
-        /// Latched by the host when it starts hosting; told to guests.
+        /// The host allows founding a colony in a shared game this session (Mod Settings), which makes it a
+        /// separate-colonies game for good. A separate-colonies game allows founding whatever this says. Latched by the
+        /// host when it starts hosting; told to guests.
         /// </summary>
         public static bool HostAllowsFounding { get; private set; }
 
@@ -29,10 +30,10 @@ namespace BeaverBuddies.Colonies
         /// <summary>The host starts hosting: its settings are fixed for the whole session.</summary>
         public static void BeginHostSession()
         {
-            HostAllowsFounding = Settings.SeparateColoniesForNewGames;
+            HostAllowsFounding = Settings.FoundingInSharedGamesAllowed;
             HostSeparateScience = Settings.SeparateScienceForNewColonies;
             HostSlotShift = 0;
-            Plugin.Log($"[Colony] Hosting; founding a colony {(HostAllowsFounding ? "allowed" : "off")}");
+            Plugin.Log($"[Colony] Hosting; founding a colony in a shared game {(HostAllowsFounding ? "allowed" : "off")}");
         }
 
         /// <summary>A guest learns the host's choice from the host's first message.</summary>

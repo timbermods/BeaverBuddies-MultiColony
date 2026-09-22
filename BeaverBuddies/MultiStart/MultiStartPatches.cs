@@ -69,7 +69,8 @@ namespace BeaverBuddies.MultiStart
 
 			// Separate colonies are chosen for a new game here, before the first starting building is placed: new
 			// district centers read the mode for their trade defaults. Each start's district center belongs to the
-			// slot of its PlayerIndex; players without a start found theirs later.
+			// slot of its PlayerIndex; players without a start found theirs later. A shared game gives them no owner,
+			// as the Stability Fork.
 			bool separateColonies = Settings.SeparateColoniesForNewGames;
 			if (separateColonies)
 				GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Enable(ReadStartingSettings(startBuildingService), "new game with several starts",
@@ -81,7 +82,7 @@ namespace BeaverBuddies.MultiStart
 				// The starting locations are deleted below, so this is the last chance to read whose each one is.
 				int slot = startingLocation.GetComponent<StartingLocationPlayer>()?.PlayerIndex ?? 0;
 				if (slot < 0 || slot >= BeaverBuddies.Colonies.ColonySlotTable.MaxSlots) slot = 0;
-				BeaverBuddies.Colonies.DistrictOwner.PendingSlot = separateColonies ? slot : 0;
+				if (separateColonies) BeaverBuddies.Colonies.DistrictOwner.PendingSlot = slot;
 				try
 				{
 					__instance._startingBuildingSpawner.Place(startingLocation.GetComponent<BlockObject>().Placement);
@@ -90,8 +91,8 @@ namespace BeaverBuddies.MultiStart
 				{
 					BeaverBuddies.Colonies.DistrictOwner.PendingSlot = null;
 				}
-				__instance._startingBuildingSpawner.StartingBuilding?.GetComponent<BeaverBuddies.Colonies.DistrictOwner>()
-					?.SetSlot(separateColonies ? slot : 0);
+				if (separateColonies)
+					__instance._startingBuildingSpawner.StartingBuilding?.GetComponent<BeaverBuddies.Colonies.DistrictOwner>()?.SetSlot(slot);
 				// Register all start buildings
 				startBuildingService.RegisterStartingBuilding(__instance._startingBuildingSpawner.StartingBuilding);
 

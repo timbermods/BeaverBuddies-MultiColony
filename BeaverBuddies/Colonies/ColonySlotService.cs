@@ -88,7 +88,9 @@ namespace BeaverBuddies.Colonies
 
         public void Save(ISingletonSaver singletonSaver)
         {
-            if (Table.Entries.Count == 0) return;
+            // Separate colonies only: who plays which colony means nothing in a shared game, and its save holds only
+            // what the Stability Fork's does (no player ids or names).
+            if (!ColonyModeService.IsSeparateColonies || Table.Entries.Count == 0) return;
             singletonSaver.GetSingleton(SlotsKey).Set(TableKey, ColonySlotTable.Encode(Table.Entries));
         }
 

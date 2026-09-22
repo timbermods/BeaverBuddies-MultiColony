@@ -119,7 +119,8 @@ namespace BeaverBuddies.Colonies
 
         public void Save(ISingletonSaver singletonSaver)
         {
-            if (totals.Count == 0) return;
+            // Separate colonies only: a shared game's save holds only what the Stability Fork's does.
+            if (!ColonyModeService.IsSeparateColonies || totals.Count == 0) return;
             singletonSaver.GetSingleton(LedgerKey).Set(EntriesKey,
                 totals.Select(t => $"{t.Key.Item1}|{t.Key.Item2}|{t.Key.Item3}|{t.Value}").ToList());
         }
@@ -153,31 +154,48 @@ namespace BeaverBuddies.Colonies
         StorableGood storableGood = StorableGood.CreateAsTakeable(good2);
         StorableGoodAmount good = new StorableGoodAmount(storableGood, DistrictCrossingCapacity);   // 30
         inventoryInitializer.AddAllowedGood(good);
+     * read in AllowEveryGoodAsTakeable, which Initialize(DistrictCrossingInventory subject, Inventory decorator) calls as
+     * each half is made or loaded: after the half's blueprint specs are on it (TemplateInstantiator adds them first).
      */
-    // A crossing half has room for 100 of each good instead of 30, in every game (the number is read when a crossing is
-    // made or loaded, before anything tells a Trading Post from a District Crossing, so it must not depend on either).
-    // At a Trading Post the room is only ever used for a round under way: one side's goods waiting on their half (at
-    // most ExchangeTerms.MaxAmount, which equals this), or the other colony's waiting to be hauled away after crossing.
-    [HarmonyPatch(typeof(DistrictCrossingInventoryInitializer), nameof(DistrictCrossingInventoryInitializer.AllowEveryGoodAsTakeable))]
+    // A Trading Post half has room for 100 of each good (ExchangeTerms.MaxAmount): at a Trading Post the room is only
+    // ever used for a round under way, one side's goods waiting on their half (at most MaxAmount), or the other colony's
+    // waiting to be hauled away after crossing. A District Crossing keeps the game's 30, in every game. Which one a half
+    // is comes from its blueprint (MultiColonyTradingPostSpec), never from the game mode, so it is the same everywhere.
+    [HarmonyPatch(typeof(DistrictCrossingInventoryInitializer), nameof(DistrictCrossingInventoryInitializer.Initialize))]
     static class TradingPostCapacityPatcher
     {
-        public const int Capacity = 100;
+        public const int Capacity = ExchangeTerms.MaxAmount;
 
+        // True only while a Trading Post half's inventory is being made (on the main thread, one at a time).
+        private static bool tradingPost;
+
+        static void Prefix(DistrictCrossingInventory subject) => tradingPost = TradingPosts.IsTradingPostBuilding(subject);
+
+        static void Finalizer() => tradingPost = false;
+
+        /// <summary>The room for each good in the half being made: the game's own, unless it is a Trading Post's.</summary>
+        public static int CapacityFor(int gameCapacity) => tradingPost ? Capacity : gameCapacity;
+    }
+
+    // The game's number is still read; the Trading Post's is put in its place only for a Trading Post half.
+    [HarmonyPatch(typeof(DistrictCrossingInventoryInitializer), nameof(DistrictCrossingInventoryInitializer.AllowEveryGoodAsTakeable))]
+    static class TradingPostCapacityTranspiler
+    {
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
+            MethodInfo capacityFor = AccessTools.Method(typeof(TradingPostCapacityPatcher), nameof(TradingPostCapacityPatcher.CapacityFor));
             int replaced = 0;
             foreach (CodeInstruction instruction in instructions)
             {
+                yield return instruction;
                 if (instruction.opcode == OpCodes.Ldsfld && instruction.operand is FieldInfo field
                     && field.Name == "DistrictCrossingCapacity")
                 {
-                    instruction.opcode = OpCodes.Ldc_I4;
-                    instruction.operand = Capacity;
+                    yield return new CodeInstruction(OpCodes.Call, capacityFor);
                     replaced++;
                 }
-                yield return instruction;
             }
-            if (replaced == 0) Plugin.LogWarning("[Colony] The crossing capacity was not found; crossings keep the game's own");
+            if (replaced == 0) Plugin.LogWarning("[Colony] The crossing capacity was not found; Trading Posts keep the game's own");
         }
     }
 

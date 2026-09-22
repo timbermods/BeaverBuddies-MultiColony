@@ -10,7 +10,8 @@ namespace BeaverBuddies.Colonies
     /// <summary>
     /// The player slot a district center belongs to, saved with it. Everything else a colony owns is found through its
     /// district: a building by the district it belongs to, a beaver by the district it lives in. Added to every
-    /// district center (see ColonyConfigurator); outside a separate-colonies game every district center is slot 0's.
+    /// district center (see ColonyConfigurator); outside a separate-colonies game every district center is slot 0's, and
+    /// is given no slot, so nothing is saved.
     /// </summary>
     public class DistrictOwner : BaseComponent, IPersistentEntity, IInitializableEntity
     {
@@ -30,6 +31,8 @@ namespace BeaverBuddies.Colonies
 
         public void Save(IEntitySaver entitySaver)
         {
+            // Separate colonies only (a shared save from an earlier build may still carry an owner: it is not written again).
+            if (!ColonyModeService.IsSeparateColonies) return;
             if (slot >= 0) entitySaver.GetComponent(DistrictOwnerKey).Set(SlotKey, slot);
         }
 
@@ -55,8 +58,10 @@ namespace BeaverBuddies.Colonies
                 slot = System.Math.Max(0, legacy.OwnerOf(ColonyGameWorld.TileOf(blockObject.Coordinates)) - 1);
                 return;
             }
-            // Older saves, shared games and the game's own starting building: the first player's.
-            slot = 0;
+            // Older saves and the game's own starting building, in a separate-colonies game: the first player's. A shared
+            // game leaves it unset (Slot reads 0 all the same), so nothing is saved; if a founding splits the game later,
+            // its district centers stay the first colony's.
+            if (ColonyModeService.IsSeparateColonies) slot = 0;
         }
 
         /// <summary>For code that creates a district center and knows its owner (starting locations, founding).</summary>

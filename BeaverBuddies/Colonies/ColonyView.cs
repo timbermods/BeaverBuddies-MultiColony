@@ -103,9 +103,13 @@ namespace BeaverBuddies.Colonies
             return ownDistricts;
         }
 
-        /// <summary>This player's biggest district: where the batch control window opens.</summary>
+        /// <summary>
+        /// This player's biggest district: where the batch control window opens, and where the Home key goes. Outside a
+        /// separate-colonies co-op game (a shared game, or alone) every district is everyone's: the biggest of all.
+        /// </summary>
         public DistrictCenter MainDistrict() =>
-            OwnDistricts().OrderByDescending(dc => (dc.DistrictPopulation.NumberOfAdults + dc.DistrictPopulation.NumberOfChildren)).FirstOrDefault();
+            (Active ? OwnDistricts() : (IEnumerable<DistrictCenter>)_districtCenterRegistry.FinishedDistrictCenters)
+                .OrderByDescending(dc => (dc.DistrictPopulation.NumberOfAdults + dc.DistrictPopulation.NumberOfChildren)).FirstOrDefault();
 
         public ResourceCount ColonyResourceCount(string goodId)
         {
