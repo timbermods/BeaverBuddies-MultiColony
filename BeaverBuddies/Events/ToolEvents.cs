@@ -44,6 +44,12 @@ namespace BeaverBuddies.Events
         public Orientation orientation;
         public bool isFlipped;
         public string duplicationSourceID;
+        /// <summary>
+        /// Whether the building could still be placed when the host played this: written by the host (the event is
+        /// sent on after it is played) and read by guests, which then place or skip without checking again. Null until
+        /// the host has played it.
+        /// </summary>
+        public bool? placed;
 
         public override void Replay(IReplayContext context)
         {
@@ -54,7 +60,7 @@ namespace BeaverBuddies.Events
                 isFlipped ? FlipMode.Flipped : FlipMode.Unflipped);
             // Skip validation for district centers - the preview object interferes with nav mesh
             bool isDistrictCenter = prefabName != null && prefabName.StartsWith("DistrictCenter.");
-            if (!isDistrictCenter && !IsPlacementValid(context, placement, buildingSpec))
+            if (!isDistrictCenter && !MayPlace(context, placement, buildingSpec))
             {
                 Plugin.LogWarning($"Invalid placement for {prefabName} at {coordinates}");
                 return;
@@ -84,6 +90,26 @@ namespace BeaverBuddies.Events
             }
         }
 
+        /// <summary>
+        /// The check that the spot is still free and allowed, made once, by the host, at the tick the placement is
+        /// played: the answer is written into the event (<see cref="placed"/>) and the guests take it. Every computer
+        /// checked for itself before, by making and destroying a whole copy of the building each time (the game's
+        /// check needs an instance), so a guest paid that for every building coming back from the host, on top of
+        /// placing it: a dragged path of thirty tiles was thirty copies made and thrown away in one frame. Both
+        /// computers hold the same world at that tick, so the host's answer is the guest's, and if it were not, the
+        /// game's own placing throws here and the session stops with a message, instead of one computer placing and
+        /// the other silently skipping.
+        /// </summary>
+        private bool MayPlace(IReplayContext context, Placement placement, BuildingSpec spec)
+        {
+            // A guest takes the host's answer when it has one. Without one (an event the host has not played, which
+            // only a file replay of an old recording gives), it checks for itself as before.
+            if (placed.HasValue && EventIO.Get() is ClientEventIO) return placed.Value;
+            bool valid = IsPlacementValid(context, placement, spec);
+            placed = valid;
+            return valid;
+        }
+
         // Note: This may not catch every possible invalid placement (e.g. if terrain height changes or something)
         // but I think it should catch the vast majority of cases due to double placement.
         // Where the check's throwaway copies are made. Made once per game instead of asking the scene for all its root
@@ -105,6 +131,9 @@ namespace BeaverBuddies.Events
 
         private static bool IsPlacementValidTimed(IReplayContext context, Placement placement, BuildingSpec spec)
         {
+            // The blocks themselves first (the spot was taken since the click, the usual reason): the game's own
+            // check, from the spec, without an instance. Only a placement that passes it needs the full check below.
+            if (!context.GetSingleton<BlockValidator>().BlocksValid(spec.GetSpec<BlockObjectSpec>(), placement)) return false;
             var templateInstantiator = context.GetSingleton<TemplateInstantiator>();
             if (checkParent == null) checkParent = new GameObject("BeaverBuddies_PlacementChecks");
             // It's a bit wasteful to instantiate the object just to check if it's valid,
@@ -216,7 +245,7 @@ namespace BeaverBuddies.Events
         // list the replay marks.
         public override ColonyScope GetColonyScope() => prefabName == UNMARK
             ? ColonyScope.Global
-            : ColonyScope.Tiles(coordinates ?? inputBlocks, Colonies.ColonyGameWorld.TileKey);
+            : ColonyScope.Tiles(coordinates ?? inputBlocks, Colonies.ColonyGameWorld.TileOf);
 
         public List<Vector3Int> inputBlocks;
         public Ray ray;
@@ -278,7 +307,10 @@ namespace BeaverBuddies.Events
             {
                 prefabName = prefabName,
                 ray = ray,
-                inputBlocks = blocks,
+                // The game only levels the dragged blocks, and the replay marks the levelled tiles below instead
+                // (PlantingLeveledCoordinatesPatcher), so the blocks themselves are not sent: an area is hundreds of
+                // tiles, and this halves what every computer serializes, sends and reads for it.
+                inputBlocks = new List<Vector3Int>(),
                 // Levelled here, with this player's view: the tiles they saw highlighted.
                 coordinates = service._terrainAreaService.InMapLeveledCoordinates(blocks, ray).ToList(),
             };
@@ -420,7 +452,7 @@ namespace BeaverBuddies.Events
     {
         // Marking only where the actor's colony may work; unmarking only ever removes the actor's own marks.
         public override ColonyScope GetColonyScope() => wasAdded
-            ? ColonyScope.Tiles(coordinates, Colonies.ColonyGameWorld.TileKey)
+            ? ColonyScope.Tiles(coordinates, Colonies.ColonyGameWorld.TileOf)
             : ColonyScope.Global;
 
         public List<Vector3Int> coordinates;

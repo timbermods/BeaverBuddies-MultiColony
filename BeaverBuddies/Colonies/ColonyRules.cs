@@ -34,15 +34,20 @@ namespace BeaverBuddies.Colonies
         public bool IsFlipped;
     }
 
-    /// <summary>A list in an event that the rules may shorten in place, keeping the order of what is left.</summary>
-    public interface IColonyList
+    /// <summary>
+    /// A list in an event that the rules may shorten in place, keeping the order of what is left. Each item is judged
+    /// by a key: an entity id, or a map tile.
+    /// </summary>
+    public interface IColonyList<TKey>
     {
         int Count { get; }
         /// <summary>Removes every item <paramref name="keep"/> rejects and returns how many were removed.</summary>
-        int Filter(Func<string, bool> keep);
+        int Filter(Func<TKey, bool> keep);
         /// <summary>Counts the items <paramref name="keep"/> accepts without changing the list.</summary>
-        int CountKept(Func<string, bool> keep);
+        int CountKept(Func<TKey, bool> keep);
     }
+
+    public interface IColonyList : IColonyList<string> { }
 
     /// <summary>What an event touches, declared by the event itself (see ReplayEvent.GetColonyScope).</summary>
     public sealed class ColonyScope
@@ -51,6 +56,8 @@ namespace BeaverBuddies.Colonies
         public IReadOnlyList<string> EntityIds { get; private set; } = Array.Empty<string>();
         public ColonyPlacement Placement { get; private set; }
         public IColonyList List { get; private set; }
+        /// <summary>The tiles of a <see cref="ColonyScopeKind.Tiles"/> scope.</summary>
+        public IColonyList<ColonyTile> TileList { get; private set; }
         /// <summary>
         /// A trading post belongs to no one: either colony may remove it. Set on demolition actions only; running a
         /// half (workers, priority) stays with its district's owner, and a crossing between one colony's own districts
@@ -80,38 +87,44 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// Marking map tiles (trees to cut, crops to plant): only where the actor's colony may work, which is where it
-        /// reaches or where no other colony does. <paramref name="tileIdOf"/> names a tile for the world.
+        /// reaches or where no other colony does. <paramref name="tileOf"/> gives an item's tile. Judged as tiles, not
+        /// names: a dragged area is hundreds of items, judged on the marker's computer and twice more on the host.
         /// </summary>
-        public static ColonyScope Tiles<T>(List<T> items, Func<T, string> tileIdOf) =>
-            new ColonyScope { Kind = ColonyScopeKind.Tiles, List = new ColonyList<T>(items, tileIdOf) };
+        public static ColonyScope Tiles<T>(List<T> items, Func<T, ColonyTile> tileOf) =>
+            new ColonyScope { Kind = ColonyScopeKind.Tiles, TileList = new ColonyList<T, ColonyTile>(items, tileOf) };
 
         public static ColonyScope EntityList<T>(List<T> items, Func<T, string> entityIdOf, bool demolition = false) =>
             new ColonyScope { Kind = ColonyScopeKind.List, List = new ColonyList<T>(items, entityIdOf), CrossingsNeutral = demolition };
     }
 
-    internal sealed class ColonyList<T> : IColonyList
+    internal class ColonyList<T, TKey> : IColonyList<TKey>
     {
         private readonly List<T> items;
-        private readonly Func<T, string> idOf;
+        private readonly Func<T, TKey> keyOf;
 
-        public ColonyList(List<T> items, Func<T, string> idOf)
+        public ColonyList(List<T> items, Func<T, TKey> keyOf)
         {
             this.items = items ?? new List<T>();
-            this.idOf = idOf;
+            this.keyOf = keyOf;
         }
 
         public int Count => items.Count;
-        public int Filter(Func<string, bool> keep) => items.RemoveAll(item => !keep(idOf(item)));
+        public int Filter(Func<TKey, bool> keep) => items.RemoveAll(item => !keep(keyOf(item)));
 
-        public int CountKept(Func<string, bool> keep)
+        public int CountKept(Func<TKey, bool> keep)
         {
             int kept = 0;
             foreach (T item in items)
             {
-                if (keep(idOf(item))) kept++;
+                if (keep(keyOf(item))) kept++;
             }
             return kept;
         }
+    }
+
+    internal sealed class ColonyList<T> : ColonyList<T, string>, IColonyList
+    {
+        public ColonyList(List<T> items, Func<T, string> idOf) : base(items, idOf) { }
     }
 
     /// <summary>The game state the rules read. Implemented against the game in ColonyGameWorld, and by fakes in tests.</summary>
@@ -127,7 +140,7 @@ namespace BeaverBuddies.Colonies
         bool IsUnlockedFor(int slot, string templateName);
 
         /// <summary>Whether this slot's colony may mark or build on a tile: it reaches it, or no other colony does.</summary>
-        bool MayUseTile(int slot, string tileId);
+        bool MayUseTile(int slot, ColonyTile tile);
 
         /// <summary>
         /// Why this slot's colony may not place this building here (another colony's area or roads), or None.
@@ -242,7 +255,7 @@ namespace BeaverBuddies.Colonies
                     return JudgeList(scope.List, scope.CrossingsNeutral, actorSlot, world, rewrite);
 
                 case ColonyScopeKind.Tiles:
-                    return JudgeTiles(scope.List, actorSlot, world, rewrite);
+                    return JudgeTiles(scope.TileList, actorSlot, world, rewrite);
 
                 case ColonyScopeKind.Founding:
                     // Judged by the founding service, which knows who has a colony already.
@@ -263,10 +276,10 @@ namespace BeaverBuddies.Colonies
             return Keep(list, keep, actorSlot, rewrite);
         }
 
-        private static ColonyVerdict JudgeTiles(IColonyList list, int actorSlot, IColonyWorld world, bool rewrite) =>
-            Keep(list, tile => string.IsNullOrEmpty(tile) || world.MayUseTile(actorSlot, tile), actorSlot, rewrite);
+        private static ColonyVerdict JudgeTiles(IColonyList<ColonyTile> tiles, int actorSlot, IColonyWorld world, bool rewrite) =>
+            Keep(tiles, tile => world.MayUseTile(actorSlot, tile), actorSlot, rewrite);
 
-        private static ColonyVerdict Keep(IColonyList list, Func<string, bool> keep, int actorSlot, bool rewrite)
+        private static ColonyVerdict Keep<TKey>(IColonyList<TKey> list, Func<TKey, bool> keep, int actorSlot, bool rewrite)
         {
             if (list == null || list.Count == 0) return ColonyVerdict.Allow;
             int total = list.Count;

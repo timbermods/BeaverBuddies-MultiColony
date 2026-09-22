@@ -338,18 +338,53 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    /// <summary>The host, once a day: which colonies' players are in the game. Kept so absence can be counted.</summary>
+    /// <summary>
+    /// The host, once a day: which colonies' players are in the game. Kept so absence can be counted. It also carries
+    /// the host's colony check for the day (ColonyDiagnostics.Fingerprint), taken as the host plays it, and every
+    /// guest takes its own at the same point and compares: colony state (owners, marks, science, exchanges, land) draws
+    /// no random numbers, so a difference in it would otherwise show only once it changed some beaver's random draw,
+    /// possibly days later and far from its cause, and might never show at all.
+    /// </summary>
     [Serializable]
     public class ColonyPresenceEvent : ReplayEvent
     {
         public int day;
         public List<int> presentSlots;
+        /// <summary>The host's colony check for the day, written as the host plays this; null from an older host.</summary>
+        public string check;
 
         // Only the host sends it (see ColonyRulesService).
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
 
-        public override void Replay(IReplayContext context) =>
+        public override void Replay(IReplayContext context)
+        {
             ColonyLifecycle.Instance?.Seen(presentSlots ?? new List<int>(), day);
+            Compare();
+        }
+
+        private void Compare()
+        {
+            string here;
+            try
+            {
+                here = ColonyDiagnostics.Instance?.Fingerprint();
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Colony] Could not take the colony check for the day: " + error.Message);
+                return;
+            }
+            if (here == null) return;
+            if (EventIO.Get() is ServerEventIO || check == null)
+            {
+                // The host: its own is what the guests compare with. Taken after Seen, so both sides count the same.
+                if (check == null) check = here;
+                return;
+            }
+            if (check == here) return;
+            Plugin.LogWarning($"[Colony] Colony state differs from the host's on day {day}: host [{check}] here [{here}]");
+            SingletonManager.GetSingleton<ReplayService>()?.HandleDesync();
+        }
 
         public override string ToActionString() => $"Colonies playing on day {day}: {string.Join(", ", presentSlots ?? new List<int>())}";
     }

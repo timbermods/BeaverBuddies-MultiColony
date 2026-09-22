@@ -5,6 +5,57 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## Unreleased
+
+**The alpha10 desync review's five findings, and a faster round trip for a guest's actions.** The review
+(`DESYNC-REVIEW-FINDINGS.md`) read every colony path of alpha10 for state that could differ between computers.
+
+- **Joining after someone acted at tick 0 (F1).** A player who joins is sent the save the host started from and only
+  the actions played after they connect, so anything played while the host still waited, paused, was missing from
+  their game; and the founding prompt asked every guest to do exactly that the moment they were seated. Now founding
+  and hand-over wait for the host's first tick (the prompt appears then; Ctrl+K and the Ctrl+T buttons say why until
+  then), and the first action that changes the game while paused closes joining, with a message saying to rehost.
+- **Dev mode's Ctrl keys (F2).** "Place finished" and "don't recover goods" were read where a building is placed or
+  removed, which in co-op is every computer: a player only holding Ctrl got a finished building, or no recovered
+  goods, on their computer alone. Both keys are off in a co-op game.
+- **Science named by no one (F3).** A relic that stood fully demolished and was then destroyed by a blast or a
+  collapse paid its science to each computer's own colony. Now a relic's reward names the colony whose mark or land
+  it stands on, and any science read or changed inside a tick or a replay without a colony goes to the first colony
+  on every computer, with a warning in the log.
+- **Founding in a save without recorded settings (F4)** read each computer's own difficulty specs; a mod changing the
+  default difficulty on one computer gave a different number of beavers. The host now writes the starting settings
+  into the founding action and every computer uses those.
+- **The blueprint files are part of the join check (F5).** A guest with the right DLL but a missing, stale or edited
+  `Buildings/` or `TemplateCollections/` folder is refused, not warned.
+- **The daily colony check is compared.** The host sends its colony fingerprint (owners, land, marks, science,
+  exchanges, hours, absence) with the day's presence; a guest whose own differs stops with the desync dialog at once,
+  with both lines in the log, instead of only when the difference changed a beaver's random draw.
+
+Faster for a guest (and the host):
+- **A guest no longer checks a placement again.** Every replayed building was checked by making and destroying a
+  whole copy of it (the game's check needs an instance), on every computer: a guest paid that for each building coming
+  back from the host, on top of placing it, and a dragged path of thirty tiles was thirty copies in one frame. The
+  host checks once, as the placement is played, and writes the answer into the action; guests take it. (If the two
+  games ever disagreed, the game's own placing throws and the session stops with a message, instead of one computer
+  placing and the other silently skipping, as before.) The host's check also tries the cheap block check first.
+- **Area marks are judged as tiles, not names.** Each tile of a dragged area was written as a string and parsed back,
+  on the marker's computer and twice on the host.
+- **A planting action is half the size:** the dragged blocks were sent along with the levelled tiles the replay marks,
+  and the replay only ever used the tiles.
+- **Compact JSON** for every action, and received actions are read straight from the parsed message instead of being
+  written out as text and parsed again.
+- The line logged for every action (with Unity's stack trace) is only written with detailed logging on.
+- Checks: StabilityTests 261 (founding and hand-over wait for the first tick; the blueprint check changes with a
+  byte and matches between two installs); RuntimeChecks 214 (the host's answers survive the event JSON; the events
+  that leave joining open are listed; a scan of simulation-reachable game methods for dev key reads; `Found` reads no
+  local specs; the planting scope is judged by tiles).
+
+Not done, and why:
+- **Playing a guest's action in the middle of the host's tick** would need both computers to apply it at the same
+  bucket of the tick and the host to send a word per bucket instead of per tick; the tick boundary stays.
+- Reusing one copy per building for the host's placement check (alpha5's reason stands); with guests no longer
+  checking, the copy is made once per placement instead of once per computer.
+
 ## 1.4.0-alpha10
 
 **The Trading Post is its own building, and the District Crossing is the game's own again.** Until now a District

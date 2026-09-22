@@ -161,8 +161,9 @@ namespace BeaverBuddies.Events
             // it anyway; this only explains it at once. Refused means not recorded and not done.
             if (ColonyRulesService.RefuseLocally(message)) return false;
 
-            // Optional: Log the message
-            Plugin.Log(message.ToActionString());
+            // A line per action, with detailed logging on. Every line goes through Unity's logger, which records a
+            // stack trace each time: a dragged path is dozens of actions in one frame.
+            if (Settings.Debug || Settings.VerboseLogging) Plugin.Log(message.ToActionString());
 
             // Record the event
             replayService.RecordEvent(message);

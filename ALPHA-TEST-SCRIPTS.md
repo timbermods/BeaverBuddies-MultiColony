@@ -91,7 +91,8 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 
 1. The friend is seated (log: `[Colony] Player 1 (…) plays slot 1`). The connection panel shows each name with its
    colony, e.g. *Alex (colony 2)*.
-2. On a standard map or an existing save: the friend sees the offer to place a district center and founds their colony.
+2. On a standard map or an existing save: once the host unpauses, the friend sees the offer to place a district
+   center and founds their colony. (Before that, Ctrl+K says the game has not started yet.)
 3. Each player tries Script A line 3 against the other's colony: refused. Then one player leaves; the other tries
    again: still refused.
 4. Build a trading post between the two colonies and run an exchange (Script A lines 7 to 10, one player per side;
@@ -104,17 +105,30 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 8. **Away.** The friend leaves; the host saves, then hosts again without them and plays on. The Ctrl+T window shows
    *player away (missed N days of hosted play)*. After the number of days in the host's setting (set it to 2 for this test), the friend's
    colony is handed to the host's. When the friend joins again, they get the notice and can found a new colony.
-9. Send both `Player.log` files. If a desync happens, first compare the mod lists at the top of both logs, then look
-   for the `Random state mismatch` line.
+9. **Dev mode and Ctrl.** The host turns dev mode on (Alt+Shift+Z). Ctrl-click a locked building to unlock it, then
+   place it with Ctrl still held; while the guest places paths, the host holds Ctrl+L; while the host holds Ctrl, a
+   building finishes demolition. Every building must look the same on both screens (a construction site, not a
+   finished building), and recovered goods appear on both.
+10. **A partial install.** The guest deletes `Buildings/DistrictManagement/MultiColonyTradingPost` from its mod folder
+    and tries to join: the join is refused with a build mismatch message, not merely warned about. Put the folder back.
+11. Both players press **Ctrl+Shift+J** before quitting, and diff the `day N tick T:` lines of the two reports: they
+    must be the same (a difference now also stops the guest at once, at the turn of the day).
+12. Send both `Player.log` files. If a desync happens, first compare the mod lists at the top of both logs, then look
+    for the `Random state mismatch` or `Colony state differs` line.
 
 ## Script C: scale (an evening, three or four players)
 
 Everyone installs the same zip; the host turns on **Always Use Detailed Logging** (the log then has one line a day
 per colony: population, land, exchanges).
 
-1. Three or four players each found a colony on a medium map, and link each pair of neighbours with a trading post.
+1. Everyone joins while the host waits paused; the host unpauses; then three or four players each found a colony on
+   a medium map, and link each pair of neighbours with a trading post. Try it the wrong way round once: player 2
+   presses Ctrl+K before the host unpauses (a notice says the game has not started); the host places a path while
+   paused, then player 3 tries to join (refused: the game was changed).
 2. Play at least two hours at your usual speed, with repeating exchanges running and colonies growing to 100+
    beavers. Note the tick rate and each player's frame rate from the connection panel every half hour.
 3. A player joins after the game has started (the host saves and hosts again with them). Then **swap hosts**.
 4. A player leaves for the rest of the evening: check their colony is handed over after the set number of days.
+   (Turn the host's detailed logging off for this step: with it on, the host plays every colony and none is ever
+   handed over.)
 5. Send every `Player.log` and your notes on the tick rate and frame rates.

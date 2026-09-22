@@ -1,3 +1,4 @@
+using BeaverBuddies.IO;
 using BeaverBuddies.Colonies;
 using Newtonsoft.Json.Linq;
 using TimberNet;
@@ -309,8 +310,8 @@ static class ColonyChecks
 
         yield return ("Colony: marking map tiles keeps only the tiles the colony may work", () =>
         {
-            Func<(int x, int y, int z), string> key = t => $"{t.x}|{t.y}|{t.z}";
-            var w = new FakeWorld().OthersTile("99|99|1");
+            Func<(int x, int y, int z), ColonyTile> key = t => new ColonyTile(t.x, t.y);
+            var w = new FakeWorld().OthersTile(new ColonyTile(99, 99));
             var tiles = new List<(int x, int y, int z)> { (1, 1, 1), (99, 99, 1), (2, 2, 1) };
             // Judged on the player's own computer: nothing changes, one tile would go.
             var local = ColonyRules.Judge(ColonyScope.Tiles(tiles, key), 1, w, false);
@@ -345,6 +346,51 @@ static class ColonyChecks
         });
 
         // ---- founding ----
+
+        yield return ("Colony: founding and hand-over wait for the host's first tick, while players can still join", () =>
+        {
+            // Before the first tick a later joiner is sent the save without them (F1 of the alpha10 review).
+            Check(ColonyRules.WaitsForStart(foundingOrHandover: true, hostTicksSinceLoad: 0));
+            Check(!ColonyRules.WaitsForStart(true, 1));
+            Check(!ColonyRules.WaitsForStart(true, 500));
+            // Everything else at tick 0 closes joining instead (ReplayService), so it is never held back.
+            Check(!ColonyRules.WaitsForStart(false, 0));
+        });
+
+        yield return ("Colony: the join check changes when a blueprint file changes, and matches between two copies", () =>
+        {
+            string root = Path.Combine(Path.GetTempPath(), "bb-digest-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                Equal("none", BlueprintDigest.Of(null));
+                Equal("none", BlueprintDigest.Of(Path.Combine(root, "missing")));
+                Directory.CreateDirectory(Path.Combine(root, "a", "Buildings", "Post"));
+                Directory.CreateDirectory(Path.Combine(root, "a", "TemplateCollections"));
+                Check(BlueprintDigest.Of(Path.Combine(root, "a")) == "none", "empty folders");
+                File.WriteAllText(Path.Combine(root, "a", "Buildings", "Post", "Post.json"), "{\"cost\": 10}");
+                File.WriteAllText(Path.Combine(root, "a", "TemplateCollections", "T.json"), "[1]");
+                string one = BlueprintDigest.Of(Path.Combine(root, "a"));
+                Check(one != "none" && one != "error" && one.Length == 16, one);
+                // A second install with the same files, under another path and separator style: the same check.
+                Directory.CreateDirectory(Path.Combine(root, "b", "Buildings", "Post"));
+                Directory.CreateDirectory(Path.Combine(root, "b", "TemplateCollections"));
+                File.WriteAllText(Path.Combine(root, "b", "Buildings", "Post", "Post.json"), "{\"cost\": 10}");
+                File.WriteAllText(Path.Combine(root, "b", "TemplateCollections", "T.json"), "[1]");
+                Equal(one, BlueprintDigest.Of(Path.Combine(root, "b") + Path.DirectorySeparatorChar));
+                // One byte changed (an edited price): refused at the join.
+                File.WriteAllText(Path.Combine(root, "b", "Buildings", "Post", "Post.json"), "{\"cost\": 11}");
+                Check(one != BlueprintDigest.Of(Path.Combine(root, "b")), "an edited blueprint gave the same check");
+                // A file missing (only the DLL was copied into an old folder): refused too.
+                File.Delete(Path.Combine(root, "a", "TemplateCollections", "T.json"));
+                Check(one != BlueprintDigest.Of(Path.Combine(root, "a")), "a missing file gave the same check");
+                // Files outside the blueprint folders (the DLLs, the docs) play no part.
+                File.WriteAllText(Path.Combine(root, "b", "README.md"), "hello");
+                File.WriteAllText(Path.Combine(root, "b", "Buildings", "Post", "Post.json"), "{\"cost\": 10}");
+                File.WriteAllText(Path.Combine(root, "a", "TemplateCollections", "T.json"), "[1]");
+                Equal(one, BlueprintDigest.Of(Path.Combine(root, "b")));
+            }
+            finally { try { Directory.Delete(root, true); } catch { } }
+        });
 
         yield return ("Colony: a player founds a colony once, where it joins no other colony's roads", () =>
         {
@@ -763,19 +809,19 @@ static class ColonyChecks
         readonly Dictionary<string, int> owners = new();
         readonly HashSet<string> crossings = new();
         readonly HashSet<(int, string)> locked = new();
-        readonly HashSet<string> othersTiles = new();
+        readonly HashSet<ColonyTile> othersTiles = new();
         readonly Dictionary<string, ColonyRefusal> conflicts = new();
 
         public FakeWorld Own(string id, int slot) { owners[id] = slot; return this; }
         public FakeWorld Crossing(string id) { crossings.Add(id); return this; }
         public FakeWorld Locked(int slot, string template) { locked.Add((slot, template)); return this; }
-        public FakeWorld OthersTile(string tile) { othersTiles.Add(tile); return this; }
+        public FakeWorld OthersTile(ColonyTile tile) { othersTiles.Add(tile); return this; }
         public FakeWorld Conflict(string template, ColonyRefusal refusal) { conflicts[template] = refusal; return this; }
 
         public int? OwnerOf(string entityId) => owners.TryGetValue(entityId, out int slot) ? slot : null;
         public bool IsCrossing(string entityId) => crossings.Contains(entityId);
         public bool IsUnlockedFor(int slot, string templateName) => !locked.Contains((slot, templateName));
-        public bool MayUseTile(int slot, string tileId) => !othersTiles.Contains(tileId);
+        public bool MayUseTile(int slot, ColonyTile tile) => !othersTiles.Contains(tile);
         public ColonyRefusal PlacementConflict(int slot, ColonyPlacement placement, out string detail)
         {
             detail = null;

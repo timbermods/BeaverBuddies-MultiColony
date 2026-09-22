@@ -66,8 +66,10 @@ namespace BeaverBuddies.IO
     {
         public JsonSettings()
         {
-            // TODO: Undo for production
-            Formatting = Formatting.Indented;
+            // Compact: every action is serialized here, parsed into a JObject, hashed, compressed and sent, and read
+            // back the same way on the other side. Indenting only made each step longer (the recording to file is
+            // a debugging aid, and the hash is over the JObject's own text, the same on every computer either way).
+            Formatting = Formatting.None;
             TypeNameHandling = TypeNameHandling.All;
             Converters.Add(new Vector3Converter());
             Converters.Add(new Vector3IntConverter());

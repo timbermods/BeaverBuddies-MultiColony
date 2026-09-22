@@ -69,12 +69,14 @@ internal static class ColonyRuntimeChecks
             object e = Activator.CreateInstance(speed, true)!;
             replayEvent.GetField("player")!.SetValue(e, 2);
             string text = (string)json.GetMethod("Serialize")!.MakeGenericMethod(replayEvent).Invoke(null, new[] { e })!;
-            if (!text.Contains("\"player\": 2")) throw new Exception("player missing from JSON: " + text);
+            if (!text.Contains("\"player\":2")) throw new Exception("player missing from JSON: " + text);
+            // Compact: what every action costs to write, hash, compress and read again is the text's length.
+            if (text.Contains("\n") || text.Contains(": ")) throw new Exception("the event JSON is not compact: " + text);
             object back = json.GetMethod("Deserialize")!.MakeGenericMethod(replayEvent).Invoke(null, new object[] { text })!;
             if ((int)replayEvent.GetField("player")!.GetValue(back)! != 2) throw new Exception("player lost on the way back");
             // An event from an older build has no player: it reads as the host's.
             object old = json.GetMethod("Deserialize")!.MakeGenericMethod(replayEvent).Invoke(null,
-                new object[] { text.Replace("\"player\": 2,", "").Replace(",\r\n  \"player\": 2", "").Replace(",\n  \"player\": 2", "") })!;
+                new object[] { text.Replace("\"player\":2,", "").Replace(",\"player\":2", "") })!;
             if ((int)replayEvent.GetField("player")!.GetValue(old)! != 0) throw new Exception("an event without player did not read as 0");
         });
 
@@ -100,6 +102,109 @@ internal static class ColonyRuntimeChecks
             if (again.GetType() != refusedType) throw new Exception("the refusal came back as " + again.GetType().Name);
             if ((string)refusedType.GetField("refusedRequestId")!.GetValue(again)! != "abcd1234:17") throw new Exception("the refused tag was lost");
             if (refusedType.GetField("refusal")!.GetValue(again)!.ToString() != "OtherColonyArea") throw new Exception("the reason was lost");
+        });
+
+        test("Colony: the host's answers written into events survive the trip through the event JSON", () =>
+        {
+            // What the host decides while playing an action travels to the guests in the action itself: whether a
+            // building could still be placed, what a founded colony starts with, the day's colony check.
+            var json = mod.GetType("BeaverBuddies.IO.JsonSettings", true)!;
+            MethodInfo serialize = json.GetMethod("Serialize")!.MakeGenericMethod(replayEvent);
+            MethodInfo deserialize = json.GetMethod("Deserialize")!.MakeGenericMethod(replayEvent);
+            object RoundTrip(object e) => deserialize.Invoke(null, new object[] { serialize.Invoke(null, new[] { e })! })!;
+
+            var placedType = mod.GetType("BeaverBuddies.Events.BuildingPlacedEvent", true)!;
+            object placed = Activator.CreateInstance(placedType, true)!;
+            if (placedType.GetField("placed")!.GetValue(RoundTrip(placed)) != null) throw new Exception("an unplayed placement came back decided");
+            placedType.GetField("placed")!.SetValue(placed, false);
+            if (!Equals(placedType.GetField("placed")!.GetValue(RoundTrip(placed)), false)) throw new Exception("the host's 'not placed' was lost");
+
+            var foundType = mod.GetType("BeaverBuddies.Colonies.FoundColonyEvent", true)!;
+            var settingsType = mod.GetType("BeaverBuddies.Colonies.ColonyStartingSettings", true)!;
+            object found = Activator.CreateInstance(foundType, true)!;
+            object settings = Activator.CreateInstance(settingsType)!;
+            settingsType.GetField("Adults")!.SetValue(settings, 7);
+            settingsType.GetField("ChildAgeMax")!.SetValue(settings, 0.75f);
+            settingsType.GetField("Food")!.SetValue(settings, 42);
+            foundType.GetField("startingSettings")!.SetValue(found, settings);
+            object foundBack = RoundTrip(found);
+            object settingsBack = foundType.GetField("startingSettings")!.GetValue(foundBack) ?? throw new Exception("the starting settings were lost");
+            if ((int)settingsType.GetField("Adults")!.GetValue(settingsBack)! != 7 || (int)settingsType.GetField("Food")!.GetValue(settingsBack)! != 42
+                || (float)settingsType.GetField("ChildAgeMax")!.GetValue(settingsBack)! != 0.75f)
+                throw new Exception("the starting settings changed on the way");
+            if (foundType.GetField("startingSettings")!.GetValue(RoundTrip(Activator.CreateInstance(foundType, true)!)) != null)
+                throw new Exception("a founding from an older host came back with settings");
+
+            var presenceType = mod.GetType("BeaverBuddies.Colonies.ColonyPresenceEvent", true)!;
+            object presence = Activator.CreateInstance(presenceType, true)!;
+            presenceType.GetField("check")!.SetValue(presence, "owners=1 stamps=2");
+            if ((string?)presenceType.GetField("check")!.GetValue(RoundTrip(presence)) != "owners=1 stamps=2") throw new Exception("the day's check was lost");
+        });
+
+        test("Colony: the events that leave joining open at tick 0 are listed for review", () =>
+        {
+            // The first action that changes the game closes joining (ReplayService): a later joiner would be sent the
+            // save without it. Only events a joiner can do without may say they change nothing.
+            var changes = replayEvent.GetMethod("ChangesGame", all)!;
+            var neutral = eventTypes
+                .Where(t => !(bool)changes.Invoke(RuntimeHelpers.GetUninitializedObject(t), null)!)
+                .Select(t => t.Name).OrderBy(n => n, StringComparer.Ordinal).ToList();
+            // ShowOptionsMenuEvent is a SpeedSetEvent (pausing to open the menu).
+            var expected = new[] { "ActionRefusedEvent", "ClientDesyncedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
+                "PlayerHelloEvent", "ShowOptionsMenuEvent", "SpeedSetEvent", "TraceLoggedForTickEvent" };
+            if (!neutral.SequenceEqual(expected))
+                throw new Exception("The list of events that leave joining open changed; review it and update this check: " + string.Join(", ", neutral));
+        });
+
+        test("Colony: no simulation-reachable game method reads a dev key the mod does not neutralise", () =>
+        {
+            // InputService.IsKeyHeld read inside code that runs on every computer during a replay or a tick (placing a
+            // building, deconstructing one) reads that computer's keyboard: the two dev keys on Ctrl did (F2 of the
+            // alpha10 review). Both are patched out of co-op games (Fixes/DevKeysCoopFix); any other such reader in
+            // these assemblies must be reviewed and either patched or listed here.
+            var readers = new List<string>();
+            foreach (string assemblyName in new[] { "Timberborn.BuildingTools", "Timberborn.RecoveredGoodSystem", "Timberborn.Demolishing",
+                "Timberborn.ConstructionSites", "Timberborn.BlockSystem", "Timberborn.EntitySystem", "Timberborn.PlantingUI", "Timberborn.Forestry" })
+            {
+                foreach (Type type in LoadableTypes(Assembly.Load(assemblyName)))
+                {
+                    MethodInfo[] methods;
+                    try { methods = type.GetMethods(all | BindingFlags.DeclaredOnly); }
+                    catch (Exception) { continue; }
+                    foreach (MethodInfo method in methods)
+                    {
+                        List<MethodBase> calls;
+                        // A method whose body references a native Unity module cannot be decoded here; it is not one of these.
+                        try { calls = MethodsCalled(method); }
+                        catch (Exception) { continue; }
+                        if (calls.Any(m => m.DeclaringType?.Name == "InputService" && (m.Name == "IsKeyHeld" || m.Name == "IsKeyDown")))
+                            readers.Add(type.Name + "." + method.Name);
+                    }
+                }
+            }
+            readers.Sort(StringComparer.Ordinal);
+            // Reviewed: the two neutralised in co-op; the dev mode plant spawner, which only the planting tool calls
+            // on the player's own computer (a dev tool that makes plants there alone, one of the documented dev mode
+            // desyncs, not a replayed path); and the tools' own input handling, which only runs on the player's own
+            // computer (it records an action; the action is what is played everywhere).
+            var reviewed = new[] { "BuildingGoodsRecoveryService.OnBuildingDeconstructed", "BuildingPlacer.ShouldBePlacedFinished",
+                "DevModePlantableSpawner.SpawnPlantables" };
+            var unreviewed = readers.Except(reviewed).Where(r => !r.Contains("Tool") && !r.Contains("Picker") && !r.Contains("Cursor")).ToList();
+            if (unreviewed.Count > 0) throw new Exception("review these key readers: " + string.Join(", ", unreviewed));
+            foreach (string needed in reviewed.Take(2))
+                if (!readers.Contains(needed)) throw new Exception("the game no longer reads a dev key in " + needed + "; the patch in DevKeysCoopFix may be stale");
+        });
+
+        test("Colony: a founding replay reads no difficulty specs of its own", () =>
+        {
+            // Founding uses the starting settings the host wrote into the event (F4): every computer's own specs
+            // (a mod changing the default difficulty on one of them) must stay out of Found.
+            var founding = mod.GetType("BeaverBuddies.Colonies.ColonyFoundingService", true)!;
+            var calls = MethodsCalled(founding.GetMethod("Found", all)!).Select(m => m.DeclaringType!.Name + "." + m.Name).ToList();
+            if (calls.Any(c => c.StartsWith("ISpecService.") || c == "ColonyFoundingService.StartingSettings"))
+                throw new Exception("Found reads local specs: " + string.Join(", ", calls.Where(c => c.StartsWith("ISpecService."))));
+            if (!calls.Contains("ColonyFoundingService.HostStartingSettings"))
+                throw new Exception("Found no longer falls back to HostStartingSettings for an older host's event");
         });
 
         test("Colony: a real serialized group of actions is stamped all the way down", () =>
@@ -375,6 +480,12 @@ internal static class ColonyRuntimeChecks
             var found = forbidden.Where(calls.Contains).ToList();
             if (found.Count > 0) throw new Exception("calls " + string.Join(", ", found));
         });
+    }
+
+    static IEnumerable<Type> LoadableTypes(Assembly assembly)
+    {
+        try { return assembly.GetTypes(); }
+        catch (ReflectionTypeLoadException e) { return e.Types.Where(t => t != null)!; }
     }
 
     /// <summary>The methods a method calls (call, callvirt), decoded from its IL, in order.</summary>

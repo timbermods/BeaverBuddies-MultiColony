@@ -193,9 +193,10 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// The colony state in a few short numbers, each the same on every computer that agrees. Sums over entities,
-        /// so the order things are found in does not matter.
+        /// so the order things are found in does not matter. Reads saved and tick-aligned state only, never anything
+        /// of this computer's own (its slot, its view), so it may be compared between computers (ColonyPresenceEvent).
         /// </summary>
-        private string Fingerprint()
+        public string Fingerprint()
         {
             long owners = 0, stamps = 0, exchanges = 0, districts = 0;
             var population = new int[ColonySlotTable.MaxSlots];

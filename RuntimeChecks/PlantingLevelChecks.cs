@@ -10,6 +10,9 @@ internal static class PlantingLevelChecks
 {
     const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
+    // Bound to the mod's ColonyTile at run time (see below): keeps the tiles in column x = 1.
+    private static bool KeepColumnOne<T>(T tile) => (int)typeof(T).GetField("X")!.GetValue(tile)! == 1;
+
     public static void Run(Assembly mod, Action<string, Action> test)
     {
         var unity = Assembly.Load("UnityEngine.CoreModule");
@@ -130,7 +133,7 @@ internal static class PlantingLevelChecks
             eventType.GetField("inputBlocks")!.SetValue(e, input);
             object Scope() => eventType.GetMethod("GetColonyScope")!.Invoke(e, null)!;
             object ListOf(object scope) =>
-                (scope.GetType().GetField("List", all)?.GetValue(scope) ?? scope.GetType().GetProperty("List", all)!.GetValue(scope))!;
+                (scope.GetType().GetField("TileList", all)?.GetValue(scope) ?? scope.GetType().GetProperty("TileList", all)!.GetValue(scope))!;
             int Count(object list) => (int)list.GetType().GetProperty("Count")!.GetValue(list)!;
 
             // Older event: the dragged blocks, as before.
@@ -141,7 +144,11 @@ internal static class PlantingLevelChecks
             object list = ListOf(Scope());
             if (Count(list) != 2) throw new Exception("the recorded tiles were not the ones judged");
             // The host removes the tiles the actor may not use from the list it judged: the list the replay marks.
-            list.GetType().GetMethod("Filter")!.Invoke(list, new object[] { (Func<string, bool>)(id => id.StartsWith("1|")) });
+            // The tiles are judged as the mod's own ColonyTile (a column: x and y), not as names.
+            Type tileType = eventType.Assembly.GetType("BeaverBuddies.Colonies.ColonyTile")!;
+            Delegate keepX1 = Delegate.CreateDelegate(typeof(Func<,>).MakeGenericType(tileType, typeof(bool)),
+                typeof(PlantingLevelChecks).GetMethod(nameof(KeepColumnOne), BindingFlags.Static | BindingFlags.NonPublic)!.MakeGenericMethod(tileType));
+            list.GetType().GetMethod("Filter")!.Invoke(list, new object[] { keepX1 });
             if (Show(Tiles(coordinates)) != Show(new[] { (1, 1, 3) })) throw new Exception($"recorded tiles left {Show(Tiles(coordinates))}");
             if (input.Count != 3) throw new Exception("the dragged blocks were trimmed instead");
         });

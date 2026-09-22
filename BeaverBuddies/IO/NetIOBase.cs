@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BeaverBuddies.Events;
+using Newtonsoft.Json;
 using TimberNet;
 using BeaverBuddies.Steam;
 
@@ -31,12 +32,16 @@ namespace BeaverBuddies.IO
             NetBase.Update();
         }
 
+        private static readonly JsonSerializer serializer = JsonSerializer.Create(JsonSettings.Default);
+
         private static ReplayEvent ToEvent(JObject obj)
         {
             //Plugin.Log($"Recieving {obj}");
             try
             {
-                return JsonSettings.Deserialize<ReplayEvent>(obj.ToString());
+                // Straight from the parsed message: writing it out as text and parsing it again was a third of the
+                // work of receiving a large action (a dragged area) for nothing.
+                return obj.ToObject<ReplayEvent>(serializer);
             }
             catch (Exception ex)
             {

@@ -41,10 +41,17 @@ host's colony. The connection panel shows each name with its colony number.
 **A new game on a multi-start map** (BeaverBuddies maps with several starting locations) gives start N to player N:
 the host's first colony is start 1, the next player's start 2, and so on.
 
+**Joining closes** at the host's first tick, or at the first action that changes the game while it is still
+paused (placing or marking something): a player joining after that would be sent the save the host started from,
+without it. The host should wait for everyone, then unpause.
+
 **Any other game** (a standard map, or any existing save): the district centers already there are the host's
 colony's. Every other player **founds** their colony once:
 
-1. On joining, a message offers to place a district center. (If you cancel, **Ctrl+K** opens the same tool.)
+1. Once the host has unpaused, a message offers to place a district center. (If you cancel, **Ctrl+K** opens the
+   same tool.) Not before: while the game is paused at the start, other players can still join, and a player who
+   joined after the founding would load the save without it. The host can hand colonies over (Ctrl+T) from the first
+   tick on, for the same reason.
 2. Place it at least 20 tiles from other colonies' buildings and paths (their land shows as coloured outlines), so
    both colonies have room to grow. It is free, needs no science, and appears **already built**, yours, with starting
    beavers, food and water (the new game's, or the Normal difficulty's for a save that did not record them).
@@ -222,6 +229,11 @@ the colony of the player using them:
 Its other tools, such as deleting any object or the dev panel's other buttons, change only the computer they are used
 on, and desync the game. A notice says so when dev mode is switched on in co-op.
 
+Two of dev mode's keys are off in co-op, on every computer: holding Ctrl while placing no longer places the building
+finished, and holding Ctrl while a building is removed no longer skips its recovered goods. The game read those keys
+where the building was placed or removed, which in co-op happens on every computer, so a player only holding Ctrl
+(for a shortcut, or the shared instant unlock) got a different building, or different goods, on their computer alone.
+
 **Tick once** (the pause key pressed while paused) is off in co-op: it would advance only the computer it is
 pressed on, and desync the game. A notice says so; unpause to play on.
 
@@ -245,11 +257,16 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   colony's pool, which only its player can spend.
 - A guest's planting tools follow the first colony's unlocks (the game builds that list before the guest is seated).
 - Dev mode's tools, apart from its instant unlock and *Finish now*, are not shared: using them desyncs a co-op game.
+  (Its "place finished" and "don't recover goods" keys, both Ctrl, are off in co-op.)
 - While a co-op game is paused, what was just built or removed updates its district (the district badge and highlight,
   and which district's builders a new construction site waits for) when the game resumes, at the same moment on every
   computer.
 - Placing is judged by the placing player's own tool: the check against joining two districts' roads is not repeated
-  in the multiplayer replay, where it read state that differs between computers.
+  in the multiplayer replay, where it read state that differs between computers. Whether the spot is still free when
+  the placement is played is checked by the host alone; guests take its answer.
+- Once a day the host sends its colony check (owners, land, marks, science, exchanges) with the day's presence, and
+  each guest compares it with its own. A difference stops that guest with the desync dialog at once, instead of
+  only when it happened to change a beaver's random draw.
 - Two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest from the
   connection panel.
 

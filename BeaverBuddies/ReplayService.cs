@@ -18,6 +18,7 @@ using System.Threading;
 using Timberborn.Automation;
 using Timberborn.Autosaving;
 using Timberborn.BlockObjectTools;
+using Timberborn.BlockSystem;
 using Timberborn.Buildings;
 using Timberborn.CoreUI;
 using Timberborn.DemolishingUI;
@@ -183,7 +184,8 @@ namespace BeaverBuddies
             ZiplineConnectionService ziplineConnectionService,
             Settings settings,
             TemplateInstantiator templateInstantiator,
-            AutomationResetter automationResetter
+            AutomationResetter automationResetter,
+            BlockValidator blockValidator
         )
         {
             //_tickWathcerService = AddSingleton(tickWathcerService);
@@ -218,6 +220,7 @@ namespace BeaverBuddies
             AddSingleton(settings);
             AddSingleton(templateInstantiator);
             AddSingleton(automationResetter);
+            AddSingleton(blockValidator);
 
             AddSingleton(this);
 

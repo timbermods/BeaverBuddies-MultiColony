@@ -54,8 +54,8 @@ namespace BeaverBuddies.Colonies
         public bool IsUnlockedFor(int slot, string templateName) =>
             ColonyScienceService.Instance?.IsUnlockedFor(slot, templateName) ?? true;
 
-        public bool MayUseTile(int slot, string tileId) =>
-            !TryParseTile(tileId, out Vector3Int tile) || (ColonyReach.Instance?.MayUse(slot, tile) ?? true);
+        public bool MayUseTile(int slot, ColonyTile tile) =>
+            ColonyReach.Instance?.MayUse(slot, new Vector3Int(tile.X, tile.Y, 0)) ?? true;
 
         /// <summary>
         /// A building may not stand on another colony's land, and neither it nor its doorstep may touch another
@@ -136,20 +136,7 @@ namespace BeaverBuddies.Colonies
 
         // ---- tiles in events ----
 
-        /// <summary>How an event's tile is named for the rules.</summary>
-        public static string TileKey(Vector3Int tile) => $"{tile.x}|{tile.y}|{tile.z}";
-
-        private static bool TryParseTile(string tileId, out Vector3Int tile)
-        {
-            tile = default;
-            string[] parts = tileId?.Split('|');
-            if (parts == null || parts.Length != 3 || !int.TryParse(parts[0], out int x) || !int.TryParse(parts[1], out int y)
-                || !int.TryParse(parts[2], out int z))
-                return false;
-            tile = new Vector3Int(x, y, z);
-            return true;
-        }
-
+        /// <summary>An event's tile for the rules (land is by column, so the height plays no part).</summary>
         public static ColonyTile TileOf(Vector3Int coordinates) => new ColonyTile(coordinates.x, coordinates.y);
 
         public static Placement ToPlacement(ColonyPlacement placement) =>
