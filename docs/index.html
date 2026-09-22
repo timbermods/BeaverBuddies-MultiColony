@@ -24,7 +24,7 @@
     </a>
     <nav class="nav" aria-label="Main">
       <a href="index.html" aria-current="page">Overview</a>
-      <a href="#new">New in beta6</a>
+      <a href="#new">New in beta7</a>
       <a href="#features">Features</a>
       <a href="#trading">Trading</a>
       <a href="install.html">Install</a>
@@ -41,13 +41,13 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta6</span> &middot; beta</span></div>
+      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta7</span> &middot; beta</span></div>
       <h1>One map.<br>A colony each.</h1>
       <p class="lede">Play Timberborn with friends without sharing a colony. Each player runs their own districts, land, beavers, stock and science on one shared map, and the colonies meet only at <b>trading posts</b>, where they barter. Co-op, not a race: nobody wins, and everyone can help.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.4.0-beta6</span></span>
+          <span>Download <span data-release="version">1.4.0-beta7</span></span>
         </a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
         <a class="btn btn-secondary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules</a>
@@ -134,7 +134,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.4.0-beta6</span></b><span>Latest pre-release</span></li>
+      <li><b><span data-release="version">1.4.0-beta7</span></b><span>Latest pre-release</span></li>
       <li><b>Up to 4 colonies</b><span>More players help the host's</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built against</span></li>
       <li><b>Steam invites</b><span>No port forwarding</span></li>
@@ -143,30 +143,30 @@
   </div>
 </div>
 
-<!-- ============ new in beta6 ============ -->
+<!-- ============ new in beta7 ============ -->
 <section class="tint" id="new">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">New in 1.4.0-beta6</div>
-      <h2>Your own chat color, a speed boost, and a color for every player</h2>
-      <p>What beta3 to beta6 added on top of beta2's nine conveniences. None of it changes the game unless a player uses it. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta6">beta6 release notes</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
+      <div class="eyebrow">New in 1.4.0-beta7</div>
+      <h2>One shared colony, exactly as in the Stability Fork</h2>
+      <p>With <b>Separate colonies for new games</b> off, none of the colony model runs any more, so a shared game plays, checks itself and saves as the Stability Fork does. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta7">beta7 release notes</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
     </div>
     <div class="grid grid-3">
       <article class="card">
-        <h3 style="margin-top:0">Your own name, in a color you pick</h3>
-        <p><b>beta6.</b> Under <b>Options, Player cursors</b>, a card at the top, <i>You, in the chat</i>, sets the color you see your own name in: a default swatch (what others see), ten presets or the Red/Green/Blue sliders, and Reset. Only you see it; other players keep whatever color they gave you.</p>
+        <h3 style="margin-top:0">A shared game is the Stability Fork's</h3>
+        <p><b>beta7.</b> No land, owners or colony check, no Trading Post (not even in dev mode), and a save with nothing of this mod's in it. What stays is what MultiColony adds to co-op in general: its desync fixes, the performance pass, the start prompt, the speed boost.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">A speed boost past the fastest button</h3>
-        <p><b>beta5.</b> At the top of the chat box, <b>&minus;</b> and <b>+</b> (or a typed number) add a constant to the speed everyone picked, so the fastest button with +0.5 runs at 7.5x. From &minus;6.5 to +23; the game never runs below 0.5x or above 30x. A guest catching up above speed 7 is no longer capped below it.</p>
+        <h3 style="margin-top:0">Splitting a shared save is the host's choice</h3>
+        <p><b>beta7.</b> A new setting, <i>Allow founding colonies in a shared game</i>, off by default, decides whether a player may found their own colony in a shared save, which splits it for good. <i>Separate colonies for new games</i> now decides new games only.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">Every player a color of their own</h3>
-        <p><b>beta4.</b> From Stability Fork 1.1.11: a player who has not changed Ping Color gets a color by player number (the host orange, then blue, green, pink, purple, teal, red and lime) on their cursor and in the chat, where only the name is colored. Colony colors stay the game's own.</p>
+        <h3 style="margin-top:0">District Crossings hold 30 again</h3>
+        <p><b>beta7.</b> Every District Crossing holds the game's 30 of a good, in every game; only a Trading Post half holds 100. <kbd>Home</kbd> works in a shared game too, and picking the old speed after a desync works again.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">Tooltips that fit on the screen</h3>
-        <p><b>beta3.</b> Every Mod Settings tooltip is one or two short lines, so none runs off the edge of the screen. Nothing in the game changed.</p>
+        <h3 style="margin-top:0">From beta3 to beta6</h3>
+        <p>Your own chat name in a color you pick, a speed boost past the fastest button, a color for every player on their cursor and in the chat (from Stability Fork 1.1.11), and Mod Settings tooltips that fit on the screen. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">Release notes</a></p>
       </article>
       <article class="card">
         <h3 style="margin-top:0">From beta2: nine conveniences</h3>
@@ -174,7 +174,7 @@
       </article>
       <article class="card">
         <h3 style="margin-top:0">Still unplayed</h3>
-        <p>532 automated checks cover all of it (3 new in beta6, for the color you see your own chat name in), and none of it has been seen in a running game yet. The test scripts' lines A22a to A22e and B8f to B8l are the ones to try first.</p>
+        <p>540 automated checks cover all of it (8 new in beta7, among them one that every colony saver asks for separate colonies first), and this build has not been played yet. The test scripts' lines A22, A22f, A22g, B8m and B8n are the ones to try first.</p>
       </article>
     </div>
   </div>
@@ -399,7 +399,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta6</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta7</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>
