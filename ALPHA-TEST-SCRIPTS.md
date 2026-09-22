@@ -209,6 +209,11 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     `[Colony] Separate colonies switched on: slot 1 founded a colony in a shared game` and `[Colony] The shared
     colony's N buildings are colony 0's` with the same N. Play ten more minutes without a desync (the colony digest
     is compared from now on); save, reload and host again: both colonies keep their land and buildings.
+8o. **Each journal is its colony's.** Wait until a beaver of the host's colony dies (old age, drowning, thirst) and a
+    child grows up in it: the host's notification journal (bottom left) lists both, the friend's lists neither. Then
+    the same the other way round. Save, reload and host again, the friend joins: once the friend's log says
+    `[Colony] This computer plays slot 1`, the friend's journal holds only colony 2's entries and the host's only
+    colony 1's (a dead beaver's body is gone after a day: its entry stays in its own colony's journal).
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*

@@ -879,6 +879,57 @@ static class ColonyChecks
             Check(!forward.MayUse(1, 20, 50) && forward.MayUse(1, 90, 10));
         });
 
+        // ---- each player's notification journal ----
+
+        yield return ("Colony: a beaver of the other colony who dies stays out of this player's journal", () =>
+        {
+            // The game unassigns a dead beaver's district before it posts the death, so the live owner is gone; the
+            // colony recorded as it died decides.
+            Check(!JournalFilter.ShouldShow(true, 0, false, true, null, 1), "slot 1's death shows in slot 0's journal");
+            Check(JournalFilter.ShouldShow(true, 1, false, true, null, 1), "slot 1's death is missing from slot 1's journal");
+            // After a reload the body is gone: the saved owner decides.
+            Check(!JournalFilter.ShouldShow(true, 0, false, false, null, 1), "a gone subject of slot 1 shows to slot 0");
+            Check(JournalFilter.ShouldShow(true, 1, false, false, null, 1), "a gone subject of slot 1 is missing for slot 1");
+        });
+
+        yield return ("Colony: the journal shows a living subject by its colony now, and everyone's entries to everyone", () =>
+        {
+            Check(JournalFilter.ShouldShow(true, 0, false, true, 0, null));
+            Check(!JournalFilter.ShouldShow(true, 0, false, true, 1, null));
+            // A beaver who moved through a Trading Post is the receiving colony's, whatever was recorded before.
+            Check(JournalFilter.ShouldShow(true, 1, false, true, 1, 0));
+            Check(!JournalFilter.ShouldShow(true, 0, false, true, 1, 0));
+            // Something in no district, and an entry about nothing, are shown to everyone.
+            Check(JournalFilter.ShouldShow(true, 0, false, true, null, null));
+            Check(JournalFilter.ShouldShow(true, 1, true, false, null, null));
+            // Alone, or before this player is seated, the journal is the game's.
+            Check(JournalFilter.ShouldShow(false, 0, false, true, 1, 1));
+            Check(JournalFilter.ShouldShow(false, -1, false, false, null, null));
+        });
+
+        yield return ("Colony: an entry about something gone whose colony nobody recorded is hidden while each sees their own", () =>
+        {
+            // A save from an earlier build: its journal may hold the other colony's deaths.
+            Check(!JournalFilter.ShouldShow(true, 0, false, false, null, null), "an unknown gone subject is shown");
+        });
+
+        yield return ("Colony: the journal's recorded colonies come back from a save, and a damaged entry is skipped", () =>
+        {
+            var a = new Guid("0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0");
+            var b = new Guid("11111111-2222-3333-4444-555555555555");
+            string text = JournalFilter.Encode(new[] { new KeyValuePair<Guid, int>(a, 1), new KeyValuePair<Guid, int>(b, 0) });
+            var back = JournalFilter.Decode(text);
+            Equal(2, back.Count);
+            Equal(a, back[0].Key); Equal(1, back[0].Value);
+            Equal(b, back[1].Key); Equal(0, back[1].Value);
+            Equal(0, JournalFilter.Decode("").Count);
+            Equal(0, JournalFilter.Decode(null).Count);
+            // Only a subject with a slot a colony can have is kept.
+            var damaged = JournalFilter.Decode($"nonsense,{a:N}:{ColonySlotTable.MaxSlots},{a:N}:-1,{b:N}:x,:1,{b:N}:3");
+            Equal(1, damaged.Count);
+            Equal(b, damaged[0].Key); Equal(3, damaged[0].Value);
+        });
+
         yield return ("Mod Settings: every tooltip fits the screen, and both colony choices are explained", () =>
         {
             // Mod Settings does not wrap a tooltip: one or two lines of at most 112 characters, or it runs off the screen.

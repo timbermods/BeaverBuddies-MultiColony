@@ -275,6 +275,11 @@ district); alerts; the notification journal. Selecting another colony's building
 figures alone. Still whole-map: the *Global* history graphs in F9/F10 and in a good's tooltip, which the game
 records for the whole map.
 
+The journal goes by the colony a beaver was in when it died, grew up or was born, and the save keeps whose each
+entry is, so after a reload it is still your colony's (it is listed again once you are seated). An entry saved by
+an earlier build whose beaver is gone is hidden, since nothing says whose it was. The game's own journal, which the
+save holds, is not changed: alone, you see every colony's entries.
+
 ## Road networks
 
 The game refuses to place a road, building or tubeway that would join two districts' roads, so two colonies' roads

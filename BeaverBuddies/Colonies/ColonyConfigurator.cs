@@ -59,6 +59,7 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyRulesService>().AsSingleton();
             containerDefinition.Bind<ColonyFoundingService>().AsSingleton();
             containerDefinition.Bind<ColonyViewService>().AsSingleton();
+            containerDefinition.Bind<ColonyJournal>().AsSingleton();
             containerDefinition.Bind<ColonyScienceService>().AsSingleton();
             containerDefinition.Bind<ColonyRoadNetworks>().AsSingleton();
             containerDefinition.Bind<ColonyTradeLedger>().AsSingleton();

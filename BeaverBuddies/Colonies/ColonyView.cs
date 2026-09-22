@@ -35,20 +35,18 @@ namespace BeaverBuddies.Colonies
         private readonly ResourceCountingService _resourceCountingService;
         private readonly PopulationService _populationService;
         private readonly WellbeingService _wellbeingService;
-        private readonly EntityRegistry _entityRegistry;
 
         private readonly PopulationData colonyPopulation = new PopulationData();
         private readonly PopulationData districtPopulation = new PopulationData();
 
         public ColonyViewService(DistrictCenterRegistry districtCenterRegistry,
             ResourceCountingService resourceCountingService, PopulationService populationService,
-            WellbeingService wellbeingService, EntityRegistry entityRegistry)
+            WellbeingService wellbeingService)
         {
             _districtCenterRegistry = districtCenterRegistry;
             _resourceCountingService = resourceCountingService;
             _populationService = populationService;
             _wellbeingService = wellbeingService;
-            _entityRegistry = entityRegistry;
         }
 
         public void Load() { }
@@ -175,12 +173,6 @@ namespace BeaverBuddies.Colonies
             }
             if (beavers == 0) return null;
             return (int)Math.Round((double)sum / beavers);
-        }
-
-        public bool IsOwnEntity(Guid entityId)
-        {
-            EntityComponent entity = _entityRegistry.GetEntity(entityId);
-            return entity == null || IsOwn(entity);
         }
     }
 
@@ -317,14 +309,17 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    // Births, deaths and the like of the other colony stay out of this player's journal. The saved journal is untouched.
+    // Births, deaths and the like of the other colony stay out of this player's journal (ColonyJournal: a death is
+    // judged by the colony the beaver died in, and the panel is listed again once this player is seated). The saved
+    // journal is untouched.
     [HarmonyPatch(typeof(NotificationPanel), nameof(NotificationPanel.AddNotification))]
+    [HarmonyPriority(Priority.Last)]
     static class ColonyViewNotificationPatcher
     {
         static bool Prefix(Notification notification)
         {
             if (!ColonyViewService.Active) return true;
-            return ColonyViewService.Instance.IsOwnEntity(notification.Subject);
+            return ColonyJournal.Instance?.ShouldShow(notification) ?? true;
         }
     }
 }

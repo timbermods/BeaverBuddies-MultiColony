@@ -327,6 +327,8 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.StatusSystem.StatusAggregator", "Timberborn.StatusSystem", "IsVisible"),
             ("Timberborn.StatusSystem.DynamicStatusAggregator", "Timberborn.StatusSystem", "IsVisible"),
             ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "AddNotification"),
+            // A dying beaver's colony is read before the game takes it out of its district (ColonyJournal).
+            ("Timberborn.Characters.Character", "Timberborn.Characters", "KillCharacter"),
             // Separate science and unlocks.
             ("Timberborn.ScienceSystem.ScienceService", "Timberborn.ScienceSystem", "get_SciencePoints"),
             ("Timberborn.ScienceSystem.ScienceService", "Timberborn.ScienceSystem", "AddPoints"),
@@ -459,6 +461,11 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.DistributionSystem.DistrictDistributableGoodProvider", "Timberborn.DistributionSystem", "_exportCache"),
             ("Timberborn.Population.PopulationService", "Timberborn.Population", "_populationDataCollector"),
             ("Timberborn.ConstructionSitesUI.ConstructionSiteDebugFragment", "Timberborn.ConstructionSitesUI", "_constructionSite"),
+            // The journal is listed again, through the colony filter, once this player is seated (ColonyJournal).
+            ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "_notifications"),
+            ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "_notificationView"),
+            ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "_latestNotification"),
+            ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "_latestNotificationElement"),
         })
         {
             test($"Colony: the game still has the field {typeName.Split('.').Last()}.{field}", () =>
@@ -544,6 +551,54 @@ internal static class ColonyRuntimeChecks
             var calls = MethodsCalled(instantiator.GetMethod("Instantiate", all)!).Select(m => m.Name).ToList();
             int made = calls.IndexOf("InstantiateInactive"), initialized = calls.IndexOf("Invoke");
             if (made < 0 || initialized < 0 || made > initialized) throw new Exception("it now calls: " + string.Join(", ", calls));
+        });
+
+        // Each player's journal judges a death by the colony the beaver died in, read in a prefix on KillCharacter
+        // (ColonyJournal). These fail if the game posts the death before it kills the beaver, or no longer takes the
+        // beaver out of its district on its Died event (then the prefix would not be needed, or not be enough).
+        test("Colony: the game kills a beaver before it posts the death, and its Died event takes it out of its district", () =>
+        {
+            var mortal = Assembly.Load("Timberborn.MortalSystem").GetType("Timberborn.MortalSystem.Mortal", true)!;
+            var calls = MethodsCalled(mortal.GetMethod("DieIfItIsTime", all)!).Select(m => m.DeclaringType!.Name + "." + m.Name).ToList();
+            int kill = calls.IndexOf("Character.KillCharacter"), post = calls.IndexOf("NotificationBus.Post");
+            if (kill < 0 || post < 0 || kill > post) throw new Exception("DieIfItIsTime now calls: " + string.Join(", ", calls));
+            var citizen = Assembly.Load("Timberborn.GameDistricts").GetType("Timberborn.GameDistricts.Citizen", true)!;
+            if (!MethodsCalled(citizen.GetMethod("OnDied", all)!).Any(m => m.Name == "RemoveFromDistrictsAssignment"))
+                throw new Exception("Citizen.OnDied no longer takes the beaver out of its district");
+            if (!MethodsCalled(citizen.GetMethod("Awake", all)!).Any(m => m.Name == "add_Died"))
+                throw new Exception("Citizen no longer listens to Character.Died");
+        });
+
+        // The journal is display only: its prefix on KillCharacter lets the game's method run, it asks the game only
+        // questions (and the save and the panel it lists), and the rule StabilityTests checks is the one it uses.
+        test("Colony: the journal only reads the game, and decides by the rule StabilityTests checks", () =>
+        {
+            var journal = mod.GetType("BeaverBuddies.Colonies.ColonyJournal", true)!;
+            var death = mod.GetType("BeaverBuddies.Colonies.ColonyJournalDeathPatcher", true)!;
+            var prefix = death.GetMethod("Prefix", all)!;
+            if (prefix.ReturnType != typeof(void)) throw new Exception("the death prefix can skip KillCharacter");
+            const BindingFlags declared = all | BindingFlags.DeclaredOnly;
+            var calls = new[] { journal, death }
+                .SelectMany(t => new[] { t }.Concat(t.GetNestedTypes(all)))
+                .SelectMany(t => t.GetMethods(declared).Cast<MethodBase>().Concat(t.GetConstructors(declared)))
+                .SelectMany(MethodsCalled)
+                .Where(m => m.DeclaringType!.Namespace?.StartsWith("Timberborn") == true || m.DeclaringType.Namespace == "UnityEngine")
+                .Select(m => m.DeclaringType!.Name + "." + m.Name)
+                .Distinct().OrderBy(n => n).ToList();
+            var asks = new[] { "GetComponent", "GetEntity", "TryGetSingleton", "Has", "Get" };
+            var allowed = new HashSet<string>
+            {
+                "NotificationBus.add_NotificationPosted", "NotificationPanel.AddNotification", "ISingletonSaver.GetSingleton",
+                "IObjectSaver.Set",
+            };
+            var changes = calls.Where(c => !c.Split('.')[1].StartsWith("get_") && !asks.Contains(c.Split('.')[1]) && !allowed.Contains(c))
+                .ToList();
+            if (changes.Count > 0) throw new Exception("calls " + string.Join(", ", changes));
+            var view = mod.GetType("BeaverBuddies.Colonies.ColonyViewNotificationPatcher", true)!;
+            if (!MethodsCalled(view.GetMethod("Prefix", all)!).Any(m => m.DeclaringType == journal && m.Name == "ShouldShow"))
+                throw new Exception("the journal's filter no longer asks ColonyJournal");
+            if (!MethodsCalled(journal.GetMethod("ShouldShow", all)!).Any(m => m.DeclaringType!.Name == "JournalFilter" && m.Name == "ShouldShow"))
+                throw new Exception("ColonyJournal no longer decides by JournalFilter");
         });
 
         // A shared-colony game's save holds only what the Stability Fork's does. Every colony service that writes into a
