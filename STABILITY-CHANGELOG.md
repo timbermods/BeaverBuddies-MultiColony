@@ -5,6 +5,25 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta11
+
+**Two guests joining over direct IP at once no longer freeze the host.** Left open in beta10 (the port's review found
+it; it was older than the port). As a guest's join finishes, the host sends it its start message
+(`InitializeClientEvent`) ahead of what was queued for it while its save went out. That message was written straight
+to every guest (`TimberServer.SendEventToClients` with `sendNow`), under the lock every broadcast takes. A second guest
+still receiving its save over a direct connection has its stream held by its own join thread for the whole paced save
+(about 1 MB/s), so the write waited for the rest of that save, and the host's game thread, whose tick broadcasts need
+the same lock, stood still with it: about a second for each MB of the save still to send. Now the start message is
+written at once only to the guest whose join is finishing (its stream is free); every other guest gets it the usual
+way, queued for one still receiving its save (sent in order after it) and written to the rest. Over Steam nothing was
+paced, so this happened over direct IP only.
+- The start message holds only the host's session choices, the same for every guest, so a guest getting another's a
+  little later changes nothing. The joining guest still gets its own first.
+- A new check: a guest whose save goes out at 1 KB/s is still downloading while a second guest joins over an unpaced
+  link; the second gets its save and its start message, and a tick broadcast from the host finishes at once (before
+  the fix, neither happened until the first guest's save was done).
+- Checks: StabilityTests 348 (1 new), RuntimeChecks 278. Not played.
+
 ## 1.4.0-beta10
 
 **Built on the Stability Fork 1.1.12**, and on the change the fork merged after it (its PR #50). Most of 1.1.12 was

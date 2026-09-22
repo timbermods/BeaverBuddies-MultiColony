@@ -47,6 +47,16 @@ static class DirectTcpChecks
         return (host, guest, clock.Elapsed);
     }
 
+    // Hands out the streams added to it, in order, as a listener hands out connections.
+    sealed class QueueListener : ISocketListener
+    {
+        readonly System.Collections.Concurrent.BlockingCollection<ISocketStream> pending;
+        public QueueListener(System.Collections.Concurrent.BlockingCollection<ISocketStream> pending) => this.pending = pending;
+        public void Start() { }
+        public ISocketStream AcceptClient() => pending.Take();
+        public void Stop() => pending.CompleteAdding();
+    }
+
     static byte[] Noise(int length, int seed)
     {
         var bytes = new byte[length];
@@ -123,6 +133,49 @@ static class DirectTcpChecks
                 Check(mapTime >= TimeSpan.FromMilliseconds(400), $"the save arrived in {mapTime.TotalMilliseconds:F0} ms: it was not paced");
             }
             finally { host.Close(); guest.Close(); }
+        });
+        yield return ("A second guest joining while the first still downloads the save does not freeze the host", () =>
+        {
+            // Guest B's save goes out at 1 KB/s (about 19 s for 20 KB) and holds B's stream all that time. Guest A joins
+            // meanwhile over an unpaced link and finishes first. Its start message used to be written straight to every
+            // guest under the lock every broadcast takes: to B it waited for the rest of B's save, and so did the host.
+            var (hostB, guestBStream) = PipeStream.Pair();
+            var (hostA, guestAStream) = PipeStream.Pair();
+            var accepted = new System.Collections.Concurrent.BlockingCollection<ISocketStream>();
+            accepted.Add(new RatedStream(hostB, chunk: 1024, bytesPerSecond: 1024));
+            var host = new TimberServer(new QueueListener(accepted), () => Task.FromResult(Noise(20 * 1024, 8)),
+                () => new JObject { [TimberNetBase.TYPE_KEY] = "Start", [TimberNetBase.TICKS_KEY] = 0 });
+            var guestB = new TimberClient(guestBStream);
+            var guestA = new TimberClient(guestAStream);
+            Task? broadcast = null;
+            try
+            {
+                host.Start(); guestB.Start();
+                Check(SpinWait.SpinUntil(() => { host.Update(); guestB.Update(); return host.ClientCount == 1; }, 2000),
+                    "the first guest never started receiving the save");
+                Thread.Sleep(100);
+                byte[]? mapA = null;
+                guestA.OnMapReceived += bytes => mapA = bytes;
+                accepted.Add(hostA);
+                guestA.Start();
+                // Guest A has its save, then its start message.
+                var eventsA = new List<JObject>();
+                Check(SpinWait.SpinUntil(() =>
+                {
+                    host.Update(); guestA.Update(); guestB.Update();
+                    if (guestA.HasEventsForTick(0)) eventsA.AddRange(guestA.ReadEvents(0));
+                    return mapA != null && eventsA.Any(e => (string?)e[TimberNetBase.TYPE_KEY] == "Start");
+                }, 2000), "the second guest never got its save and its start message while the first still downloads");
+                // What ReplayService.SendEvents does on the host's game thread for a tick's events.
+                broadcast = Task.Run(() => host.DoUserInitiatedEvent(new JObject { [TimberNetBase.TYPE_KEY] = "Tick", [TimberNetBase.TICKS_KEY] = 1 }));
+                Check(broadcast.Wait(1000), "the host's broadcast waited for the first guest's paced save");
+                Check(host.ClientCount == 2, "both guests should still be joining or joined");
+            }
+            finally
+            {
+                guestA.Close(); guestB.Close();
+                if (broadcast == null || broadcast.IsCompleted) host.Close();
+            }
         });
         yield return ("Ending the session while a guest downloads the save does not wait for the paced save", () =>
         {

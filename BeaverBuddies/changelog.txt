@@ -1,3 +1,7 @@
+v1.4.0-beta11 (BeaverBuddies MultiColony)
+* Two players joining by IP at the same moment no longer freeze the host until the first one's save has arrived.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta10 (BeaverBuddies MultiColony)
 * Built on the Stability Fork 1.1.12. Each guest now compares all of the host's random-number state every tick (it was one word of four), and which entities tick and where every walking character stands (a difference there is logged once).
 * Direct (IP) connections send each message at once, and the host's game thread no longer pauses while sending a large tick.

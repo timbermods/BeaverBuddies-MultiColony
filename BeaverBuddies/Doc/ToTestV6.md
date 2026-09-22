@@ -42,4 +42,5 @@ lines 15 to 19 (joined roads, a refused Trading Post half, gates, automation, th
   out of your alert panel; a desync's two lists start at the same change number;
 - beta10's port of the Stability Fork 1.1.12 (Script B lines 8q, 8r and 8s): that the fuller desync check raises no
   false alarm in a healthy game at speed 3 and 7, that a guest's Reconnect after a desync joins the way it joined,
-  and that the period key on a waiting computer pauses everyone.
+  and that the period key on a waiting computer pauses everyone;
+- beta11 (Script C line 1a): two guests joining by IP at once, with a large save, leave the host responsive.

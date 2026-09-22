@@ -287,6 +287,10 @@ per colony: population, land, exchanges).
    a medium map, and link each pair of neighbours with a trading post. Try it the wrong way round once: player 2
    presses Ctrl+K before the host unpauses (a notice says the game has not started); the host places a path while
    paused, then player 3 tries to join (refused: the game was changed).
+1a. **Two join by IP at once (beta11).** With a save of a grown colony (a few MB), two guests press **Join co-op
+    game** by IP within a few seconds of each other while the host waits paused. While both receive the save, the
+    host's game stays responsive (the camera moves, menus open) and its connection panel keeps updating; both
+    guests join. Before beta11 the host froze until the first guest's save had arrived.
 2. Play at least two hours at your usual speed, with repeating exchanges running and colonies growing to 100+
    beavers. Note the tick rate and each player's frame rate from the connection panel every half hour.
 3. A player joins after the game has started (the host saves and hosts again with them). Then **swap hosts**.

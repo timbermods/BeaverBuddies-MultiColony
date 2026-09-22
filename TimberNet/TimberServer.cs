@@ -168,10 +168,10 @@ namespace TimberNet
                             if (initEventProvider != null)
                             {
                                 JObject initEvent = initEventProvider();
-                                // Send the event before finishing queueing
-                                // so it is guaranteed to arrive first.
-                                // (This also sends it to other clients.)
-                                DoUserInitiatedEvent(initEvent, true);
+                                // Written to this guest at once, before what was queued for it while its save went
+                                // out, so it arrives first. The other guests get it the usual way: queued for one still
+                                // receiving its save, written to the rest (see SendEventToClients).
+                                DoUserInitiatedEvent(initEvent, sendNowTo: client);
                             }
                             FinishQueuing(client);
 
@@ -445,28 +445,35 @@ namespace TimberNet
             SendEvent(client, message);
         }
 
-        void DoUserInitiatedEvent(JObject message, bool sendNow)
+        void DoUserInitiatedEvent(JObject message, ISocketStream sendNowTo)
         {
             string type = (string?)message[TYPE_KEY] ?? "?";
             int tick = message[TICKS_KEY]?.Type == JTokenType.Integer ? (int)message[TICKS_KEY]! : -1;
-            Send(message.ToString(Newtonsoft.Json.Formatting.None), type, tick, sendNow);
+            Send(message.ToString(Newtonsoft.Json.Formatting.None), type, tick, sendNowTo);
         }
 
         public override void DoUserInitiatedEvent(string json, string type, int tick)
         {
-            Send(json, type, tick, false);
+            Send(json, type, tick, null);
         }
 
         // Encoded, hashed and compressed once, whatever the number of guests: each is sent the same bytes. Before,
         // every event was written out as text and compressed again for each guest, and once more for the hash.
-        private void Send(string json, string type, int tick, bool sendNow)
+        private void Send(string json, string type, int tick, ISocketStream? sendNowTo)
         {
             byte[] utf8 = Encoding.UTF8.GetBytes(json);
             NoteInitiatedEvent(utf8, type);
-            SendEventToClients(new Outgoing(CompressionUtils.Compress(utf8), type, tick), sendNow);
+            SendEventToClients(new Outgoing(CompressionUtils.Compress(utf8), type, tick), sendNowTo);
         }
 
-        private void SendEventToClients(Outgoing message, bool sendNow)
+        /// <summary>
+        /// Every guest gets the message: queued for one still receiving its save (FinishQueuing sends it in order after
+        /// the save), written at once to the others. <paramref name="sendNowTo"/>, a guest whose join is finishing, gets
+        /// it written at once although it is still queued, ahead of its queue. Never write to another queued guest here:
+        /// its join thread holds its stream for the whole paced save, and this runs under the lock every broadcast takes,
+        /// so the host's game thread would wait for the rest of that save (two guests joining over direct IP at once).
+        /// </summary>
+        private void SendEventToClients(Outgoing message, ISocketStream? sendNowTo)
         {
             lock (queuedMessages)
             {
@@ -482,7 +489,7 @@ namespace TimberNet
                 // Share the join/close lock across enumeration and mutation.
                 clients.ForEach(client =>
                 {
-                    if (sendNow)
+                    if (client == sendNowTo)
                     {
                         SendBytes(client, message.Wire, message.Type, message.Tick);
                     }
