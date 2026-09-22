@@ -20,8 +20,11 @@ Steam client is required. Animation tests model a forward-only path cursor and
 invalid visual coordinates, not a running Unity water simulation.
 
 GitHub Actions runs these checks and the Python snapshot tests below on every push and
-pull request (`.github/workflows/tests.yml`, Windows, .NET 8). RuntimeChecks needs the
-installed game's assemblies, so it runs only on a computer with the game.
+pull request (`.github/workflows/tests.yml`, Windows, .NET 8). A few checks time real threads
+against the wall clock and miss their deadlines on a shared runner's few cores; the workflow
+names them, and there their failure is a warning instead of a red build. Run the whole suite
+locally before a release. RuntimeChecks needs the installed game's assemblies, so it runs only
+on a computer with the game.
 
 `dotnet run --project StabilityTests -- --ping-report` prints how the ping shown over Steam
 depends on the players' frame length, with Steam served once per frame and with it also served
