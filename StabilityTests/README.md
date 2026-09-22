@@ -19,6 +19,10 @@ connection panel model, player cursor preferences and animation patch source. St
 Steam client is required. Animation tests model a forward-only path cursor and
 invalid visual coordinates, not a running Unity water simulation.
 
+GitHub Actions runs these checks and the Python snapshot tests below on every push and
+pull request (`.github/workflows/tests.yml`, Windows, .NET 8). RuntimeChecks needs the
+installed game's assemblies, so it runs only on a computer with the game.
+
 `dotnet run --project StabilityTests -- --ping-report` prints how the ping shown over Steam
 depends on the players' frame length, with Steam served once per frame and with it also served
 between the ticks of a frame. It runs the real transport, server, client and ping tracker over a
