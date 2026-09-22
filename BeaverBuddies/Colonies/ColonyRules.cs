@@ -331,6 +331,24 @@ namespace BeaverBuddies.Colonies
             if (localSlot == founderSlot) return founded ? FoundingNotice.Done : FoundingNotice.Failed;
             return founded ? FoundingNotice.Founded : FoundingNotice.None;
         }
+
+        /// <summary>
+        /// The text a founding notice shows, as a localization key, or null for no notice. Founding.Other names the
+        /// colony as {0}.
+        /// </summary>
+        public static string FoundingNoticeKey(FoundingNotice notice) => notice switch
+        {
+            FoundingNotice.Done => "BeaverBuddies.Colony.Founding.Done",
+            FoundingNotice.Failed => "BeaverBuddies.Colony.Founding.Failed",
+            FoundingNotice.Founded => "BeaverBuddies.Colony.Founding.Other",
+            _ => null,
+        };
+
+        /// <summary>
+        /// Only the founder's failed try is shown as a warning: it asks them to act (try again). A founding that
+        /// worked is news, for the founder and for everyone else.
+        /// </summary>
+        public static bool FoundingNoticeWarns(FoundingNotice notice) => notice == FoundingNotice.Failed;
     }
 
     /// <summary>The notice a founding shows on one computer: see <see cref="ColonyRules.FoundingNoticeFor"/>.</summary>

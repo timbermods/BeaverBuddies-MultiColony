@@ -403,27 +403,21 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// Display only, on this computer, as a founding is played or skipped: the founder hears how it went, everyone
-        /// else only that a colony was founded (ColonyRules.FoundingNoticeFor).
+        /// else only that a colony was founded. Which notice, which text and whether it is a warning are decided in
+        /// ColonyRules (FoundingNoticeFor, FoundingNoticeKey, FoundingNoticeWarns), where StabilityTests checks them.
         /// </summary>
         private static void TellFounding(int slot, bool founded)
         {
             try
             {
+                FoundingNotice notice = ColonyRules.FoundingNoticeFor(ColonySession.LocalSlot, slot, founded);
+                string key = ColonyRules.FoundingNoticeKey(notice);
+                if (key == null) return;
                 ColonyRulesService rules = SingletonManager.GetSingleton<ColonyRulesService>();
                 if (rules == null) return;
-                switch (ColonyRules.FoundingNoticeFor(ColonySession.LocalSlot, slot, founded))
-                {
-                    case FoundingNotice.Done:
-                        rules.ShowNotice(RegisteredLocalizationService.T("BeaverBuddies.Colony.Founding.Done"), warning: false);
-                        break;
-                    case FoundingNotice.Failed:
-                        rules.ShowNotice(RegisteredLocalizationService.T("BeaverBuddies.Colony.Founding.Failed"));
-                        break;
-                    case FoundingNotice.Founded:
-                        rules.ShowNotice(string.Format(RegisteredLocalizationService.T("BeaverBuddies.Colony.Founding.Other"),
-                            ColonyExchangeService.ColonyName(slot)), warning: false);
-                        break;
-                }
+                string text = RegisteredLocalizationService.T(key);
+                if (notice == FoundingNotice.Founded) text = string.Format(text, ColonyExchangeService.ColonyName(slot));
+                rules.ShowNotice(text, warning: ColonyRules.FoundingNoticeWarns(notice));
             }
             catch (Exception error)
             {
