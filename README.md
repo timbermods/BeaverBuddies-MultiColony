@@ -12,7 +12,7 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > [!WARNING]
 > **Beta.** Hosting, joining over Steam and founding a second colony have been played. This version's model
 > (colonies with their own land, trading posts and barter, colony handover) and the desync review's fixes (alpha11
-> to beta2) have **not been played yet**; they are covered by automated checks. Since alpha13 a guest whose colony
+> to beta3) have **not been played yet**; they are covered by automated checks. Since alpha13 a guest whose colony
 > state differs from the host's stops at once, the tick it happens, so a bug in that check would also stop a healthy
 > game: the log line says which it was. Play on a copy of your save, keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).

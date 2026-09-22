@@ -5,6 +5,19 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta3
+
+**Mod settings tooltips that fit on the screen.** No code change. The tooltips in Mod Settings ran to 250 to 430
+characters on one line, and Mod Settings does not wrap them, so the longer ones (separate colonies, hand-over days,
+the guest frame-rate floor, detailed logging) were drawn off both edges of the screen. Every one of the seventeen
+now says what the setting does in one sentence of at most 112 characters, with a second short line only where a
+warning or a pointer belongs (pause before saving with *Never auto-pause*; every player must turn detailed logging
+on; the frame-rate floor is also in the connection panel; Ctrl+K founds a colony; Ctrl+T hands one over). The same
+facts in fewer words; the labels are unchanged. `Localizations/enUS_BeaverBuddie.csv` (English only, like the rest).
+- Checks unchanged: StabilityTests 282; RuntimeChecks 233.
+- Not seen in a game: the tooltip box's width is the game's, so please hover a few (any Script) and say if one still
+  runs off the screen.
+
 ## 1.4.0-beta2
 
 **Nine things that make a colony each easier to live with.** Everything sits on machinery that was already there;
