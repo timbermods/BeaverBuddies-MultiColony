@@ -1,3 +1,11 @@
+v1.4.0-beta8 (BeaverBuddies MultiColony)
+* Over Steam the host checks a guest's Steam ID against its connection before seating it in a colony: a guest can no longer take another player's colony by saying their id. Direct IP joins are still taken at their word.
+* A multiplayer frame can only create the mod's actions and what they carry. A guest that gets an action it cannot read (say, from a mod only the host has) stops with a message naming it, instead of drifting out of step; the host refuses a guest's unreadable action and tells that guest.
+* Each player's notification journal lists only their own colony's entries, deaths and reloads included.
+* Only the founder hears how a founding went; the others get "A new colony has been founded: <name>."
+* On a desync in a separate-colonies game, every computer logs its last 256 colony changes, to find the first one that differs.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta7 (BeaverBuddies MultiColony)
 * With separate colonies off, a game plays as in the Stability Fork: no colony bookkeeping, checks or save data, no Trading Post, and District Crossings hold the game's 30 again (a Trading Post half still holds 100).
 * Founding a colony in a shared save is its own host setting, "Allow founding colonies in a shared game", off by default. "Separate colonies for new games" decides new games only.

@@ -32,4 +32,8 @@ lines 15 to 19 (joined roads, a refused Trading Post half, gates, automation, th
   players' cards, and whether your own chat name follows a pick there on your screen only;
 - a shared game (beta7, Script A line 22, Script B lines 8m and 8n): that it plays as the Stability Fork's (no
   founding offer, no Trading Post, crossings holding 30, a save without `BeaverBuddies.` entries), and that a
-  founding the host allows splits it on both computers alike (the same building count in both logs).
+  founding the host allows splits it on both computers alike (the same building count in both logs);
+- beta8's merged pull requests (Script B lines 1a, 8a and 8o): that a Steam guest and a direct IP
+  guest are both seated with no `Refused PlayerHelloEvent` line, that nothing a normal game sends is refused as an
+  unreadable frame (a `could not be read` line would mean the binder is missing a type), that each journal lists
+  only its colony's entries after a reload, and that a desync's `Colony changes here` lists line up.

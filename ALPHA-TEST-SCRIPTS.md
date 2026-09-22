@@ -150,7 +150,7 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 
 1. The friend is seated (log: `[Colony] Player 1 (…) plays slot 1`). The connection panel shows each name with its
    colony, e.g. *Alex (colony 2)*.
-1a. **Seating checks the Steam connection.** The friend who joined over Steam is seated as above, and the host's log
+1a. **Seating checks the Steam connection (beta8).** The friend who joined over Steam is seated as above, and the host's log
     has no `[Colony] Refused PlayerHelloEvent` line. If a third player can, they join **by IP** (direct connection):
     also seated, with no refusal. After **Save and Rehost** (line 7) each gets their own colony again.
 2. On a standard map or an existing save: once the host unpauses, the friend sees the offer to place a district
@@ -217,7 +217,7 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     `[Colony] Separate colonies switched on: slot 1 founded a colony in a shared game` and `[Colony] The shared
     colony's N buildings are colony 0's` with the same N. Play ten more minutes without a desync (the colony digest
     is compared from now on); save, reload and host again: both colonies keep their land and buildings.
-8o. **Each journal is its colony's.** Wait until a beaver of the host's colony dies (old age, drowning, thirst) and a
+8o. **Each journal is its colony's (beta8).** Wait until a beaver of the host's colony dies (old age, drowning, thirst) and a
     child grows up in it: the host's notification journal (bottom left) lists both, the friend's lists neither. Then
     the same the other way round. Save, reload and host again, the friend joins: once the friend's log says
     `[Colony] This computer plays slot 1`, the friend's journal holds only colony 2's entries and the host's only

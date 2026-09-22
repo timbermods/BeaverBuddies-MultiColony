@@ -5,6 +5,64 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta8
+
+**Seven reviewed pull requests** (timbermods/BeaverBuddies-MultiColony#2 to #8), each reviewed again before merging;
+the review's small fixes went onto the pull requests' branches first.
+- **Over Steam, the host checks who a guest is (MC3, #2).** The host seated a guest by whatever stable id its
+  `PlayerHelloEvent` claimed, and every player's id is sent to the whole session and kept in the save, so a guest
+  could take another player's colony by claiming their id. The host now compares the hello with the Steam ID Steam
+  proved for the connection (`SteamLinkSocket.RemoteSteamId`, through the new `IVerifiedIdentity`): a hello that
+  claims another Steam ID is refused, and a guest whose game could not read its own Steam ID is seated by the proved
+  one. On every join, a connection already seated cannot say hello again as someone else, an id with a line break
+  or a `|`, or longer than 64 characters, is refused (it could add rows to the saved slot table), and ids and names
+  go into the host's log on one line (`ColonySlotTable.ForLog`). **Direct IP joins are still taken at their word**,
+  and the host listens for them in a Steam-invite game too (README: *Which joins are verified*). Host-only; no
+  simulation, wire or save change.
+- **A received frame can only create actions (MC7, #5).** Frames are read with Newtonsoft's
+  `TypeNameHandling.All`, so a `$type` in one named any loaded type to create. `ReplayEventBinder` now lets through
+  only `ReplayEvent` types and what their fields carry (strings, numbers, enums, the mod's structs, lists of them);
+  anything else, a list, array, map or Nullable of it, a Unity object, a delegate or a reflection type is refused
+  before it is created. Another mod's actions (MixedStorage's `StorageAllocationEvent`) pass with the classes they
+  declare. The JSON written, and so the event hash, is unchanged.
+- **An unreadable frame stops the session cleanly (MC-NF1, #5).** A guest that receives an action it cannot read
+  (one from a mod only the host has, a refused type) now stops the session with a reason naming the type and its
+  assembly, and plays nothing more of that tick; before, it skipped the tick's actions and drifted out of step. A
+  host that cannot read a guest's frame logs it (its first 500 characters), keeps the guest's other frames, carries
+  on and sends that guest an `ActionRefusedEvent` for each action it lost ("The host could not accept that
+  action."); before, a malformed frame could throw out of the host's tick.
+- **Each journal is its own colony's (MC2, #3).** The notification journal still showed the other colony's deaths
+  (the game takes a dying beaver out of its district before it posts the death, and "no owner" counted as
+  everyone's) and, after a reload, every saved entry (listed before the guest is seated). `ColonyJournal` records
+  the colony a beaver dies in or leaves (`Character.KillCharacter`, `Citizen.UnassignDistrict`, read-only
+  prefixes), saves whose each journal entry is (`BeaverBuddies.ColonyJournal`, separate-colonies saves only), and
+  lists the panel again once the player is seated; `JournalFilter.ShouldShow` is the rule. An entry saved by an
+  earlier build whose beaver is gone is hidden. Display only. The other colony's death alert still shows for about
+  a day in the alert panel (same cause, not yet changed).
+- **Only the founder hears how a founding went (MC4, #7).** Every player got the founder's notices, warnings
+  included ("could not be founded there after all ... Try again with Ctrl+K"). The others now get a plain notice,
+  *A new colony has been founded: <name>.*, and the founder's success is no longer styled as a warning
+  (`ColonyRules` decides the text and style).
+- **The host's placement check puts the random state back (MC1, #7).** The host checks a replayed placement on a
+  throwaway copy of the building; the copy's components wake as it is made, and another mod's building could draw
+  Unity random numbers there on the host only. `UnityEngine.Random.state` is now saved before the copy and put back
+  in a `finally`, before the copy is destroyed. No change for the game's own buildings.
+- **The desync log lists each computer's last 256 colony changes (MC6, #4).** On a desync in a separate-colonies
+  game every computer logs `Colony changes here as ... desynced`, each change with its number and the digest it
+  left: lined up by `#n`, the first line that differs between two players' logs is the change they did not make
+  alike. The ring allocates nothing and is cleared with the digest at load; the log is caught so it cannot stop the
+  rest of the desync handling. One tick can count more than 256 changes (a large mark, a hand-over), so the change
+  that differed can already be out of a list.
+- **The planting replay's levelling override runs last (#8)**: `[HarmonyPriority(Priority.Last)]`, as in the
+  Stability Fork's port; another mod's prefix on `TerrainAreaService.InMapLeveledCoordinates` now runs first.
+  Nothing changes without such a mod.
+- **Stability Fork 1.1.11 is recorded as merged (MC8, #6)**: a merge commit with no file changes, so the next sync
+  from the fork does not meet the 11 conflicts of the hand port again.
+- **CI (#7):** StabilityTests and the Python snapshot tests run on GitHub Actions (Windows, .NET 8) for every push
+  and pull request. Two checks that time real threads against the wall clock are only a warning there; a crash or
+  any other failure fails the build.
+- Checks: StabilityTests 320 (19 new), RuntimeChecks 268 (29 new). Not played.
+
 ## 1.4.0-beta7
 
 **With separate colonies off, a game is the Stability Fork's.** A shared-colony game (a new game with the setting
