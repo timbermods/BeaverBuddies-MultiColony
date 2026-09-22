@@ -29,8 +29,8 @@ namespace BeaverBuddies.Colonies
         if (blockObject.IsPreview && _districtService.IsPreviewDistrictInConflict(blockObject.GetComponent<DistrictCenter>()?.CenterCoordinates))
             { errorMessage = _loc.T(DistrictsInConflictLocKey); return false; }
      */
-    // A replayed placement is checked once, by the host as it plays it, and the guests take its answer
-    // (BuildingPlacedEvent.MayPlace; only a file replay of an old recording checks on each computer). This validator
+    // In a session a replayed placement is checked once, by the host as it plays it, and the guests take its answer
+    // (BuildingPlacedEvent.MayPlace; a replay from a file checks for itself). This validator
     // reads the preview road graph, which holds whatever the host's player is hovering and is updated once per frame:
     // a path the host is dragging that would join two districts would make the host refuse every building replayed
     // meanwhile, for everyone. While events replay it passes; the placing player's own tool already refused a joining

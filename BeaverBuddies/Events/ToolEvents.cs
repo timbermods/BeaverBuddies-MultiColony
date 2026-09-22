@@ -100,8 +100,8 @@ namespace BeaverBuddies.Events
         /// </summary>
         private bool MayPlace(IReplayContext context, Placement placement, BuildingSpec spec)
         {
-            // A guest takes the host's answer when it has one. Without one (an event the host has not played, which
-            // only a file replay of an old recording gives), it checks for itself as before.
+            // A guest takes the host's answer, which the host writes as it plays the event, before sending it on. A
+            // replay from a file, and a guest given an event without one, check for themselves as before.
             if (placed.HasValue && EventIO.Get() is ClientEventIO) return placed.Value;
             // A district center gets the block check only (below): its preview copy interferes with the nav mesh. It
             // used to get no check at all, so two placed on the same tiles in one tick threw and stopped the session.
