@@ -38,7 +38,9 @@ jobs:
           $tolerated = @($failed | Where-Object { $line = "$_"; @($timing | Where-Object { $line.StartsWith("FAIL ${_}: ") }).Count -gt 0 })
           foreach ($line in $tolerated) { Write-Output "::warning title=Timing check on the runner::$line" }
           if ($failed.Count -gt $tolerated.Count) { exit 1 }
-          if ($code -ne 0 -and $failed.Count -eq 0) { exit $code }
+          # A run that ends without its summary line crashed or did not build: that fails whatever was tolerated.
+          $summary = @($output | Where-Object { "$_" -match '^\d+/\d+ passed$' })
+          if ($code -ne 0 -and ($failed.Count -eq 0 -or $summary.Count -eq 0)) { exit $code }
           exit 0
       - name: Water snapshot comparison (Python)
         if: ${{ !cancelled() }}

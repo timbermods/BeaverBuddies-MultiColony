@@ -163,8 +163,8 @@ namespace BeaverBuddies.Events
             }
             finally
             {
-                if (gameObject != null) UnityEngine.Object.Destroy(gameObject);
                 UnityEngine.Random.state = randomState;
+                if (gameObject != null) UnityEngine.Object.Destroy(gameObject);
             }
         }
 
