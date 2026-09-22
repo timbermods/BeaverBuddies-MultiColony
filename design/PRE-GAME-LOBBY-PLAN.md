@@ -1116,3 +1116,14 @@ StabilityTests 355/355, RuntimeChecks 330/330.
     `Game/SettlementNameBox` and `Core/DialogBox` have no unset keys.
 12. **The new-settlement notification** goes into the game's notification journal before the save, and the save holds
     the journal, so the reloaded host still has it.
+
+**Built as 1.4.0-beta18 (2026-09-22)**, where it departs from this plan:
+
+- No `bb_state` Steam key (§8): `bb_open = "0"` at Start already gives an old invite the existing "already started"
+  message.
+- `ColonyOf` lives in TimberNet (`LobbyRoom.ColonyOf`), since the roster frames need it; `LobbyRules` keeps the rest.
+- Every waiting-room frame goes out through a `SendLane` of the guest's own (found in the review before release:
+  writing under the pump's lock let one stalled direct-IP guest hold up the host's game thread).
+- The guest's page and the host's page share one builder (`LobbyPage`); the settlement box's Next uses the game's
+  `Core.NavigationNext`.
+- Checks: StabilityTests 372 (17 new), RuntimeChecks 338 (7 new). Not played.

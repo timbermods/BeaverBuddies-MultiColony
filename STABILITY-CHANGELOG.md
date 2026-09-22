@@ -5,6 +5,62 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta18
+
+**A waiting room for new co-op games: invite players and ready up before the world exists.** Asked for by the
+maintainer to clean up getting player 2 in: before, the host made a new game alone, saved it, went back to the menu,
+loaded it with Host co-op game and waited paused, and player 2 could found only once the host unpaused. Now **Host
+co-op game** sits beside **Start** on the New Game difficulty page; friends join a **Co-op Game** page (a page of the
+game's own New Game wizard), mark themselves ready, and everyone starts together at tick 0 with joining already
+closed, so a guest founds its colony at once, even paused. Designed in `design/PRE-GAME-LOBBY-PLAN.md` (the
+maintainer's decisions D1 to D6: new games only, the host may start with someone not ready after a question,
+joining closes for good at Start, the host keeps the map's district center and the others found when they please,
+Folktails is the tested case, and the look must be the game's own). **Wire change** (a waiting-room phase before the
+save, and one field in the host's first message); no save change.
+
+- **The network phase** (`TimberNet`: `LobbyFrames`, `LobbyRoom`, `LobbyInbox`; `TimberServer.OpenLobby`,
+  `ReleaseLobby`, `CloseLobbyToNewcomers`, `RemoveFromLobby`, `CancelLobby`). After the build check a guest comes into
+  the room, gets its player number, and is read for its hello (stable id, name) and ready only: anything else it
+  sends before its save is dropped, a frame over 64 KB closes it. The host's welcome, roster and state go to each
+  guest every second from a `SendLane` of its own (off the game thread, which is busy making the world; a guest that
+  stops reading is taken out and holds up nobody), marked by a -1 length so hosting a save sends the same bytes as
+  before. Each guest's join waits on a `TaskCompletionSource` completed with the saved world (its continuations never
+  run on the releasing thread), then goes on exactly as a guest of a hosted save: queued, the save, the state, the
+  first event. Guests still waiting are closed with the server, can be removed, and are told why the room ended.
+- **The host** (`BeaverBuddies/Lobby`): `LobbyPatches` (the button, greyed with Start), `SettlementNamePanel` (the
+  game's own `Game/SettlementNameBox` with Cancel and Next; the name is checked as the game checks it and goes into the
+  new game's configuration), `LobbyHostPanel` and `LobbyPage` (the page: `MainMenu/NewGameTemplate`, keyed before it
+  is initialised, the Game Mode page's summary plate and the faction logo ring, the Mods window's board and rows, the
+  faction page's status line, the map page's wide Invite Friends button, the game's yes/no boxes). `LobbySession`
+  keeps the server outside EventIO until the save loads, so the scene that makes the world is single player; at
+  Start it closes the room, fills a multi-start map's starts for the players present (at most the Players field), and
+  makes the world behind the held loading screen (`LoadingScreenDisablePatcher`). `LobbyWorldMaker` fills the colony
+  slot table in the room's order, queues the tick-0 save (`<date> Co-op start`), reads it a frame later, sends it,
+  and once every guest is queued loads it as the hosted game (EventIO set, random state from the save's bytes). A
+  failure tells the guests why and leaves the host in a solo game with the reason.
+- **The guest**: a *Connecting to …* box (`ConnectingBox`, the game's dialog with Cancel) after Join co-op game or an
+  accepted invite, in place of "Joined! Receiving map..."; `LobbyGuestPanel`, the same page titled with the host's
+  name, with **I'm ready** / **Not ready** (or its row's checkbox) and **Leave**; the page says why when the room ends
+  (and the join-failed dialog stays quiet then); two minutes without a word asks *Keep waiting* / *Leave*; a waiting
+  room that answers while the player is in a game is left with a note to join from the main menu; the loading screen
+  names the host's game.
+- **In the game**: `ColonySession.JoiningClosedAtStart` (told to guests as `InitializeClientEvent.joiningClosedAtStart`)
+  makes `ColonyRules.WaitsForStart` hold nothing back, so founding (and its prompt), colony switching and stewardship
+  work at tick 0; the host's **Hand to …** buttons still wait for the first tick. *Joining: open* and *Start the
+  game?* never show (the server's session is latched as closed at Start). The connection panel marks a guest still
+  loading (`PanelPlayer.Loading`, in every co-op game).
+- Found in the review before release and fixed: waiting-room writes no longer hold a shared lock while a guest's
+  connection might block (the host's game thread took that lock); the keep-alive stops once everyone has the world;
+  the guest page's "keep waiting?" resets for a new room; a new join forgets the last room's host.
+- Docs: README (*Start a game*), TWO-COLONIES (*Starting*, *Known limits*, *How it works*), STEAM-INVITES,
+  CONNECTION-PANEL, ALPHA-TEST-SCRIPTS (Script D), WORKSHOP and the site. English strings only.
+- Checks: StabilityTests 372 (17 new: the waiting room's network phase over pipes with the real handshake, a guest
+  that stops reading, its rules, the seating order, its strings and style-sheet scope, founding without waiting after
+  a waiting room, the panel's loading mark), RuntimeChecks 338 (7 new: every game member and patch target it uses,
+  the save-before-unpause order, UI.zip's templates, names and the main menu's style sheets, the init event's flag,
+  and who reads it). Both builds, 0 warnings.
+- Not seen in a game. Script D is this release's.
+
 ## 1.4.0-beta17
 
 **Another colony's district's migration controls are greyed out.** Found playing beta15: in the Migration tab (F7),

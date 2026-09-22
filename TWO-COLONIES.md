@@ -8,8 +8,9 @@ colonies meet only at **trading posts**, where they barter.
 Steam, founding a second colony and building in it; and in three short sessions with separate science (beta12,
 beta14 and beta15): a founding and both players building, in step at every tick (beta12's one desync, dev mode's
 science, was fixed in beta14), and in beta15 trading posts with exchanges of goods and beavers. **The rest of this
-version's model has not been seen in a game yet**: colony handover, the road rule that replaced land in beta15, and most of the desync review's fixes (alpha11
-onward) are covered by automated checks only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
+version's model has not been seen in a game yet**: colony handover, the road rule that replaced land in beta15, the
+new game's waiting room (beta18), and most of the desync review's fixes (alpha11 onward) are covered by automated
+checks only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
 in that check would stop a healthy game too; the log line says which. Play on a copy of your save and keep backups.
 
 ## The rules in one minute
@@ -48,7 +49,26 @@ host's colony. The connection panel shows each name with its colony number.
 **A new game on a multi-start map** (BeaverBuddies maps with several starting locations) gives start N to player N:
 the host's first colony is start 1, the next player's start 2, and so on.
 
-**Joining closes** at the host's first tick, or at the first action that changes the game while it is still
+**A new game with a waiting room** (1.4.0-beta18). On the New Game panel's difficulty page the host chooses **Host
+co-op game** (beside Start) and names the settlement in the game's own box. The **Co-op Game** page, a page of the
+game's New Game wizard, lists everyone in the room: the host (colony 1), then each guest in the order they came in
+(colonies 2 to 4, then helpers of colony 1; no colonies in a shared game), each **Ready** or **Not ready**
+(**Joining…** until the guest has said who it is). Guests join from the main menu, by Steam invite or **Join co-op
+game**, and press **I'm ready**; the host may remove a guest, and **Start Game** asks first if someone is not ready
+or nobody came. At Start:
+
+- nobody new can join, for good (a **Save and Rehost** lets someone in later, as after any first tick);
+- the host's computer makes the world as a single-player game behind the loading screen, fills the colony slot
+  table in the room's order, saves it at tick 0 (a save named `<date> Co-op start` in the named settlement), sends
+  those bytes to every guest in the room and loads the same bytes itself as the hosted game;
+- on a multi-start map only as many starts are filled as there are players (host and guests, at most the Players
+  field and four), each to its player in room order; anyone beyond founds a colony;
+- the game opens paused at tick 0 with every guest loading; the connection panel marks a guest *(loading)* until
+  its game has loaded. There is no *Joining: open* and no *Start the game?*: joining closed at Start. **Founding**,
+  switching colonies and asking a steward work at once, while paused (a hosted save waits for the first tick, below);
+  the host's **Hand to …** buttons still wait for the first tick (a guest still loading looks away).
+
+**Joining closes** (a hosted save) at the host's first tick, or at the first action that changes the game while it is still
 paused (placing or marking something): a player joining after that would be sent the save the host started from,
 without it. The host should wait for everyone, then unpause. So that this never happens by accident, the host's
 first change while joining is open is held and the host is asked (**Start the game**, which plays it and closes
@@ -61,7 +81,8 @@ centers already there are the host's colony's. Every other player **founds** the
 1. Once the host has unpaused, a message offers to place a district center. (If you cancel, **Ctrl+K** opens the
    same tool.) Not before: while the game is paused at the start, other players can still join, and a player who
    joined after the founding would load the save without it. The host can hand colonies over (Ctrl+T) from the first
-   tick on, for the same reason.
+   tick on, for the same reason. After a waiting room nobody can join late, so the message comes as soon as the
+   guest is in, even while paused.
 2. Place it anywhere its roads won't join another colony's (other colonies' roads show in their colors). It is
    free, needs no science, and appears **already built**, yours, with starting
    beavers, food and water (the new game's, or for a save that did not record them the host's Normal difficulty:
@@ -196,7 +217,7 @@ count as one colony at a time, and a steward switches which.
   While they run it, their actions are judged and stamped as that colony's, and their toolbar, science, top bar,
   working hours and every refusal follow, exactly as the owner's would; the connection panel shows them with that
   colony's number. Which colony a player acts as is session state (an action every computer plays, refused before
-  the first tick like a founding), forgotten when the session ends. Both players may act on the colony at once.
+  the first tick like a founding, except after a waiting room), forgotten when the session ends. Both players may act on the colony at once.
 - **Not handed over.** A colony looked after by a steward who is in the game is not handed over for its own player's
   absence (the days away still count, and show in the window). The host judges every grant, revocation and switch
   (ColonyStewardRules); a player who does not look after a colony cannot switch into it.
@@ -351,6 +372,10 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 ## Known limits
 
 - Up to four colonies; more players join as helpers of the host's colony.
+- The waiting room is for new games only (a save is hosted with Load Game → Host co-op game), holds at most seven
+  guests (the Steam lobby's eight), and is joined from the main menu only. It has no chat, map preview or mod-list
+  comparison (mismatch warnings still show in the game). Its settlement-name box has no *Change start location*.
+  Anyone who can reach the direct-IP port can come into the room; the host can remove them.
 - The game ends only when every beaver on the map is gone, not per colony.
 - There is no land: where to build is the players' call. Wild bushes, ruins and piles nobody marked go to whichever
   colony's workers reach them first.
@@ -419,7 +444,14 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   refused, and so is a hello the host could not stamp with a guest's number (a connection it no longer knows).
   (`ColonySlotTable.SeatHello` and `CheckHello`; a refused hello is logged as `[Colony] Refused PlayerHelloEvent …`.)
 - **Joining** closes at the first tick, or at the first action played while the host still waits paused, since a
-  later joiner is sent the save the host started from. The join check covers the mod's own files (`Buildings`,
+  later joiner is sent the save the host started from. After a waiting room it closed at Start, before the world was
+  made: the host's first message says so (`InitializeClientEvent.joiningClosedAtStart`), and `ColonyRules.WaitsForStart`
+  then holds nothing back.
+- **The waiting room** is a phase of the host's server before any save exists (`TimberNet`: `LobbyRoom`,
+  `LobbyFrames`, `LobbyInbox`): after the build check a guest waits there, and only its hello and ready are read; the
+  host's roster and progress go to it every second from a lane of its own (never the game thread), marked by a -1
+  length so a hosted save's bytes on the wire are unchanged. The server stays outside the game's session until the
+  saved world loads, so the scene that makes the world is a single-player one (`LobbySession`, `LobbyWorldMaker`). The join check covers the mod's own files (`Buildings`,
   `TemplateCollections`) as well as the game and mod versions.
 - **Every colony state change** (owners, marks, science and unlocks, exchanges and their ledger, traded
   beavers, presence, hand-overs, working hours) made inside a tick or a replayed action folds into a running digest.

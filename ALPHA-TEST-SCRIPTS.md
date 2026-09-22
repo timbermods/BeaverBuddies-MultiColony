@@ -357,3 +357,47 @@ per colony: population, exchanges).
 4a. **A Trading Post between two others.** A third player tries to remove a post between colony 1 and colony 2:
     refused.
 5. Send every `Player.log` and your notes on the tick rate and frame rates.
+
+## Script D: the waiting room (two players, about 20 minutes) *(beta18)*
+
+A new game where everyone joins before the world is made. **Not played yet**: every line is new. Compare the pages
+with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot of each page helps.
+
+1. **The button.** Host: **New Game** → Folktails → a standard map → Normal. **Host co-op game** sits beside
+   **Start** and looks like it. Choose **Customize**, set a starting value out of range: both buttons grey out.
+   Set it back.
+2. **The settlement's name.** **Host co-op game** shows the game's own "name your settlement" box, with **Cancel**
+   and **Next**. Cancel goes back. A name already used shows the game's own message. Name it and go on.
+3. **The host's page.** A **Co-op Game** page like the New Game pages: the banner and title, the faction logo and
+   "Folktails - map - Normal" plate, the settlement's name in gold, **Players (1)** with your row (ticked, *Host ·
+   Colony 1*, **Ready**), a yellow line *Invite friends, then start the game.*, **Invite Friends** (usable after a
+   moment), the IP line, **Cancel** and **Start Game**. Screenshot it at your usual resolution and at the smallest
+   window you use.
+4. **Joining.** Guest, from the main menu: accept the invite. A *Connecting to …* box, then the **Kyler's Game** page:
+   the same plate and players, your row marked *(you)*, **I'm ready** and **Leave**. The host's row for you shows
+   *Joining…*, then your name, *Colony 2* and **Not ready**, within a second.
+5. **Ready.** Guest: **I'm ready** (the button then reads **Not ready**), then untick your row's checkbox, then tick
+   it: the host's row follows each time, and the host's line says who is not ready.
+6. **Remove and leave.** Host: the red cross on the guest's row → confirm: the guest's page closes with *Kyler removed
+   you from the waiting room.* Guest joins again by IP (**Join co-op game**). Guest: **Leave** → confirm: back to the
+   main menu, and the host's list drops the row.
+7. **Start with someone not ready.** Guest joins again and is not ready. Host: **Start Game** → *Not everyone is
+   ready (…)* → **Keep waiting**: nothing happens. Guest: ready. Host: **Start Game**. Both see the loading screen
+   with the mod's line (*Creating the world…*, *Loading your co-op game…*, *Loading Kyler's co-op game…*). The host
+   never sees the new world before it.
+8. **In the game.** Both paused at the start. The host has the district center. No *Joining: open*, and placing
+   something as host asks nothing. The host's connection panel shows *(loading)* after the guest's name until the
+   guest is in. The guest is offered **Place your district center** at once: place it **while still paused**. The
+   log has `[Lobby] Guest 1 (…) seated in colony 2`. Unpause and play 5 minutes: no desync.
+9. **A multi-start map.** Players field 4, two players: two starts are filled, the guest's is start 2, and nobody
+   founds anything. (`[Lobby] Filling 2 start(s)` in the host's log.)
+10. **Too late.** A third account accepts an old invite after **Start Game**: refused with "The host has already
+    started the game…".
+11. **Cancel.** Host opens a waiting room, the guest joins, host **Cancel** → confirm: the guest sees *Kyler closed
+    the waiting room.* The host is back on the difficulty page; **Load Game → Host co-op game** on any save still
+    works as before (the guest now sees a *Connecting* box instead of "Joined! Receiving map...").
+12. **From a game.** Guest plays a solo game and accepts a waiting-room invite: a box says to go back to the main menu
+    and accept it again; nothing else changes.
+13. **Waiting.** Leave the guest on the page three minutes before Start: nothing drops. Pull the host's network
+    cable for two minutes while the guest waits: the guest is asked *Keep waiting* / *Leave*.
+14. Send both `Player.log` files. Lines from the waiting room start with `[Lobby]`.

@@ -40,7 +40,7 @@ has, and offer the last exchange again in one click.
 over while they are in the game.
 
 **Found your colony anywhere:** on a standard map the host starts with the colony that is there; every other player
-founds theirs once the host unpauses, free and already built, with starting beavers. Colonies are remembered by
+founds theirs once the host unpauses (after a new game's waiting room, at once), free and already built, with starting beavers. Colonies are remembered by
 Steam account, whoever hosts. A colony whose player stops playing, or that dies out, is handed to another player,
 and its player can found again.
 

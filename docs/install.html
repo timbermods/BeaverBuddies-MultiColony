@@ -73,7 +73,7 @@
       <ol class="steps compact">
         <li>
           <h3>Download</h3>
-          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a> (every release so far is a beta pre-release) and download <code><span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta17.zip</span></code> under <b>Assets</b>, not "Source code". The release also has a <code><span data-release="version">1.4.0-beta17</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
+          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a> (every release so far is a beta pre-release) and download <code><span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta18.zip</span></code> under <b>Assets</b>, not "Source code". The release also has a <code><span data-release="version">1.4.0-beta18</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
         </li>
         <li>
           <h3>Close Timberborn</h3>
@@ -102,22 +102,30 @@
         <strong class="label">Updating from an earlier download?</strong>
         <p>Replace your <code>BeaverBuddies-MultiColony</code> folder with the new one. If you still have a <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder (the Stability Fork, or an early two-colony build), delete it: only one BeaverBuddies can run at a time.</p>
       </div>
-      <p>To check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.4.0-beta17</span>-SHA256SUMS.txt</code>:</p>
-      <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta17.zip</span> -Algorithm SHA256</code></pre>
+      <p>To check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.4.0-beta18</span>-SHA256SUMS.txt</code>:</p>
+      <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta18.zip</span> -Algorithm SHA256</code></pre>
     </section>
 
     <section id="verify">
       <h2>Check it loaded</h2>
       <ul>
-        <li>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with version <b><span data-release="version">1.4.0-beta17</span></b>.</li>
+        <li>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with version <b><span data-release="version">1.4.0-beta18</span></b>.</li>
         <li>The main menu has a <b>Join co-op game</b> button.</li>
-        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-beta17</span> is loaded!</code></li>
+        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-beta18</span> is loaded!</code></li>
       </ul>
       <p>If it is not there, see <a href="troubleshooting.html#not-loading">The mod does not load</a>.</p>
     </section>
 
     <section id="host">
       <h2>Host a game</h2>
+      <h3>A new game: the waiting room (beta18)</h3>
+      <ol>
+        <li><b>New Game</b> &rarr; faction &rarr; map &rarr; difficulty, as usual, then choose <b>Host co-op game</b> beside <b>Start</b> and name your settlement.</li>
+        <li>On the <b>Co-op Game</b> page, bring your friends in with one of the three ways below. They appear in the list and press <b>I'm ready</b>; you can remove anyone.</li>
+        <li>Press <b>Start Game</b> (you are asked first if someone is not ready). Everyone loads the new world together, paused; unpause when the connection panel shows nobody <i>(loading)</i>. Nobody new can join after Start.</li>
+      </ol>
+      <p>Not played yet: please report how it goes (<a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/ALPHA-TEST-SCRIPTS.md">Script D</a>).</p>
+      <h3>A save</h3>
       <ol>
         <li>Load the save you want to play and choose <b>Host co-op game</b>.</li>
         <li>Bring your friends in with one of the three ways below.</li>
@@ -140,12 +148,12 @@
     <section id="join">
       <h2>Join a game</h2>
       <h3>With a Steam invite</h3>
-      <p>Accept the invite from the Steam notification or overlay. If Timberborn is closed, Steam launches it and joins for you. If the host has <b>Allow Friends to Join Directly via Steam</b> on (it is by default), you can also use <b>Join Game</b> from the host's entry in your Steam friends list.</p>
+      <p>Accept the invite from the Steam notification or overlay, <b>from the main menu</b> for a new game's waiting room (you then see the host's <b>Co-op Game</b> page: press <b>I'm ready</b>). If Timberborn is closed, Steam launches it and joins for you. If the host has <b>Allow Friends to Join Directly via Steam</b> on (it is by default), you can also use <b>Join Game</b> from the host's entry in your Steam friends list.</p>
       <h3>With an IP address</h3>
       <p>From the main menu choose <b>Join co-op game</b> and enter the host's IP address or domain name.</p>
       <p>Guests receive a copy of the host's save. It is kept under <b>Online Games</b>.</p>
       <h3>Found your colony</h3>
-      <p>Once the host unpauses, a message offers you a district center to place (or press <b>Ctrl+K</b> later). Put it anywhere its roads won't join another colony's (their roads show in their colors): it appears already built, with starting beavers, food and water. On a BeaverBuddies multi-start map you get the next starting location instead. The save remembers your colony by your Steam ID (without Steam, by an id kept on your computer), whoever hosts.</p>
+      <p>After a waiting room, as soon as you are in; in a hosted save, once the host unpauses: a message offers you a district center to place (or press <b>Ctrl+K</b> later). Put it anywhere its roads won't join another colony's (their roads show in their colors): it appears already built, with starting beavers, food and water. On a BeaverBuddies multi-start map you get the next starting location instead. The save remembers your colony by your Steam ID (without Steam, by an id kept on your computer), whoever hosts.</p>
     </section>
 
     <section id="playing">

@@ -1,3 +1,8 @@
+v1.4.0-beta18 (BeaverBuddies MultiColony)
+* A waiting room for new co-op games: on the New Game difficulty page choose Host co-op game (beside Start) and name your settlement. Friends join by Steam invite or IP from the main menu and press I'm ready; you press Start Game, and everyone loads the new world together. Each friend can place their district center at once, even while paused. Not played yet.
+* Joining now shows a "Connecting to ..." box with Cancel, and the host's connection panel marks a guest still loading.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta17 (BeaverBuddies MultiColony)
 * In the Migration tab, another colony's district's automatic migration settings, and the manual migration buttons between it and yours, are now greyed out. (Changes there were already refused, but the toggles looked changed.)
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.

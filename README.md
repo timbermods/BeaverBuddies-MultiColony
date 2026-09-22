@@ -13,8 +13,8 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > **Beta.** Hosting, joining over Steam and founding a second colony have been played, and beta12, beta14 and beta15
 > each had a short separate-colonies session: a founding and building, in step at every tick (beta12's one desync, dev
 > mode's science, was fixed in beta14), and in beta15 trading posts with exchanges of goods and beavers. The rest of
-> this version's model (colony handover, most of the road rule) and most of the desync review's fixes (alpha11
-> onward) have **not been played yet**; they are covered by automated checks. Since
+> this version's model (colony handover, most of the road rule), the new game's **waiting room** (beta18) and most of
+> the desync review's fixes (alpha11 onward) have **not been played yet**; they are covered by automated checks. Since
 > alpha13, in a separate-colonies game, a guest whose colony state differs from the host's stops the tick it happens,
 > so a bug in that check would also stop a healthy game; the log line says which it was. Play on a copy of your save,
 > keep backups, and please report what you find
@@ -62,7 +62,24 @@ build cannot join.
 - **Hand over a colony after its player is away (days)**: 7 by default, 0 for never (see
   [when a colony is handed over](#when-a-colony-is-handed-over)).
 
-**2. Host: pick a game.** Any save works, new or old, on any map.
+**2. Host: a new game with a waiting room** (the easy way, 1.4.0-beta18; not played yet).
+
+- **New Game** → faction → map → difficulty, as usual. Then choose **Host co-op game** beside **Start**, and name
+  your settlement (the game's own box).
+- The **Co-op Game** page opens. Invite with **Invite Friends** (Steam), or give your IP address (port **25565**).
+  Friends appear as they join: **Joining…**, then their name and colony, and **Ready** once they press **I'm ready**.
+  You can remove someone from the room.
+- Press **Start Game** whenever you like (if someone is not ready, or nobody came, you are asked first). Your
+  computer makes the world behind the loading screen, and everyone loads it together, paused at the start. Nobody new
+  can join after Start (a **Save and Rehost** lets someone in later).
+- **Guests** accept the Steam invite, or choose **Join co-op game** → the host's IP, **from the main menu**. A short
+  *Connecting* box, then the same page with **I'm ready** and **Leave**.
+- In the game, the host has the map's district center. On a standard map every other player is offered **Place your
+  district center** as soon as they are in, even while the game is still paused (step 5). On a BeaverBuddies
+  multi-start map each player gets a start, in the order they came into the room (only as many starts as players,
+  at most the Players field); anyone beyond founds theirs.
+
+**Or host a save** (any save, new or old, on any map, including a new game you started alone):
 
 - **A new game on a BeaverBuddies multi-start map:** start 1 is the host's colony, start 2 the next player's, and so on.
 - **A new game on a standard map, or a separate-colonies save:** the district centers already there are the host's
@@ -71,18 +88,21 @@ build cannot join.
   colony, unless the host ticks **Allow founding colonies in a shared game**: then other players may found theirs,
   and the first founding splits the save into colonies for good.
 
-**3. Host: save, then host.** Save the game. Open **Load Game**, select that save and choose **Host co-op game**
-(instead of Load). Invite your friend with **Invite Friends** (Steam), or give them your IP address (port **25565**).
+**3. Host a save: save, then host.** Save the game. Open **Load Game**, select that save and choose **Host co-op
+game** (instead of Load). Invite your friend with **Invite Friends** (Steam), or give them your IP address (port
+**25565**).
 
-**4. Guest: join** by accepting the Steam invite (or **Join co-op game** → the host's IP). **Host: wait, paused,
-until everyone is in**: nobody can join once the game has started, or once anything was changed while it waited (a
-later joiner would be sent the save without it). The connection panel says **Joining: open** until then. If you
-place or mark something while waiting, the game asks first: **Start the game** (what you did is played, and joining
-closes) or **Keep waiting** (nothing happens). A guest's change while you wait is refused with a notice.
+**4. Guest: join** by accepting the Steam invite (or **Join co-op game** → the host's IP). **Host of a save: wait,
+paused, until everyone is in**: nobody can join once the game has started, or once anything was changed while it
+waited (a later joiner would be sent the save without it). The connection panel says **Joining: open** until then.
+If you place or mark something while waiting, the game asks first: **Start the game** (what you did is played, and
+joining closes) or **Keep waiting** (nothing happens). A guest's change while you wait is refused with a notice.
+(After a waiting room none of this applies: everyone is already in. The connection panel marks a guest still
+loading.)
 
-**5. Guest without a colony: found yours.** Once the host unpauses, a message offers to **place your district
-center** (or press **Ctrl+K** later, whenever you are ready; before the first tick it says the game has not started
-yet). Place it **anywhere its roads won't join another colony's** (other colonies' roads show in their colors). It
+**5. Guest without a colony: found yours.** After a waiting room, as soon as you are in; in a hosted save, once the
+host unpauses. A message offers to **place your district center** (or press **Ctrl+K** later, whenever you are
+ready; in a hosted save, before the first tick it says the game has not started yet). Place it **anywhere its roads won't join another colony's** (other colonies' roads show in their colors). It
 is free, needs no science, and appears **already built**, with starting beavers, food and water. You found once; you may found again only if your colony is handed
 over.
 
@@ -310,7 +330,12 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   for 30 of a good, and a crossing that holds more than that (the earlier builds allowed 100) is expected to stop
   the save loading (traced in the game's code, not tried).
   Start a new game, or empty the crossings in the earlier build first. Stability Fork saves load as before.
-- **Ctrl+K says the game has not started yet:** wait until the host unpauses once.
+- **Ctrl+K says the game has not started yet:** wait until the host unpauses once. (It never says this after a
+  waiting room.)
+- **A guest's game failed to load after the waiting room's Start:** nobody can join a started game; the host uses
+  **Save and Rehost**, and the guest joins that.
+- **"… is waiting for you in a co-op waiting room":** you accepted an invite (or used Join) while in a game. Go back
+  to the main menu, then accept the invite again or join from there.
 - **Ctrl+K says this is one shared colony:** the save is a shared game. To split it into colonies, the host ticks
   **Allow founding colonies in a shared game (beta)** and rehosts; the first founding makes it separate for good.
 - **A desync dialog with `Colony state differs` in the log:** the every-tick colony check (alpha13) disagreed. It
@@ -365,7 +390,14 @@ not to the original BeaverBuddies project.
   save has none: it is the same as the
   Stability Fork's.
 
-Design notes and the plans: [design/TRADING-EXCHANGE-PLAN.md](design/TRADING-EXCHANGE-PLAN.md),
+- **The waiting room** keeps its players in a room of its own on the host's server, before any save exists: small
+  messages of their own after the build check (a guest's hello and ready, the host's roster and progress), never game
+  actions. At **Start Game** the host's computer makes the world as a single-player game, saves it at tick 0, sends
+  those bytes to every player in the room, and loads the same bytes itself as the hosted game, as **Host co-op game**
+  on a save does. The colony slot table is filled in the room's order before that first save.
+
+Design notes and the plans: [design/PRE-GAME-LOBBY-PLAN.md](design/PRE-GAME-LOBBY-PLAN.md) (the waiting room),
+[design/TRADING-EXCHANGE-PLAN.md](design/TRADING-EXCHANGE-PLAN.md),
 [design/TWO-COLONY-ALPHA-PLAN.md](design/TWO-COLONY-ALPHA-PLAN.md); the beta11 desync and network review:
 [design/REVIEW-FINDINGS-1.4.0-beta11.md](design/REVIEW-FINDINGS-1.4.0-beta11.md); Wonders on the tick:
 [BeaverBuddies/Doc/WonderTiming.md](BeaverBuddies/Doc/WonderTiming.md).

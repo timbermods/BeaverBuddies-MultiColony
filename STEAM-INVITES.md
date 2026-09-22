@@ -6,7 +6,13 @@ you host, so Hamachi / port forwarding / direct IP keep working exactly as befor
 
 ## Using it
 
-**Host**
+**Host of a new game (MultiColony's waiting room, 1.4.0-beta18)**
+1. **New Game** → faction → map → difficulty → **Host co-op game** (beside Start), and name the settlement.
+2. On the **Co-op Game** page choose **Invite Friends** (it is enabled once the Steam lobby exists) and pick your
+   friend. The friend appears in the room; press **Start Game** when everyone is ready. Nobody new can join after
+   that: the Steam lobby closes at Start.
+
+**Host of a save**
 1. Make sure **Enable Steam Networking** is on in Mod Settings (it is by default).
 2. Load your save and choose **Host co-op game**.
 3. Choose **Invite Friends** and pick your friend in the Steam overlay.
@@ -15,7 +21,9 @@ you host, so Hamachi / port forwarding / direct IP keep working exactly as befor
    the first change to the game, whichever comes first (a later joiner would be sent the save without it).
 
 **Friend**
-- Accept the invite (Steam notification or overlay). If Timberborn is not running, Steam
+- Accept the invite (Steam notification or overlay). A *Connecting to …* box shows (with Cancel) until the host's
+  waiting room opens or its save arrives. Accept a waiting room's invite **from the main menu**: accepted during a
+  game, you are told to go back to the main menu and accept it again. If Timberborn is not running, Steam
   launches it and joins for you. With **Allow Friends to Join Directly via Steam** on, a
   friend can also use **Join Game** from Steam's friends list.
 - Both players need the same BeaverBuddies build and the game version must match. Since 1.4.0-alpha11 the
@@ -47,8 +55,8 @@ Steamworks assembly.
 
 - **Lobby.** The host opens a friends-only Steam lobby; that is what the overlay invites
   into. Lobby data records whether the host is still accepting players, and is set to closed at the
-  first tick or the first game-changing action while paused, so an old invite explains itself instead
-  of hanging.
+  first tick or the first game-changing action while paused (a new game's waiting room: at **Start Game**), so an
+  old invite explains itself instead of hanging.
 - **Admission.** The host accepts a connection only from a player who is in its lobby, so a
   stranger who knows a Steam ID cannot connect. A guest that appears before the host's lobby
   view catches up gets a five-second grace period.
@@ -123,6 +131,9 @@ fix and the pumping between ticks are covered by checks on their decisions, not 
 6. Repeat with an invite sent **after** the host has unpaused (expect the "already started" message), and once with
    an invite sent after the host placed a path while still paused (expect the "already changed the game" message).
    An invite sent after **Start Game** while the host still waits paused, with nothing changed, still works.
+6b. **Waiting room:** New Game → **Host co-op game**; invite the friend; the friend sees *Connecting…*, then the
+    host's **Co-op Game** page; ready up and start. An invite accepted after Start gets the "already started"
+    message. See `ALPHA-TEST-SCRIPTS.md`, Script D.
 6a. Rejoin the same save later with the friend hosting it: in MultiColony each of you gets the same colony as
     before (`[Colony] Player … plays slot …` in the log).
 7. Host with Steam Networking **off** and confirm direct IP works as before.
@@ -134,7 +145,7 @@ Steam's numeric end reason and debug text, which is what makes a failure diagnos
 
 - Both players must be online in Steam, and the friend must own Timberborn.
 - Joining after the host's first tick (unpausing), or after the host changed anything while waiting paused, is not
-  possible.
+  possible; nor after a waiting room's **Start Game**.
   After a desync, the host uses **Save and rehost**. A Steam guest's **Reconnect (wait for Rehost)** joins the
   host's new lobby when Steam shows it (the host has **Allow Friends to Join Directly via Steam** on); otherwise the
   guest is told to accept a fresh invite. In MultiColony a
