@@ -157,6 +157,12 @@ namespace BeaverBuddies.Events
         public override void Replay(IReplayContext context)
         {
             ReplayService replayService = context.GetSingleton<ReplayService>();
+            // Every computer logs its last colony changes: the desynced one as it stops (HandleDesync plays this at once,
+            // a heartbeat's digest that differs included), the others as its word arrives. The first line that differs
+            // between two players' logs is the change they did not make alike. First, so nothing below can stop it.
+            if (Colonies.ColonyModeService.IsSeparateColonies)
+                Plugin.LogWarning($"[Colony] Colony changes here as {(replayService.IsDesynced ? "this computer" : "another player")} "
+                    + $"desynced (tick {replayService.TicksSinceLoad}): {Colonies.ColonyDigest.DescribeRecent()}");
             context.GetSingleton<BeaverBuddies.Fixes.MultiplayerInputRecovery>()?.RequestReset();
             // Paused, and the pick with it: otherwise picking the old speed again afterwards would be taken for asking for
             // the speed already picked, and ignored (SpeedChangePatcher).
