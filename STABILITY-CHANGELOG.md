@@ -5,6 +5,21 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha15
+
+**The test scripts cover alpha12 to alpha14.** No code change.
+
+- Script A (host alone) gains lines for joined roads and the *roads joined* notice, a Trading Post half on the
+  wrong land and partner-only removal, gates (by hand, by switch, while hovering, and one that would join two
+  districts), automation and copying settings from another colony's building, the District Crossing panel left
+  open, and the digest count after a load.
+- Script B (two players) gains the every-tick digest (what a `Colony state differs … at tick` line means and what
+  to send), a guest's refused working-hours change and dev-mode unlock, joined roads and gates with two players, and
+  the hand-over by absence with detailed logging on and without a rehost.
+- Script C: the hand-over step no longer says to turn the host's logging off (alpha12 fixed that), and a Trading
+  Post half refused for a third colony.
+- Checks unchanged: StabilityTests 263; RuntimeChecks 229.
+
 ## 1.4.0-alpha14
 
 **The alpha10 review's Appendix B: the baseline's own per-frame state.** The last section of the review. Each is

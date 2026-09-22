@@ -87,17 +87,35 @@ colony (alpha)** are ticked, and tick **Always Use Detailed Logging** (debug mod
     **Go to**, and both colonies with their population; the game keeps running behind it. Close it with its close
     button, then open it and press Esc, then Ctrl+T: each closes it. Press **Ctrl+L**: the land outlines show and
     hide.
-15. **Handover.** As colony 1, open **Ctrl+T**: colony 2 (nobody plays it in this session) has **Hand to Colony 1**.
+15. **Two colonies' roads joined.** As colony 1, lay a path up to the edge of colony 2's land, then as colony 2 try
+    a path on the tile beside it: red, *…would touch another colony's building or path*, also while colony 1's path
+    is still a construction site. If you manage to join the two roads anyway (place both at the same moment, each
+    fine alone), the game **keeps running** and the notice *Two districts' roads are joined…* shows; remove one
+    path and it goes.
+16. **A Trading Post half on the wrong land.** Place a Trading Post so that one half stands deep inside the other
+    colony's land: **neither half** appears, with one notice. Then remove a post that trades between colonies 1 and
+    2 while flipped to a colony 3 (found one, or flip past 2): refused; as colony 1 or 2: allowed.
+17. **Gates.** Place a gate on one of your paths and close and open it (by hand, then with a switch): it opens within a
+    moment and never shows the conflict mark. While it opens, hover a path preview across it with the tool: the
+    hovering must not stop it. Then place a gate that would join colony 1's and colony 2's roads: it stays shut with
+    the conflict mark.
+18. **Automation.** A switch wired to pause a building: the building pauses within a moment of the flip. Copy
+    settings from colony 2's building onto colony 1's (or place a copy of it): refused with a notice, or the copy is
+    placed without its settings.
+19. **The District Crossing panel.** Between two of colony 1's districts, with import settings set, keep a crossing's
+    panel open for a few minutes of hauling: the workers keep exporting as before.
+20. **Handover.** As colony 1, open **Ctrl+T**: colony 2 (nobody plays it in this session) has **Hand to Colony 1**.
     Click it: colony 2's buildings, land and stock are colony 1's (select one of them), and after flipping to colony 2
     (Ctrl+Shift+K) you can press Ctrl+K to found again. A colony with no beavers left is handed over by itself a day
     later (if you can, let one starve and check).
-16. **Save, reload, host again:** owners, land, marks, working hours, science pools, unlocks, the totals, the
+21. **Save, reload, host again:** owners, land, marks, working hours, science pools, unlocks, the totals, the
     ledger and an exchange under way (with the goods waiting on each half, which nobody carries off after loading) or
-    an offer waiting are unchanged.
-17. **Mode off.** Untick **Separate colonies** and start a new game: one shared colony, no refusals, no Trading Post
+    an offer waiting are unchanged. The day's `[Colony] Check day N tick T:` line in the log ends in `digest=…/0`
+    right after a load (the count starts again from zero).
+22. **Mode off.** Untick **Separate colonies** and start a new game: one shared colony, no refusals, no Trading Post
     in District Management, District Crossings trade by import settings as in the game (holding up to 100), science is
     one pool.
-18. Send `Player.log`.
+23. Send `Player.log`.
 
 ## Script B: two players (about 45 minutes)
 
@@ -117,9 +135,27 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
    connection panel at the start and at the end.
 7. **Save and Rehost.** Both players get the same colony again. Then **swap hosts**: the friend hosts the same save;
    each player still gets their own colony.
-8. **Away.** The friend leaves; the host saves, then hosts again without them and plays on. The Ctrl+T window shows
-   *player away (missed N days of hosted play)*. After the number of days in the host's setting (set it to 2 for this test), the friend's
-   colony is handed to the host's. When the friend joins again, they get the notice and can found a new colony.
+8. **Away.** The friend leaves while the host plays on (no rehost): from the next day the Ctrl+T window shows
+   *player away (missed N days of hosted play)* and offers **Hand to …** at once. Wait the number of days in the
+   host's setting (set it to 2 for this test; it can be changed during the game): the friend's colony is handed to
+   the host's. Do this once with the host's **Always Use Detailed Logging** on: the hand-over must still happen
+   (before alpha12 it never did with logging on). When the friend joins again (the host saves and rehosts), they get
+   the notice and can found a new colony.
+8a. **Every tick compared (alpha13).** Play a quarter of an hour at speed 1 to 3 with building, marking and an
+    exchange, across a day change. Expect **no** desync dialog. If one appears and the log says `Colony state differs
+    from the host's at tick …` (not `Random state mismatch`), that is this build's digest disagreeing, not your game:
+    send both `Player.log` files; the two change counts in that line say which side counted one more.
+8b. **Refusals a guest sees (alpha12).** A guest who is not seated in a colony (a helper: join a game with every
+    colony taken) changes the working hours: refused, and the panel goes back to the colony's hours. With the host's
+    dev mode off, the guest Ctrl-clicks a locked building: the tool does **not** open; the host's refusal notice
+    appears instead. With the host's dev mode on, the tool opens once the host answers.
+8c. **Joined roads, two players (alpha12).** Colony 1 lays a path up to the edge of its land and pauses the moment it
+    finishes; colony 2 places a path on the neighbouring tile and resumes: refused (*…would touch another colony's
+    building or path*). Force a join (both place at the same moment): the game keeps running on both computers and
+    both see the *roads joined* notice.
+8d. **Gates, two players (alpha14).** One player opens a gate on their own roads while the other hovers a path
+    preview across it: it opens on both screens within a tick. A gate that would join the two colonies' roads stays
+    shut with the conflict mark on both.
 9. **Dev mode and Ctrl.** The host turns dev mode on (Alt+Shift+Z). Ctrl-click a locked building to unlock it, then
    place it with Ctrl still held; while the guest places paths, the host holds Ctrl+L; while the host holds Ctrl, a
    building finishes demolition. Every building must look the same on both screens (a construction site, not a
@@ -129,7 +165,8 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 11. Both players press **Ctrl+Shift+J** before quitting, and diff the `day N tick T:` lines of the two reports: they
     must be the same (a difference now also stops the guest at once, at the turn of the day).
 12. Send both `Player.log` files. If a desync happens, first compare the mod lists at the top of both logs, then look
-    for the `Random state mismatch` or `Colony state differs` line.
+    for the `Random state mismatch` or `Colony state differs` line. A `Colony state differs … at tick` line is the
+    every-tick digest (alpha13); one `… on day` is the daily check.
 
 ## Script C: scale (an evening, three or four players)
 
@@ -143,7 +180,9 @@ per colony: population, land, exchanges).
 2. Play at least two hours at your usual speed, with repeating exchanges running and colonies growing to 100+
    beavers. Note the tick rate and each player's frame rate from the connection panel every half hour.
 3. A player joins after the game has started (the host saves and hosts again with them). Then **swap hosts**.
-4. A player leaves for the rest of the evening: check their colony is handed over after the set number of days.
-   (Turn the host's detailed logging off for this step: with it on, the host plays every colony and none is ever
-   handed over.)
+4. A player leaves for the rest of the evening: from the next day their colony shows as away in Ctrl+T, and it is
+   handed over after the set number of days, with the host's detailed logging on or off (only a host testing alone,
+   with nobody connected, plays every colony).
+4a. **A Trading Post half refused.** Someone places a post with one half on a third colony's land: neither half
+    appears. A third player tries to remove a post between the other two: refused.
 5. Send every `Player.log` and your notes on the tick rate and frame rates.
