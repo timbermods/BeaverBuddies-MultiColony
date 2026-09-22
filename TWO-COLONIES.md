@@ -276,7 +276,9 @@ figures alone. Still whole-map: the *Global* history graphs in F9/F10 and in a g
 records for the whole map.
 
 The journal goes by the colony an entry's beaver is in now; a beaver that has died, or lives in no district (cut
-off, or its district center deleted), goes by the colony it was last in. A beaver moved through a Trading Post takes
+off, or its district center deleted), goes by the colony it was last in. The save keeps that only for a beaver the
+journal has an entry about: after a reload, the death of any other beaver still in no district is in nobody's
+journal. A beaver moved through a Trading Post takes
 its earlier entries to its new colony. The save keeps whose each entry is, so after a reload it is still your
 colony's (it is listed again once you are seated). An entry saved by an earlier build whose beaver is gone is
 hidden, since nothing says whose it was. The game's own journal, which the save holds, is not changed: alone, you
