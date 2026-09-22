@@ -145,14 +145,27 @@ namespace BeaverBuddies.Events
             // 2) There's no easy way to get at the cache of previews the UI uses,
             //    and each blueprint requires a different GameObject, so we can't cache just one.
             // TODO: Check if this is still the case with the new blueprint system.
-            GameObject gameObject = templateInstantiator.Instantiate(spec.Blueprint, checkParent.transform);
-            gameObject.SetActive(value: false);
-            var blockObject = gameObject.GetComponentSlow<BlockObject>();
-            blockObject.MarkAsPreviewAndInitialize();
-            blockObject.Reposition(placement);
-            bool isValid = blockObject.IsValid();
-            UnityEngine.Object.Destroy(gameObject);
-            return isValid;
+            // The copy's components wake up (Awake) as it is made. The game's own draw no game random numbers there, but
+            // another mod's building might, and only the host makes this copy (the guests take its answer): the random
+            // state is put back as it was, whatever the copy drew, so the host's stays the guests'. Not
+            // DeterminismService.GetNonGameRandom: Guid.NewGuid and direct UnityEngine.Random calls draw from this state
+            // whatever it says. (Destroy runs OnDestroy later, outside this; none of the game's draws there.)
+            UnityEngine.Random.State randomState = UnityEngine.Random.state;
+            GameObject gameObject = null;
+            try
+            {
+                gameObject = templateInstantiator.Instantiate(spec.Blueprint, checkParent.transform);
+                gameObject.SetActive(value: false);
+                var blockObject = gameObject.GetComponentSlow<BlockObject>();
+                blockObject.MarkAsPreviewAndInitialize();
+                blockObject.Reposition(placement);
+                return blockObject.IsValid();
+            }
+            finally
+            {
+                if (gameObject != null) UnityEngine.Object.Destroy(gameObject);
+                UnityEngine.Random.state = randomState;
+            }
         }
 
         public override string ToActionString()
