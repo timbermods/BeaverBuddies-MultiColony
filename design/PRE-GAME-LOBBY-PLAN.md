@@ -660,9 +660,8 @@ return). Does nothing unless `LobbySession.Current?.State == CreatingWorld` and 
 
 1. **Hold the loading screen.** Harmony prefix on `SceneLoading: LoadingScreen.Disable`: return false while
    `LobbySession.HoldLoadingScreen`. (The hold is released by step 6.3.3 or `Fail`; every path out must release it.)
-2. **Don't unpause.** Harmony prefix on `GameStartup: GameInitializer.UnpauseGame`: while creating the world, skip
-   `ChangeSpeed(1f)` but keep the state moving to `ShowUI` **(read the method body in Phase 0 and copy its state change
-   with a dated `[ManualMethodOverwrite]` excerpt)**.
+2. ~~**Don't unpause.**~~ Dropped in Phase 0 (§14, item 1): the save is written before the unpause, and the made
+   world is discarded.
 3. **`[OnEvent] NewGameInitializedEvent`**:
    - Pre-seed the slot table: `ColonySlotService.Instance.Table.Resolve(LocalPlayerIdentity.Id, LocalPlayerIdentity.
      Name)`, then for each frozen member in order `Resolve(member.StableId, member.Name)`, where the stable id is the
@@ -1074,4 +1073,46 @@ rehost." and "The waiting room is full."
 
 ## 14. Phase 0 findings
 
-*(The implementing session fills this in.)*
+Settled 2026-09-22 against 1.1.2.4 and the repo at `07a39a5` (beta16 + this plan). Baseline: both builds 0 warnings,
+StabilityTests 355/355, RuntimeChecks 330/330.
+
+1. **`GameInitializer.UnpauseGame`** is `_speedManager.ChangeSpeed(1f); return InitializationState.ShowUI;`.
+   **No patch is needed, and §6.4 step 2 is dropped.** The made world is thrown away once saved: the save is queued in
+   the `NewGameInitializedEvent` handler and written in that frame's `LateUpdate`, before `UnpauseGame` runs on the
+   next frame, so it holds tick 0 either way. On a failure the host keeps an ordinary solo game, unpaused as vanilla
+   leaves it.
+2. **`LoadingScreen.Disable`** is called only by `SceneLoader.LoadSceneCoroutine`. `SoundSettingsSystem: Muter` mutes on
+   `LoadingScreenEnabled` and unmutes on `LoadingScreenDisabled`, so holding `Disable` keeps the sound muted until the
+   reload's own `Disable`, which is what we want. Prefix returning false while held.
+3. **`EventIO` set inside a single-player scene.** The tick patch (`TickableBucketServiceTickUpdatePatcher`) falls
+   back to vanilla when `TickingService` is null. The in-game Options → Load → **Host co-op game** already sets
+   `EventIO` in a single-player scene and then waits in a dialog, so this is exercised today. `LoadSceneCoroutine` sets
+   `Time.timeScale = 0` synchronously before it yields, so the one frame before the scene change runs no ticks.
+4. **A length of -1** reads back as -1 (`BitConverter.ToInt32`). Today the guest would pass it to
+   `ReceiveFile`/`ReadUntilComplete` and throw. The sentinel has to be handled at the top of the read loop. Classic
+   hosting never writes it.
+5. **The host's receive loop.** `StampReceivedEvent`, `HandleActivity` and `HandleChat` trust `playerIds`. A
+   waiting-room member gets its number at admission, so the gate must drop every non-lobby frame until that member is
+   admitted to the game (`StartQueuing`), or a frame sent early would be stamped with a real number. The guest sends
+   nothing but lobby frames before its save arrives (its activity channel only exists from then on).
+6. **`NewGameModePanel`**: `_map` (a `MapItem`: `DisplayName`, `MapFileReference`), `_factionSpec` (`Id`,
+   `DisplayName.Value`, `Logo`), `_predefinedGameMode` (null for a custom mode; `GameModeSpec.DisplayNameLocKey`),
+   `_summary` (`SummaryText`), `_nextButton`, `_root`, and private `TryGetValidatedGameMode`. The summary is
+   `faction + " - " + map + " - " + (selected mode button text or T("NewGameConfigurationPanel.Custom"))`.
+7. **Keys:** "Next" is `CommonLocKeys.NavigationNextKey` (`Core.NavigationNext`); Cancel is `Core.Cancel`; a custom
+   mode's name is `NewGameConfigurationPanel.Custom`. `Lobby.Next` is not needed.
+8. **Missing translations.** `LocalizationLoader.GetLocalization` puts every enUS record into a language that lacks
+   it, with a log warning, so the English text shows. English-only keys are fine.
+9. **The tutorial checkbox** writes the player's `TutorialSettings`, which the new world reads when it is made. This is
+   exactly what happens today when a new game is made alone and then hosted, so there is no new risk. Not forced off.
+10. **APIs:** `GameSaveRepository.CreateDirectoryForSettlement(string)` is public; `FactionSpecService.GetFaction(id)`;
+    `VisualElementLoader.LoadVisualTreeAsset(name)` is public. BindingChecks confirms the bindings after the build.
+11. **Templates.** All the §5 templates and names exist in UI.zip. **Change from §5.4:**
+    `LoadVisualElement("MainMenu/NewGameTemplate")` would throw. Its `HeaderText` is a `LocalizableLabel` with no
+    `text-loc-key` (the game's pages set one with `AttributeOverrides`), and `VisualElementLocalizer` throws for an
+    unset key. So the page is built with `LoadVisualTreeAsset(...).CloneTree().ElementAt(0)`, the label's
+    `_textLocKey` is set (publicized), and only then does `VisualElementInitializer.InitializeVisualElement` run. The
+    content element (class `new-game__main-content`) sits inside MainContent's `Center`. `Modding/ModItem`,
+    `Game/SettlementNameBox` and `Core/DialogBox` have no unset keys.
+12. **The new-settlement notification** goes into the game's notification journal before the save, and the save holds
+    the journal, so the reloaded host still has it.
