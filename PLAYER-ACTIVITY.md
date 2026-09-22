@@ -35,8 +35,9 @@ their side of the map as you would a teammate.
 
 - **Cursor colors are the player's; colony colors are the colony's.** The land outlines (Ctrl+L, or while a tool is
   in hand), the *(colony N)* beside a name in the connection panel and the colony names in the trading window use
-  the game's own start colors, one per colony. The cursor, name label, selection outline and chat lines use the color
-  the player chose (or the one you set for them under **Player cursors**). A player and their colony need not match.
+  the game's own start colors, one per colony. The cursor, name label, selection outline and chat name use the color
+  the player chose (or the one you set for them under **Player cursors**), or, while they have not chosen one, a
+  color by player number (see *Settings* below). A player and their colony need not match.
 - **Selection outlines cross colonies.** Selecting another colony's building shows it to everyone as any selection
   is; opening its panels changes nothing (see *What you see* in TWO-COLONIES.md).
 - **Pings** are shared by everyone, whichever colony pinged.
@@ -54,8 +55,8 @@ player who is sharing activity gets a card with:
 | Size | 50%–300% | 100% |
 | Transparency | 0%–90% | 50% |
 
-The color also applies to that player's name label, their selection outline and their chat
-lines in the connection panel, so a player always looks like one consistent color. The swatch in each card previews the
+The color also applies to that player's name label, their selection outline and their name in the
+chat in the connection panel, so a player always looks like one consistent color. The swatch in each card previews the
 color and transparency live, and **Reset** returns that player to the defaults.
 
 These are **display-only, local choices**. They are never sent over the network, so
@@ -79,6 +80,12 @@ In Mod Settings, **Player activity indicators** turns sharing and display on or 
 **Ping Display Name** and **Ping Color** are the name and color other players see for
 you here, and on your pings. Pick different names and colors for easier
 identification; connection labels distinguish players even if their names match.
+While **Ping Color** is left on its default yellow, other players see a color of their own by player
+number instead (the host orange, then blue, green, pink, purple, teal, red and lime for the guests as
+they join, repeating after eight), so players who never touch the setting still look different. Any
+other color, even a slightly different yellow, is kept as chosen. The swatch called **Their color** in
+**Player cursors** shows that color, and your own choices there still win. Pings always use the Ping
+Color as set, yellow by default. (From Stability Fork 1.1.11.)
 A host who disables their own display still relays other guests' activity.
 
 ## Performance and synchronization

@@ -18,7 +18,7 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > ([how](#troubleshooting-and-reporting-problems)).
 
 MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
-(1.1.10), which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything
+(1.1.11), which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything
 those do still works: Steam invites, the connection panel and chat, pings, player cursors, and ordinary
 shared-colony co-op (turn **Separate colonies** off).
 
@@ -232,7 +232,9 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   **Allow Friends to Join Directly via Steam**. Only friends who join the host's friends-only lobby can connect.
 - **Direct IP:** the host forwards port **25565**, or both use a VPN such as Hamachi.
 - **The connection panel** (top-left) shows each player, their ping, whether you're in sync, the tick rate and a
-  chat box. Collapse it by clicking its title; hide or move it in Mod Settings.
+  chat box. Collapse it by clicking its title; hide or move it in Mod Settings. Chat names are drawn in each
+  player's cursor color, and a player who has not chosen one gets a color of their own by player number (the host
+  orange, then blue, green, pink, purple, teal, red and lime), so nobody starts out yellow.
 - **A guest's actions** go to the host and back before they happen. While they travel, the tiles of what you placed
   or marked are tinted (red for a removal); if the host refuses the action, a notice says why.
 - **Mismatched mods** are flagged when someone joins. It's a warning, but a mod that changes the simulation will

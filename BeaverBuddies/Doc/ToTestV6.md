@@ -3,7 +3,7 @@
 (This file was the original project's to-do list for a Timberborn update. It now says what this fork has and has
 not seen in a game, so nobody mistakes an automated check for a playtest.)
 
-**Played:** the Stability Fork underneath (1.1.10), for more than an hour over Steam invites with two players and
+**Played:** the Stability Fork underneath (1.1.11, whose player colors were played on top of 1.1.10), for more than an hour over Steam invites with two players and
 large colonies; and the land-split alphas (1.2.0-two-colony-alpha1 to 5): hosting, joining, founding a second
 colony and building in it.
 

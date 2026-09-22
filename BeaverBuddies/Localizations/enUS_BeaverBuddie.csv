@@ -80,7 +80,8 @@ BeaverBuddies.KeyBindings.Ping,"Ping Location",""
 BeaverBuddies.Settings.PingPlayerName,"Ping Display Name",""
 BeaverBuddies.Settings.PingPlayerName.Tooltip,"Your name next to your pings, cursor and edits. Choose one nobody else in the game uses.",""
 BeaverBuddies.Settings.PingColor,"Ping Color",""
-BeaverBuddies.Settings.PingColor.Tooltip,"The colour of your pings and cursor on the other players' screens.",""
+BeaverBuddies.Settings.PingColor.Tooltip,"The colour of your pings, cursor and chat name on the other players' screens.
+Left on the default yellow, your cursor and chat name get a colour by player number; pings stay yellow.",""
 BeaverBuddies.Settings.GuestFpsFloor,"Ease off when a guest drops below this frame rate",""
 BeaverBuddies.Settings.GuestFpsFloor.Tooltip,"Host only. Slows the game a little while a guest draws fewer frames than this, then speeds back up by itself.
 Also in the connection panel during a game.",""

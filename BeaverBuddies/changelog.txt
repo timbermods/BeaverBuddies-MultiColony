@@ -52,6 +52,7 @@ v1.4.0-alpha1 to alpha9
 
 v1.1.10 and v1.1.11 (BeaverBuddies Stability Fork, which MultiColony is built on)
 * Steam friend invites over Valve's current networking API, a connection panel with chat, player cursors and selections, and fixes for water, animation, random-number, saving, demolition and input desyncs and crashes.
+* 1.1.11 (in MultiColony since 1.4.0-beta4): every player gets a colour of their own until they choose one, and only the name is coloured in the chat.
 
 v1.1.0-1.0.1
 * Fixed a build bug where Steam options were not included
