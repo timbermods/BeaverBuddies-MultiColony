@@ -1,3 +1,4 @@
+using BeaverBuddies.Colonies;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ namespace BeaverBuddies.Steam
     /// <see cref="WaitForConnection"/> is meant to be called on a worker thread.
     /// </para>
     /// </summary>
-    public sealed class SteamLinkSocket : ISocketStream, IConnectionAwaitable, IFailureDescriber, ITransportInfo
+    public sealed class SteamLinkSocket : ISocketStream, IConnectionAwaitable, IFailureDescriber, ITransportInfo, IVerifiedIdentity
     {
         /// <summary>Well under Steam's 512 KB message limit, and small enough to keep latency low.</summary>
         public const int MaxMessageBytes = 128 * 1024;
@@ -65,6 +66,11 @@ namespace BeaverBuddies.Steam
         double bufferFullSince = -1;
 
         public ulong RemoteSteamId { get; }
+        /// <summary>
+        /// The other end's stable player id, from the Steam ID that Steam authenticated for this connection (not one the
+        /// other end sent), in the form LocalPlayerIdentity gives it. The host holds a guest's hello to it.
+        /// </summary>
+        public string VerifiedPlayerId => RemoteSteamId == 0 ? null : ColonySlotTable.SteamIdPrefix + RemoteSteamId;
         public bool IsIncoming { get; }
         public string Name { get; }
         public string TransportName => "Steam";

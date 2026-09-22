@@ -35,6 +35,8 @@ namespace TimberNet
         private readonly ConcurrentDictionary<ISocketStream, ActivityChannel> activityChannels =
             new ConcurrentDictionary<ISocketStream, ActivityChannel>();
         private int lastPlayerId;
+        // Player number -> the identity its connection proved, for the whole session (numbers are never reused).
+        private readonly ConcurrentDictionary<int, string> verifiedIds = new ConcurrentDictionary<int, string>();
 
         // Chat: the host numbers every message and keeps the whole conversation, so a guest who joins late can be
         // sent all of it. chatGate makes "publish a message" and "send the history to a new guest" one step each, so
@@ -68,6 +70,13 @@ namespace TimberNet
         {
             lock (queuedMessages) return clients.Select(c => c.Name).ToList();
         }
+
+        /// <summary>
+        /// Who a guest is as its connection proved it (<see cref="IVerifiedIdentity"/>: a Steam connection's Steam ID),
+        /// or null for a connection that proves nothing (direct TCP), the host itself (0) or no guest at all. Kept after
+        /// the guest leaves, so an event it sent just before is still judged by who it was. Any thread.
+        /// </summary>
+        public string? VerifiedIdOf(int player) => verifiedIds.TryGetValue(player, out string? id) ? id : null;
 
         /// <summary>The player numbers of the guests still connected, as the host numbered them.</summary>
         public List<int> ConnectedPlayerIds
@@ -190,7 +199,10 @@ namespace TimberNet
                 queuedMessages.TryAdd(client, new ConcurrentQueue<Outgoing>());
                 clients.Add(client);
                 // The host is player 0; the host, not the guest, chooses each guest's id.
-                playerIds[client] = Interlocked.Increment(ref lastPlayerId);
+                int player = Interlocked.Increment(ref lastPlayerId);
+                playerIds[client] = player;
+                string? verified = (client as IVerifiedIdentity)?.VerifiedPlayerId;
+                if (!string.IsNullOrEmpty(verified)) verifiedIds[player] = verified!;
                 trackers[client] = new RttTracker(RttTracker.NowMs);
             }
         }

@@ -378,6 +378,15 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   or drops it (logged as `[Colony] Refused …`). Guests never judge, so the computers cannot disagree. What the host
   decides while playing an action travels in the action too: whether a building could still be placed, what a
   founded colony starts with, the day's presence and colony check. A Trading Post's two halves are judged together.
+- **Seating checks the connection where it can.** A guest's hello says its stable id. Over Steam the host holds it to
+  the Steam ID Steam proved for the connection (`TimberServer.VerifiedIdOf`): a hello saying another Steam ID is
+  refused, and a guest whose own Steam ID could not be read (it says a local id) is seated by the proved one. A
+  direct (IP) connection proves nothing, so its hello is taken at its word; a guest there who says another player's
+  id takes that player's colony, and one who rejoins under new ids at tick 0 takes the free slots. The host always
+  listens for direct connections too, Steam invites or not. Over either, a connection already seated can't say hello
+  again as someone else, an id the slot table can't hold as it is (a line break or `|`, over 64 characters) is
+  refused, and so is a hello the host could not stamp with a guest's number (a connection it no longer knows).
+  (`ColonySlotTable.SeatHello` and `CheckHello`; a refused hello is logged as `[Colony] Refused PlayerHelloEvent …`.)
 - **Joining** closes at the first tick, or at the first action played while the host still waits paused, since a
   later joiner is sent the save the host started from. The join check covers the mod's own files (`Buildings`,
   `TemplateCollections`) as well as the game and mod versions.
