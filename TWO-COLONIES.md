@@ -280,9 +280,12 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - Placing is judged by the placing player's own tool: the check against joining two districts' roads is not repeated
   in the multiplayer replay, where it read state that differs between computers. Whether the spot is still free when
   the placement is played is checked by the host alone; guests take its answer.
-- Once a day the host sends its colony check (owners, land, marks, science, exchanges) with the day's presence, and
-  each guest compares it with its own. A difference stops that guest with the desync dialog at once, instead of
-  only when it happened to change a beaver's random draw.
+- Every tick the host's heartbeat carries a running digest of every colony state change (owners, marks, science,
+  exchanges, the ledger, land, presence, hand-overs, working hours), and each guest compares it with its own at the
+  same point: a difference stops that guest with the desync dialog that tick, with both digests and the number of
+  changes each side counted in the log. Once a day the host also sends its full colony check with the day's presence,
+  and a guest that differs stops too. Colony code draws no random numbers, so without these a difference showed only
+  once it changed a beaver's random draw, or never.
 - Two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest from the
   connection panel.
 

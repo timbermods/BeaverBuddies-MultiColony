@@ -60,7 +60,11 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>For code that creates a district center and knows its owner (starting locations, founding).</summary>
-        public void SetSlot(int newSlot) => slot = newSlot;
+        public void SetSlot(int newSlot)
+        {
+            slot = newSlot;
+            ColonyDigest.Note("owner", GetComponent<EntityComponent>()?.EntityId.GetHashCode() ?? 0, newSlot);
+        }
 
         // ---- owner of anything ----
 

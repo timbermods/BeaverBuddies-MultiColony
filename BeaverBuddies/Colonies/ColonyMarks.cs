@@ -79,7 +79,11 @@ namespace BeaverBuddies.Colonies
         public static bool MayChangeMark(int slot, int? owner, Vector3Int tile) =>
             owner != null ? owner.Value == slot : ColonyReach.Instance?.MayUse(slot, tile) ?? true;
 
-        internal void SetPlanting(Vector3Int tile, int slot) => planting[tile] = slot;
+        internal void SetPlanting(Vector3Int tile, int slot)
+        {
+            planting[tile] = slot;
+            ColonyDigest.Note("plant", Hash(tile), slot);
+        }
 
         /// <summary>
         /// Diagnostics: per colony, how many standing planting and cutting marks it has, and a hash of where they are
@@ -116,8 +120,12 @@ namespace BeaverBuddies.Colonies
         {
             foreach (Vector3Int tile in planting.Where(m => m.Value == from).Select(m => m.Key).ToList()) planting[tile] = to;
             foreach (Vector3Int tile in cutting.Where(m => m.Value == from).Select(m => m.Key).ToList()) cutting[tile] = to;
+            ColonyDigest.Note("marks-transfer", from, to);
         }
-        internal void ClearPlanting(Vector3Int tile) => planting.Remove(tile);
+        internal void ClearPlanting(Vector3Int tile)
+        {
+            if (planting.Remove(tile)) ColonyDigest.Note("unplant", Hash(tile));
+        }
 
         /// <summary>
         /// Marks trees for cutting for <paramref name="slot"/>, or unmarks them: only tiles that are free or already its
@@ -132,11 +140,13 @@ namespace BeaverBuddies.Colonies
             {
                 _treeCuttingArea.AddCoordinates(mine);
                 foreach (Vector3Int tile in mine) cutting[tile] = slot;
+                foreach (Vector3Int tile in mine) ColonyDigest.Note("cut", Hash(tile), slot);
             }
             else
             {
                 _treeCuttingArea.RemoveCoordinates(mine);
                 foreach (Vector3Int tile in mine) cutting.Remove(tile);
+                foreach (Vector3Int tile in mine) ColonyDigest.Note("uncut", Hash(tile), slot);
             }
             if (mine.Count < tiles.Count)
                 Plugin.Log($"[Colony] Slot {slot}: {tiles.Count - mine.Count} of {tiles.Count} tree marks belong to another colony and were left alone");

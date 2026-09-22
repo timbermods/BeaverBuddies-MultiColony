@@ -5,6 +5,30 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha13
+
+**A colony desync is caught the tick it happens, not the day some beaver's random draw changed.** The alpha10 review's
+section 4 (what is compared between computers, and what is not) implemented in full.
+
+- **A running colony digest, checked every tick.** Every change to colony state (a building or district getting its
+  owner, a planting or cutting mark set or cleared, science earned, spent or unlocked, an exchange proposed, held,
+  crossed, cancelled or ended, a ledger line, a round's totals, land reached or given up, beavers traded, a day's
+  presence, a hand-over, working hours) folds into one 64-bit number on every computer. The host writes it into
+  every heartbeat; a guest compares at the same point of the same tick and stops with the desync dialog if it
+  differs, with the number of changes each side counted in the log. Colony code draws no random numbers, so until now
+  a colony that differed showed only once the difference reached a beaver's random draw, possibly days later, or never
+  (a science pool, an unlock set, a serial or the ledger might never). Only changes made inside the simulation (a tick
+  or a replayed action) count, so loading and display cannot skew it.
+- **The daily colony check covers everything.** It now also has: each colony's unlocked buildings and bot worker
+  types by name (not only their count); the tiles two colonies reach and who holds each; every exchange, closed ones
+  too, with its good, serial, rounds, repeat, who proposed it and its ledger; the goods waiting on each half; the
+  totals traded; the mode flags, the starting settings and the slot table; the two unsaved phases (the stamping and
+  crossing counters); and the digest itself. It is taken in every co-op game, not only with separate colonies. The
+  host still sends it with the day's presence and a guest that differs stops.
+- Checks: StabilityTests 263 (the digest: the same changes give the same number, another order or another number
+  differ, nothing counts outside the simulation, names hash the same every run); RuntimeChecks 226 (the heartbeat's
+  digest survives the event JSON; an older host's heartbeat has none).
+
 ## 1.4.0-alpha12
 
 **The alpha10 review's Appendix A: the bugs that were not desyncs.** Every item of that list that alpha11 had not

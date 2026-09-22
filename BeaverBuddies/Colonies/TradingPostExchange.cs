@@ -134,30 +134,56 @@ namespace BeaverBuddies.Colonies
             Done = 0;
             CancelAsked = false;
             Colony = colony;
+            Changed("propose");
         }
 
-        internal void Activate() => State = ExchangeState.Active;
+        internal void Activate()
+        {
+            State = ExchangeState.Active;
+            Changed("activate");
+        }
 
-        internal void Hold(int amount) => Held += amount;
+        internal void Hold(int amount)
+        {
+            Held += amount;
+            Changed("hold");
+        }
 
         /// <summary>The round's goods crossed: the next round (if any) starts with nothing on the half.</summary>
         internal void Crossed()
         {
             Done++;
             Held = 0;
+            Changed("crossed");
         }
 
-        internal void AskCancel(bool asked) => CancelAsked = asked;
+        internal void AskCancel(bool asked)
+        {
+            CancelAsked = asked;
+            Changed("cancel-asked");
+        }
 
         internal void Record(TradeRecord record)
         {
             ledger.Add(record);
             if (ledger.Count > LedgerLength) ledger.RemoveRange(0, ledger.Count - LedgerLength);
+            ColonyDigest.Note("ledger", Hash(), ColonyDigest.Of(record.Encode()));
         }
+
+        /// <summary>Diagnostics: every field, open or not (a serial that differs makes Accept or Cancel skip on one computer only).</summary>
+        public long Fingerprint() =>
+            1 + (int)State + 3L * Held + 7919L * Total + 104729L * Done + 15485863L * Serial + 1299709L * Rounds
+            + (CancelAsked ? 2 : 0) + (Repeat ? 4 : 0) + (ProposedHere ? 8 : 0) + 16L * (Colony + 2)
+            + 17L * ColonyDigest.Of(GoodId) + 19L * ledger.Count + (ledger.Count > 0 ? ColonyDigest.Of(ledger[ledger.Count - 1].Encode()) : 0);
+
+        private void Changed(string what) => ColonyDigest.Note("exchange-" + what, Hash(), Fingerprint());
+
+        private long Hash() => GetComponent<EntityComponent>()?.EntityId.GetHashCode() ?? 0;
 
         /// <summary>No exchange here any more; the serial and the ledger stay.</summary>
         internal void Clear()
         {
+            Changed("clear");
             State = ExchangeState.None;
             ProposedHere = false;
             GoodId = null;
@@ -260,6 +286,8 @@ namespace BeaverBuddies.Colonies
         private readonly GameCycleService _gameCycleService;
         private readonly MigrationService _migrationService;
         private int ticks;
+        /// <summary>Diagnostics: the crossing phase (not saved; the same on every computer that loaded together).</summary>
+        public int Ticks => ticks;
 
         /// <summary>True while a round's goods are being moved across by this service (nothing else moves any).</summary>
         public static bool Crossing { get; private set; }
@@ -484,6 +512,7 @@ namespace BeaverBuddies.Colonies
                 .ThenByDescending(_migrationService.GetDayOfBirth)
                 .Take(Math.Min(amount, BeaversToSpare(from))).ToList();
             string colony = ColonyName(fromSlot);
+            ColonyDigest.Note("beavers", fromSlot, movers.Count, target.GetComponent<EntityComponent>()?.EntityId.GetHashCode() ?? 0);
             foreach (Beaver beaver in movers)
             {
                 beaver.GetComponent<Citizen>().AssignDistrict(target);

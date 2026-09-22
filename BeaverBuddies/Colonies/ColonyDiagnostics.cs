@@ -14,6 +14,7 @@ using Timberborn.DistributionSystem;
 using Timberborn.DwellingSystem;
 using Timberborn.EntitySystem;
 using Timberborn.GameDistricts;
+using Timberborn.Goods;
 using Timberborn.InputSystem;
 using Timberborn.InventorySystem;
 using Timberborn.Modding;
@@ -171,7 +172,8 @@ namespace BeaverBuddies.Colonies
         {
             ticks++;
             ticksThisSecond++;
-            if (!ColonyModeService.IsSeparateColonies) return;
+            // In every co-op game (a shared game has a digest and marks too), not only with separate colonies.
+            if (EventIO.IsNull) return;
             int day = _dayNightCycle.DayNumber;
             if (day == checkedDay) return;
             bool first = checkedDay == int.MinValue;
@@ -199,7 +201,7 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public string Fingerprint()
         {
-            long owners = 0, stamps = 0, exchanges = 0, districts = 0;
+            long owners = 0, stamps = 0, exchanges = 0, districts = 0, stock = 0;
             var population = new int[ColonySlotTable.MaxSlots];
             foreach (DistrictCenter districtCenter in _districtCenterRegistry.AllDistrictCenters)
             {
@@ -218,16 +220,30 @@ namespace BeaverBuddies.Colonies
                 if (districtBuilding != null)
                     districts += Hash(entity) * (3 * Hash(districtBuilding.ConstructionDistrict) + 5 * Hash(districtBuilding.InstantDistrict)
                         + 7 * Hash(districtBuilding.District) + 1);
+                // Every exchange, open or closed (a closed one keeps its serial and ledger), with every field.
                 CrossingExchange exchange = entity.GetComponent<CrossingExchange>();
-                if (exchange != null && exchange.IsOpen)
-                    exchanges += Hash(entity) * (1 + (int)exchange.State + 3 * exchange.Held + 7919 * exchange.Total + 104729 * exchange.Done
-                        + 15485863L * exchange.Serial + (exchange.CancelAsked ? 2 : 0));
+                if (exchange != null) exchanges += Hash(entity) * exchange.Fingerprint();
+                // What waits on each half of a crossing.
+                DistrictCrossingInventory crossingInventory = entity.GetComponent<DistrictCrossingInventory>();
+                if (crossingInventory != null && crossingInventory.Inventory != null)
+                {
+                    foreach (GoodAmount good in crossingInventory.Inventory.Stock)
+                        stock += Hash(entity) * (ColonyDigest.Of(good.GoodId) * 7 + good.Amount);
+                }
             }
             ColonyReach reach = ColonyReach.Instance;
-            string land = reach == null ? "-" : string.Join("/", Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(reach.LandSize));
+            string land = reach == null ? "-"
+                : string.Join("/", Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(reach.LandSize)) + $":{(uint)reach.ContestedHash():x}";
+            ColonyModeService mode = ColonyModeService.Instance;
+            string flags = $"{(mode?.Enabled == true ? "sep" : "shared")}/{(ColonyScienceService.IsEnabled ? "sci" : "-")}"
+                + $"/{(uint)ColonyDigest.Of(mode?.StartingSettings?.ToString()):x}"
+                + $"/{(uint)ColonyDigest.Of(ColonySlotTable.Encode(ColonySlotService.Instance?.Table?.Entries ?? Enumerable.Empty<ColonySlotEntry>())):x}";
+            string phases = $"{reach?.Ticks ?? 0}/{ColonyExchangeService.Instance?.Ticks ?? 0}";
             return $"owners={(uint)owners:x} stamps={(uint)stamps:x} districts={(uint)districts:x} land={land} people={string.Join("/", population)} "
-                + $"exchanges={(uint)exchanges:x} marks=[{ColonyMarks.Instance?.Fingerprint()}] science=[{ColonyScienceService.Instance?.Fingerprint()}] "
-                + $"hours=[{ColonyWorkingHours.Instance?.Fingerprint()}] away=[{ColonyLifecycle.Instance?.Fingerprint()}]";
+                + $"exchanges={(uint)exchanges:x} stock={(uint)stock:x} totals={(uint)(ColonyTradeLedger.Instance?.Fingerprint() ?? 0):x} "
+                + $"marks=[{ColonyMarks.Instance?.Fingerprint()}] science=[{ColonyScienceService.Instance?.Fingerprint()}] "
+                + $"hours=[{ColonyWorkingHours.Instance?.Fingerprint()}] away=[{ColonyLifecycle.Instance?.Fingerprint()}] "
+                + $"flags={flags} phases={phases} digest={ColonyDigest.Describe()}";
         }
 
         private static string RoleOf(EventIO io) => io is ServerEventIO ? "host" : io is ClientEventIO ? "guest" : io.GetType().Name;

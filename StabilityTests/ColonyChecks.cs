@@ -347,6 +347,31 @@ static class ColonyChecks
 
         // ---- founding ----
 
+        yield return ("Colony: the running colony digest is the same for the same changes, differs for others, and counts only inside the simulation", () =>
+        {
+            ColonyDigest.Gate = () => true;
+            ColonyDigest.Reset();
+            ulong start = ColonyDigest.Value;
+            ColonyDigest.Note("stamp", 12345, 1); ColonyDigest.Note("science", 1, 40, 140);
+            ulong one = ColonyDigest.Value; Equal(2, ColonyDigest.Changes);
+            ColonyDigest.Reset(); Equal(start, ColonyDigest.Value); Equal(0, ColonyDigest.Changes);
+            ColonyDigest.Note("stamp", 12345, 1); ColonyDigest.Note("science", 1, 40, 140);
+            Equal(one, ColonyDigest.Value);
+            // Another order, or another number, is another game.
+            ColonyDigest.Reset(); ColonyDigest.Note("science", 1, 40, 140); ColonyDigest.Note("stamp", 12345, 1);
+            Check(ColonyDigest.Value != one, "order");
+            ColonyDigest.Reset(); ColonyDigest.Note("stamp", 12345, 2); ColonyDigest.Note("science", 1, 40, 140);
+            Check(ColonyDigest.Value != one, "a different slot");
+            // Outside the simulation (loading, display) nothing counts.
+            ColonyDigest.Reset(); ColonyDigest.Gate = () => false;
+            ColonyDigest.Note("stamp", 12345, 1);
+            Equal(start, ColonyDigest.Value); Equal(0, ColonyDigest.Changes);
+            ColonyDigest.Gate = () => true;
+            // Names hash the same every run (not string.GetHashCode).
+            Equal(ColonyDigest.Of("Carrot"), ColonyDigest.Of("Carrot")); Check(ColonyDigest.Of("Carrot") != ColonyDigest.Of("Potato"));
+            Equal(0L, ColonyDigest.Of(null));
+        });
+
         yield return ("Colony: a Trading Post is removed by either of its partners, and by nobody else", () =>
         {
             var w = new FakeWorld().Crossing("post", 0, 1).Own("post", 0);

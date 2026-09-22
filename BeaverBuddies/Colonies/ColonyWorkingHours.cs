@@ -92,6 +92,7 @@ namespace BeaverBuddies.Colonies
             if (slot < 0 || slot >= hours.Length) return;
             hours[slot] = Math.Max(0, Math.Min(24, newHours));
             version++;
+            ColonyDigest.Note("hours", slot, hours[slot].Value);
             Plugin.Log($"[Colony] Slot {slot} works {hours[slot]} hours a day");
         }
 

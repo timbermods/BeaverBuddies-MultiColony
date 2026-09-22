@@ -51,7 +51,11 @@ namespace BeaverBuddies.Colonies
             if (slot < 0 && DistrictOwner.PendingSlot.HasValue) slot = DistrictOwner.PendingSlot.Value;
         }
 
-        internal void Stamp(int newSlot) => slot = newSlot;
+        internal void Stamp(int newSlot)
+        {
+            slot = newSlot;
+            ColonyDigest.Note("stamp", GetComponent<EntityComponent>()?.EntityId.GetHashCode() ?? 0, newSlot);
+        }
     }
 
     /// <summary>
@@ -78,6 +82,8 @@ namespace BeaverBuddies.Colonies
 
         private readonly List<(int x, int y, int slot)> savedOwners = new List<(int, int, int)>();
         private int ticks;
+        /// <summary>Diagnostics: the stamping phase (not saved; the same on every computer that loaded together).</summary>
+        public int Ticks => ticks;
 
         private ColonyReachGrid map;
 
@@ -275,6 +281,15 @@ namespace BeaverBuddies.Colonies
                 var contribution = added[entity];
                 if (contribution.slot == from) added[entity] = (to, contribution.tiles);
             }
+        }
+
+        /// <summary>Diagnostics: a hash of the tiles two colonies reach and who holds each (saved state).</summary>
+        public long ContestedHash()
+        {
+            long hash = 0;
+            if (grid == null) return 0;
+            foreach (var (x, y, slot) in grid.ContestedTiles()) hash += ((long)x * 73856093) ^ ((long)y * 19349663) ^ ((long)(slot + 1) * 83492791);
+            return hash;
         }
 
         /// <summary>Whose land the tile is (the colony that reached it first), or null.</summary>

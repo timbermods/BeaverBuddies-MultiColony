@@ -135,6 +135,16 @@ internal static class ColonyRuntimeChecks
             if (foundType.GetField("startingSettings")!.GetValue(RoundTrip(Activator.CreateInstance(foundType, true)!)) != null)
                 throw new Exception("a founding from an older host came back with settings");
 
+            var heartbeatType = mod.GetType("BeaverBuddies.HeartbeatEvent", true)!;
+            object heartbeat = Activator.CreateInstance(heartbeatType, true)!;
+            heartbeatType.GetField("digest")!.SetValue(heartbeat, 0xDEADBEEFCAFEF00DUL);
+            heartbeatType.GetField("changes")!.SetValue(heartbeat, 42);
+            object heartbeatBack = RoundTrip(heartbeat);
+            if (!Equals(heartbeatType.GetField("digest")!.GetValue(heartbeatBack), 0xDEADBEEFCAFEF00DUL) || !Equals(heartbeatType.GetField("changes")!.GetValue(heartbeatBack), 42))
+                throw new Exception("the heartbeat's colony digest was lost");
+            if (heartbeatType.GetField("digest")!.GetValue(RoundTrip(Activator.CreateInstance(heartbeatType, true)!)) != null)
+                throw new Exception("a heartbeat from an older host came back with a digest");
+
             var presenceType = mod.GetType("BeaverBuddies.Colonies.ColonyPresenceEvent", true)!;
             object presence = Activator.CreateInstance(presenceType, true)!;
             presenceType.GetField("check")!.SetValue(presence, "owners=1 stamps=2");

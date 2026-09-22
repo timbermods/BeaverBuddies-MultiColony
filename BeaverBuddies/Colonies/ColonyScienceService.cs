@@ -201,12 +201,14 @@ namespace BeaverBuddies.Colonies
             points[from] = 0;
             unlocked[to].UnionWith(unlocked[from]);
             workerUnlocked[to].UnionWith(workerUnlocked[from]);
+            ColonyDigest.Note("science-transfer", from, to, points[to]);
         }
 
         public void UnlockWorkerType(int slot, UnlockableWorkerType workerType)
         {
             if (slot < 0 || slot >= workerUnlocked.Length) slot = 0;
             workerUnlocked[slot].Add(WorkerKey(workerType));
+            ColonyDigest.Note("worker-unlock", slot, ColonyDigest.Of(WorkerKey(workerType)));
         }
 
         /// <summary>
@@ -244,12 +246,21 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>Diagnostics: each colony's science, and how many buildings and bot worker types it has unlocked.</summary>
         public string Fingerprint() => !Enabled ? "shared" : string.Join(" ",
-            Enumerable.Range(0, points.Length).Select(i => $"{i}:{points[i]}/{unlocked[i].Count}u/{workerUnlocked[i].Count}w"));
+            Enumerable.Range(0, points.Length).Select(i => $"{i}:{points[i]}/{unlocked[i].Count}u{(uint)Names(unlocked[i]):x}/{workerUnlocked[i].Count}w{(uint)Names(workerUnlocked[i]):x}"));
+
+        // The sets are sorted, so the hash is of the names, not of the order they were unlocked in.
+        private static long Names(SortedSet<string> names)
+        {
+            long hash = 0;
+            foreach (string name in names) hash = hash * 31 + ColonyDigest.Of(name);
+            return hash;
+        }
 
         public void Add(int slot, int amount)
         {
             if (slot < 0 || slot >= points.Length) slot = 0;
             points[slot] += amount;
+            ColonyDigest.Note("science", slot, amount, points[slot]);
         }
 
         public void Subtract(int slot, int amount)
@@ -258,6 +269,7 @@ namespace BeaverBuddies.Colonies
             if (points[slot] - amount < 0)
                 throw new ArgumentException($"Can't subtract {amount} science points from slot {slot}, there are only {points[slot]}");
             points[slot] -= amount;
+            ColonyDigest.Note("science-spend", slot, amount, points[slot]);
         }
 
         public bool IsUnlockedFor(int slot, string templateName)
@@ -280,7 +292,10 @@ namespace BeaverBuddies.Colonies
         public bool RecordUnlock(int slot, BuildingSpec spec)
         {
             if (slot < 0 || slot >= unlocked.Length) slot = 0;
-            return unlocked[slot].Add(_buildingService.GetTemplateName(spec));
+            string name = _buildingService.GetTemplateName(spec);
+            bool added = unlocked[slot].Add(name);
+            if (added) ColonyDigest.Note("unlock", slot, ColonyDigest.Of(name));
+            return added;
         }
 
         /// <summary>

@@ -76,9 +76,17 @@ namespace BeaverBuddies
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
         public override bool ChangesGame() => false;
 
+        /// <summary>The host's colony digest at the start of this tick, and how many changes it counted (see ColonyDigest).</summary>
+        public ulong? digest;
+        public int? changes;
+
         public override void Replay(IReplayContext context)
         {
-            // No op
+            // A guest: the same point in the same tick as the host wrote it. Nothing else to do.
+            if (digest == null || !(EventIO.Get() is ClientEventIO) || digest.Value == ColonyDigest.Value) return;
+            Plugin.LogWarning($"[Colony] Colony state differs from the host's at tick {ticksSinceLoad}: " +
+                $"host digest {digest.Value:x16} after {changes} changes, here {ColonyDigest.Describe()}");
+            context.GetSingleton<ReplayService>()?.HandleDesync();
         }
     }
 
@@ -563,6 +571,7 @@ namespace BeaverBuddies
         {
             // Start tick at 0
             DesyncDetecterService.StartTick(ticksSinceLoad);
+            ColonyDigest.Reset();
 
             IsLoaded = true;
         }
@@ -747,7 +756,9 @@ namespace BeaverBuddies
             {
                 // Add a heartbeat if needed to make sure all ticks have
                 // at least 1 event, so the clients know we're ticking.
-                EnqueueEventForSending(new HeartbeatEvent());
+                // It carries the host's colony digest as of now (the end of the last tick): a guest plays the
+                // heartbeat first thing in this tick, at the same point, and compares.
+                EnqueueEventForSending(new HeartbeatEvent { digest = ColonyDigest.Value, changes = ColonyDigest.Changes });
             }
             // Replay and send events at the change of a tick always.
             // For the server, sending events allows clients to keep playing.

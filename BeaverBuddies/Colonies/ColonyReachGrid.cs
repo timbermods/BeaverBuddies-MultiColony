@@ -48,6 +48,7 @@ namespace BeaverBuddies.Colonies
             if (slot < 0 || slot >= ColonySlotTable.MaxSlots || tiles == null || sign == 0) return;
             Version++;
             int[] grid = counts[slot] ??= new int[width * height];
+            int ownerChanges = 0, footprint = 0;
             foreach (var (x, y) in tiles)
             {
                 foreach (var (dx, dy) in Disk)
@@ -57,10 +58,12 @@ namespace BeaverBuddies.Colonies
                     int i = ty * width + tx;
                     int before = grid[i];
                     grid[i] += sign;
-                    if (before <= 0 && grid[i] > 0 && owners[i] < 0) owners[i] = slot;
-                    else if (before > 0 && grid[i] <= 0 && owners[i] == slot) owners[i] = NextReacher(i);
+                    if (before <= 0 && grid[i] > 0 && owners[i] < 0) { owners[i] = slot; ownerChanges++; }
+                    else if (before > 0 && grid[i] <= 0 && owners[i] == slot) { owners[i] = NextReacher(i); ownerChanges++; }
                 }
+                footprint++;
             }
+            ColonyDigest.Note("land", slot, sign, footprint, ownerChanges);
         }
 
         private int NextReacher(int i)
@@ -157,10 +160,12 @@ namespace BeaverBuddies.Colonies
                 for (int i = 0; i < source.Length; i++) target[i] += source[i];
                 counts[from] = null;
             }
+            int moved = 0;
             for (int i = 0; i < owners.Length; i++)
             {
-                if (owners[i] == from) owners[i] = to;
+                if (owners[i] == from) { owners[i] = to; moved++; }
             }
+            ColonyDigest.Note("land-transfer", from, to, moved);
         }
 
         /// <summary>The tiles of a colony's land that touch land not its own: its outline, for drawing.</summary>

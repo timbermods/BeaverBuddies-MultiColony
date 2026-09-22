@@ -128,6 +128,15 @@ namespace BeaverBuddies.Colonies
         {
             totals.TryGetValue((from, to, goodId), out int total);
             totals[(from, to, goodId)] = total + amount;
+            ColonyDigest.Note("totals", from, to, ColonyDigest.Of(goodId), total + amount);
+        }
+
+        /// <summary>Diagnostics: a hash of every total (sorted, so the order trades happened in plays no part).</summary>
+        public long Fingerprint()
+        {
+            long hash = 0;
+            foreach (var t in totals) hash = hash * 31 + (t.Key.Item1 * 7 + t.Key.Item2 * 13 + ColonyDigest.Of(t.Key.Item3) * 17 + t.Value);
+            return hash;
         }
 
         /// <summary>Goods that went from <paramref name="from"/> to <paramref name="to"/>, most first.</summary>
