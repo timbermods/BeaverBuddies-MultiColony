@@ -329,6 +329,8 @@ internal static class ColonyRuntimeChecks
             ("Timberborn.NotificationSystemUI.NotificationPanel", "Timberborn.NotificationSystemUI", "AddNotification"),
             // A dying beaver's colony is read before the game takes it out of its district (ColonyJournal).
             ("Timberborn.Characters.Character", "Timberborn.Characters", "KillCharacter"),
+            // And the colony any beaver leaves, for one that dies in no district (ColonyJournal).
+            ("Timberborn.GameDistricts.Citizen", "Timberborn.GameDistricts", "UnassignDistrict"),
             // Separate science and unlocks.
             ("Timberborn.ScienceSystem.ScienceService", "Timberborn.ScienceSystem", "get_SciencePoints"),
             ("Timberborn.ScienceSystem.ScienceService", "Timberborn.ScienceSystem", "AddPoints"),
@@ -569,19 +571,63 @@ internal static class ColonyRuntimeChecks
                 throw new Exception("Citizen no longer listens to Character.Died");
         });
 
-        // The journal is display only: its prefix on KillCharacter lets the game's method run, it asks the game only
-        // questions (and the save and the panel it lists), and the rule StabilityTests checks is the one it uses.
+        // A beaver can die in no district (cut off from it, or its district center deleted); the journal then goes by
+        // the colony it last left, read in a prefix on Citizen.UnassignDistrict. This fails if a way out of a district
+        // no longer goes through it.
+        test("Colony: every way a beaver leaves its district goes through Citizen.UnassignDistrict", () =>
+        {
+            var citizen = Assembly.Load("Timberborn.GameDistricts").GetType("Timberborn.GameDistricts.Citizen", true)!;
+            foreach (string way in new[] { "RemoveFromDistrictsAssignment", "UnassignDistrictIfCutOff", "AssignDistrict" })
+                if (!MethodsCalled(citizen.GetMethod(way, all)!).Any(m => m.Name == "UnassignDistrict"))
+                    throw new Exception($"Citizen.{way} no longer calls UnassignDistrict");
+            var setters = citizen.GetMethods(all | BindingFlags.DeclaredOnly).Where(m => m.Name != "UnassignDistrict" && m.Name != "AssignDistrict")
+                .Where(m => MethodsCalled(m).Any(c => c.Name == "set_AssignedDistrict")).Select(m => m.Name).ToList();
+            if (setters.Count > 0) throw new Exception("AssignedDistrict is now also set in " + string.Join(", ", setters));
+        });
+
+        // The journal is display only: its prefixes let the game's methods run, it asks the game and this mod only
+        // questions (and the save and the panel it lists), the rule StabilityTests checks is the one it uses, and the
+        // recording and the listing again are still wired up.
         test("Colony: the journal only reads the game, and decides by the rule StabilityTests checks", () =>
         {
             var journal = mod.GetType("BeaverBuddies.Colonies.ColonyJournal", true)!;
             var death = mod.GetType("BeaverBuddies.Colonies.ColonyJournalDeathPatcher", true)!;
-            var prefix = death.GetMethod("Prefix", all)!;
-            if (prefix.ReturnType != typeof(void)) throw new Exception("the death prefix can skip KillCharacter");
+            var leave = mod.GetType("BeaverBuddies.Colonies.ColonyJournalLeavePatcher", true)!;
+            foreach (Type patcher in new[] { death, leave })
+                if (patcher.GetMethod("Prefix", all)!.ReturnType != typeof(void))
+                    throw new Exception($"{patcher.Name}'s prefix can skip the game's method");
             const BindingFlags declared = all | BindingFlags.DeclaredOnly;
-            var calls = new[] { journal, death }
+            var ours = new[] { journal, death, leave };
+            var called = ours
                 .SelectMany(t => new[] { t }.Concat(t.GetNestedTypes(all)))
                 .SelectMany(t => t.GetMethods(declared).Cast<MethodBase>().Concat(t.GetConstructors(declared)))
                 .SelectMany(MethodsCalled)
+                .ToList();
+            // Of this mod it may only ask too: nothing that changes a colony (an owner, the digest, a stamp).
+            var modAllowed = new HashSet<string> { "DistrictOwner.OwnerOf", "Plugin.LogWarning", "SingletonManager.GetSingleton", "RegisteredSingleton..ctor" };
+            var modChanges = called
+                .Where(m => m.DeclaringType!.Namespace?.StartsWith("BeaverBuddies") == true && m.DeclaringType.Name != "JournalFilter")
+                .Where(m => !ours.Contains(m.DeclaringType) && !ours.Contains(m.DeclaringType!.DeclaringType))
+                .Where(m => !m.Name.StartsWith("get_"))
+                .Select(m => m.DeclaringType!.Name + "." + m.Name)
+                .Where(n => !modAllowed.Contains(n))
+                .Distinct().OrderBy(n => n).ToList();
+            if (modChanges.Count > 0) throw new Exception("calls into this mod " + string.Join(", ", modChanges));
+            foreach (var (type, method, target, name) in new[]
+            {
+                (death, "Prefix", "ColonyJournal", "RecordDeath"),
+                (leave, "Prefix", "ColonyJournal", "RecordLeaving"),
+                (journal, "RecordDeath", "Dictionary`2", "set_Item"),
+                (journal, "RecordLeaving", "Dictionary`2", "set_Item"),
+                (journal, "Load", "NotificationBus", "add_NotificationPosted"),
+                (journal, "UpdateSingleton", "ColonyJournal", "ListAgain"),
+                (journal, "ListAgain", "NotificationPanel", "AddNotification"),
+            })
+            {
+                if (!MethodsCalled(type.GetMethod(method, all)!).Any(m => m.DeclaringType!.Name == target && m.Name == name))
+                    throw new Exception($"{type.Name}.{method} no longer calls {target}.{name}");
+            }
+            var calls = called
                 .Where(m => m.DeclaringType!.Namespace?.StartsWith("Timberborn") == true || m.DeclaringType.Namespace == "UnityEngine")
                 .Select(m => m.DeclaringType!.Name + "." + m.Name)
                 .Distinct().OrderBy(n => n).ToList();

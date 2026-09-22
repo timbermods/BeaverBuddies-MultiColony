@@ -24,6 +24,13 @@ namespace BeaverBuddies.Colonies
             return entityExists;
         }
 
+        /// <summary>
+        /// Which recorded subjects can be forgotten when the record grows: those out of the journal (kept) that are gone.
+        /// A living beaver keeps its last colony, for the day it dies in no district (cut off, or its district deleted).
+        /// </summary>
+        public static List<Guid> Forgettable(IEnumerable<Guid> recorded, ICollection<Guid> kept, Func<Guid, bool> exists) =>
+            recorded.Where(subject => !kept.Contains(subject) && !exists(subject)).ToList();
+
         /// <summary>The recorded owners, for the save: "subject:slot" separated by commas, in the order given.</summary>
         public static string Encode(IEnumerable<KeyValuePair<Guid, int>> owners) =>
             string.Join(",", owners.Select(pair => $"{pair.Key:N}:{pair.Value}"));

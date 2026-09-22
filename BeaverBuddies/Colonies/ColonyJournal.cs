@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Timberborn.Characters;
 using Timberborn.EntitySystem;
+using Timberborn.GameDistricts;
 using Timberborn.NotificationSystem;
 using Timberborn.NotificationSystemUI;
 using Timberborn.Persistence;
@@ -18,8 +19,9 @@ namespace BeaverBuddies.Colonies
     /// one journal for the whole map (NotificationSaver, saved as it is and never changed here); what each computer
     /// lists of it is decided here. Display only: nothing here changes anything that is simulated.
     ///
-    /// Two things the game's journal does not know are kept: the colony a beaver was in as it died (the game takes it
-    /// out of its district before it posts the death) and the colony of each entry's subject as it was posted, so an
+    /// Two things the game's journal does not know are kept: the colony a beaver was last in (the game takes a dying
+    /// beaver out of its district before it posts the death, and a beaver cut off from its district, or whose district
+    /// center is deleted, lives and may die in none) and the colony of each entry's subject as it was posted, so an
     /// entry keeps its colony once its subject is gone. A separate-colonies game saves them for the journal's entries.
     /// The journal is listed again whenever this computer's colony changes: a guest is seated only after the save has
     /// loaded (and the game has listed the whole journal), and a player can switch to a colony they look after.
@@ -39,7 +41,7 @@ namespace BeaverBuddies.Colonies
         private readonly NotificationPanel _notificationPanel;
         private readonly EntityRegistry _entityRegistry;
 
-        // subject -> the colony it was in when last seen (as it died, or as an entry about it was posted).
+        // subject -> the colony it was in when last seen (as it left a district or died, or as an entry about it was posted).
         private readonly Dictionary<Guid, int> owners = new Dictionary<Guid, int>();
         // The colony the panel was last listed for; -1 for every colony's (the game's own list).
         private int listedFor = -1;
@@ -89,7 +91,7 @@ namespace BeaverBuddies.Colonies
                 entity != null, entity != null ? DistrictOwner.OwnerOf(entity) : null, Recorded(subject));
         }
 
-        // The two below run inside the game's tick (a death, a post): whatever happens here, the game carries on.
+        // The three below run inside the game's tick (a death, a move, a post): whatever happens here, the game carries on.
 
         /// <summary>A character is about to die, still in its district: its colony, for the death's entry.</summary>
         public void RecordDeath(Character character)
@@ -103,6 +105,26 @@ namespace BeaverBuddies.Colonies
             catch (Exception error)
             {
                 Plugin.LogWarning("[Colony] Could not note a death's colony for the journal: " + error.Message);
+            }
+        }
+
+        /// <summary>
+        /// A citizen is about to leave its district (it died, was cut off, or moves to another): the colony it leaves.
+        /// A deleted district center still says whose it was, though the game no longer counts it as there.
+        /// </summary>
+        public void RecordLeaving(Citizen citizen)
+        {
+            try
+            {
+                DistrictCenter district = citizen.AssignedDistrict;
+                if (district is null) return;
+                int? owner = district.GetComponent<DistrictOwner>()?.Slot;
+                EntityComponent entity = citizen.GetComponent<EntityComponent>();
+                if (entity != null && owner != null) owners[entity.EntityId] = owner.Value;
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Colony] Could not note the colony a beaver left, for the journal: " + error.Message);
             }
         }
 
@@ -127,7 +149,7 @@ namespace BeaverBuddies.Colonies
         {
             // The entry being posted may not be in the saved journal yet.
             var kept = new HashSet<Guid>(_notificationSaver.Notifications.Select(n => n.Subject)) { posted };
-            foreach (Guid subject in owners.Keys.Where(s => !kept.Contains(s)).ToList()) owners.Remove(subject);
+            foreach (Guid subject in JournalFilter.Forgettable(owners.Keys, kept, s => Entity(s) != null)) owners.Remove(subject);
         }
 
         private EntityComponent Entity(Guid subject) => subject == Guid.Empty ? null : _entityRegistry.GetEntity(subject);
@@ -177,6 +199,19 @@ namespace BeaverBuddies.Colonies
         {
             if (!ColonyModeService.IsSeparateColonies || !__instance.Alive) return;
             ColonyJournal.Instance?.RecordDeath(__instance);
+        }
+    }
+
+    // A beaver can also die in no district: cut off from it (Citizen.UnassignDistrictIfCutOff), or after its district
+    // center was deleted. Every way out of a district goes through the private Citizen.UnassignDistrict, so its colony is
+    // read there first. Read only: the game's own method runs as it would.
+    [HarmonyPatch(typeof(Citizen), "UnassignDistrict")]
+    static class ColonyJournalLeavePatcher
+    {
+        static void Prefix(Citizen __instance)
+        {
+            if (!ColonyModeService.IsSeparateColonies || __instance.AssignedDistrict is null) return;
+            ColonyJournal.Instance?.RecordLeaving(__instance);
         }
     }
 }

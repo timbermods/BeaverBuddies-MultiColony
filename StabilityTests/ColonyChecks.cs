@@ -913,6 +913,22 @@ static class ColonyChecks
             Check(!JournalFilter.ShouldShow(true, 0, false, false, null, null), "an unknown gone subject is shown");
         });
 
+        yield return ("Colony: a living beaver keeps its last colony when the journal's record is trimmed", () =>
+        {
+            // A beaver cut off from its district, or whose district center was deleted, lives in none: if it dies, the
+            // colony it last lived in decides. Only what is gone and out of the journal is forgotten.
+            var inJournal = new Guid("aaaaaaaa-0000-0000-0000-000000000001");
+            var living = new Guid("aaaaaaaa-0000-0000-0000-000000000002");
+            var gone = new Guid("aaaaaaaa-0000-0000-0000-000000000003");
+            var goneInJournal = new Guid("aaaaaaaa-0000-0000-0000-000000000004");
+            var forgotten = JournalFilter.Forgettable(new[] { inJournal, living, gone, goneInJournal },
+                new HashSet<Guid> { inJournal, goneInJournal }, subject => subject == inJournal || subject == living);
+            Check(!forgotten.Contains(living), "a living beaver's last colony is forgotten");
+            Check(!forgotten.Contains(inJournal) && !forgotten.Contains(goneInJournal), "a journal entry's colony is forgotten");
+            Equal(1, forgotten.Count);
+            Equal(gone, forgotten[0]);
+        });
+
         yield return ("Colony: the journal's recorded colonies come back from a save, and a damaged entry is skipped", () =>
         {
             var a = new Guid("0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0");

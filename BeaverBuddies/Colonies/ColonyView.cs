@@ -309,8 +309,8 @@ namespace BeaverBuddies.Colonies
         }
     }
 
-    // Births, deaths and the like of the other colony stay out of this player's journal (ColonyJournal: a death is
-    // judged by the colony the beaver died in, and the panel is listed again once this player is seated). The saved
+    // Births, deaths and the like of the other colony stay out of this player's journal (ColonyJournal: a dead beaver
+    // is judged by the colony it was last in, and the panel is listed again once this player is seated). The saved
     // journal is untouched.
     [HarmonyPatch(typeof(NotificationPanel), nameof(NotificationPanel.AddNotification))]
     [HarmonyPriority(Priority.Last)]
@@ -319,7 +319,16 @@ namespace BeaverBuddies.Colonies
         static bool Prefix(Notification notification)
         {
             if (!ColonyViewService.Active) return true;
-            return ColonyJournal.Instance?.ShouldShow(notification) ?? true;
+            // This runs inside NotificationBus.Post, in the tick, and only on computers that filter: it must never throw.
+            try
+            {
+                return ColonyJournal.Instance?.ShouldShow(notification) ?? true;
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Colony] Could not decide whose a journal entry is, so it is shown: " + error.Message);
+                return true;
+            }
         }
     }
 }
