@@ -226,6 +226,7 @@ BeaverBuddies.Colony.Founding.NotStartedYet,"A colony can be founded once the ho
 BeaverBuddies.Colony.Founding.HostOff,"This is one shared colony: the host has not allowed founding colonies in a shared game.",""
 BeaverBuddies.Colony.Founding.Done,"A new colony has been founded.",""
 BeaverBuddies.Colony.Founding.Failed,"The colony could not be founded there after all (the spot changed). Try again with Ctrl+K.",""
+BeaverBuddies.Colony.Founding.Other,"A new colony has been founded: {0}.",""
 BeaverBuddies.Building.TradingPost.DisplayName,"Trading Post",""
 BeaverBuddies.Building.TradingPost.Description,"Lets two colonies barter goods, science and beavers. Build it where your land meets another colony's, each half reached by one colony's roads. Each round, both sides' goods wait on their own half until both are in, then cross together.",""
 BeaverBuddies.Building.TradingPost.FlavorDescription,"One beaver's surplus is another beaver's dam.",""

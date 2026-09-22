@@ -320,5 +320,28 @@ namespace BeaverBuddies.Colonies
             if (tooCloseToColony) return ColonyVerdict.Refuse(ColonyRefusal.TooCloseToColony, "its land would run into another colony's");
             return ColonyVerdict.Allow;
         }
+
+        /// <summary>
+        /// What a founding tells this computer's player. Every computer plays the founding at its tick, but only the
+        /// founder asked for it: they hear that it worked, or that the spot changed and they can try again. Everyone
+        /// else hears only that a new colony exists, and nothing of a failed try. Display only.
+        /// </summary>
+        public static FoundingNotice FoundingNoticeFor(int localSlot, int founderSlot, bool founded)
+        {
+            if (localSlot == founderSlot) return founded ? FoundingNotice.Done : FoundingNotice.Failed;
+            return founded ? FoundingNotice.Founded : FoundingNotice.None;
+        }
+    }
+
+    /// <summary>The notice a founding shows on one computer: see <see cref="ColonyRules.FoundingNoticeFor"/>.</summary>
+    public enum FoundingNotice
+    {
+        None,
+        /// <summary>The founder: their colony was founded.</summary>
+        Done,
+        /// <summary>The founder, as a warning: the spot changed before the founding's tick; try again.</summary>
+        Failed,
+        /// <summary>Another player: a colony was founded (a plain notice naming it).</summary>
+        Founded,
     }
 }
