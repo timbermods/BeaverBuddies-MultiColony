@@ -185,8 +185,8 @@ namespace BeaverBuddies.Colonies
             if (check.SeatId != hello.playerId)
                 Plugin.Log($"[Colony] Player {hello.player} said hello as {ColonySlotTable.ForLog(hello.playerId)}; seated as {check.SeatId}, the Steam ID its connection proved");
             Plugin.Log(check.Slot.HasValue
-                ? $"[Colony] Player {hello.player} ({hello.playerName}) plays slot {seat}"
-                : $"[Colony] Player {hello.player} ({hello.playerName}) joins as a helper of slot {seat}: every slot is taken");
+                ? $"[Colony] Player {hello.player} ({ColonySlotTable.ForLog(hello.playerName)}) plays slot {seat}"
+                : $"[Colony] Player {hello.player} ({ColonySlotTable.ForLog(hello.playerName)}) joins as a helper of slot {seat}: every slot is taken");
             return true;
         }
 

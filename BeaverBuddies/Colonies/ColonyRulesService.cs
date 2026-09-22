@@ -61,7 +61,7 @@ namespace BeaverBuddies.Colonies
                     ColonySlotService slots = ColonySlotService.Instance;
                     if (slots != null && !slots.HostSeat(hello, verifiedId, out string helloWhy))
                     {
-                        Plugin.LogWarning($"[Colony] Refused {replayEvent.type} from player {replayEvent.player} ({hello.playerName}): {helloWhy}");
+                        Plugin.LogWarning($"[Colony] Refused {replayEvent.type} from player {replayEvent.player} ({ColonySlotTable.ForLog(hello.playerName)}): {helloWhy}");
                         refusal = ColonyRefusal.HostRefused;
                         return false;
                     }
