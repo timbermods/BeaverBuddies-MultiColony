@@ -5,6 +5,26 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha20
+
+**Every guide and page is current.** No code change.
+
+- **PLAYER-ACTIVITY.md** covers MultiColony: activity across colonies, an *Editing* notice for a change the host
+  then refuses, cursor colors versus colony colors, selections and pings across colonies, the check counts, and a
+  playtest step.
+- **WORKSHOP.md**'s description says what the Trading Post is now (its own building, 100 an item a round, rounds,
+  both sides in before anything crosses, ending takes both), when a colony is founded, that desyncs are caught at
+  once, and that the mod's files are part of the join check.
+- **The docs site** (`docs/`) was still the Stability Fork's: it now describes MultiColony (a colony each, trading
+  posts, founding, the every-tick check), links to this repository's releases (every release is a pre-release, so
+  the pages link to the release list and the page script picks the newest), names the mod's folder and mod-list
+  entry, and says in the FAQ, install guide and troubleshooting when joining closes, what the desync messages
+  mean, and what the known limits are.
+- README.md and TWO-COLONIES.md name alpha20 as the last unplayed build.
+- Left as they are, on purpose: `BeaverBuddies/changelog.txt` and `BeaverBuddies/Doc/` are the original project's
+  (the in-game changelog dialog is off in this fork); `design/` holds the plans as written.
+- Checks unchanged: StabilityTests 263; RuntimeChecks 229.
+
 ## 1.4.0-alpha19
 
 **STEAM-INVITES.md covers MultiColony.** No code change.

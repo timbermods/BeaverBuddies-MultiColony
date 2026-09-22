@@ -26,14 +26,18 @@ Play Timberborn together, each with your own colony, on one map.
 chooses) science and unlocks. Your screen shows your colony; your beavers work for your colony only; nobody can change
 anyone else's colony.
 
-**Colonies meet at trading posts:** a District Crossing where two colonies' land meets. Offer "1000 logs for 250
-gears" (or science, or beavers, or a gift), the other player accepts, and both colonies' beavers carry it out, in step.
-Standing deals repeat by themselves.
+**Colonies meet at trading posts:** a building of its own (10 logs, no science), placed where two colonies' land
+meets. Offer "100 logs for 25 gears, 4 rounds" (or science, or beavers, or a gift), the other player accepts, and
+both colonies' beavers carry it out: each side's goods wait on its own half and cross all at once when both are in.
+Standing deals repeat by themselves; ending one early takes both players.
 
 **Found your colony anywhere:** on a standard map the host starts with the colony that is there; every other player
-founds theirs, free and already built, with starting beavers. Colonies are remembered by Steam account, whoever
-hosts. A colony whose player stops playing, or that dies out, is handed to another player, and its player can found
-again.
+founds theirs once the host unpauses, free and already built, with starting beavers. Colonies are remembered by
+Steam account, whoever hosts. A colony whose player stops playing, or that dies out, is handed to another player,
+and its player can found again.
+
+**Desyncs are caught at once:** colony state is compared with the host's every tick, so a game that drifts stops
+the tick it happens instead of much later.
 
 Up to four colonies. Built on BeaverBuddies by thomaswp and contributors, and on the BeaverBuddies Stability Fork.
 
@@ -41,6 +45,7 @@ Up to four colonies. Built on BeaverBuddies by thomaswp and contributors, and on
 https://github.com/timbermods/BeaverBuddies-MultiColony/issues
 
 **Do not enable another BeaverBuddies at the same time:** they cannot run together (the main menu tells you if one
-is enabled). Every player needs the same version.
+is enabled). Every player needs the same version, and the same files: a copy with the Trading Post's files missing
+or edited is refused at the join. Join while the host waits, paused, before they build anything.
 
 Requires Harmony and Mod Settings.

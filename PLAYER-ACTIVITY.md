@@ -1,7 +1,9 @@
 # Player activity indicators
 
 Other players' cursors, selections and building activity are
-shown on your screen, and you can restyle each player's cursor.
+shown on your screen, and you can restyle each player's cursor. In a MultiColony game (a colony each, see
+[TWO-COLONIES.md](TWO-COLONIES.md)) all of this works across colonies: you see the other colony's player at work on
+their side of the map as you would a teammate.
 
 ## What you see
 
@@ -22,7 +24,21 @@ shown on your screen, and you can restyle each player's cursor.
   reported as editing. This is an advisory notice, not a lock: both players can still
   change a building, and the normal multiplayer command order decides the result.
   Third-party UI that bypasses BeaverBuddies' entity-action path cannot emit an edit
-  notice, and zipline tools and global technology unlocks are not covered.
+  notice, and zipline tools and global technology unlocks are not covered. In a separate-colonies game the notice is
+  sent when the command is made, before the host judges it: a change to another colony's building, which the host
+  refuses, can still show **Editing** on other screens for its three seconds, although nothing changes.
+
+## In a separate-colonies game
+
+- **Cursor colors are the player's; colony colors are the colony's.** The land outlines (Ctrl+L, or while a tool is
+  in hand), the *(colony N)* beside a name in the connection panel and the colony names in the trading window use
+  the game's own start colors, one per colony. The cursor, name label, selection outline and chat lines use the color
+  the player chose (or the one you set for them under **Player cursors**). A player and their colony need not match.
+- **Selection outlines cross colonies.** Selecting another colony's building shows it to everyone as any selection
+  is; opening its panels changes nothing (see *What you see* in TWO-COLONIES.md).
+- **Pings** are shared by everyone, whichever colony pinged.
+- **Who is who** is the connection panel's job: each name there carries the colony its player runs. The cursor
+  label shows the name only.
 
 ## Customizing each player's cursor
 
@@ -92,7 +108,8 @@ every player in a session has this feature or none of them do.
 
 ## Validation
 
-`dotnet run --project StabilityTests` (50 checks) covers:
+`dotnet run --project StabilityTests` (263 checks in 1.4.0-alpha19, of which the activity checks are described
+here) covers:
 
 - the production transport over in-memory streams with a host and two guests:
   identity assignment (a guest claiming another id is ignored), relay without echo,
@@ -105,7 +122,7 @@ every player in a session has this feature or none of them do.
   save and reload, unwritable locations, and name-collision keys.
 
 `dotnet run --project RuntimeChecks -- <BeaverBuddies.dll> <Timberborn Managed>
-<Harmony dir> <ModSettings Scripts dir>` (53 checks) still passes against the
+<Harmony dir> <ModSettings Scripts dir>` (229 checks in 1.4.0-alpha19) still passes against the
 compiled mod.
 
 **Not covered by automated tests:** how the cursor, labels and outlines actually
@@ -132,3 +149,6 @@ game.
 7. Repeat while paused and at faster speeds. Hover UI, alt-tab, disable and re-enable
    activity, remove a selected building, and disconnect a guest; stale marks should
    clear within about three seconds.
+8. In a separate-colonies game: select the other colony's building (the outline shows on their screen, in your
+   cursor color); try to change it: refused, and on their screen **Editing** shows for at most three seconds with
+   nothing changed; press Ctrl+L and check the land outlines are the colonies' colors, not the cursors'.
