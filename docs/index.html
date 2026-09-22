@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BeaverBuddies MultiColony: Timberborn co-op with a colony each</title>
-  <meta name="description" content="Play Timberborn together, each with your own colony on one map, trading through trading posts. Steam friend invites, a live connection panel, teammate cursors. Alpha, free and open source.">
+  <meta name="description" content="A Timberborn co-op mod where each player runs their own colony on one shared map and the colonies trade through trading posts. Steam friend invites, a live connection panel, teammates' cursors. Alpha, free and open source.">
   <meta name="theme-color" content="#b9530f">
   <meta property="og:title" content="BeaverBuddies MultiColony">
-  <meta property="og:description" content="Timberborn co-op with a colony each: your own land, beavers and science, trading posts between colonies, Steam friend invites and a live connection panel. Alpha.">
+  <meta property="og:description" content="Timberborn co-op with a colony each: your own land, beavers and science, trading posts between colonies, Steam friend invites and a live connection panel.">
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/style.css">
@@ -18,11 +18,13 @@
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="index.html">
-      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#b9530f"/><path d="M14 46V18h15c6 0 9.5 3 9.5 7.6 0 3-1.7 5.3-4.4 6.4 3.6 1 5.7 3.6 5.7 7.2 0 5-3.9 7.8-10 7.8H14z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><circle cx="49.5" cy="41" r="4.5" fill="#fff"/></svg>
+      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#b9530f"/><path d="M8 40c6-10 12-10 18 0" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/><path d="M38 40c6-10 12-10 18 0" fill="none" stroke="#9fe0ea" stroke-width="4.5" stroke-linecap="round"/><path d="M26 40h12" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/><path d="M14 28l6-6 6 6M40 28l6-6 6 6" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><rect x="16" y="28" width="8" height="10" fill="#fff"/><rect x="42" y="28" width="8" height="10" fill="#9fe0ea"/></svg>
       <span>BeaverBuddies<small>MultiColony</small></span>
     </a>
     <nav class="nav" aria-label="Main">
-      <a href="index.html" aria-current="page">Features</a>
+      <a href="index.html" aria-current="page">Overview</a>
+      <a href="#features">Features</a>
+      <a href="#trading">Trading</a>
       <a href="install.html">Install</a>
       <a href="troubleshooting.html">Troubleshooting</a>
       <a href="faq.html">FAQ</a>
@@ -37,22 +39,92 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow">Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-alpha20</span></div>
-      <h1>One map, a colony each.</h1>
-      <p class="lede">BeaverBuddies MultiColony lets you and your friends each run your own Timberborn colony on one shared map: your own districts, land, beavers, stock, working hours and science, meeting the others only at trading posts. Steam friend invites, a live connection panel and the Stability Fork's fixes are all still there. It is an <b>alpha</b>: play on a copy of your save.</p>
+      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-alpha21</span> &middot; alpha</span></div>
+      <h1>One map.<br>A colony each.</h1>
+      <p class="lede">Play Timberborn with friends without sharing a colony. Each player runs their own districts, land, beavers, stock and science on one shared map, and the colonies meet only at <b>trading posts</b>, where they barter. Co-op, not a race: nobody wins, and everyone can help.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.4.0-alpha20</span></span>
+          <span>Download <span data-release="version">1.4.0-alpha21</span></span>
         </a>
-        <a class="btn btn-secondary" href="install.html">Read the install guide</a>
+        <a class="btn btn-secondary" href="install.html">Install guide</a>
+        <a class="btn btn-secondary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules</a>
       </div>
-      <p class="hero-note">Free and open source. Built against Timberborn 1.1.2.4 on Windows with the Steam version. The colony model has not been played yet; it is covered by automated checks.</p>
+      <p class="hero-note">Free and open source. Built against Timberborn 1.1.2.4 on Windows with the Steam version. Needs Harmony and Mod Settings.</p>
+      <div class="callout warn" role="note">
+        <strong class="label">Alpha</strong>
+        <p>The colony model is covered by <b>492 automated checks</b> and has <b>not been played yet</b>. Play on a copy of your save, keep backups, and <a href="#status">see exactly what is and isn't tested</a>.</p>
+      </div>
     </div>
 
-    <figure class="panel-demo">
-      <img class="panel-shot" src="assets/connection-panel.png" width="383" height="558" alt="Screenshot of the in-game connection panel as the host sees it: status In sync, the host's own row das it mane in bold with a dash, sarawr at 19 ms, tick rate 11.7 ticks per second, speed 7x, 1 tick behind, connection Steam, and a chat with a yellow line from das it mane and a pink line from sarawr.">
-      <figcaption class="demo-caption">The in-game connection panel, as the host sees it during a Steam co-op session. Chat lines take each player's cursor color.</figcaption>
+    <figure class="map-figure">
+      <svg class="map" viewBox="0 0 560 400" role="img" aria-label="Illustration: a map with two colonies. Colony 1's land, in amber, on the left with a district center, houses and a path; Colony 2's land, in teal, on the right. A river runs between them. Where the two lands meet, a trading post with one half on each side; logs cross one way and gears the other.">
+        <defs>
+          <pattern id="tiles" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="var(--map-grid)" stroke-width="1"/></pattern>
+          <clipPath id="mapclip"><rect x="0" y="0" width="560" height="400" rx="18"/></clipPath>
+        </defs>
+        <g clip-path="url(#mapclip)">
+          <rect width="560" height="400" fill="var(--map-ground)"/>
+          <rect width="560" height="400" fill="url(#tiles)"/>
+          <!-- river -->
+          <path d="M292 -10 C270 60 320 110 300 170 S250 260 275 320 S320 380 300 420" fill="none" stroke="var(--map-water)" stroke-width="30" stroke-linecap="round" opacity=".9"/>
+          <path d="M292 -10 C270 60 320 110 300 170 S250 260 275 320 S320 380 300 420" fill="none" stroke="var(--map-water-edge)" stroke-width="2" stroke-dasharray="6 8" opacity=".6"/>
+          <!-- colony 1 land -->
+          <path class="land land-1" d="M48 84 C90 40 170 40 206 74 C246 108 250 160 236 210 C222 262 250 292 232 330 C200 366 120 366 76 334 C36 300 26 244 40 190 C48 150 22 118 48 84 Z"/>
+          <!-- colony 2 land -->
+          <path class="land land-2" d="M352 96 C392 56 470 50 512 82 C550 112 546 170 530 214 C520 256 546 296 524 332 C494 372 416 374 376 340 C336 306 330 258 344 214 C356 176 330 128 352 96 Z"/>
+          <!-- contested strip: where both reach, first come -->
+          <path d="M236 210 C222 262 250 292 232 330 L262 330 C282 300 262 250 270 210 Z" fill="var(--map-overlap)" opacity=".6"/>
+
+          <!-- paths colony 1 -->
+          <g stroke="var(--map-path)" stroke-width="7" stroke-linecap="round" fill="none">
+            <path d="M120 206 H176 V262 H240 V300 H262"/>
+            <path d="M120 206 V150 H150"/>
+          </g>
+          <!-- paths colony 2 -->
+          <g stroke="var(--map-path)" stroke-width="7" stroke-linecap="round" fill="none">
+            <path d="M444 190 H400 V262 H336 V300 H312"/>
+            <path d="M444 190 V130 H420"/>
+          </g>
+
+          <!-- buildings colony 1 -->
+          <g class="b1">
+            <rect x="96" y="182" width="48" height="36" rx="4"/><path d="M92 184 L120 162 L148 184 Z"/><rect x="118" y="150" width="4" height="14"/><path d="M122 150 h12 l-3 4 3 4 h-12z"/>
+            <rect x="150" y="138" width="24" height="18" rx="3"/><rect x="176" y="240" width="22" height="16" rx="3"/><rect x="204" y="240" width="22" height="16" rx="3"/><rect x="150" y="266" width="22" height="16" rx="3"/>
+            <circle cx="72" cy="132" r="9"/><circle cx="90" cy="118" r="7"/><circle cx="60" cy="156" r="7"/><circle cx="82" cy="262" r="8"/><circle cx="106" cy="290" r="7"/>
+          </g>
+          <!-- buildings colony 2 -->
+          <g class="b2">
+            <rect x="420" y="166" width="48" height="36" rx="4"/><path d="M416 168 L444 146 L472 168 Z"/><rect x="442" y="134" width="4" height="14"/><path d="M446 134 h12 l-3 4 3 4 h-12z"/>
+            <rect x="396" y="118" width="24" height="18" rx="3"/><rect x="376" y="240" width="22" height="16" rx="3"/><rect x="348" y="240" width="22" height="16" rx="3"/><rect x="404" y="266" width="22" height="16" rx="3"/>
+            <circle cx="500" cy="120" r="9"/><circle cx="486" cy="102" r="7"/><circle cx="512" cy="150" r="7"/><circle cx="486" cy="280" r="8"/><circle cx="466" cy="306" r="7"/>
+          </g>
+
+          <!-- trading post: two halves on the river bank -->
+          <g class="post">
+            <rect x="262" y="286" width="24" height="28" rx="3" class="half-1"/>
+            <rect x="288" y="286" width="24" height="28" rx="3" class="half-2"/>
+            <path d="M258 288 L287 274 L316 288 Z" fill="var(--map-roof)"/>
+            <line x1="287" y1="286" x2="287" y2="314" stroke="var(--map-ground)" stroke-width="2"/>
+          </g>
+          <!-- goods crossing -->
+          <g class="flow">
+            <path d="M232 268 C250 250 300 250 330 262" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="5 6"/>
+            <path d="M326 258 l6 4 -7 3z" fill="var(--accent)"/>
+            <path d="M342 342 C320 358 270 358 246 344" fill="none" stroke="var(--water)" stroke-width="2.5" stroke-dasharray="5 6"/>
+            <path d="M250 348 l-6 -4 7 -3z" fill="var(--water)"/>
+          </g>
+        </g>
+        <!-- labels -->
+        <g class="lbl">
+          <text x="60" y="66" class="t1">Colony 1</text>
+          <text x="440" y="60" class="t2" text-anchor="middle">Colony 2</text>
+          <text x="262" y="244" text-anchor="middle" class="tg">100 logs</text>
+          <text x="294" y="376" text-anchor="middle" class="tw">25 gears</text>
+          <text x="287" y="332" text-anchor="middle" class="tp">Trading Post</text>
+        </g>
+      </svg>
+      <figcaption class="demo-caption">Each colony's land is the ground within 10 tiles of its buildings and paths. The colonies never share a road; they meet at a Trading Post, one half on each side.</figcaption>
     </figure>
   </div>
 </div>
@@ -60,38 +132,39 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.4.0-alpha20</span></b><span>Latest release</span></li>
-      <li><b>Timberborn 1.1.2.4</b><span>Built and tested against</span></li>
-      <li><b>Windows + Steam</b><span>Tested platform</span></li>
-      <li><b>Up to four colonies</b><span>More players help the host's</span></li>
-      <li><b>GPL-3.0</b><span>Open source license</span></li>
+      <li><b><span data-release="version">1.4.0-alpha21</span></b><span>Latest pre-release</span></li>
+      <li><b>Up to 4 colonies</b><span>More players help the host's</span></li>
+      <li><b>Timberborn 1.1.2.4</b><span>Built against</span></li>
+      <li><b>Steam invites</b><span>No port forwarding</span></li>
+      <li><b>GPL-3.0</b><span>Open source, on GitHub</span></li>
     </ul>
   </div>
 </div>
 
-<!-- ============ three steps ============ -->
+<!-- ============ how a game goes ============ -->
 <section id="how-to-play">
   <div class="container">
     <div class="section-head">
-      <h2>Playing together takes four steps</h2>
-      <p>No router settings, no virtual networks. If you both have Timberborn on Steam, you are a few clicks away.</p>
+      <div class="eyebrow">A game, start to finish</div>
+      <h2>Your own colony in four steps</h2>
+      <p>Any save works: a new game, an old colony, or a BeaverBuddies multi-start map. The host's colony is whatever is already there; everyone else founds theirs.</p>
     </div>
     <ol class="steps horizontal">
       <li>
         <h3>Everyone installs the mod</h3>
-        <p>Same download, same version, then restart the game. <a href="install.html">Install guide</a></p>
+        <p>The same zip, then restart. Players on different builds cannot join each other, and the mod checks its own files too. <a href="install.html">Install guide</a></p>
       </li>
       <li>
-        <h3>The host invites a friend</h3>
-        <p>Load a save, choose <b>Host co-op game</b>, then <b>Invite Friends</b> and pick your friend in Steam's overlay.</p>
+        <h3>The host invites, then waits</h3>
+        <p>Load a save, <b>Host co-op game</b>, <b>Invite Friends</b> in Steam's overlay. When everyone is in, <b>Start Game</b> and unpause. Build nothing before that: joining closes at the first change.</p>
       </li>
       <li>
-        <h3>Your friend joins, you start</h3>
-        <p>When your friend appears in the player list, the host chooses <b>Start Game</b>, then waits, paused, until everyone is in, building nothing meanwhile. Joining closes at the first tick or the first change.</p>
+        <h3>Found your colony</h3>
+        <p>A message offers you a district center. Place it at least 20 tiles from other colonies (their land shows as outlines): it appears already built, with beavers, food and water.</p>
       </li>
       <li>
-        <h3>Your friend founds their colony</h3>
-        <p>Once the host unpauses, a message offers each new player a district center to place, at least 20 tiles from other colonies. It appears already built, with starting beavers, food and water.</p>
+        <h3>Build, grow, trade</h3>
+        <p>Your land grows with your buildings and stops where another colony's begins. When two lands meet, put a Trading Post across the edge and make an offer.</p>
       </li>
     </ol>
   </div>
@@ -102,223 +175,141 @@
   <div class="container">
     <div class="section-head">
       <h2>What you get</h2>
-      <p>Everything the original BeaverBuddies and the Stability Fork do, plus a colony of your own.</p>
+      <p>Everything the original BeaverBuddies and the <a href="https://timbermods.github.io/BeaverBuddies-Stability-Fork/">Stability Fork</a> do, plus a colony of your own.</p>
     </div>
     <div class="grid grid-3">
       <article class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg></div>
-        <h3>A colony each</h3>
-        <p>Your districts, your land (10 tiles around your buildings, first come), your beavers, stock, working hours and, if the host chooses, your own science and unlocks. Nobody can change another colony's things, and each colony's beavers work for it alone.</p>
+        <h3>Your colony, yours alone</h3>
+        <p>Your districts, beavers, stock, working hours and marks. Nobody can pause, rename, demolish or re-staff your buildings, and your beavers build, cut, plant and gather only for you.</p>
       </article>
       <article class="card">
-        <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4"/></svg></div>
+        <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+        <h3>Land that grows with you</h3>
+        <p>Every tile within 10 of your buildings and paths, first come. Others can't build or mark there; you can't on theirs. Outlines in each colony's color show where things stand, any time with <kbd>Ctrl</kbd>+<kbd>L</kbd>.</p>
+      </article>
+      <article class="card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4"/></svg></div>
         <h3>Trading posts</h3>
-        <p>Colonies meet only at a Trading Post, placed across the edge of two lands. Offer "100 logs for 25 gears, 4 rounds", science or beavers, or a gift; the other player accepts; each side's goods wait on its own half and cross all at once when both are in.</p>
+        <p>The one place colonies meet. Offer goods, science or beavers, or a gift; the other player accepts; the beavers do the carrying. <a href="#trading">How an exchange works</a></p>
       </article>
       <article class="card">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
-        <h3>Desyncs caught the tick they happen</h3>
-        <p>Colony state (owners, marks, science, exchanges, land) is compared with the host's every tick and in full once a day. A game that drifts stops at once, with a log line that says what differed, instead of days later.</p>
+        <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l1 4h3l-2 5 2 6H5l2-6-2-5h3z"/><path d="M10 14h4"/></svg></div>
+        <h3>Your own science</h3>
+        <p>If the host chooses, each colony earns its own science and unlocks its own buildings and bot types. Your inventors work for you; your toolbar is yours.</p>
       </article>
       <article class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></div>
-        <h3>Steam friend invites</h3>
-        <p>Invite a friend from Steam's own overlay. Connections go straight between you when Steam finds a route and are relayed through Steam otherwise, so there is no Hamachi and no port forwarding. Direct IP still works too.</p>
+        <h3>Colonies are remembered</h3>
+        <p>The save knows you by your Steam account: the same colony every time, whoever hosts. A colony whose player stops coming, or that dies out, is handed to a neighbour, and its player can found again.</p>
       </article>
       <article class="card">
         <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
-        <h3>A connection panel</h3>
-        <p>See who is connected, each player's ping, whether you are in sync, and the tick rate at a glance, and chat with everyone in the game. Collapse it to one line or hide it completely.</p>
-      </article>
-      <article class="card">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3l7 17 2.5-7.5L21 10z"/></svg></div>
-        <h3>See your teammates</h3>
-        <p>Colored, translucent cursors with names, selection outlines, and Viewing / Editing labels on buildings. Restyle each player's cursor in the Player cursors dialog.</p>
-      </article>
-      <article class="card">
-        <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
-        <h3>Fewer crashes and desyncs</h3>
-        <p>Fixes for the water, animation, random-number, saving, demolition and input problems that knocked sessions out of sync or crashed them.</p>
-      </article>
-      <article class="card">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg></div>
-        <h3>Problems are explained</h3>
-        <p>Joining with a different build is refused before the save is sent, and a warning lists any mods that differ. Failed connections and multiplayer actions end with a plain-language reason instead of a silent hang.</p>
-      </article>
-      <article class="card">
-        <div class="icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></div>
-        <h3>Quicker and lighter</h3>
-        <p>A guest's actions reach the host about half a tick sooner (roughly 0.3 seconds at normal speed), the mod does less work every tick and every frame, and over Steam the ping no longer climbs as the game speeds up.</p>
+        <h3>The Stability Fork underneath</h3>
+        <p>Steam friend invites, a connection panel with chat, teammates' cursors and selections, pings, and the fixes for the crashes and desyncs that made co-op painful. Turn <b>Separate colonies</b> off for ordinary shared co-op.</p>
       </article>
     </div>
   </div>
 </section>
 
-<!-- ============ steam ============ -->
-<section id="steam">
-  <div class="container grid grid-2" style="align-items:start;gap:2.5rem">
+<!-- ============ trading ============ -->
+<section id="trading">
+  <div class="container grid grid-2 trade-grid">
     <div>
-      <div class="eyebrow">Steam invites</div>
-      <h2>Skip the port forwarding</h2>
-      <p class="lede" style="max-width:none">Choose <b>Invite Friends</b> and your friend gets a normal Steam invitation. If their game is closed, Steam launches it and joins for them.</p>
-      <p><span class="chip ok">Confirmed</span> &nbsp;Working in real playtests between the maintainer and a friend.</p>
+      <div class="eyebrow">Trading posts</div>
+      <h2>Barter, not a market</h2>
+      <p class="lede" style="max-width:none">No prices and no currency. An exchange is "this many of one thing for that many of another, so many times", and nothing is given before what it was exchanged for is in.</p>
+      <ol class="steps compact">
+        <li><h3>Offer</h3><p>On your half of the post: <b>You give</b> 100 logs, <b>You get</b> 25 gears, 4 rounds. Or science, or beavers, or a gift (ask for 0).</p></li>
+        <li><h3>Accept</h3><p>The other player sees the offer on their half and accepts, declines, or waits. You may withdraw until then.</p></li>
+        <li><h3>Each side brings its goods</h3><p>Your workers carry the logs to your half; theirs carry the gears to theirs. The goods wait there, held.</p></li>
+        <li><h3>Both in, everything crosses</h3><p>Goods to the other half, science from pool to pool, beavers to their new district, all at once. Then the next round.</p></li>
+      </ol>
+      <p style="color:var(--muted);font-size:.95rem">Ending an exchange early takes both players. <kbd>Ctrl</kbd>+<kbd>T</kbd> lists every post, its exchange and every colony.</p>
     </div>
-    <div>
-      <ul>
-        <li><b>Friends only.</b> The host opens a friends-only lobby and only accepts players who joined it. A stranger who knows your Steam ID cannot connect.</li>
-        <li><b>Your address stays private.</b> Valve documents that relayed connections keep players' IP addresses hidden from each other.</li>
-        <li><b>Direct IP still works.</b> Both options are offered when you host, so Hamachi and port forwarding keep working. Steam problems can never stop you hosting over direct IP.</li>
-        <li><b>Clear errors.</b> If a connection fails, you get Steam's own reason in plain language and in the log.</li>
-        <li><b>The current API.</b> The original used Valve's older networking API, which Valve marks as deprecated. This fork uses the one Valve recommends.</li>
-      </ul>
-      <p style="color:var(--muted);font-size:.95rem">Both players need to be online in Steam and to own Timberborn on Steam.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ============ panel ============ -->
-<section class="tint" id="panel">
-  <div class="container">
-    <div class="section-head">
-      <div class="eyebrow">Connection panel</div>
-      <h2>Know how your session is doing</h2>
-      <p>A small panel in a corner of your screen during multiplayer games. It only reads: it sends no gameplay events, and if it ever fails it switches itself off.</p>
-    </div>
-    <div class="grid grid-2" style="align-items:start">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Status</th><th>What it means</th></tr></thead>
-          <tbody>
-            <tr><td><b>In sync</b></td><td>Normal. Everything is running together.</td></tr>
-            <tr><td><b>Catching up</b></td><td>Guests only: your game is a few ticks behind the host.</td></tr>
-            <tr><td><b>Waiting for host</b></td><td>Guests only: this game has been held at the start of a tick for a moment, waiting for the host's word for it.</td></tr>
-            <tr><td><b>Connection unstable</b></td><td>Someone has stopped responding for five seconds.</td></tr>
-            <tr><td><b>Out of sync</b></td><td>A desync was detected: the random state at an action, or the colony state (every tick, or the daily check).</td></tr>
-            <tr><td><b>Disconnected</b></td><td>The session has ended.</td></tr>
-          </tbody>
-        </table>
+    <div class="exchange-mock" aria-label="A mock-up of the trading panel during a round">
+      <div class="xm-head"><span>Trading with <b class="c2">Colony 2</b></span><span class="xm-round">Round 2 of 4</span></div>
+      <div class="xm-card">
+        <div class="xm-row"><span class="xm-label">You give</span><b>100 Logs</b><span class="xm-sub">on your half</span></div>
+        <div class="xm-bar"><i class="c1" style="width:100%"></i></div>
+        <div class="xm-note">100 of 100 waiting on your half</div>
       </div>
-      <div>
-        <ul>
-          <li>Each player is a <b>name and a ping</b>, host first, with the colony they run beside the name. Your own row is bold, with a dash where the ping would be.</li>
-          <li><b>Ping</b> is the round trip between you and that player. It is normal text at 80 ms or less, <span style="color:var(--warn)"><b>yellow</b></span> up to 160 ms, and <span style="color:var(--bad)"><b>red</b></span> for anything higher or no response.</li>
-          <li>The <b>dot</b> beside the status is <span style="color:var(--good)"><b>green</b></span> when you are in sync, <span style="color:var(--warn)"><b>yellow</b></span> while catching up or waiting for the host, and <span style="color:var(--bad)"><b>red</b></span> when the connection is unstable, out of sync or disconnected.</li>
-          <li><b>Tick rate</b> and <b>speed</b> show how fast the simulation is really running, and guests see how many ticks they are <b>behind the host</b> (0 or 1 is normal).</li>
-          <li><b>Connection</b> shows whether players are connected directly or through Steam.</li>
-          <li>The host also sees how far behind the slowest guest is and the lowest <b>guest frame rate</b>, and can click <b>Ease off below</b> to slow the game a little while a guest stays under a frame rate (Off, 20, 30, 45 or 60 fps).</li>
-          <li>A <b>chat box</b> sits below the panel. Everyone sees messages in the same order, and a player who joins later gets the whole conversation. Each line is drawn in the sender's cursor color.</li>
-          <li><b>Click the title</b> to collapse it to a single line. Your choice is remembered.</li>
-          <li>Hide it or move it to any corner in <b>Mod Settings</b>, or bind the optional <b>Toggle connection panel</b> key.</li>
-        </ul>
-        <p style="color:var(--muted);font-size:.95rem">Ping is measured by the mod's network layer, so it means the same thing over Steam, Hamachi and direct IP. Over Steam it includes a short wait for each game to serve Steam, which the mod keeps to a few milliseconds even at a high game speed.</p>
+      <div class="xm-card">
+        <div class="xm-row"><span class="xm-label">You get</span><b>25 Gears</b><span class="xm-sub">on their half</span></div>
+        <div class="xm-bar"><i class="c2" style="width:64%"></i></div>
+        <div class="xm-note">16 of 25 on Colony 2's half &middot; waiting for their workers</div>
       </div>
+      <div class="xm-ledger">
+        <div class="xm-ledger-title">Ledger</div>
+        <div class="xm-ledger-row"><span>Cycle 3, day 12</span><span>gave 100 Logs</span><span>got 25 Gears</span></div>
+      </div>
+      <div class="xm-actions"><span class="xm-btn">Cancel exchange</span><span class="xm-btn ghost">All posts</span></div>
     </div>
   </div>
 </section>
 
-<!-- ============ teammates ============ -->
-<section id="teammates">
-  <div class="container grid grid-2" style="align-items:start;gap:2.5rem">
-    <div>
-      <div class="eyebrow">Player activity</div>
-      <h2>See what your teammates are doing</h2>
-      <p class="lede" style="max-width:none">Other players' cursors, selections and building edits show up on your screen, across colonies too. Cursor colors are each player's own; the land outlines use the colonies' colors.</p>
-      <ul>
-        <li><b>Cursors</b> are colored and translucent, with a name label. They are shared in world space, so cameras can be anywhere.</li>
-        <li><b>Selection outlines</b> use the game's own outline in that player's color.</li>
-        <li><b>Viewing / Editing</b> labels appear on buildings. It is an advisory notice, not a lock: both players can still change a building.</li>
-      </ul>
-    </div>
-    <div>
-      <h3 style="margin-top:0">Make each cursor your own</h3>
-      <p>Open <b>Options</b> (Esc) and choose <b>Player cursors</b>. Each connected player gets a card:</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Control</th><th>Range</th><th>Default</th></tr></thead>
-          <tbody>
-            <tr><td>Color</td><td>Their color, 10 presets, or exact RGB</td><td>Their color</td></tr>
-            <tr><td>Size</td><td>50% to 300%</td><td>100%</td></tr>
-            <tr><td>Transparency</td><td>0% to 90%</td><td>50%</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p style="color:var(--muted);font-size:.95rem">These are display-only choices that stay on your machine. They are never sent to other players, are remembered by player name, and cannot affect the simulation.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ============ stability ============ -->
-<section class="tint" id="stability">
+<!-- ============ kept in step ============ -->
+<section class="tint" id="in-step">
   <div class="container">
     <div class="section-head">
       <div class="eyebrow">Under the hood</div>
-      <h2>Stability work, and how sure we are of it</h2>
-      <p>Inherited from the Stability Fork. Each fix is marked by how well it is confirmed. <b>Confirmed</b> means it was verified in a real multiplayer playtest; <b>Tested</b> means automated regression checks cover it but it has not been confirmed in a live session. The colony model itself, and the desync review's fixes (1.4.0-alpha11 to alpha20), are all <b>Tested</b>: nothing of them has been played yet.</p>
+      <h2>Two colonies, one truth</h2>
+      <p>Timberborn is a single-player game, so co-op keeps every player's copy identical instead of streaming one game to everyone. MultiColony adds rules to that, and checks them.</p>
     </div>
-    <div class="grid grid-2">
+    <div class="grid grid-3">
       <article class="card">
-        <h3 style="margin-top:0">Water no longer depends on frame rate <span class="chip ok">Confirmed</span></h3>
-        <p>Players at different frame rates used to see different water, which caused desyncs. The water now follows the simulation's own clock. It resolved a reported "badtide" desync.</p>
+        <h3 style="margin-top:0">The host decides</h3>
+        <p>Every action goes through the host, which seats players, writes the actor's colony into the action, judges it against the rules, and plays and forwards it, or refuses it with a reason. Guests never judge, so the computers can't disagree.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">Animation crash fixed <span class="chip ok">Confirmed</span></h3>
-        <p>A path cursor that could move backward between ticks, and non-finite visual coordinates, no longer crash the game.</p>
+        <h3 style="margin-top:0">Ownership is saved</h3>
+        <p>Who owns each district, building and mark is in the save, the same on every computer. Land is worked out from the buildings standing. Beavers choose their work from these only.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">Builds are checked before the save is sent <span class="chip tested">Tested</span></h3>
-        <p>The original only warned about a version mismatch after the save had loaded. The fork compares the game version and the exact mod build first, with a time limit and a clear message.</p>
-      </article>
-      <article class="card">
-        <h3 style="margin-top:0">A failed action stops safely <span class="chip tested">Tested</span></h3>
-        <p>If a multiplayer action fails, replay stops, the session pauses and peers are told, instead of two games quietly drifting apart.</p>
-      </article>
-      <article class="card">
-        <h3 style="margin-top:0">More deterministic random numbers, saving and ordering <span class="chip tested">Tested</span></h3>
-        <p>Nested random-number scopes are restored even after errors, a stale saving flag is cleared, and water sources are applied in a consistent order.</p>
-      </article>
-      <article class="card">
-        <h3 style="margin-top:0">Demolition and input fixes <span class="chip tested">Tested</span></h3>
-        <p>A replayed demolition selection that included already-demolished buildings no longer ends the session, equal-distance demolition jobs are chosen deterministically, and input state is recovered after a desync, a failed action or a lost connection, so the menu and controls keep working. The maintainer confirmed the controls work after a disconnect; the other cases are covered by checks only.</p>
-      </article>
-      <article class="card">
-        <h3 style="margin-top:0">The ping stays low at a high game speed <span class="chip ok">Confirmed</span></h3>
-        <p>Over Steam, data used to wait for the end of every frame, and at a high game speed a frame is mostly simulation, so the ping grew with the speed. Steam is now also served between the ticks of a frame. At a true speed 7 the ping stayed under 100 ms, where it had been 200 to 300 ms.</p>
-      </article>
-      <article class="card">
-        <h3 style="margin-top:0">The host can ease off for a slow guest <span class="chip tested">Tested</span></h3>
-        <p>The host picks a frame rate floor; while a guest stays below it, the host slows the game a little and speeds back up by itself. It never changes what happens in a tick. An earlier version of the rule was played once and worked but changed speed too often; the current rule has not been played yet.</p>
+        <h3 style="margin-top:0">A desync is caught the tick it happens</h3>
+        <p>Every colony state change folds into a digest the host sends with each heartbeat; a guest that differs stops at once, with both numbers in the log. A full colony check follows once a day.</p>
       </article>
     </div>
-    <p style="margin-top:1.5rem">The full list is in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
+    <p style="margin-top:1.5rem;color:var(--muted)">The full rules, with what still reaches across colonies (water, weather, area effects) and every known limit: <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">TWO-COLONIES.md</a>.</p>
   </div>
 </section>
 
-<!-- ============ how it works ============ -->
-<section id="how-it-works">
-  <div class="container narrow">
-    <h2>How it works, in one minute</h2>
-    <p>Timberborn is a single-player game, so BeaverBuddies keeps every player's copy of the game identical instead of streaming one game to everyone.</p>
-    <ol>
-      <li><b>Everyone starts from the same save.</b> The host sends the save when a friend joins.</li>
-      <li><b>Every action is mirrored.</b> Building, changing a recipe or setting a priority is sent to the host, which decides which tick it happens on and sends it to everyone.</li>
-      <li><b>The game is deterministic.</b> Given the same save and the same actions on the same ticks, every copy of the game plays out exactly the same.</li>
-    </ol>
-    <p>That is why <b>everyone must run the same build</b>, why other mods should match, and why nobody can join once the host has started or changed anything. In MultiColony the host also decides every colony question (who may build where, whether a placement is still possible, who is present) and writes the answer into the action every computer plays, so guests never judge. When something breaks that sameness, that is a desync. The <a href="https://github.com/thomaswp/BeaverBuddies/wiki/How-does-it-work%3F">original project's wiki</a> explains the design in more detail.</p>
+<!-- ============ status ============ -->
+<section id="status">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Honest status</div>
+      <h2>What has and hasn't been played</h2>
+      <p><span class="chip ok">Confirmed</span> means seen in a real multiplayer session; <span class="chip tested">Tested</span> means automated checks cover it and no one has played it yet.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Part</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Steam invites, connection panel, cursors, the fork's desync fixes</td><td><span class="chip ok">Confirmed</span></td><td>Played for hours with two players in large colonies (Stability Fork 1.1.10).</td></tr>
+          <tr><td>Hosting, joining, founding a second colony and building in it</td><td><span class="chip ok">Confirmed</span></td><td>Played in the early land-split alphas.</td></tr>
+          <tr><td>Land, ownership, per-colony work and science</td><td><span class="chip tested">Tested</span></td><td>StabilityTests 263 and RuntimeChecks 229, which read the game's own assemblies.</td></tr>
+          <tr><td>Trading posts and exchanges</td><td><span class="chip tested">Tested</span></td><td>Every rule of a round is checked headlessly; the panel has not been seen in a game.</td></tr>
+          <tr><td>The every-tick colony check</td><td><span class="chip tested">Tested</span></td><td>A bug in the check itself would stop a healthy game; the log line says what differed. The first thing to try: <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/ALPHA-TEST-SCRIPTS.md">Script B, line 8a</a>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--muted)">Every build says what changed and what was and wasn't tested in its <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">release notes</a>. If a game desyncs, every computer writes a report next to <code>Player.log</code>; send them all.</p>
   </div>
 </section>
 
-<!-- ============ honest limits ============ -->
+<!-- ============ good to know ============ -->
 <section class="tint" id="limits">
   <div class="container narrow">
     <h2>Good to know before you play</h2>
     <ul>
-      <li><b>Everyone must run the exact same build</b> of the mod and the same version of the game.</li>
-      <li><b>Other mods should match.</b> When someone joins, both players get a warning listing any mods that differ. Settings are not compared, so keep simulation-affecting settings identical.</li>
-      <li><b>Join before the host starts, or builds.</b> Nobody can join after <b>Start Game</b>, or after the host places or marks anything while waiting paused.</li>
-      <li><b>Desyncs can still happen.</b> Known causes are removed and a colony difference is caught the tick it happens; none of that is a promise. Keep backups of your saves.</li>
-      <li><b>Alpha.</b> The Stability Fork underneath was played with two players on Windows and Steam; the colony model has not been played yet. Up to four colonies; other platforms have not been tried.</li>
+      <li><b>Everyone must run the exact same build</b> of the mod and the same version of the game; the join is refused otherwise. Other mods should match too (you get a warning).</li>
+      <li><b>Join before the host starts or builds.</b> Nobody can join after the first tick, or after the host places or marks anything while waiting paused.</li>
+      <li><b>Only one BeaverBuddies at a time.</b> If another is enabled, the main menu names it and this one stays out of the way.</li>
+      <li><b>The map is shared.</b> Water, droughts, badwater tides and weather reach everyone; a dam upstream still changes what flows downstream. The game ends only when every beaver on the map is gone.</li>
+      <li><b>Text is English only</b> for what this mod adds; other languages show the English text there.</li>
     </ul>
-    <p>More answers are in the <a href="faq.html">FAQ</a>, and <a href="troubleshooting.html">Troubleshooting</a> covers what to do when something goes wrong.</p>
+    <p>More in the <a href="faq.html">FAQ</a>; <a href="troubleshooting.html">Troubleshooting</a> covers what to do when something goes wrong.</p>
   </div>
 </section>
 
@@ -326,11 +317,11 @@
   <div class="container">
     <div class="cta-band">
       <div>
-        <h2>Ready to play?</h2>
+        <h2>Ready to found your colony?</h2>
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-alpha20</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-alpha21</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>
@@ -352,6 +343,8 @@
           <li><a href="install.html">Install guide</a></li>
           <li><a href="troubleshooting.html">Troubleshooting</a></li>
           <li><a href="faq.html">FAQ</a></li>
+          <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules (TWO-COLONIES.md)</a></li>
+          <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/ALPHA-TEST-SCRIPTS.md">Test scripts</a></li>
         </ul>
       </div>
       <div>
@@ -360,7 +353,9 @@
           <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony">Source code</a></li>
           <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">All releases</a></li>
           <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">Changelog</a></li>
+          <li><a href="https://timbermods.github.io/BeaverBuddies-Stability-Fork/">The Stability Fork</a></li>
           <li><a href="https://github.com/thomaswp/BeaverBuddies">The original BeaverBuddies</a></li>
+          <li><a href="https://timbermods.github.io/">More Timberborn mods</a></li>
         </ul>
       </div>
     </div>

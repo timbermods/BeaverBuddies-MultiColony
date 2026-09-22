@@ -295,3 +295,78 @@ details.q .answer > :last-child { margin-bottom: 0; }
   .btn-row .btn { flex: 1 1 100%; justify-content: center; }
   .nav { scrollbar-width: thin; }
 }
+
+/* ---------- MultiColony: the map illustration ---------- */
+:root {
+  --map-ground: #eee5d2;
+  --map-grid: rgba(80, 60, 30, .08);
+  --map-water: #bfe0e6;
+  --map-water-edge: #6fb3c0;
+  --map-path: #cdbd9c;
+  --map-roof: #6b4a2e;
+  --map-overlap: #d9c7a5;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --map-ground: #22201a;
+    --map-grid: rgba(255, 230, 190, .06);
+    --map-water: #173b45;
+    --map-water-edge: #3c8797;
+    --map-path: #4e4232;
+    --map-roof: #c9a074;
+    --map-overlap: #4a3a24;
+  }
+}
+.map-figure { margin: 0; width: min(100%, 560px); justify-self: end; }
+.map { display: block; width: 100%; height: auto; border-radius: 18px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+.map .land { stroke-width: 2.5; stroke-dasharray: 7 5; }
+.map .land-1 { fill: color-mix(in srgb, var(--accent) 20%, transparent); stroke: var(--accent); }
+.map .land-2 { fill: color-mix(in srgb, var(--water) 22%, transparent); stroke: var(--water); }
+.map .b1 { fill: var(--accent); }
+.map .b2 { fill: var(--water); }
+.map .b1 circle, .map .b2 circle { opacity: .55; }
+.map .half-1 { fill: var(--accent); }
+.map .half-2 { fill: var(--water); }
+.map .lbl text { font: 700 14px var(--font); fill: var(--ink); }
+.map .lbl .t1 { fill: var(--accent); }
+.map .lbl .t2 { fill: var(--water); }
+.map .lbl .tg { font-size: 12px; fill: var(--accent); }
+.map .lbl .tw { font-size: 12px; fill: var(--water); }
+.map .lbl .tp { font-size: 12px; fill: var(--ink); }
+.map .lbl .tm { font: 600 10px var(--font); fill: var(--muted); letter-spacing: .02em; }
+@media (prefers-reduced-motion: no-preference) {
+  .map .flow path[stroke-dasharray] { animation: flow 1.6s linear infinite; }
+  @keyframes flow { to { stroke-dashoffset: -22; } }
+}
+.hero .callout { margin-top: 1.4rem; max-width: 46ch; }
+.eyebrow > span { display: inline; }
+.eyebrow { flex-wrap: nowrap; align-items: flex-start; }
+.eyebrow::before { flex: none; margin-top: .55em; }
+.hero .btn-row .btn-secondary + .btn-secondary { margin-left: 0; }
+
+/* ---------- the exchange mock-up ---------- */
+.trade-grid { align-items: start; gap: 2.5rem; }
+.exchange-mock {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 1.1rem 1.2rem 1.2rem; font-size: .95rem; position: sticky; top: 100px;
+}
+.exchange-mock .c1 { color: var(--accent); }
+.exchange-mock .c2 { color: var(--water); }
+.xm-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding-bottom: .8rem; border-bottom: 1px solid var(--line); margin-bottom: .9rem; }
+.xm-round { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.xm-card { background: var(--bg-tint); border: 1px solid var(--line); border-radius: 12px; padding: .8rem .9rem; margin-bottom: .7rem; }
+.xm-row { display: flex; align-items: baseline; gap: .6rem; margin-bottom: .5rem; }
+.xm-row b { font-size: 1.05rem; }
+.xm-label { font-size: .75rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.xm-sub { margin-left: auto; font-size: .82rem; color: var(--muted); }
+.xm-bar { height: 10px; border-radius: 999px; background: color-mix(in srgb, var(--line) 70%, transparent); overflow: hidden; }
+.xm-bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+.xm-bar i.c2 { background: var(--water); }
+.xm-note { margin-top: .45rem; font-size: .84rem; color: var(--muted); }
+.xm-ledger { border-top: 1px solid var(--line); padding-top: .8rem; margin-top: .3rem; }
+.xm-ledger-title { font-size: .75rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem; }
+.xm-ledger-row { display: grid; grid-template-columns: 1fr auto auto; gap: .8rem; font-size: .88rem; color: var(--muted); }
+.xm-actions { display: flex; gap: .6rem; margin-top: .9rem; flex-wrap: wrap; }
+.xm-btn { display: inline-block; padding: .5rem .9rem; border-radius: 10px; font-weight: 700; font-size: .88rem; background: var(--bad); color: #fff; }
+.xm-btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+@media (max-width: 860px) { .exchange-mock { position: static; } .map-figure { justify-self: stretch; order: 2; } }
