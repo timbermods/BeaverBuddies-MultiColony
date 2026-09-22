@@ -41,7 +41,24 @@ namespace TimberNet
         }
         protected void SendSessionFault(ISocketStream stream, string reason)
         {
-            SendEvent(stream, new JObject { [TYPE_KEY] = "SessionFault", [TICKS_KEY] = TickCount, ["reason"] = reason });
+            SendEvent(stream, SessionFaultFrame(reason));
+        }
+
+        protected JObject SessionFaultFrame(string reason) =>
+            new JObject { [TYPE_KEY] = "SessionFault", [TICKS_KEY] = TickCount, ["reason"] = reason };
+
+        /// <summary>
+        /// Starts a long-lived network thread of its own, above normal priority, for a loop that reads a connection. It
+        /// was a thread-pool task: while the game's own workers (water, soil, the job system) kept every core busy, a
+        /// pool task could wait tens of milliseconds for a turn before it read what had already arrived, and a guest's
+        /// next tick waited with it.
+        /// </summary>
+        protected static Thread StartNetworkThread(string name, ThreadStart run)
+        {
+            var thread = new Thread(run) { IsBackground = true, Name = name };
+            try { thread.Priority = ThreadPriority.AboveNormal; } catch (Exception) { }
+            thread.Start();
+            return thread;
         }
         public const string TICKS_KEY = "ticksSinceLoad";
         public const string TYPE_KEY = "type";

@@ -5,6 +5,96 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta12
+
+**A desync and network review of beta11, and its fixes.** Two review agents and the main one went over everything
+that touches synced state and the network. Each finding was checked against the decompiled game (1.1.2.4) before it
+was fixed or refuted. The plan and the full report, with the evidence for every item, are in
+[design/REVIEW-PLAN-1.4.0-beta11.md](design/REVIEW-PLAN-1.4.0-beta11.md) and
+[design/REVIEW-FINDINGS-1.4.0-beta11.md](design/REVIEW-FINDINGS-1.4.0-beta11.md). **Wire change.**
+
+Desyncs:
+- **Wonders run on the tick** (the Stability Fork's PR #46, closed there, ported with one change).
+  - What ran on render frames: every Wonder's activation and deactivation animation, and the whole of the Earth
+    Repopulator's plane launch (the catapult's wait, the runway, the launcher's turn between planes).
+  - What their ends did: spawned the planes (entities created outside any tick, whose IDs draw the shared random
+    numbers), deactivated the Wonder and started the pilots' timer. So each computer did these at a different point.
+  - Now `WonderTickService` steps them once per tick with the game's own code, and the frames only draw between ticks
+    (`Fixes/WonderTimingFix.cs`, [the design note](BeaverBuddies/Doc/WonderTiming.md)).
+  - The change from #46: a game update that changes how often those methods read the frame clock no longer throws
+    out of the mod's one `PatchAll` (which would have left the mod half patched). It leaves the method as it is, logs
+    once, and switches the whole takeover off, so the Wonders fall back to frame time.
+  - The host also decides whether a Wonder can be activated (`WonderActivatedEvent.activated`), since the game's
+    check reads animation state.
+  - The always-on walker hash leaves out switched-off walkers, so pilots riding their planes don't log a mismatch.
+- **A deleted entity is gone for everyone at the same moment.**
+  - Why it was alive: Unity destroys a deleted entity at the end of the frame, and until then the game's own "does it
+    still exist" check says yes.
+  - Why that desynced: a tick is spread over a different number of frames on each computer. So in a later bucket of
+    the same tick, a lumberjack walked on to a tree an explosion took on one computer, and gave up on the other.
+  - Now a deletion inside a tick or a replayed action ends that frame's ticking on every computer
+    (`Fixes/TickTimingFixes.cs`). The frame's unticked buckets are given back to the game's ticker, so the game runs
+    no slower (an interruption used to lose them), and a pending save waits for the end of the tick.
+- **Loading keeps the non-game random marks.** In the first frames of a game, sounds and input the mod marks as not
+  simulation still drew the shared random numbers, so a sound one player heard and another did not moved one random
+  state. The rule is now `RandomSourceRules` (checked on its own): marked methods first, and another thread never
+  draws the game's.
+- **The rest:**
+  - The game's walker debugger (debug mode) no longer draws the shared random numbers.
+  - The desync diagnostics files are named with real GUIDs (they drew game random numbers on computers with debug
+    data only).
+  - The patched `Time.time` starts at 0 as a game loads, instead of the last session's value (only animation read
+    it).
+  - A real GUID asked for on another thread no longer affects the main thread's.
+
+Stopping everyone, and a false alarm:
+- **A setting for a building that is gone** (an automation change replayed on a building demolished in the same tick)
+  is skipped on every computer; it threw and ended the session.
+- **A building from a mod only some players run.**
+  - The host refuses a guest's placement or unlock of a building the host's game does not have, and tells the guest.
+  - A guest that meets a building the host used and it lacks leaves quietly, like beta9's unreadable action, while
+    the host and the others play on.
+  - Both used to stop everyone.
+- **The daily colony check no longer hashes the seat table.** The host changes it as it loads and hands it to guests
+  only inside a hello, so a guest whose hello was refused was stopped at its next daily check. No guest simulates
+  anything from it.
+
+Behaviour:
+- **Spring-return levers** switch off in the tick, at once, on every computer.
+  - Before, the tick's own switch was taken for a click on each computer: played a tick late, sent again by every
+    guest, and refused with a notice for the other colonies' players.
+  - Holding one on never worked in co-op, and still doesn't.
+  - Also: a paused building deleted in the tick no longer records a "resume".
+- **Saves wait for the water and soil simulation.**
+  - What was wrong: a co-op save skips the game's full-tick finish, rightly. But the game then refused the save, the
+    mod's workaround silenced the refusal, and the save read the water arrays while their threads wrote them.
+  - Now a save waits for those threads first.
+  - Only the players' pause saves at once. A stop for another reason (a guest waiting, the host easing off) finishes
+    its tick first.
+
+Network:
+- **Guests follow the host's pace.** When the host eases off for a slow guest, the other guests kept the full speed,
+  reached every tick early and stood waiting for it: stop-go at every tick, worse the more the host eased. The
+  heartbeat now carries the host's pace (`HeartbeatEvent.hostSpeed`, left out at full speed), and guests run at it
+  (`CatchUpSpeed.PaceFor`).
+- **One stalled direct-IP guest no longer freezes everyone.**
+  - The host wrote each tick to every direct guest on its game thread. A guest that stopped reading (asleep, its
+    Wi-Fi gone) froze the host, and so every other guest, until its connection gave up (measured: 3.6 s to over 20 s).
+  - Each direct guest now has an ordered send lane of its own (`TimberNet/SendLane.cs`).
+  - A guest that takes nothing for 30 seconds, or has 16 MB waiting, is dropped, as over Steam.
+- **Receiving on threads of their own.** Each connection is read by a dedicated thread above normal priority. A pool
+  thread waited tens of milliseconds for a turn while the game's workers kept every core busy.
+- **Steam at once.** What the host sends while paused, a guest's own action and a desync notice are handed to Steam at
+  once, not at the next frame's pump.
+- **Pacing at boosted speeds.** The host's easing thresholds grow with the speed above 7. At speed 30 with a high ping,
+  a guest in step read as behind, and an eased host never climbed back.
+- gzip's fastest level: much less time on large actions, on the host's game thread.
+
+Checks:
+- StabilityTests 360 (12 new) and RuntimeChecks 314 (36 new, 14 of them the fork's Wonder checks).
+- Run against beta11's code, the new checks for these fixes fail (the report lists which pass there, and why).
+- Not played: Script B lines 8t to 8y and Script C 1b.
+
 ## 1.4.0-beta11
 
 **Two guests joining over direct IP at once no longer freeze the host.** Left open in beta10 (the port's review found

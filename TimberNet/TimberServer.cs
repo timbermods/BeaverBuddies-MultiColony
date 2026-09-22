@@ -29,6 +29,21 @@ namespace TimberNet
         private readonly ConcurrentDictionary<ISocketStream, ConcurrentQueue<Outgoing>> queuedMessages =
             new ConcurrentDictionary<ISocketStream, ConcurrentQueue<Outgoing>>();
 
+        // Guests whose connection can block (IBlockingWrites: a direct link) each get an ordered send lane of their own as
+        // their join finishes (FinishQueuing), and the host's game thread only queues for them. A guest that stopped
+        // reading used to stop the host in the middle of its tick's broadcast, and with it every other guest, until its
+        // connection gave up (up to about 20 s). Guests over Steam, whose writes only queue, are written to directly.
+        private readonly ConcurrentDictionary<ISocketStream, SendLane> sendLanes = new ConcurrentDictionary<ISocketStream, SendLane>();
+
+        /// <summary>How long a guest's connection may take to accept one frame before the guest is dropped (as over Steam).</summary>
+        public static int SendStallLimitMs = 30000;
+
+        /// <summary>How much may wait for one guest before it is dropped.</summary>
+        public static long MaxQueuedBytesPerGuest = 16L * 1024 * 1024;
+
+        /// <summary>How long ending the session waits for the guests' lanes to deliver the reason.</summary>
+        public static int AbortFlushMs = 2000;
+
         // Player activity is presentation-only and deliberately kept out of queuedMessages' lock,
         // so a slow gameplay send can never stall a guest's receive thread.
         private readonly ConcurrentDictionary<ISocketStream, int> playerIds = new ConcurrentDictionary<ISocketStream, int>();
@@ -175,9 +190,8 @@ namespace TimberNet
                             }
                             FinishQueuing(client);
 
-                            // This must come last - it is an infinite loop
-                            // until the client disconnects
-                            StartListening(client, false);
+                            // Reads until the guest disconnects, on a thread of its own (see StartNetworkThread).
+                            StartNetworkThread("BeaverBuddies receive from a guest", () => StartListening(client, false));
                         }
                         catch (Exception error) { HandleConnectionFailure(client, "Connection rejected: " + error.Message); }
                     });
@@ -219,6 +233,7 @@ namespace TimberNet
 
         private void RemoveActivity(ISocketStream client)
         {
+            if (sendLanes.TryRemove(client, out SendLane? lane)) lane.Close();
             playerIds.TryRemove(client, out _);
             trackers.TryRemove(client, out _);
             guestTicksBehind.TryRemove(client, out _);
@@ -398,6 +413,9 @@ namespace TimberNet
                         SendBytes(client, message.Wire, message.Type, message.Tick);
                     }
                     queuedMessages.TryRemove(client, out _);
+                    // From now on what is sent to this guest goes after what was just written, in order: through its
+                    // own lane for a direct link, directly otherwise.
+                    if (!IsStopped && client is IBlockingWrites) OpenSendLane(client);
                     if (!IsStopped) OpenActivityLane(client);
                 }
                 else
@@ -405,6 +423,22 @@ namespace TimberNet
                     Log("Warning! Missing client!");
                 }
             }
+        }
+
+        private void OpenSendLane(ISocketStream client)
+        {
+            string name = playerIds.TryGetValue(client, out int id) ? $"player {id}" : "a guest";
+            sendLanes[client] = new SendLane(name, (wire, type, tick) => SendBytes(client, wire, type, tick));
+        }
+
+        // A guest that took nothing for SendStallLimitMs, or has too much waiting: dropped, as a Steam connection that stops
+        // taking data is. Closing its stream also ends a write stuck on it. The other guests and the host play on.
+        private void DropStalled(ISocketStream client, SendLane lane)
+        {
+            sendLanes.TryRemove(client, out _);
+            lane.Close();
+            HandleConnectionFailure(client, $"A player's connection took nothing for {SendStallLimitMs / 1000} seconds, so they were " +
+                "dropped from the game (their game may have frozen, or their connection is gone).");
         }
 
         private void SendErrorMessage(ISocketStream client)
@@ -509,6 +543,11 @@ namespace TimberNet
             {
                 queue.Enqueue(message);
             }
+            else if (sendLanes.TryGetValue(client, out SendLane? lane))
+            {
+                if (lane.IsStalled(SendLane.NowMs, SendStallLimitMs, MaxQueuedBytesPerGuest)) DropStalled(client, lane);
+                else lane.Post(message.Wire, message.Type, message.Tick);
+            }
             else
             {
                 SendBytes(client, message.Wire, message.Type, message.Tick);
@@ -517,6 +556,7 @@ namespace TimberNet
 
         public override void AbortSession(string reason)
         {
+            var lanes = new List<SendLane>();
             try
             {
                 lock (queuedMessages)
@@ -526,8 +566,17 @@ namespace TimberNet
                         // its stream for the whole paced save (about 1 MB/s over a direct connection), and this runs on
                         // the host's game thread (ReplayService.AbortReplay), which would wait for the rest of the save.
                         if (queuedMessages.ContainsKey(client)) continue;
-                        SendSessionFault(client, reason);
+                        // A guest with a send lane gets the reason after what is already queued for it, from its lane.
+                        if (sendLanes.TryGetValue(client, out SendLane? lane))
+                        {
+                            lane.Post(MessageToBuffer(SessionFaultFrame(reason)), "SessionFault", TickCount);
+                            lanes.Add(lane);
+                        }
+                        else SendSessionFault(client, reason);
                     }
+                // Outside the lock, and briefly: a guest that takes nothing must not hold up the end of the session.
+                long deadline = SendLane.NowMs + AbortFlushMs;
+                foreach (SendLane lane in lanes) lane.WaitUntilEmpty((int)Math.Max(0, deadline - SendLane.NowMs));
             }
             finally { Close(); }
         }
@@ -536,6 +585,8 @@ namespace TimberNet
         {
             base.Close();
             foreach (var pair in activityChannels) pair.Value.Close();
+            foreach (var pair in sendLanes) pair.Value.Close();
+            sendLanes.Clear();
             try
             {
                 lock (queuedMessages) clients.ForEach(client => client.Close());

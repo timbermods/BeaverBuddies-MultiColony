@@ -245,6 +245,28 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     the guest briefly waits for the host (the connection panel's *Waiting for host*), or on a host easing off for a
     slow guest: the game pauses for everyone, as the pause button does, and no *Tick once is off* notice shows. Press
     it again while paused: the notice shows and nothing ticks.
+8t. **The Earth Repopulator (beta12).** On an Iron Teeth map, with one player's frame rate capped at 15 (the game's
+    or the graphics driver's limit) and the other uncapped, activate a finished Earth Repopulator with 8 pilots. All 8
+    planes launch, the Wonder deactivates and the pilots disappear half an hour later, with no desync and no
+    `Walker mismatch` line. Save and Rehost once while a plane is on the runway and once while the launcher turns.
+    Activate a Folktails Earth Recultivator in co-op, and again right after it deactivates. With LateGamePerformance on
+    both computers, repeat the launch with one player's camera turned away from the Wonder. The launch should look
+    smooth at speed 1.
+8u. **Deletions (beta12).** At speed 1 and at speed 7, let dynamite go off next to lumberjacks working, and demolish a
+    building a builder is walking to. Pause, demolish something, and unpause at once. No `Entity mismatch` or `Walker
+    mismatch` line in either log, and the game runs at its usual tick rate.
+8v. **A host easing off (beta12).** At speed 7, the host sets **Ease off below** to 60 fps, so it eases for any guest below that.
+    The other player's beavers should **not** stop and start at every tick while the connection panel shows
+    *Easing off*; both run at the same, slower pace.
+8w. **A direct-IP guest's link cut (beta12).** Three players, one joined by IP. That player turns off their Wi-Fi (or
+    pulls the cable) during play: the host and the other guest play on without a freeze; about 30 seconds later the
+    host's log says the player was dropped.
+8x. **Spring-return levers (beta12).** In separate colonies, each player sets a lever to spring-return and presses it:
+    it turns on, and off again a tick later, on both screens; the other player gets **no** refusal notice.
+8y. **A building from a mod on one side only (beta12).** Only if you have a mod that adds a building: the friend has it,
+    the host does not. The friend places it: refused with a notice, and the friend plays on. The other way round (the
+    host has it): the host places it, the friend's game stops with *The host used the building …* and leaves; the host
+    plays on.
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*
@@ -292,6 +314,8 @@ per colony: population, land, exchanges).
     game** by IP within a few seconds of each other while the host waits paused. While both receive the save, the
     host's game stays responsive (the camera moves, menus open) and its connection panel keeps updating; both
     guests join. Before beta11 the host froze until the first guest's save had arrived.
+1b. **High ping at a boosted speed (beta12).** A player far away (ping 150 ms or more) and a speed boost to 30: the
+    connection panel's *Easing off* should come and go, not stay at a low percentage while every guest keeps up.
 2. Play at least two hours at your usual speed, with repeating exchanges running and colonies growing to 100+
    beavers. Note the tick rate and each player's frame rate from the connection panel every half hour.
 3. A player joins after the game has started (the host saves and hosts again with them). Then **swap hosts**.

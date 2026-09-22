@@ -19,7 +19,7 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > ([how](#troubleshooting-and-reporting-problems)).
 
 MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
-(1.1.12, and the change after it that runs the mod's recording patches first), which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything
+(1.1.12, the change after it that runs the mod's recording patches first, and its not-yet-merged change that runs the Wonders on the tick), which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything
 those do still works: Steam invites, the connection panel and chat, pings, player cursors, and ordinary
 shared-colony co-op, which plays as in the Stability Fork (see [One shared colony](#one-shared-colony)).
 
@@ -227,7 +227,11 @@ connection panel** and **Chat: start typing** are unbound until you set them the
 - **Dev mode** (Alt+Shift+Z): only the host's instant unlock and *Finish now* are shared; its other tools desync the
   game, and its two Ctrl keys (place finished, don't recover goods) are off in co-op.
 - **Gates and automation** react at the tick rather than the frame in co-op: at most a tick later than in single
-  player, the same on every computer.
+  player, the same on every computer. So do the **Wonders**' animations and the Earth Repopulator's plane launch
+  (a launch takes a few ticks longer), and a **spring-return lever** switches off the tick after it is pressed even
+  while you hold it.
+- **Mods that add buildings:** every player needs the same ones. The host refuses a building its own game does not
+  have; a player whose game lacks a building the host places leaves the game with a message (the others play on).
 - **Single player:** without a co-op session nothing is refused and no colony can be founded. Host the game (even
   alone) to play the mode.
 - **Performance:** more colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest
@@ -351,7 +355,9 @@ not to the original BeaverBuddies project.
   Stability Fork's.
 
 Design notes and the plans: [design/TRADING-EXCHANGE-PLAN.md](design/TRADING-EXCHANGE-PLAN.md),
-[design/TWO-COLONY-ALPHA-PLAN.md](design/TWO-COLONY-ALPHA-PLAN.md).
+[design/TWO-COLONY-ALPHA-PLAN.md](design/TWO-COLONY-ALPHA-PLAN.md); the beta11 desync and network review:
+[design/REVIEW-FINDINGS-1.4.0-beta11.md](design/REVIEW-FINDINGS-1.4.0-beta11.md); Wonders on the tick:
+[BeaverBuddies/Doc/WonderTiming.md](BeaverBuddies/Doc/WonderTiming.md).
 
 ## Building from source
 

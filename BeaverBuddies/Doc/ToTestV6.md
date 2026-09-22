@@ -43,4 +43,7 @@ lines 15 to 19 (joined roads, a refused Trading Post half, gates, automation, th
 - beta10's port of the Stability Fork 1.1.12 (Script B lines 8q, 8r and 8s): that the fuller desync check raises no
   false alarm in a healthy game at speed 3 and 7, that a guest's Reconnect after a desync joins the way it joined,
   and that the period key on a waiting computer pauses everyone;
-- beta11 (Script C line 1a): two guests joining by IP at once, with a large save, leave the host responsive.
+- beta11 (Script C line 1a): two guests joining by IP at once, with a large save, leave the host responsive;
+- beta12's review fixes (Script B lines 8t to 8y, Script C 1b): the Earth Repopulator with one player at 15 fps,
+  deletions mid-tick, guests following an easing host, a direct-IP guest's link cut, spring-return levers, and a
+  building from a mod on one side only.

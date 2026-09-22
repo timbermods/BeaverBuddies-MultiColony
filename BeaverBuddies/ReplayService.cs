@@ -82,9 +82,16 @@ namespace BeaverBuddies
         // The host's TEBPatcher hashes when this tick started, compared by every guest (see DesyncCheck).
         public int? entityOrderHash;
         public int? walkerPositionHash;
+        /// <summary>
+        /// The speed the host runs at while it eases off for a slow guest (HostPacing, FrameRatePacing), for the guests to
+        /// follow (CatchUpSpeed.PaceFor); left out at full speed. How fast ticks are worked through, never what is in them.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public float? hostSpeed;
 
         public override void Replay(IReplayContext context)
         {
+            if (EventIO.Get() is ClientEventIO) context.GetSingleton<ReplayService>()?.SetHostPace(hostSpeed);
             // A guest: the same point in the same tick as the host wrote it.
             if (digest == null || !(EventIO.Get() is ClientEventIO)) return;
             if (digest.Value == ColonyDigest.Value)
@@ -430,7 +437,13 @@ namespace BeaverBuddies
             }, (replayEvent, error) =>
             {
                 Plugin.LogError($"Failed to replay event {replayEvent?.type}: {error}");
-                AbortReplay("A multiplayer action could not be completed.");
+                // A guest missing a building the host used, found before anything of the action was played: only this
+                // guest leaves, and the host and the others play on, as for an action it cannot read (1.4.0-beta9). It used
+                // to stop the whole session.
+                if (error is MissingContentException missing && io is ClientEventIO)
+                    AbortReplay(missing.Message, leaveQuietly: true);
+                else
+                    AbortReplay("A multiplayer action could not be completed.");
             }, active => IsReplayingEvents = active, IsReplayingEvents);
         }
 
@@ -599,7 +612,7 @@ namespace BeaverBuddies
             // the EventIO
             // TODO: This only works because sending events is currently a synchronous
             // operation, and it really shouldn't be, so this is a short-term fix!
-            SendEvents();
+            if (SendEvents()) FlushSteam();
             // Pause
             SpeedChangePatcher.SetSpeedSilentlyNow(_speedManager, 0);
             EventIO.Reset();
@@ -667,11 +680,12 @@ namespace BeaverBuddies
                 heartbeat?.entityOrderHash, heartbeat?.walkerPositionHash, local);
         }
 
-        private void SendEvents()
+        /// <summary>Sends what is queued as one group. True if anything was sent.</summary>
+        private bool SendEvents()
         {
-            if (EventIO.IsNull) return;
+            if (EventIO.IsNull) return false;
             // Called every frame for a guest, so skip the allocations when there is nothing to send.
-            if (eventsToSend.IsEmpty) return;
+            if (eventsToSend.IsEmpty) return false;
             List<ReplayEvent> events = new List<ReplayEvent>();
             while (eventsToSend.TryDequeue(out ReplayEvent replayEvent))
             {
@@ -679,11 +693,20 @@ namespace BeaverBuddies
                 events.Add(replayEvent);
             }
             // Don't send an empty list to save bandwidth.
-            if (events.Count == 0) return;
+            if (events.Count == 0) return false;
             GroupedEvent group = new GroupedEvent(events);
             group.ticksSinceLoad = ticksSinceLoad;
             EventIO.Get().WriteEvents(group);
+            return true;
         }
+
+        /// <summary>
+        /// Hands what was just sent to Steam now. Steam moves data only when the game thread pumps it: once a frame before
+        /// anything else, and between buckets while ticking. What is sent while paused, or by a guest waiting at the start
+        /// of a tick (no buckets run), otherwise waited for the next frame's pump, a frame each way. Direct connections
+        /// send at once and are not affected.
+        /// </summary>
+        private static void FlushSteam() => Steam.SteamNet.PumpBetweenTicks(force: true);
 
         /**
          * Replays any pending events from the user or connected users
@@ -692,10 +715,10 @@ namespace BeaverBuddies
          * a tick or right at the start of a tick, so that events always
          * are recorded and replayed at the exact same time in the update loop.
          */
-        private void DoTickIO()
+        private bool DoTickIO()
         {
             ReplayEvents();
-            SendEvents();
+            return SendEvents();
         }
 
         private void Initialize()
@@ -739,7 +762,7 @@ namespace BeaverBuddies
             // then before the end of the tick.
             if (_speedManager.CurrentSpeed == 0 && TargetSpeed == 0)
             {
-                DoTickIO();
+                if (DoTickIO()) FlushSteam();
             }
             else if (io is ClientEventIO)
             {
@@ -748,9 +771,25 @@ namespace BeaverBuddies
                 // it replays them and sends them back. So they can leave as soon as they are made
                 // instead of waiting for the next tick boundary, which saves about half a tick
                 // of input delay on average.
-                SendEvents();
+                if (SendEvents()) FlushSteam();
             }
             UpdateSpeed();
+        }
+
+        // A guest: the host's pace while it eases off for a slow guest, from its last heartbeat (CatchUpSpeed.PaceFor).
+        private float? hostPace;
+
+        /// <summary>A guest: the host's pace, as its heartbeat says (null at full speed).</summary>
+        public void SetHostPace(float? pace) => hostPace = pace;
+
+        /// <summary>
+        /// The host: its own pace while it eases off for a slow guest (HostPacing, FrameRatePacing), for the guests to
+        /// follow; null at full speed, and while it holds still (a guest behind it then catches up).
+        /// </summary>
+        private float? PaceForGuests()
+        {
+            float eased = hostPacing.Apply(TargetSpeed, frameRatePacing.Percent);
+            return eased > 0 && eased < TargetSpeed ? eased : (float?)null;
         }
 
         public void SetTargetSpeed(float speed)
@@ -811,7 +850,7 @@ namespace BeaverBuddies
             nextHostPacingSampleMs = now + TimberNet.TimberServer.StatusIntervalMs;
             int before = hostPacing.Percent;
             bool wasHolding = hostPacing.IsHolding;
-            hostPacing.Sample(host.NetBase?.WorstGuestTicksBehind, TargetSpeed > 0);
+            hostPacing.Sample(host.NetBase?.WorstGuestTicksBehind, TargetSpeed > 0, TargetSpeed);
             if (hostPacing.IsHolding != wasHolding)
             {
                 Plugin.Log(hostPacing.IsHolding
@@ -864,7 +903,9 @@ namespace BeaverBuddies
             }
 
             // If we're not out of ticks to process, speed up while we're behind.
-            float targetSpeed = CatchUpSpeed.For(TargetSpeed, io.TicksBehind, _speedManager.CurrentSpeed);
+            // A guest works through ticks at the host's pace while the host eases off (CatchUpSpeed.PaceFor).
+            float pace = io is ClientEventIO ? CatchUpSpeed.PaceFor(TargetSpeed, hostPace) : TargetSpeed;
+            float targetSpeed = CatchUpSpeed.For(pace, io.TicksBehind, _speedManager.CurrentSpeed);
 
             // The host is never behind. It eases off instead, and only when a guest cannot keep up.
             if (io is ServerEventIO host)
@@ -920,6 +961,7 @@ namespace BeaverBuddies
                 EnqueueEventForSending(new HeartbeatEvent
                 {
                     digest = colonies ? ColonyDigest.Value : (ulong?)null,
+                    hostSpeed = PaceForGuests(),
                     changes = colonies ? ColonyDigest.Changes : (int?)null,
                 });
             }
@@ -950,8 +992,11 @@ namespace BeaverBuddies
 
         public void FinishFullTickIfNeededAndThen(Action action)
         {
-            // If we're paused, we should be at the end of a tick anyway
-            if (_speedManager.CurrentSpeed == 0)
+            // Paused by the players, the game stands at the start of a tick with nothing of it run yet (a pause is played
+            // there), so it can be saved at once. Standing still for another reason (a guest waiting for the host's word,
+            // the host easing off for a slow guest) can be in the middle of a tick: that tick is finished first, as when
+            // running. Until 1.4.0-beta12 any stop saved at once, so a save could hold half a tick.
+            if (TargetSpeed == 0)
             {
                 action();
                 return;
@@ -999,6 +1044,18 @@ namespace BeaverBuddies
 
         public ReplayService replayService { get; set; }
 
+        // The game's bucket service, as TickBuckets last saw it: what a save waits on (FinishParallelTickBeforeSaving).
+        private TickableBucketService bucketService;
+
+        // The game's ticker, which turns each frame's time into buckets: an interruption gives it back the buckets it
+        // left unticked (GiveBackBuckets).
+        private readonly Ticker ticker;
+
+        public TickingService(Ticker ticker)
+        {
+            this.ticker = ticker;
+        }
+
         // Should be ok non-concurrent - for now only main thread call this
         private List<Action> onCompletedFullTick = new List<Action>();
 
@@ -1026,6 +1083,10 @@ namespace BeaverBuddies
             // each ticking update
             ShouldInterruptTicking = false;
             if (!ShouldCompleteFullTick) return;
+            // An interruption (a deletion, see EntityDeletionEndsFramePatcher) stopped this frame short of the tick's end:
+            // what waits for the end of the tick (a save) waits for the next frame, which carries on to it.
+            if (bucketService != null && bucketService._nextBucketIndex != 0) return;
+            if (onCompletedFullTick.Count > 0) FinishParallelTickBeforeSaving();
             Plugin.Log($"Finished full tick; calling {onCompletedFullTick.Count} callbacks");
             foreach (var action in onCompletedFullTick)
             {
@@ -1033,6 +1094,29 @@ namespace BeaverBuddies
             }
             onCompletedFullTick.Clear();
             ShouldCompleteFullTick = false;
+        }
+
+        /// <summary>
+        /// Before a deferred save (or rehost) runs at the end of a tick: the water and soil simulations started at this
+        /// tick's first bucket may still be running on their own threads. The game's own save makes them finish
+        /// (TickableBucketService.FinishFullTick); a co-op save skips that, as it also lets their listeners catch up
+        /// early on this computer alone (TickableBucketService_FinishFullTick_Patch), and so it read their arrays while
+        /// they were being written (TickOnlyArrayServiceAllowEditPatch let it). Waiting for them here changes nothing
+        /// else: every computer waits for them at the start of the next tick anyway, before anything there is played,
+        /// and the water sources held for that moment (LateTickableBuffer) run with nothing in between that reads them.
+        /// </summary>
+        private void FinishParallelTickBeforeSaving()
+        {
+            if (bucketService == null) return;
+            try
+            {
+                var singletons = (TickableSingletonService)bucketService._tickableSingletonService;
+                if (!singletons.ParalleTicklIsFinished) singletons.FinishParallelTick();
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("Could not wait for the water simulation before saving: " + error.Message);
+            }
         }
 
         private bool ShouldTick(TickableBucketService __instance, int numberOfBucketsToTick)
@@ -1106,8 +1190,24 @@ namespace BeaverBuddies
             return false;
         }
 
+        /// <summary>
+        /// An interruption ends a frame's ticking early (a deletion, EntityDeletionEndsFramePatcher; a loaded entity whose
+        /// ID was taken). The game's ticker had already taken the frame's buckets off its clock, so the ones left unticked
+        /// were lost and the game ran slower. They go back to the ticker's clock instead, to be ticked from the next frame.
+        /// At most one tick's worth waits there, so a game interrupted in every frame cannot save up a burst.
+        /// </summary>
+        private void GiveBackBuckets(TickableBucketService buckets, int unticked)
+        {
+            if (unticked <= 0 || ticker == null) return;
+            float perBucket = ticker._secondsPerBucket;
+            if (!(perBucket > 0)) return;
+            float oneTick = perBucket * buckets.TotalNumberOfBuckets;
+            ticker._accumulatedDeltaTime = Math.Min(oneTick, ticker._accumulatedDeltaTime + unticked * perBucket);
+        }
+
         public bool TickBuckets(TickableBucketService __instance, int numberOfBucketsToTick)
         {
+            bucketService = __instance;
 
             // TODO: I think if number of buckets starts at 0, we should unmark
             // complete full tick and return because it means we're paused...
@@ -1137,6 +1237,10 @@ namespace BeaverBuddies
                     numberOfBucketsToTick++;
                 }
             }
+
+            // Stopped by an interruption: the buckets this frame had left go back to the game's ticker (the loop above
+            // counted one past the last it was given).
+            if (ShouldInterruptTicking && !ReplayService.HasReplayFailure) GiveBackBuckets(__instance, numberOfBucketsToTick + 1);
 
             // Tell the TickRequester we've finished this partial (or possibly complete) tick
             OnTickingCompleted();

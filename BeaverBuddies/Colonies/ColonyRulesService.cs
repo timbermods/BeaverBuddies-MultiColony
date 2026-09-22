@@ -135,6 +135,17 @@ namespace BeaverBuddies.Colonies
                 return false;
             }
 
+            // A building the host's game does not have, in every game: from a mod a guest runs and the host does not. Played,
+            // it threw on the host and stopped everyone; refused, no computer plays it and the guest is told.
+            string building = replayEvent is BuildingPlacedEvent placing ? placing.prefabName
+                : replayEvent is BuildingUnlockedEvent unlocking ? unlocking.buildingName : null;
+            if (building != null && !service.world.HasBuilding(building))
+            {
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: this game has no building {building}");
+                refusal = ColonyRefusal.HostRefused;
+                return false;
+            }
+
             // Zipline links, in every game: the game's own check, made here once instead of in every computer's replay.
             if (replayEvent is ZiplineConnectionChangedEvent zipline && ColonyRoadNetworks.Instance != null
                 && !ColonyRoadNetworks.Instance.HostAllowsZipline(zipline, out string why))

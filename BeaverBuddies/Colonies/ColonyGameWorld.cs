@@ -69,6 +69,13 @@ namespace BeaverBuddies.Colonies
             catch (Exception) { return false; }
         }
 
+        /// <summary>Whether this game has a building of that name (another player's mod may add some it does not).</summary>
+        public bool HasBuilding(string templateName)
+        {
+            try { return _buildingService.GetBuildingTemplate(templateName) != null; }
+            catch (Exception) { return false; }
+        }
+
         public bool IsUnlockedFor(int slot, string templateName) =>
             ColonyScienceService.Instance?.IsUnlockedFor(slot, templateName) ?? true;
 

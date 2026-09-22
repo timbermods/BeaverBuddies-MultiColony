@@ -1,3 +1,12 @@
+v1.4.0-beta12 (BeaverBuddies MultiColony)
+* The Earth Repopulator's plane launch, and every Wonder's animation, now run on the game's ticks in multiplayer, so they no longer desync.
+* Something deleted during a tick (a tree an explosion took, a demolished building) is gone on every computer at the same moment.
+* When the host slows down for a slow player, everyone else follows its pace instead of stopping and starting at every tick.
+* A player whose direct (IP) connection stops no longer freezes the host and everyone else; they are dropped after 30 seconds.
+* A building from a mod only some players have is refused, or makes the player without it leave, instead of stopping everyone.
+* Spring-return levers switch off at once on every computer; saves no longer catch the water simulation half done.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta11 (BeaverBuddies MultiColony)
 * Two players joining by IP at the same moment no longer freeze the host until the first one's save has arrived.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.

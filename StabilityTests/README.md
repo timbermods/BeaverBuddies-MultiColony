@@ -81,6 +81,27 @@ Both executables exit nonzero on failure. Neither verifies full multiplayer
 determinism or executes Unity's native simulation. Build BeaverBuddies using
 the repository's env.props setup before running RuntimeChecks.
 
+StabilityTests also runs the host's send lanes (1.4.0-beta12): frames in order, posting that never waits, a guest
+stuck past the limit reported stalled, and a real loopback session where one guest stops reading while the host
+broadcasts 2 MB. Every broadcast returns at once, the reading guest gets everything, and the stalled guest is dropped
+after the limit. It also checks that both ends read on dedicated threads above normal priority, and it runs a
+frame-by-frame model of a guest behind an easing host (`PaceChecks`).
+
+RuntimeChecks also runs the Wonders' timing (1.4.0-beta12, from the Stability Fork's PR #46,
+`BeaverBuddies/Doc/WonderTiming.md`).
+- It decodes the installed game's plane catapult, runway and launcher rotation IL, runs the mod's timing transpilers
+  on it, and drives it, with the game's own animator and Wonder animation controller, at 10, 30 and 144 FPS.
+- The results differ before the fix, and after it they match bit for bit and end on the same tick, behind the mod's
+  per-frame gates and inside its tick scope.
+- The animation runs through the mod's own `WonderTiming.Tick`, also with a LateGamePerformance-style culling prefix
+  ahead of the gate and after the session has ended.
+- A transpiler given a body it does not expect leaves it unchanged and switches the Wonder timing off, without
+  throwing.
+- From the game's IL: planes are only spawned from the two frame updates the tick takes over.
+
+`ReviewFixChecks` covers the rest of the review's fixes against the compiled mod: saves, deletions, levers, random
+sources, the daily colony check, buildings from other mods, and pacing and Steam wiring.
+
 RuntimeChecks also clones the installed game's depth-source modifier IL, substitutes
 a controlled frame clock and depth-query stub, and exercises the production
 timing transpiler. It reproduces frame-rate-dependent output before the patch

@@ -199,8 +199,10 @@ namespace BeaverBuddies.Colonies
                 : string.Join("/", Enumerable.Range(0, ColonySlotTable.MaxSlots).Select(reach.LandSize)) + $":{(uint)reach.ContestedHash():x}";
             ColonyModeService mode = ColonyModeService.Instance;
             string flags = $"{(mode?.Enabled == true ? "sep" : "shared")}/{(ColonyScienceService.IsEnabled ? "sci" : "-")}"
-                + $"/{(uint)ColonyDigest.Of(mode?.StartingSettings?.ToString()):x}"
-                + $"/{(uint)ColonyDigest.Of(ColonySlotTable.Encode(ColonySlotService.Instance?.Table?.Entries ?? Enumerable.Empty<ColonySlotEntry>())):x}";
+                + $"/{(uint)ColonyDigest.Of(mode?.StartingSettings?.ToString()):x}";
+            // Not the table of who plays which colony: that is the host's bookkeeping, which it changes as it loads (its own
+            // seat, SeatHost) and hands to everyone only inside the next hello. A guest whose hello was refused kept the
+            // save's table and was stopped at its next daily check, although no guest simulates anything from it.
             string phases = $"{reach?.Ticks ?? 0}/{ColonyExchangeService.Instance?.Ticks ?? 0}";
             return $"owners={(uint)owners:x} stamps={(uint)stamps:x} districts={(uint)districts:x} land={land} people={string.Join("/", population)} "
                 + $"exchanges={(uint)exchanges:x} stock={(uint)stock:x} totals={(uint)(ColonyTradeLedger.Instance?.Fingerprint() ?? 0):x} "
