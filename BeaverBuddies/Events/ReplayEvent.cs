@@ -56,6 +56,15 @@ namespace BeaverBuddies.Events
         /// </summary>
         public virtual ColonyScope GetColonyScope() => null;
 
+        /// <summary>
+        /// Whether playing this changes what a save would hold. A player who joins is sent the save the host started
+        /// from and only the actions played after they connected, so once an action that changes the game has been
+        /// played nobody else can join (see ReplayService). False only for events a late joiner can do without:
+        /// greetings, the host's session choices (sent to every joiner anyway), heartbeats, notices, the speed.
+        /// A method, not a property: properties are written into the event's JSON.
+        /// </summary>
+        public virtual bool ChangesGame() => true;
+
         public override string ToString()
         {
             return type;

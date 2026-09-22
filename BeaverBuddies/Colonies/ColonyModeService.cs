@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Timberborn.Persistence;
@@ -8,6 +9,7 @@ using UnityEngine;
 namespace BeaverBuddies.Colonies
 {
     /// <summary>What a colony starts with, taken from the new-game settings so a colony founded later gets the same.</summary>
+    [Serializable]
     public sealed class ColonyStartingSettings
     {
         public int Adults;

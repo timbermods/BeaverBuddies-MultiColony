@@ -162,6 +162,8 @@ namespace BeaverBuddies.Colonies
         DevModeOff,
         /// <summary>Refused by the host for a reason of its own (not seated yet, a zipline the game refuses...).</summary>
         HostRefused,
+        /// <summary>Founding or handing over a colony before the host's first tick, while players can still join.</summary>
+        NotStartedYet,
     }
 
     public readonly struct ColonyVerdict
@@ -274,6 +276,17 @@ namespace BeaverBuddies.Colonies
             if (rewrite && removed > 0) list.Filter(keep);
             return ColonyVerdict.Kept(removed);
         }
+
+        /// <summary>
+        /// Founding a colony and handing one over wait for the host's first tick. Until then players can still join,
+        /// and a player who joins is sent the save the host started from and only what is played after they connected:
+        /// a colony founded before that would be missing from their game, and one handed over would keep its old
+        /// owner there, silently. After the first tick nobody can join, so nobody can miss it. Every other action at
+        /// tick 0 closes joining instead (see ReplayService); these two are held back because the founding prompt
+        /// invites every guest to act the moment they are seated, while others are still on their way.
+        /// </summary>
+        public static bool WaitsForStart(bool foundingOrHandover, int hostTicksSinceLoad) =>
+            foundingOrHandover && hostTicksSinceLoad < 1;
 
         /// <summary>
         /// Whether a player may found a colony now. Once per player: only a player whose slot owns no district center

@@ -133,9 +133,13 @@ namespace BeaverBuddies
 
         private static ILogger logger;
 
+        /// <summary>The folder this mod runs from (its manifest, DLLs, Buildings and TemplateCollections).</summary>
+        public static string ModPath { get; private set; }
+
         public void StartMod(IModEnvironment modEnvironment)
         {
             logger = new UnityLogger();
+            ModPath = modEnvironment?.ModPath;
 
             Log($"{Name} v{Version} is loaded!");
 

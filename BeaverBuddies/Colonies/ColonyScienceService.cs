@@ -6,6 +6,7 @@ using System.Linq;
 using Timberborn.AutomationBuildings;
 using Timberborn.BaseComponentSystem;
 using Timberborn.BlockObjectTools;
+using Timberborn.BlockSystem;
 using Timberborn.Buildings;
 using Timberborn.Demolishing;
 using Timberborn.Persistence;
@@ -82,6 +83,33 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>The slot science is shown for on this computer.</summary>
         public static int DisplaySlot => Math.Max(0, ColonySession.LocalSlot);
+
+        /// <summary>
+        /// The slot for science named by no one. Outside the simulation that is the display's: this computer's player.
+        /// Inside it (a tick, or a replayed action) the local player must never decide, or each computer would pay its
+        /// own colony: there it is <see cref="UnnamedSimulationSlot"/> on every computer, with a warning, since every
+        /// simulation caller is meant to name its colony.
+        /// </summary>
+        public static int ActingSlot =>
+            Context ?? SlotWithoutContext(DeterminismService.IsTicking || ReplayService.IsReplayingEvents, DisplaySlot);
+
+        /// <summary>Whose science it is when simulation code names no colony: the first colony's, on every computer.</summary>
+        public const int UnnamedSimulationSlot = 0;
+
+        // One warning is enough to find the caller; more would flood the log from inside a tick.
+        private static bool warnedUnnamed;
+
+        internal static int SlotWithoutContext(bool inSimulation, int displaySlot)
+        {
+            if (!inSimulation) return displaySlot;
+            if (!warnedUnnamed)
+            {
+                warnedUnnamed = true;
+                Plugin.LogWarning("[Colony] Science was read or changed in the simulation without naming a colony; " +
+                    $"counted as slot {UnnamedSimulationSlot}'s on every computer. Caller: " + Environment.StackTrace);
+            }
+            return UnnamedSimulationSlot;
+        }
 
         public ColonyScienceService(ISingletonLoader singletonLoader, ScienceService scienceService,
             BuildingUnlockingService buildingUnlockingService, BuildingService buildingService,
@@ -251,6 +279,10 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public void RefreshToolLocks()
         {
+            // Display code that also runs inside replays (a hello, a founding, a handover): it names the local
+            // player's colony itself, since nothing unnamed is the local player's there (see ActingSlot).
+            int? previous = Context;
+            Context = DisplaySlot;
             try
             {
                 foreach (ToolButton toolButton in _toolButtonService.ToolButtons)
@@ -268,6 +300,10 @@ namespace BeaverBuddies.Colonies
             catch (Exception error)
             {
                 Plugin.LogWarning("[Colony] Could not refresh the toolbar's locks: " + error.Message);
+            }
+            finally
+            {
+                Context = previous;
             }
         }
 
@@ -292,7 +328,7 @@ namespace BeaverBuddies.Colonies
         {
             var service = ColonyScienceService.Instance;
             if (service == null || !service.Enabled) return true;
-            __result = service.PointsOf(ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot);
+            __result = service.PointsOf(ColonyScienceService.ActingSlot);
             return false;
         }
     }
@@ -304,8 +340,9 @@ namespace BeaverBuddies.Colonies
         {
             var service = ColonyScienceService.Instance;
             if (service == null || !service.Enabled) return true;
-            // Earned outside any colony's building (a dev tool): this player's. Simulation callers name their colony.
-            service.Add(ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot, amount);
+            // Earned outside any colony's building (a dev tool): this player's. Simulation callers name their colony
+            // (see ActingSlot for one that does not).
+            service.Add(ColonyScienceService.ActingSlot, amount);
             return false;
         }
     }
@@ -317,7 +354,7 @@ namespace BeaverBuddies.Colonies
         {
             var service = ColonyScienceService.Instance;
             if (service == null || !service.Enabled) return true;
-            service.Subtract(ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot, amount);
+            service.Subtract(ColonyScienceService.ActingSlot, amount);
             return false;
         }
     }
@@ -367,6 +404,23 @@ namespace BeaverBuddies.Colonies
         static void Finalizer(int? __state) => ColonyScienceContext.Exit(__state);
     }
 
+    // A relic's reward is paid whenever it is deleted fully demolished, not only by its demolisher: a tunnel's blast
+    // or a collapse can delete one that stands at 100 %. Then no beaver names the colony, so the relic does: the
+    // colony whose mark or land it stands on, else the first. A demolisher's own context, when there is one, stays.
+    [HarmonyPatch(typeof(DemolishableScienceReward), nameof(DemolishableScienceReward.DeleteEntity))]
+    static class ColonyScienceRelicRewardPatcher
+    {
+        static void Prefix(DemolishableScienceReward __instance, out int? __state)
+        {
+            __state = ColonyScienceService.Context;
+            if (__state != null || !ColonyScienceService.IsEnabled) return;
+            ColonyScienceService.Context = ColonySeparation.NaturalOwnerOf(__instance.GetComponent<BlockObject>())
+                ?? ColonyScienceService.UnnamedSimulationSlot;
+        }
+
+        static void Finalizer(int? __state) => ColonyScienceService.Context = __state;
+    }
+
     // ---- unlocks per slot ----
 
     [HarmonyPatch(typeof(BuildingUnlockingService), nameof(BuildingUnlockingService.Unlocked))]
@@ -376,7 +430,7 @@ namespace BeaverBuddies.Colonies
         {
             var service = ColonyScienceService.Instance;
             if (service == null || !service.Enabled) return true;
-            __result = service.IsUnlockedFor(ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot, buildingSpec);
+            __result = service.IsUnlockedFor(ColonyScienceService.ActingSlot, buildingSpec);
             return false;
         }
     }
@@ -391,7 +445,7 @@ namespace BeaverBuddies.Colonies
         {
             var service = ColonyScienceService.Instance;
             if (service == null || !service.Enabled) return true;
-            int slot = ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot;
+            int slot = ColonyScienceService.ActingSlot;
             service.RecordUnlock(slot, buildingSpec);
             return slot == ColonyScienceService.DisplaySlot;
         }
@@ -409,7 +463,7 @@ namespace BeaverBuddies.Colonies
             ColonyScienceService service = ColonyScienceService.Instance;
             if (service == null || !service.Enabled || !service.WorkerSetsReady
                 || __instance.GetUnlockCost(unlockableWorkerType) <= 0) return true;
-            __result = service.IsWorkerTypeUnlocked(ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot, unlockableWorkerType);
+            __result = service.IsWorkerTypeUnlocked(ColonyScienceService.ActingSlot, unlockableWorkerType);
             return false;
         }
     }
@@ -422,7 +476,7 @@ namespace BeaverBuddies.Colonies
         {
             ColonyScienceService service = ColonyScienceService.Instance;
             if (service == null || !service.Enabled) return true;
-            service.UnlockWorkerType(ColonyScienceService.Context ?? ColonyScienceService.DisplaySlot, unlockableWorkerType);
+            service.UnlockWorkerType(ColonyScienceService.ActingSlot, unlockableWorkerType);
             return false;
         }
     }

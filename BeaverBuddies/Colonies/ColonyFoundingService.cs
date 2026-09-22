@@ -38,7 +38,7 @@ namespace BeaverBuddies.Colonies
     /// The placement is an ordinary replayed action (FoundColonyEvent): the host judges it like any other and every
     /// computer founds the colony at the same tick, so beaver creation and its random numbers line up.
     /// </summary>
-    public class ColonyFoundingService : RegisteredSingleton, ILoadableSingleton, IPostLoadableSingleton, IInputProcessor
+    public class ColonyFoundingService : RegisteredSingleton, ILoadableSingleton, IPostLoadableSingleton, IUpdatableSingleton, IInputProcessor
     {
         public const string FoundKeyBindingId = "BeaverBuddies.KeyBind.FoundColony";
 
@@ -102,9 +102,17 @@ namespace BeaverBuddies.Colonies
             {
                 var service = SingletonManager.GetSingleton<ColonyFoundingService>();
                 int slot = ColonySession.LocalSlot;
-                return service != null && !EventIO.IsNull && slot >= 0 && !service.SlotOwnsDistrict(slot) && FoundingAllowed;
+                return service != null && !EventIO.IsNull && slot >= 0 && !service.SlotOwnsDistrict(slot) && FoundingAllowed
+                    && !WaitingForStart;
             }
         }
+
+        /// <summary>
+        /// Founding waits for the host's first tick, while other players can still join (ColonyRules.WaitsForStart).
+        /// A guest's own tick count is the host's: it loads the same save and plays the host's ticks.
+        /// </summary>
+        private static bool WaitingForStart =>
+            ColonyRules.WaitsForStart(true, SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1);
 
         private static bool FoundingAllowed => ColonyModeService.IsSeparateColonies || ColonySession.HostAllowsFounding;
 
@@ -125,6 +133,13 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public void OfferFounding()
         {
+            // Seated while the game is still paused at tick 0: the offer is made at the first tick instead, when no
+            // one else can join and miss the founding. Until then the key explains why (see WhyNot).
+            if (WaitingForStart && !EventIO.IsNull && ColonySession.LocalSlot >= 0)
+            {
+                offerPending = true;
+                return;
+            }
             if (!LocalPlayerMayFound) return;
             try
             {
@@ -141,6 +156,17 @@ namespace BeaverBuddies.Colonies
             }
         }
 
+        private bool offerPending;
+
+        /// <summary>Every frame: an offer held back at tick 0 is made once the game has started.</summary>
+        public void UpdateSingleton()
+        {
+            if (!offerPending || WaitingForStart) return;
+            offerPending = false;
+            if (EventIO.IsNull) return;
+            OfferFounding();
+        }
+
         /// <summary>The notice for a player who may not found a colony right now.</summary>
         private string WhyNot()
         {
@@ -148,6 +174,7 @@ namespace BeaverBuddies.Colonies
             int slot = ColonySession.LocalSlot;
             if (slot >= 0 && SlotOwnsDistrict(slot)) return "BeaverBuddies.Colony.Founding.NotNeeded";
             if (!FoundingAllowed) return "BeaverBuddies.Colony.Founding.HostOff";
+            if (slot >= 0 && WaitingForStart) return "BeaverBuddies.Colony.Founding.NotStartedYet";
             return "BeaverBuddies.Colony.Founding.NotYours";
         }
 
@@ -176,10 +203,11 @@ namespace BeaverBuddies.Colonies
         // ---- judging (host verdict, local check, preview) ----
 
         /// <summary>
-        /// What a founded colony starts with: the new game's settings when the save recorded them, otherwise the game's default
-        /// difficulty (the same specs on every computer).
+        /// Host only, when it judges a founding: what the colony will start with. The save's recorded settings when
+        /// it has them; otherwise the host's own default difficulty. Written into the event, so a guest whose mods
+        /// change the default difficulty founds the same colony as the host (a beaver more or less would desync).
         /// </summary>
-        private ColonyStartingSettings StartingSettings()
+        public ColonyStartingSettings HostStartingSettings()
         {
             if (_colonyModeService.StartingSettings != null) return _colonyModeService.StartingSettings;
             GameModeSpec mode = null;
@@ -274,7 +302,7 @@ namespace BeaverBuddies.Colonies
 
         // ---- founding (replayed on every computer) ----
 
-        public void Found(Placement placement, int slot)
+        public void Found(Placement placement, int slot, ColonyStartingSettings settings)
         {
             // Judged again here, at the tick it happens: the host judged it when it arrived, but someone may have built
             // or blasted there since. The world is the same on every computer now, so is the answer, and an invalid
@@ -286,7 +314,9 @@ namespace BeaverBuddies.Colonies
                 Notice("BeaverBuddies.Colony.Founding.Failed");
                 return;
             }
-            ColonyStartingSettings start = StartingSettings();
+            // The event's own (the host's), never this computer's specs: see HostStartingSettings. An event from an
+            // older host carries none; then the save's, and failing that this computer's, as before.
+            ColonyStartingSettings start = settings ?? HostStartingSettings();
 
             if (!_colonyModeService.Enabled)
             {
@@ -382,6 +412,8 @@ namespace BeaverBuddies.Colonies
         public Vector3Int coordinates;
         public Orientation orientation;
         public bool isFlipped;
+        /// <summary>What the colony starts with, written by the host when it allows the founding (null from an older host).</summary>
+        public ColonyStartingSettings startingSettings;
 
         public Placement Placement => new Placement(coordinates, orientation, isFlipped ? FlipMode.Flipped : FlipMode.Unflipped);
 
@@ -402,8 +434,8 @@ namespace BeaverBuddies.Colonies
                 Plugin.LogWarning("[Colony] Cannot found a colony: the founding service is missing");
                 return;
             }
-            // The host wrote the founder's slot into the event before playing it.
-            service.Found(Placement, slot);
+            // The host wrote the founder's slot and the starting settings into the event before playing it.
+            service.Found(Placement, slot, startingSettings);
         }
 
         public override string ToActionString() => $"Founding a colony for slot {slot} at {coordinates}";

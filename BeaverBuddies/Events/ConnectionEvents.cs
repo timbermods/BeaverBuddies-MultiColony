@@ -20,6 +20,7 @@ namespace BeaverBuddies.Events
     public class InitializeClientEvent : ReplayEvent
     {
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
+        public override bool ChangesGame() => false;
 
         public string serverModVersion;
         public string serverGameVersion;
@@ -80,6 +81,7 @@ namespace BeaverBuddies.Events
     public class ClientDesyncedEvent : ReplayEvent
     {
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
+        public override bool ChangesGame() => false;
 
         public string desyncID;
         public string desyncTrace;

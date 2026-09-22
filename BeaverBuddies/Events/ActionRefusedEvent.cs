@@ -10,6 +10,7 @@ namespace BeaverBuddies.Events
     class ActionRefusedEvent : ReplayEvent
     {
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
+        public override bool ChangesGame() => false;
 
         /// <summary>The refused action's own tag (its requestId).</summary>
         public string refusedRequestId;

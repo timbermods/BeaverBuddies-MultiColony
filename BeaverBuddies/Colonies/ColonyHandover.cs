@@ -264,7 +264,10 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public bool HostMayHandOver(int from, int to) =>
             from != to && from >= 0 && to >= 0 && from < ColonySlotTable.MaxSlots && to < ColonySlotTable.MaxSlots
-            && OwnsDistrict(from) && (!PresentSlots().Contains(from) || PopulationOf(from) == 0);
+            && OwnsDistrict(from) && (!PresentSlots().Contains(from) || PopulationOf(from) == 0)
+            // Not before the first tick: a player still joining would keep the old owner (ColonyRules.WaitsForStart).
+            // Before it, every colony whose player is still loading looks away, which is exactly when this is wrong.
+            && !ColonyRules.WaitsForStart(true, SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1);
 
         // ---- the handover itself (every computer, the same way) ----
 

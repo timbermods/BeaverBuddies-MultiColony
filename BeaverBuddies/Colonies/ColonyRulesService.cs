@@ -71,6 +71,15 @@ namespace BeaverBuddies.Colonies
                 return false;
             }
 
+            // Founding and handing over wait for the first tick, in every game (see ColonyRules.WaitsForStart).
+            if (ColonyRules.WaitsForStart(replayEvent is FoundColonyEvent || replayEvent is ColonyHandoverEvent,
+                SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1))
+            {
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: the game has not started, players can still join");
+                refusal = ColonyRefusal.NotStartedYet;
+                return false;
+            }
+
             // Dev mode's shortcuts that every computer plays (a free unlock, Finish now), in every game: only while the
             // host has dev mode on. The host decides whether the game is being tested; a guest can't cheat alone.
             if (IsDevShortcut(replayEvent) && !service._devModeManager.Enabled)
@@ -183,7 +192,11 @@ namespace BeaverBuddies.Colonies
             {
                 var founding = SingletonManager.GetSingleton<ColonyFoundingService>();
                 if (founding == null) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "no founding service");
-                return founding.Judge(slot, ColonyGameWorld.ToPlacement(scope.Placement));
+                ColonyVerdict verdict = founding.Judge(slot, ColonyGameWorld.ToPlacement(scope.Placement));
+                // The host, allowing it: the colony starts with what the host says, on every computer.
+                if (rewrite && verdict.IsAllowed && replayEvent is FoundColonyEvent found)
+                    found.startingSettings = founding.HostStartingSettings();
+                return verdict;
             }
             return ColonyRules.Judge(scope, slot, world, rewrite);
         }
@@ -221,6 +234,7 @@ namespace BeaverBuddies.Colonies
             ColonyRefusal.TooCloseToColony => "BeaverBuddies.Colony.Refused.TooCloseToColony",
             ColonyRefusal.DevModeOff => "BeaverBuddies.Colony.Refused.DevModeOff",
             ColonyRefusal.HostRefused => "BeaverBuddies.Colony.Refused.HostRefused",
+            ColonyRefusal.NotStartedYet => "BeaverBuddies.Colony.Refused.NotStartedYet",
             _ => "BeaverBuddies.Colony.Refused.OtherColony",
         });
     }

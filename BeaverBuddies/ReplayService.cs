@@ -73,6 +73,7 @@ namespace BeaverBuddies
     class HeartbeatEvent : ReplayEvent
     {
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
+        public override bool ChangesGame() => false;
 
         public override void Replay(IReplayContext context)
         {
@@ -368,6 +369,14 @@ namespace BeaverBuddies
                 // Only broadcast successful events from an active session.
                 replayEvent.randomS0Before = UnityEngine.Random.state.s0;
                 replayEvent.Replay(this);
+                // A player who joins from now on would load the save without this and never be sent it (the host
+                // serves the bytes it started from, and a joiner gets only what is played after it connects). So the
+                // first action that changes the game closes joining, as the first tick does. Closed before the action
+                // is sent, so a guest that is admitted has it queued and one that is not is refused (see TimberServer).
+                if (io is ServerEventIO serverAtStart && currentTick == 0 && replayEvent.ChangesGame())
+                {
+                    serverAtStart.StopAcceptingClients(gameChanged: true);
+                }
                 if (CanAct && !EventIO.SkipRecording)
                 {
                     EnqueueEventForSending(replayEvent);

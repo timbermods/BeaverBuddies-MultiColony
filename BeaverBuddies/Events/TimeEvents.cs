@@ -15,6 +15,8 @@ namespace BeaverBuddies.Events
     public class SpeedSetEvent : ReplayEvent
     {
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
+        // Unpausing starts the first tick, which closes joining itself.
+        public override bool ChangesGame() => false;
 
         public float speed;
 

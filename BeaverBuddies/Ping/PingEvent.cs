@@ -10,6 +10,7 @@ namespace BeaverBuddies.Ping
     public class PingEvent : ReplayEvent
     {
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
+        public override bool ChangesGame() => false;
 
 
         public float worldX;

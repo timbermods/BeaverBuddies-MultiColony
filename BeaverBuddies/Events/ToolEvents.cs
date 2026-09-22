@@ -533,7 +533,13 @@ namespace BeaverBuddies.Events
             }
             // The toolbar below is this computer's: another colony's unlock changes nothing on it.
             if (separate && actorSlot != Colonies.ColonyScienceService.DisplaySlot) return;
+            // Display code inside a replay: whatever it asks about science is this colony's (the local player's).
+            if (separate) Colonies.ColonyScienceService.InSlot(actorSlot, () => UnlockTool(context, building));
+            else UnlockTool(context, building);
+        }
 
+        private void UnlockTool(IReplayContext context, BuildingSpec building)
+        {
             var toolButtonService = context.GetSingleton<ToolButtonService>();
             var toolUnlockingService = toolButtonService._toolUnlockingService;
 

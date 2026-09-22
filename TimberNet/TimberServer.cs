@@ -52,7 +52,8 @@ namespace TimberNet
 
         public int ClientCount { get { lock (queuedMessages) return clients.Count; } }
 
-        private string? errorMessage = null;
+        // Set on the game thread, read on the accept threads.
+        private volatile string? errorMessage = null;
         public bool IsAcceptingClients => errorMessage == null;
 
         public List<string?> GetConnectedClients()
@@ -160,6 +161,14 @@ namespace TimberNet
             lock (queuedMessages)
             {
                 if (IsStopped) { client.Close(); throw new IOException("Session closed while joining."); }
+                // Checked again here, under the lock every broadcast takes: joining closed while this client's
+                // handshake ran (the host acted, see ReplayService), and it would miss what was just played.
+                if (!IsAcceptingClients)
+                {
+                    SendErrorMessage(client);
+                    client.Close();
+                    throw new IOException("Joining closed while the map was being prepared.");
+                }
                 queuedMessages.TryAdd(client, new ConcurrentQueue<JObject>());
                 clients.Add(client);
                 // The host is player 0; the host, not the guest, chooses each guest's id.

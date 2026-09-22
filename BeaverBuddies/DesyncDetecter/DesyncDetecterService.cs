@@ -30,6 +30,7 @@ namespace BeaverBuddies.DesyncDetecter
     public class TraceLoggedForTickEvent : ReplayEvent
     {
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
+        public override bool ChangesGame() => false;
 
         // tick refers to the tick for which these traces are captures
         // while ReplayEvent.ticksSinceLoad is the timing of when the

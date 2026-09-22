@@ -165,6 +165,9 @@ namespace BeaverBuddies.Colonies
     [Serializable]
     public class PlayerHelloEvent : ReplayEvent
     {
+        // Every hello carries the host's whole table, so a later joiner's own hello brings it up to date.
+        public override bool ChangesGame() => false;
+
         public string playerId;
         public string playerName;
         // Written by the host before the event is played and sent on.
