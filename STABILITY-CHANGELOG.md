@@ -5,6 +5,19 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha19
+
+**STEAM-INVITES.md covers MultiColony.** No code change.
+
+- The host waits paused and changes nothing until everyone is in; when joining closes over Steam (the first tick or
+  the first change) and what an old invite says; the lobby's closed state.
+- The build check includes the mod's own files; a colony follows the Steam account, and what to do when the
+  account changes.
+- The two-account playtest: a friend who leaves shows as away, an invite after a change while paused, and rejoining
+  a save with the friend hosting.
+- Known limits: rehosting after a desync, and the every-tick colony check.
+- Checks unchanged: StabilityTests 263; RuntimeChecks 229.
+
 ## 1.4.0-alpha18
 
 **CONNECTION-PANEL.md covers MultiColony.** No code change.
