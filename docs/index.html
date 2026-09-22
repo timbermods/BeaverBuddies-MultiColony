@@ -11,6 +11,7 @@
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/game-panel.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -214,36 +215,75 @@
 
 <!-- ============ trading ============ -->
 <section id="trading">
-  <div class="container grid grid-2 trade-grid">
-    <div>
+  <div class="container">
+    <div class="section-head">
       <div class="eyebrow">Trading posts</div>
-      <h2>Barter, not a market</h2>
-      <p class="lede" style="max-width:none">No prices and no currency. An exchange is "this many of one thing for that many of another, so many times", and nothing is given before what it was exchanged for is in.</p>
-      <ol class="steps compact">
-        <li><h3>Offer</h3><p>On your half of the post: <b>You give</b> 100 logs, <b>You get</b> 25 gears, 4 rounds. Or science, or beavers, or a gift (ask for 0).</p></li>
-        <li><h3>Accept</h3><p>The other player sees the offer on their half and accepts, declines, or waits. You may withdraw until then.</p></li>
-        <li><h3>Each side brings its goods</h3><p>Your workers carry the logs to your half; theirs carry the gears to theirs. The goods wait there, held.</p></li>
-        <li><h3>Both in, everything crosses</h3><p>Goods to the other half, science from pool to pool, beavers to their new district, all at once. Then the next round.</p></li>
-      </ol>
-      <p style="color:var(--muted);font-size:.95rem">Ending an exchange early takes both players. <kbd>Ctrl</kbd>+<kbd>T</kbd> lists every post, its exchange and every colony.</p>
+      <h2>Barter, not a market: play with the real panel</h2>
+      <p>No prices and no currency. An exchange is "this many of one thing for that many of another, so many times", and nothing is given before what it was exchanged for is in. This is a working copy of the Trading Post's panel, drawn like the game, with the mod's own rules: make an offer, watch each colony's workers bring its side to its own half, and see the round cross only when both are in.</p>
     </div>
-    <div class="exchange-mock" aria-label="A mock-up of the trading panel during a round">
-      <div class="xm-head"><span>Trading with <b class="c2">Colony 2</b></span><span class="xm-round">Round 2 of 4</span></div>
-      <div class="xm-card">
-        <div class="xm-row"><span class="xm-label">You give</span><b>100 Logs</b><span class="xm-sub">on your half</span></div>
-        <div class="xm-bar"><i class="c1" style="width:100%"></i></div>
-        <div class="xm-note">100 of 100 waiting on your half</div>
+    <noscript><p style="color:var(--muted)">The interactive panel needs JavaScript.</p></noscript>
+    <div class="tp-stage">
+      <div class="tp-side" data-tp-side>
+        <div class="tp-controls">
+          <div>
+            <span class="tp-ctl-label" id="tp-me-label">You are</span>
+            <div class="tp-ctl-group" role="group" aria-labelledby="tp-me-label">
+              <button class="tp-ctl" type="button" data-me="0" aria-pressed="true">Colony 1</button>
+              <button class="tp-ctl c2" type="button" data-me="1" aria-pressed="false">Colony 2</button>
+              <label class="tp-ctl" style="display:inline-flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" data-auto checked style="margin:0"> the other colony answers by itself</label>
+            </div>
+          </div>
+          <div>
+            <span class="tp-ctl-label" id="tp-ex-label">Load an offer</span>
+            <div class="tp-ctl-group" role="group" aria-labelledby="tp-ex-label">
+              <button class="tp-ctl" type="button" data-preset="logs">100 logs for 25 gears, 4 rounds</button>
+              <button class="tp-ctl" type="button" data-preset="gift">A gift of berries</button>
+              <button class="tp-ctl" type="button" data-preset="science">Science for berries</button>
+              <button class="tp-ctl" type="button" data-preset="beavers">2 beavers for carrots</button>
+              <button class="tp-ctl" type="button" data-preset="standing">A standing deal</button>
+              <button class="tp-ctl" type="button" data-reset>Reset demo</button>
+            </div>
+          </div>
+          <div>
+            <span class="tp-ctl-label" id="tp-w-label">Workers on your half</span>
+            <div class="tp-ctl-group" role="group" aria-labelledby="tp-w-label">
+              <select class="tp-ctl" data-workers aria-label="Workers on your half"><option value="0">0 (nobody brings your side)</option><option value="1">1</option><option value="2" selected>2</option></select>
+            </div>
+          </div>
+        </div>
+        <h3>Things to try</h3>
+        <ol class="tp-tips">
+          <li>Press <strong>Make offer</strong>. Colony 2 accepts after a moment; your workers bring the logs to <strong>your half</strong> and theirs bring the gears to theirs. The round crosses only when both bars are full, and the <strong>ledger</strong> gets a line.</li>
+          <li>Untick <strong>answers by itself</strong>, make an offer, then switch to <strong>Colony 2</strong>: you see the offer from their side, with <strong>Accept</strong> and <strong>Decline</strong>. Every exchange in the game is agreed this way, one player per side.</li>
+          <li>Set <strong>Workers on your half</strong> to 0 during a round: your side stops arriving and the status line says why. Nothing crosses until it is in.</li>
+          <li>Press <strong>Cancel exchange</strong> mid-round. The other colony must agree; until then nothing moves. Once it ends, what waited on each half goes back home.</li>
+          <li>Type <strong>150</strong> in an amount box: the line turns red and <strong>Make offer</strong> greys out. Set <strong>Rounds</strong> higher instead, or tick <strong>Repeat until cancelled</strong>.</li>
+        </ol>
+        <div class="tp-log" data-tp-log aria-live="polite"></div>
       </div>
-      <div class="xm-card">
-        <div class="xm-row"><span class="xm-label">You get</span><b>25 Gears</b><span class="xm-sub">on their half</span></div>
-        <div class="xm-bar"><i class="c2" style="width:64%"></i></div>
-        <div class="xm-note">16 of 25 on Colony 2's half &middot; waiting for their workers</div>
+
+      <div>
+        <div class="tp" role="group" aria-label="Interactive Trading Post panel">
+          <div class="tp-deco" aria-hidden="true">
+            <div class="tp-bar">
+              <div><span class="tp-circle tp-circle--red"><svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13"/></svg></span><span class="tp-circle"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></span></div>
+              <div><span class="tp-circle"><svg viewBox="0 0 24 24"><path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="tp-circle tp-circle--red"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+            </div>
+            <div class="tp-sec tp-header">
+              <svg viewBox="0 0 24 24"><path d="M3 20h18M4 20V9l4-4 4 4v11M12 20V9l4-4 4 4v11"/><path d="M8 20v-5M16 20v-5"/></svg>
+              <div><h3>Trading Post</h3><p data-tp-half>Colony 1's half</p></div>
+              <span></span>
+            </div>
+            <div class="tp-sec tp-desc">
+              <p>Trades goods, science and beavers with another colony, one exchange at a time. Each colony's workers bring its side to its own half.</p>
+              <em>Half the fun is haggling. The other half is the other half.</em>
+            </div>
+            <div class="tp-sec tp-workers"><span class="tp-btn tp-sq">&minus;</span><span class="tp-input" style="width:34px;line-height:23px" data-tp-workers>2</span><span class="tp-btn tp-sq">+</span><span>Workers on this half</span></div>
+          </div>
+          <section class="tp-sec tp-section" data-tp-panel aria-label="Trading"></section>
+        </div>
+        <p class="tp-fine"><span data-clock>Cycle 3, day 12</span> &middot; A replica for illustration, not part of the game. Goods icons are Timberborn's; nothing here is saved.</p>
       </div>
-      <div class="xm-ledger">
-        <div class="xm-ledger-title">Ledger</div>
-        <div class="xm-ledger-row"><span>Cycle 3, day 12</span><span>gave 100 Logs</span><span>got 25 Gears</span></div>
-      </div>
-      <div class="xm-actions"><span class="xm-btn">Cancel exchange</span><span class="xm-btn ghost">All posts</span></div>
     </div>
   </div>
 </section>
@@ -362,6 +402,7 @@
     <p class="fineprint">Built on the BeaverBuddies Stability Fork and on BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. Timberborn is made by Mechanistry; this is an unofficial community mod and is not affiliated with or endorsed by them.</p>
   </div>
 </footer>
+<script src="assets/trade-demo.js" defer></script>
 <script src="assets/release.js" defer data-repo="timbermods/BeaverBuddies-MultiColony" data-asset="^BeaverBuddies-MultiColony-.+\.zip$"></script>
 </body>
 </html>
