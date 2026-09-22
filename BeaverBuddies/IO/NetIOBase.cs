@@ -33,6 +33,7 @@ namespace BeaverBuddies.IO
         }
 
         private static readonly JsonSerializer serializer = JsonSerializer.Create(JsonSettings.Default);
+        private const int MaxLoggedFrame = 500;
 
         /// <summary>
         /// Reads one received frame, or returns null if it cannot be read: a "$type" in it was refused (see
@@ -61,7 +62,10 @@ namespace BeaverBuddies.IO
             {
                 problem = Describe(ex);
             }
-            Plugin.Log("The frame that could not be read: " + obj);
+            // Its start only: a dragged area's frame can be long, and a guest can send one such frame after another.
+            string text = obj.ToString(Formatting.None);
+            Plugin.Log("The frame that could not be read: "
+                + (text.Length > MaxLoggedFrame ? text.Substring(0, MaxLoggedFrame) + $"... ({text.Length} characters)" : text));
             return null;
         }
 
