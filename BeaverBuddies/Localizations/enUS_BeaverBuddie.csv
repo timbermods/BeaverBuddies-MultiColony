@@ -45,31 +45,23 @@ By proceeding, you confirm that you are at least the legal age of digital consen
 
 Do you agree to share your data with the developers of this mod?",""
 BeaverBuddies.Settings.ClientConnectionAddress,"Client Connection Address",""
-BeaverBuddies.Settings.ClientConnectionAddress.Tooltip,"Default IP address used when connecting to a Host.",""
+BeaverBuddies.Settings.ClientConnectionAddress.Tooltip,"The host's address, filled in for you when you join by IP.",""
 BeaverBuddies.Settings.Port,"Port",""
-BeaverBuddies.Settings.Port.Tooltip,"Port used when hosting or joining a game. This should match a forwaded port for the host.",""
+BeaverBuddies.Settings.Port.Tooltip,"The port for hosting and joining by IP. A host forwards this port on their router.",""
 BeaverBuddies.Settings.SilenceLogging,"Silence Logging",""
-BeaverBuddies.Settings.SilenceLogging.Tooltip,"Prevent this mod from logging to the player log file (except warnings and errors).
-This setting is indended for developers.",""
+BeaverBuddies.Settings.SilenceLogging.Tooltip,"For developers: no routine log lines from this mod. Warnings and errors are still logged.",""
 BeaverBuddies.Settings.ShowFirstTimerMessage,"Show First Timer Message",""
 BeaverBuddies.Settings.AlwaysTrace,"Always Use Detailed Logging",""
-BeaverBuddies.Settings.AlwaysTrace.Tooltip,"When enabled, the game will always use detailed logging, which enables you to submit desync reports on the first occurrence without manually enabling detailed logging.
-Note that all players must have the setting enabled.
-This setting will cause some lag and is not recommended for most players.",""
+BeaverBuddies.Settings.AlwaysTrace.Tooltip,"Detailed desync tracing from the first tick, so the first desync can be reported.
+Every player must turn it on. Costs some performance.",""
 BeaverBuddies.Settings.ReportingConsent,"Consent to Reporting",""
 BeaverBuddies.Settings.EnableSteamConnection,"Enable Steam Networking",""
-BeaverBuddies.Settings.EnableSteamConnection.Tooltip,"Allows players to join your games via Steam's peer-to-peer networking.
-Players will still be able to join via port forwarding.
-Note: This feature may not work if your network does not support peer-to-peer connections.
-Additionally, peer-to-peer connections may be slower than direct connections.",""
+BeaverBuddies.Settings.EnableSteamConnection.Tooltip,"Let players join through Steam (no port forwarding). Joining by IP still works.",""
 BeaverBuddies.Settings.FriendsCanJoinSteamGame,"Allow Friends to Join Directly via Steam",""
-BeaverBuddies.Settings.FriendsCanJoinSteamGame.Tooltip,"When enabled, your friends can join your game directly via Steam without you inviting them.",""
+BeaverBuddies.Settings.FriendsCanJoinSteamGame.Tooltip,"Steam friends can join your game from their friends list, without an invite.",""
 BeaverBuddies.Settings.PauseReduction,"Reduce the number of forced pauses",""
-BeaverBuddies.Settings.PauseReduction.Tooltip,"For an optimal experience, all players should set it to the same value.
-
-Off - Default behaviour
-Menu only - Auto-pause only when opening the menu (not for deconstructions)
-Never auto-pause - The game will never auto-pause, including when opening the menu. This can lead to save corruptions if you don't pause the game before saving.",""
+BeaverBuddies.Settings.PauseReduction.Tooltip,"How often the game pauses for menus and dialogs. Every player should choose the same.
+Never auto-pause: pause before saving, or the save may be corrupted.",""
 BeaverBuddies.Settings.PauseReduction.Off,"Off",""
 BeaverBuddies.Settings.PauseReduction.LowRisk,"Menu only",""
 BeaverBuddies.Settings.PauseReduction.HighRisk,"Never auto-pause",""
@@ -86,20 +78,23 @@ BeaverBuddies.JoinCoopGame.Error.CouldNotConnect,"Could not connect to Host. Ple
 BeaverBuddies.KeyBindings.Group,"BeaverBuddies",""
 BeaverBuddies.KeyBindings.Ping,"Ping Location",""
 BeaverBuddies.Settings.PingPlayerName,"Ping Display Name",""
-BeaverBuddies.Settings.PingPlayerName.Tooltip,"The name shown to other players next to your pings, cursor and building activity. Choose a different name from other players.",""
+BeaverBuddies.Settings.PingPlayerName.Tooltip,"Your name next to your pings, cursor and edits. Choose one nobody else in the game uses.",""
 BeaverBuddies.Settings.PingColor,"Ping Color",""
-BeaverBuddies.Settings.PingColor.Tooltip,"The color used to draw your pings on every player's screen.",""
+BeaverBuddies.Settings.PingColor.Tooltip,"The colour of your pings and cursor on the other players' screens.",""
 BeaverBuddies.Settings.GuestFpsFloor,"Ease off when a guest drops below this frame rate",""
-BeaverBuddies.Settings.GuestFpsFloor.Tooltip,"Host only. A guest computer can keep up with the simulation and still draw very few frames, especially with the large colony speed limit removed. While a guest stays below this frame rate, the host slows the game a little, and speeds back up by itself once the guest has room to spare. It can also be changed from the connection panel during a session. It does not affect the simulation.",""
+BeaverBuddies.Settings.GuestFpsFloor.Tooltip,"Host only. Slows the game a little while a guest draws fewer frames than this, then speeds back up by itself.
+Also in the connection panel during a game.",""
 BeaverBuddies.Settings.GuestFpsFloor.Off,"Off",""
 BeaverBuddies.Settings.GuestFpsFloor.20,"20 fps",""
 BeaverBuddies.Settings.GuestFpsFloor.30,"30 fps",""
 BeaverBuddies.Settings.GuestFpsFloor.45,"45 fps",""
 BeaverBuddies.Settings.GuestFpsFloor.60,"60 fps",""
 BeaverBuddies.Settings.RemoveSpeedLimit,"Remove the large colony speed limit",""
-BeaverBuddies.Settings.RemoveSpeedLimit.Tooltip,"Timberborn slows its speed settings as the population grows: in a big colony, speed 7 runs at about half that. Tick this to run at the full chosen speed. In multiplayer the host's choice applies to everyone for the whole session, and the host eases off by itself if a guest's computer cannot keep up. Single player: applies at once.",""
+BeaverBuddies.Settings.RemoveSpeedLimit.Tooltip,"Run at the chosen speed however big the colony (the game halves speed 7 in a big one).
+In co-op the host's choice applies to everyone.",""
 BeaverBuddies.Settings.PlayerActivity,"Player activity indicators",""
-BeaverBuddies.Settings.PlayerActivity.Tooltip,"Share your world cursor, selected entity and recent building edits, and show other players' activity. This is an advisory display; buildings are not locked. Use Player cursors in the options menu to change how each player looks to you.",""
+BeaverBuddies.Settings.PlayerActivity.Tooltip,"Show the other players' cursors, selections and edits, and share yours. Display only.
+Player cursors in Options changes how each player looks to you.",""
 BeaverBuddies.Cursors.Button,"Player cursors",""
 BeaverBuddies.Cursors.Title,"Player cursors",""
 BeaverBuddies.Cursors.Subtitle,"Choose how each player's cursor looks to you. Only you see these changes.",""
@@ -115,12 +110,13 @@ BeaverBuddies.Cursors.Done,"Done",""
 BeaverBuddies.JoinCoopGame.Error.HostStarted,"The host has already started the game. Ask them to rehost and send you a new invite.",""
 BeaverBuddies.KeyBindings.TogglePanel,"Toggle connection panel",""
 BeaverBuddies.Settings.ConnectionPanelDisplay,"Connection panel",""
-BeaverBuddies.Settings.ConnectionPanelDisplay.Tooltip,"Shows who is connected, their ping, the tick rate and whether you are in sync during a multiplayer game. Click the panel's title to collapse or expand it, or bind Toggle connection panel in Options > Bindings to show or hide it.",""
+BeaverBuddies.Settings.ConnectionPanelDisplay.Tooltip,"The in-game panel with the players, their ping, the tick rate and whether you are in sync.
+Click its title to collapse it; a key binding shows and hides it.",""
 BeaverBuddies.Settings.ConnectionPanelDisplay.Expanded,"Expanded",""
 BeaverBuddies.Settings.ConnectionPanelDisplay.Collapsed,"Collapsed",""
 BeaverBuddies.Settings.ConnectionPanelDisplay.Hidden,"Hidden",""
 BeaverBuddies.Settings.ConnectionPanelCorner,"Connection panel position",""
-BeaverBuddies.Settings.ConnectionPanelCorner.Tooltip,"Which corner of the screen the connection panel sits in.",""
+BeaverBuddies.Settings.ConnectionPanelCorner.Tooltip,"The corner of the screen the connection panel sits in.",""
 BeaverBuddies.Settings.ConnectionPanelCorner.TopLeft,"Top left",""
 BeaverBuddies.Settings.ConnectionPanelCorner.TopRight,"Top right",""
 BeaverBuddies.Settings.ConnectionPanelCorner.BottomLeft,"Bottom left",""
@@ -174,9 +170,11 @@ BeaverBuddies.Chat.Placeholder,"Type a message...",""
 BeaverBuddies.Chat.Empty,"No messages yet",""
 BeaverBuddies.Chat.Unread,"{0} new",""
 BeaverBuddies.Settings.SeparateColonies,"Separate colonies (beta)",""
-BeaverBuddies.Settings.SeparateColonies.Tooltip,"Host only. Each player runs their own colony: their own districts, beavers and stock. Build anywhere; the only rule is that two players' roads may not join, except through a Trading Post, where the colonies barter (a District Crossing links a colony's own districts). A new game on a map with several starts gives each start to a player; otherwise every player without a colony founds one, once, with a free district center (Ctrl+K). Turn off to play one shared colony.",""
+BeaverBuddies.Settings.SeparateColonies.Tooltip,"Host only. Each player runs their own colony; roads meet only at a Trading Post, where colonies barter.
+A player without a colony founds one with Ctrl+K. Off: one shared colony.",""
 BeaverBuddies.Settings.SeparateScience,"Separate science and unlocks per colony (beta)",""
-BeaverBuddies.Settings.SeparateScience.Tooltip,"Host only. With separate colonies, each colony earns and spends its own science and unlocks its own buildings. Chosen when a separate-colonies game begins and kept for the whole save.",""
+BeaverBuddies.Settings.SeparateScience.Tooltip,"Host only. Each colony earns its own science and unlocks its own buildings.
+Fixed once a separate-colonies game begins.",""
 BeaverBuddies.KeyBindings.FlipColonySeat,"Debug: act as the next colony (host)",""
 BeaverBuddies.KeyBindings.FoundColony,"Found your colony (place its district center)",""
 BeaverBuddies.KeyBindings.ToggleColonyLand,"Show colonies' land",""
@@ -205,7 +203,8 @@ BeaverBuddies.Colony.Handover.ReceivedDied,"{0} had no beavers left: its buildin
 BeaverBuddies.Colony.Handover.ReceivedAbandoned,"{0}'s player has been away too long: their colony is now yours to run.",""
 BeaverBuddies.Colony.Handover.ReceivedByHost,"The host handed {0} to you: its buildings, land and stock are now yours.",""
 BeaverBuddies.Settings.AbandonedColonyDays,"Hand over a colony after its player is away (days)",""
-BeaverBuddies.Settings.AbandonedColonyDays.Tooltip,"Host only. When a colony's player has missed this many in-game days of hosted co-op play in a row, their colony is handed to the nearest colony whose player is playing. Days played in single player, and the first day after loading, do not count. 0: never (the host can still do it by hand, Ctrl+T).",""
+BeaverBuddies.Settings.AbandonedColonyDays.Tooltip,"Host only. Days of hosted play a player may miss before their colony goes to the nearest active colony.
+0: never (the host can still hand one over in Ctrl+T).",""
 BeaverBuddies.Colony.RoadsJoined,"Two districts' roads have been joined without a District Crossing or Trading Post. Remove the joining path or building.",""
 BeaverBuddies.Colony.DebugSeat,"Debug: your actions now count as colony {0}.",""
 BeaverBuddies.Colony.PanelName,"{0} (colony {1})",""
