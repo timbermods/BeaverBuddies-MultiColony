@@ -96,6 +96,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(ManualMigrationPopulationRow), nameof(ManualMigrationPopulationRow.MigratePopulation))]
     class ManualMigrationPopulationRowMigratePatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(ManualMigrationPopulationRow __instance, int amount)
         {
             amount = Math.Min(amount, __instance._populationDistributor.Current);
@@ -147,6 +148,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(PopulationDistributor), nameof(PopulationDistributor.SetMinimumAndMigrate))]
     class PopulationDistributorSetMinimumAndMigratePatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(PopulationDistributor __instance, int minimum)
         {
             return ReplayEvent.DoEntityPrefix(__instance.DistrictCenter, (entityID) =>
@@ -224,6 +226,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(PopulationDistributor), nameof(PopulationDistributor.ToggleAllowImmigrationAndMigrate))]
     class PopulationDistributorToggleAllowImmigrationAndMigratePatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(PopulationDistributor __instance)
         {
             return SetDistrictMigrationToggledEvent.DoPrefix(__instance, true, !__instance.AllowImmigration);
@@ -233,6 +236,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(PopulationDistributor), nameof(PopulationDistributor.ToggleAllowEmigrationAndMigrate))]
     class PopulationDistributorToggleAllowEmigrationAndMigratePatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(PopulationDistributor __instance)
         {
             return SetDistrictMigrationToggledEvent.DoPrefix(__instance, false, !__instance.AllowEmigration);
@@ -331,6 +335,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(GoodDistributionSetting), nameof(GoodDistributionSetting.SetExportThreshold))]
     class GoodDistributionSettingSetImportThresholdPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(GoodDistributionSetting __instance, float exportThreshold)
         {
             if (__instance.ExportThreshold == exportThreshold) return true;
@@ -340,6 +345,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(GoodDistributionSetting), nameof(GoodDistributionSetting.SetImportOption))]
     class GoodDistributionSettingSetImportOptionPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(GoodDistributionSetting __instance, ImportOption importOption)
         {
             if (__instance.ImportOption == importOption) return true;
@@ -349,6 +355,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(GoodDistributionSetting), nameof(GoodDistributionSetting.SetDefault))]
     class GoodDistributionSettingSetDefaultPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(GoodDistributionSetting __instance)
         {
             var exportThreshold = 0f;

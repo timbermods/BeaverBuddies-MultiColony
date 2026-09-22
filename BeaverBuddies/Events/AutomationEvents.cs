@@ -216,7 +216,9 @@ namespace BeaverBuddies.Events
             harmony.Patch(info, prefix: new HarmonyMethod(prefix));
         }
 
-        // This is the method Harmony actually calls
+        // This is the method Harmony actually calls. It records, so it runs first (see ReplayEvent.DoPrefix);
+        // new HarmonyMethod(prefix) above takes the priority from this attribute.
+        [HarmonyPriority(Priority.First)]
         private static bool UniversalPrefix(BaseComponent __instance, MethodBase __originalMethod, object[] __args)
         {
             // Use the same key logic to identify which method was triggered
@@ -336,6 +338,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(AutomatableFragment), nameof(AutomatableFragment.SetInput))]
     static class AutomatableFragmentSetInputPatch
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(AutomatableFragment __instance, Automator automator)
         {
             return ReplayEvent.DoEntityPrefix(__instance._automatable, entityID =>
@@ -424,6 +427,7 @@ namespace BeaverBuddies.Events
     {
         public static Timer CurrentEditingTimer { get; set; }
 
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(TimerIntervalElement __instance, float time, IntervalType intervalType)
         {
             Timer timer = CurrentEditingTimer;
@@ -474,6 +478,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(SequentialTransmitterResetFragment), nameof(SequentialTransmitterResetFragment.OnReset))]
     static class SequentialTransmitterResetFragmentOnResetPatch
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(SequentialTransmitterResetFragment __instance)
         {
             return ReplayEvent.DoEntityPrefix(__instance._automator, entityID =>
@@ -490,6 +495,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(SequentialTransmitterResetFragment), nameof(SequentialTransmitterResetFragment.OnResetAll))]
     static class SequentialTransmitterResetFragmentOnResetAllPatch
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(SequentialTransmitterResetFragment __instance)
         {
             return ReplayEvent.DoEntityPrefix(__instance._automator, entityID =>
@@ -530,6 +536,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(WeatherStationFragment), nameof(WeatherStationFragment.OnEarlyActivationToggleChanged))]
     static class WeatherStationFragmentOnEarlyActivationToggleChangedPatch
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(WeatherStationFragment __instance, ChangeEvent<bool> evt)
         {
             if (evt.newValue == __instance._weatherStation.EarlyActivationEnabled)

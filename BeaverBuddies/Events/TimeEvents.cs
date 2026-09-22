@@ -106,6 +106,7 @@ namespace BeaverBuddies.Events
             speedManager.ChangeSpeed();
         }
 
+        [HarmonyPriority(Priority.First)]
         static bool Prefix(SpeedManager __instance, ref float speed)
         {
             if (!ReplayService.IsLoaded) return true;
@@ -230,6 +231,7 @@ namespace BeaverBuddies.Events
     [HarmonyPatch(typeof(GameOptionsBox), nameof(GameOptionsBox.Show))]
     public class GameOptionsBoxShowPatcher
     {
+        [HarmonyPriority(Priority.First)]
         static bool Prefix()
         {
             // After a failed multiplayer action everything else is blocked on purpose (see ReplayEvent.DoPrefix),
