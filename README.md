@@ -328,7 +328,8 @@ not to the original BeaverBuddies project.
   plays. In a separate-colonies game every change to colony state folds into a running digest that the host sends
   with each heartbeat; a guest whose digest differs stops that tick.
 - A separate-colonies save gets a few small extra entries (the mode, who plays which colony, owners, marks,
-  science, working hours, exchanges, the trade ledger). A shared-colony game's save has none: it is the same as the
+  science, working hours, exchanges, the trade ledger, which colony each journal entry is for). A shared-colony game's
+  save has none: it is the same as the
   Stability Fork's.
 
 Design notes and the plans: [design/TRADING-EXCHANGE-PLAN.md](design/TRADING-EXCHANGE-PLAN.md),
