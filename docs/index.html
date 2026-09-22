@@ -24,7 +24,7 @@
     </a>
     <nav class="nav" aria-label="Main">
       <a href="index.html" aria-current="page">Overview</a>
-      <a href="#new">New in beta10</a>
+      <a href="#new">New in beta11</a>
       <a href="#features">Features</a>
       <a href="#trading">Trading</a>
       <a href="install.html">Install</a>
@@ -41,13 +41,13 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta10</span> &middot; beta</span></div>
+      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta11</span> &middot; beta</span></div>
       <h1>One map.<br>A colony each.</h1>
       <p class="lede">Play Timberborn with friends without sharing a colony. Each player runs their own districts, land, beavers, stock and science on one shared map, and the colonies meet only at <b>trading posts</b>, where they barter. Co-op, not a race: nobody wins, and everyone can help.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.4.0-beta10</span></span>
+          <span>Download <span data-release="version">1.4.0-beta11</span></span>
         </a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
         <a class="btn btn-secondary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules</a>
@@ -134,7 +134,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.4.0-beta10</span></b><span>Latest pre-release</span></li>
+      <li><b><span data-release="version">1.4.0-beta11</span></b><span>Latest pre-release</span></li>
       <li><b>Up to 4 colonies</b><span>More players help the host's</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built against</span></li>
       <li><b>Steam invites</b><span>No port forwarding</span></li>
@@ -143,15 +143,19 @@
   </div>
 </div>
 
-<!-- ============ new in beta10 ============ -->
+<!-- ============ new in beta11 ============ -->
 <section class="tint" id="new">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">New in 1.4.0-beta10</div>
+      <div class="eyebrow">New in 1.4.0-beta11</div>
       <h2>Built on the Stability Fork 1.1.12</h2>
-      <p>A fuller check that the players' games still agree, direct connections that send at once, a reconnect that joins the way you joined, and every recorded action ahead of other mods. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta10">beta10 release notes</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
+      <p>beta10 brought a fuller check that the players' games still agree, direct connections that send at once, a reconnect that joins the way you joined, and every recorded action ahead of other mods; beta11 fixes a freeze when two players join by IP at once. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta11">beta11</a> and <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta10">beta10</a> release notes and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
     </div>
     <div class="grid grid-3">
+      <article class="card">
+        <h3 style="margin-top:0">Two can join by IP at once</h3>
+        <p><b>beta11.</b> A second player joining by IP while the first still downloads the save no longer freezes the host until that save has arrived (about a second per MB). Steam joins were never affected.</p>
+      </article>
       <article class="card">
         <h3 style="margin-top:0">All of the random state, every tick</h3>
         <p><b>beta10.</b> Each guest compared a quarter of the host's random-number state; now it compares all of it, and which entities tick and where every walking character stands. A difference in those is logged once, so a later desync says when the games first differed.</p>
@@ -165,16 +169,12 @@
         <p><b>beta10.</b> Every patch that records a player's action runs before other mods' patches, so another mod can't act on one computer only or stop an action from being sent. The period key pauses everyone on a computer that waits, and joining closes before the first tick is sent.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">From beta9: the four things beta8 left</h3>
-        <p>A guest missing a mod leaves on its own while the others play on, the host refuses only the action it can't read, another colony's deaths stay out of your alerts, and a desync's lists line up. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta9">beta9 release notes</a></p>
-      </article>
-      <article class="card">
-        <h3 style="margin-top:0">From beta2 to beta8</h3>
-        <p>Steam identities checked at seating, network frames that can only create the mod's actions, a shared game that is the Stability Fork's, your own chat color, a speed boost, and beta2's conveniences: looking after a friend's colony, go-to-player and <kbd>Home</kbd>, wishlists, counter-offers. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">Release notes</a></p>
+        <h3 style="margin-top:0">From beta2 to beta9</h3>
+        <p>A guest missing a mod leaving on its own, another colony's deaths out of your alerts, Steam identities checked at seating, a shared game that is the Stability Fork's, your own chat color, a speed boost, and beta2's conveniences: looking after a friend's colony, go-to-player, wishlists, counter-offers. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">Release notes</a></p>
       </article>
       <article class="card">
         <h3 style="margin-top:0">Still unplayed</h3>
-        <p>625 automated checks cover all of it (33 new in beta10, among them one that every recorded action runs first), and this build has not been played yet. The test scripts' lines B8q, B8s and B8r are the ones to try first.</p>
+        <p>626 automated checks cover all of it (34 new in beta10 and beta11, among them one that every recorded action runs first and one for two players joining at once), and this build has not been played yet. The test scripts' lines B8q, B8s, B8r and C1a are the ones to try first.</p>
       </article>
     </div>
   </div>
@@ -399,7 +399,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta10</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta11</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>
