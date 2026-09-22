@@ -22,7 +22,9 @@
  * newest release.
  *
  * "Latest" is what GitHub marks as Latest: the newest published release that is not a draft or a pre-release.
- * A repository with only pre-releases falls back to its newest pre-release. The answer is kept in
+ * A repository with only pre-releases falls back to its most recently published pre-release. That is chosen by
+ * publication date: GitHub's list is not in that order (it put v1.4.0-beta9 ahead of beta10, beta11 and beta12, so the
+ * site offered beta9 for three releases). The answer is kept in
  * localStorage for 30 minutes, because unauthenticated visitors get 60 GitHub lookups an hour per IP address.
  * Only text and href values are ever written, never markup.
  */
@@ -39,7 +41,8 @@
 
   var API = 'https://api.github.com/repos/' + repo + '/releases';
   var PREFIX = 'https://github.com/' + repo + '/';
-  var CACHE_KEY = 'tbmods.release.v1.' + repo;
+  // v2: answers cached by v1 could be beta9 (see above), and must not outlive this fix by half an hour.
+  var CACHE_KEY = 'tbmods.release.v2.' + repo;
   var CACHE_MS = 30 * 60 * 1000;
 
   function readCache() {
@@ -71,6 +74,7 @@
       tag: tag,
       version: tag.replace(/^v(?=\d)/i, ''),
       prerelease: !!r.prerelease,
+      published: Date.parse(String(r.published_at || r.created_at || '')) || 0,
       notes: notes,
       asset: { name: String(asset.name), url: url, sha256: digest ? digest[1].toLowerCase() : '' }
     };
@@ -86,14 +90,15 @@
     return getJson(API + '/latest').then(function (r) {
       if (r.ok) return shape(r.json);
       if (r.status !== 404) return null; // rate limited or an outage: leave the page as written
-      // No stable release yet: use the newest published pre-release.
-      return getJson(API + '?per_page=10').then(function (l) {
+      // No stable release yet: use the most recently published pre-release (not the list's first, see above).
+      return getJson(API + '?per_page=100').then(function (l) {
         if (!l.ok || !Array.isArray(l.json)) return null;
+        var newest = null;
         for (var i = 0; i < l.json.length; i++) {
           var s = shape(l.json[i]);
-          if (s) return s;
+          if (s && (!newest || s.published > newest.published)) newest = s;
         }
-        return null;
+        return newest;
       });
     });
   }
