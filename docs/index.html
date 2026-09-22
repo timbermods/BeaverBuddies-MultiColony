@@ -24,7 +24,7 @@
     </a>
     <nav class="nav" aria-label="Main">
       <a href="index.html" aria-current="page">Overview</a>
-      <a href="#new">New in beta12</a>
+      <a href="#new">New in beta13</a>
       <a href="#features">Features</a>
       <a href="#trading">Trading</a>
       <a href="install.html">Install</a>
@@ -41,13 +41,13 @@
 <div class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta12</span> &middot; beta</span></div>
+      <div class="eyebrow"><span>Timberborn co-op mod &middot; <span data-release="tag">v1.4.0-beta13</span> &middot; beta</span></div>
       <h1>One map.<br>A colony each.</h1>
       <p class="lede">Play Timberborn with friends without sharing a colony. Each player runs their own districts, land, beavers, stock and science on one shared map, and the colonies meet only at <b>trading posts</b>, where they barter. Co-op, not a race: nobody wins, and everyone can help.</p>
       <div class="btn-row">
         <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
-          <span>Download <span data-release="version">1.4.0-beta12</span></span>
+          <span>Download <span data-release="version">1.4.0-beta13</span></span>
         </a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
         <a class="btn btn-secondary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules</a>
@@ -134,7 +134,7 @@
 <div class="facts">
   <div class="container">
     <ul>
-      <li><b><span data-release="version">1.4.0-beta12</span></b><span>Latest pre-release</span></li>
+      <li><b><span data-release="version">1.4.0-beta13</span></b><span>Latest pre-release</span></li>
       <li><b>Up to 4 colonies</b><span>More players help the host's</span></li>
       <li><b>Timberborn 1.1.2.4</b><span>Built against</span></li>
       <li><b>Steam invites</b><span>No port forwarding</span></li>
@@ -143,15 +143,19 @@
   </div>
 </div>
 
-<!-- ============ new in beta12 ============ -->
+<!-- ============ new in beta13 ============ -->
 <section class="tint" id="new">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">New in 1.4.0-beta12</div>
-      <h2>A desync and network review</h2>
-      <p>beta12 goes over everything that keeps the players' games in step, and fixes what it found: Wonders on the tick, deletions the same for everyone, players who follow a host that slows down, and a direct player whose connection dies no longer freezing the rest. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta12">beta12 release notes</a>, the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/design/REVIEW-FINDINGS-1.4.0-beta11.md">review report</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
+      <div class="eyebrow">New in 1.4.0-beta13</div>
+      <h2>Clearer colony settings, after a desync and network review</h2>
+      <p>beta13 rewrites the tooltips of the two colony settings so they can't be mixed up. beta12 went over everything that keeps the players' games in step, and fixed what it found: Wonders on the tick, deletions the same for everyone, players who follow a host that slows down, and a direct player whose connection dies no longer freezing the rest. The details are in the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases/tag/v1.4.0-beta12">beta12 release notes</a>, the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/design/REVIEW-FINDINGS-1.4.0-beta11.md">review report</a> and the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">changelog</a>.</p>
     </div>
     <div class="grid grid-3">
+      <article class="card">
+        <h3 style="margin-top:0">Which colony setting?</h3>
+        <p><b>beta13.</b> <b>Separate colonies for new games</b> is only for new games: on, each player gets their own colony. <b>Allow founding colonies in a shared game</b> is only for a shared save you already have: it lets a player found a colony and splits the save for good. For a new game with a colony each, the first is all you need.</p>
+      </article>
       <article class="card">
         <h3 style="margin-top:0">Wonders on the tick</h3>
         <p><b>beta12.</b> The Earth Repopulator's plane launch and every Wonder's animation ran on each player's frames, so a launch desynced the game. They now advance once per tick, the same for everyone (the Stability Fork's tick-driven Wonders, ported).</p>
@@ -169,12 +173,9 @@
         <p><b>beta12.</b> A direct (IP) player whose connection dies no longer freezes the host and everyone else; they are dropped after 30 seconds, as over Steam. Messages are read on threads of their own, even when the game keeps every core busy.</p>
       </article>
       <article class="card">
-        <h3 style="margin-top:0">From beta2 to beta11</h3>
-        <p>All of the random state compared every tick, direct connections that send at once, a reconnect that joins the way you joined, your actions ahead of other mods, two players joining by IP at once, and beta2's conveniences: looking after a friend's colony, go-to-player, wishlists, counter-offers. <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">Release notes</a></p>
-      </article>
       <article class="card">
         <h3 style="margin-top:0">Still unplayed</h3>
-        <p>675 automated checks cover all of it (49 new in beta12, among them the game's own Wonder code at three frame rates and a player who stops receiving), and this build has not been played yet. The test scripts' lines B8t to B8y and C1b are the ones to try first.</p>
+        <p>675 automated checks cover all of it (49 new in beta12, among them the game's own Wonder code at three frame rates and a player who stops receiving), and this build has not been played yet. The test scripts' lines B8t to B8z and C1b are the ones to try first.</p>
       </article>
     </div>
   </div>
@@ -399,7 +400,7 @@
         <p>Download the mod, follow the install guide, and send your friend an invite.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta12</span></span></a>
+        <a class="btn btn-primary" href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes"><span>Download <span data-release="version">1.4.0-beta13</span></span></a>
         <a class="btn btn-secondary" href="install.html">Install guide</a>
       </div>
     </div>

@@ -73,7 +73,7 @@
       <ol class="steps compact">
         <li>
           <h3>Download</h3>
-          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a> (every release so far is a beta pre-release) and download <code><span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta12.zip</span></code> under <b>Assets</b>, not "Source code". The release also has a <code><span data-release="version">1.4.0-beta12</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
+          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a> (every release so far is a beta pre-release) and download <code><span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta13.zip</span></code> under <b>Assets</b>, not "Source code". The release also has a <code><span data-release="version">1.4.0-beta13</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
         </li>
         <li>
           <h3>Close Timberborn</h3>
@@ -102,16 +102,16 @@
         <strong class="label">Updating from an earlier download?</strong>
         <p>Replace your <code>BeaverBuddies-MultiColony</code> folder with the new one. If you still have a <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder (the Stability Fork, or an early two-colony build), delete it: only one BeaverBuddies can run at a time.</p>
       </div>
-      <p>To check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.4.0-beta12</span>-SHA256SUMS.txt</code>:</p>
-      <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta12.zip</span> -Algorithm SHA256</code></pre>
+      <p>To check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.4.0-beta13</span>-SHA256SUMS.txt</code>:</p>
+      <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta13.zip</span> -Algorithm SHA256</code></pre>
     </section>
 
     <section id="verify">
       <h2>Check it loaded</h2>
       <ul>
-        <li>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with version <b><span data-release="version">1.4.0-beta12</span></b>.</li>
+        <li>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with version <b><span data-release="version">1.4.0-beta13</span></b>.</li>
         <li>The main menu has a <b>Join co-op game</b> button.</li>
-        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-beta12</span> is loaded!</code></li>
+        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-beta13</span> is loaded!</code></li>
       </ul>
       <p>If it is not there, see <a href="troubleshooting.html#not-loading">The mod does not load</a>.</p>
     </section>
@@ -176,8 +176,8 @@
         <table>
           <thead><tr><th>Setting</th><th>Default</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><b>Separate colonies for new games (beta)</b></td><td>On</td><td>Host only. A new game gives each player their own colony. Off: one shared colony, as in the Stability Fork. A save keeps the mode it was started in.</td></tr>
-            <tr><td><b>Allow founding colonies in a shared game (beta)</b></td><td>Off</td><td>Host only. Lets a player found their own colony in a shared save, which splits it into separate colonies for good.</td></tr>
+            <tr><td><b>Separate colonies for new games (beta)</b></td><td>On</td><td>Host only, and only for new games. On: each player gets their own colony. Off: all players share one colony, as in the Stability Fork. A save keeps the mode it started with. For a new game with a colony each, this is all you need.</td></tr>
+            <tr><td><b>Allow founding colonies in a shared game (beta)</b></td><td>Off</td><td>Host only, for a shared save you already have (one colony for all players): lets a player without a colony found their own, which splits the save into separate colonies for good. Off: shared saves stay shared.</td></tr>
             <tr><td><b>Separate science and unlocks per colony (beta)</b></td><td>On</td><td>Host only. Each colony earns its own science and unlocks its own buildings. Fixed for the save once a separate-colonies game begins.</td></tr>
             <tr><td><b>Hand over a colony after its player is away (days)</b></td><td>7</td><td>Host only. Days of hosted play a player may miss before their colony goes to another player. 0 means never.</td></tr>
             <tr><td><b>Enable Steam Networking</b></td><td>On</td><td>Lets players join your games through Steam. Joining by IP still works.</td></tr>

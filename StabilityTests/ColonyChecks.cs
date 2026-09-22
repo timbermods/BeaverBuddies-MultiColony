@@ -1249,9 +1249,13 @@ static class ColonyChecks
                 foreach (string line in lines) Check(line.Length <= 112, $"{match.Groups[1].Value}: {line.Length} characters: {line}");
             }
             string Tooltip(string key) => tooltips.Single(m => m.Groups[1].Value == key).Groups[2].Value;
-            Check(Tooltip("BeaverBuddies.Settings.SeparateColonies.Tooltip").Contains("new game"), "Separate colonies does not say it is for new games");
+            // The two are easily mixed up: one decides what a new game becomes, the other splits a shared save that exists.
+            string separate = Tooltip("BeaverBuddies.Settings.SeparateColonies.Tooltip");
+            Check(separate.Contains("only for new games") && separate.Contains("Off:") && separate.Contains("next setting"),
+                "Separate colonies does not say it is only for new games and point to the next setting: " + separate);
             string founding = Tooltip("BeaverBuddies.Settings.FoundingInSharedGames.Tooltip");
-            Check(founding.Contains("shared game") && founding.Contains("Off:"), "founding in a shared game is not explained: " + founding);
+            Check(founding.Contains("shared save") && founding.Contains("for good") && founding.Contains("Off:"),
+                "founding in a shared save is not explained: " + founding);
         });
     }
 

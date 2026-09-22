@@ -1,3 +1,7 @@
+v1.4.0-beta13 (BeaverBuddies MultiColony)
+* Clearer Mod Settings tooltips for the two colony choices. "Separate colonies for new games" is only for new games: on, each player gets their own colony; off, everyone shares one. "Allow founding colonies in a shared game" is for a shared save you already have: it lets a player found their own colony, which splits the save for good.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta12 (BeaverBuddies MultiColony)
 * The Earth Repopulator's plane launch, and every Wonder's animation, now run on the game's ticks in multiplayer, so they no longer desync.
 * Something deleted during a tick (a tree an explosion took, a demolished building) is gone on every computer at the same moment.

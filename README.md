@@ -48,10 +48,12 @@ build cannot join.
 
 **1. Host: settings.** Main menu → **Mod Settings → BeaverBuddies**:
 
-- **Separate colonies for new games (beta)**, on: a new game gives each player their own colony. Off: one shared
-  colony, as in the Stability Fork. A save keeps the mode it was started in.
-- **Allow founding colonies in a shared game (beta)**, off: lets a player found their own colony in a shared save,
-  which splits it into separate colonies for good.
+- **Separate colonies for new games (beta)**, on: only read when you start a new game. On, each player gets their
+  own colony; off, all players share one colony, as in the Stability Fork. A save keeps the mode it started with.
+  **Want a new game with a colony each? Leave this on.** The setting below is not needed for that.
+- **Allow founding colonies in a shared game (beta)**, off: only for a shared save you already have (one colony
+  for all players, say a Stability Fork save). On, a player without a colony can found their own, which splits the
+  save into separate colonies for good. Off, shared saves stay shared.
 - **Separate science and unlocks per colony (beta)**, on: each colony earns its own science and unlocks its own
   buildings. Chosen when a separate-colonies game begins, then fixed for the save.
 - **Hand over a colony after its player is away (days)**: 7 by default, 0 for never (see

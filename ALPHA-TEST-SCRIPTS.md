@@ -267,6 +267,10 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     the host does not. The friend places it: refused with a notice, and the friend plays on. The other way round (the
     host has it): the host places it, the friend's game stops with *The host used the building …* and leaves; the host
     plays on.
+8z. **The colony settings' tooltips (beta13).** In **Mod Settings → BeaverBuddies**, hover **Separate colonies for new
+    games** and **Allow founding colonies in a shared game**: each tooltip is two lines, all on screen. From the
+    tooltips alone, does the friend (who has not read this) know which one to use for a new game with a colony each,
+    and which one to split a shared save? Report anything they would still get wrong.
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*

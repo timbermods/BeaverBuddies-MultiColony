@@ -177,11 +177,11 @@ BeaverBuddies.Chat.Unread,"{0} new",""
 BeaverBuddies.Chat.Boost,"Speed boost",""
 BeaverBuddies.Chat.Boost.Tooltip,"Added to the speed picked at the top right, for everyone in the game: speed 2 (3x) with +0.5 runs at 3.5x. Click - or + for steps of 0.5, or type a number and press Enter. From -6.5 to +23; the game never runs below 0.5x or above 30x.",""
 BeaverBuddies.Settings.SeparateColonies,"Separate colonies for new games (beta)",""
-BeaverBuddies.Settings.SeparateColonies.Tooltip,"Host only. In a new game each player runs their own colony (Ctrl+K founds one); they barter at Trading Posts.
-Off: one shared colony, as in the Stability Fork. A save keeps the mode it was started in.",""
+BeaverBuddies.Settings.SeparateColonies.Tooltip,"Host only, and only for new games. On: each player gets their own colony. Off: all players share one colony.
+A save keeps the mode it started with. To split a shared save you already have, use the next setting.",""
 BeaverBuddies.Settings.FoundingInSharedGames,"Allow founding colonies in a shared game (beta)",""
-BeaverBuddies.Settings.FoundingInSharedGames.Tooltip,"Host only. A player may found their own colony (Ctrl+K) in a shared game, splitting it into colonies for good.
-Off: a shared game stays one shared colony, as in the Stability Fork.",""
+BeaverBuddies.Settings.FoundingInSharedGames.Tooltip,"Host only, for a shared save (one colony for all players): lets a player without a colony found their own.
+The first one founded splits the save into separate colonies for good. Off: shared saves stay shared.",""
 BeaverBuddies.Settings.SeparateScience,"Separate science and unlocks per colony (beta)",""
 BeaverBuddies.Settings.SeparateScience.Tooltip,"Host only. Each colony earns its own science and unlocks its own buildings.
 Fixed once a separate-colonies game begins.",""

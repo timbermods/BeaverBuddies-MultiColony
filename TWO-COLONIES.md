@@ -32,8 +32,8 @@ in that check would stop a healthy game too; the log line says which. Play on a 
 
 | Setting | Default | What it does |
 |---|---|---|
-| **Separate colonies for new games (beta)** | on | Read when a new game is made: players run their own colonies. Off: one shared colony, as in the Stability Fork (see *A shared-colony game*). A save keeps the mode it was started in. |
-| **Allow founding colonies in a shared game (beta)** | off | Read when hosting starts: a player without a colony may found one in a shared save, which makes it a separate-colonies game for good (step 3 below). Off: a shared game stays shared. |
+| **Separate colonies for new games (beta)** | on | Only read when a new game is made. On: each player gets their own colony. Off: all players share one colony, as in the Stability Fork (see *A shared-colony game*). A save keeps the mode it started with. For a new game with a colony each, this is all you need. |
+| **Allow founding colonies in a shared game (beta)** | off | Only for a shared save (one colony for all players), read when hosting starts: a player without a colony may found their own, which makes the save a separate-colonies game for good (step 3 below). Off: a shared save stays shared. It changes nothing in a separate-colonies game, where founding is always on. |
 | **Separate science and unlocks per colony (beta)** | on | Each colony earns and spends its own science and unlocks its own buildings. Chosen when a separate-colonies game begins (or a shared one is split) and kept for the life of the save. |
 
 The days before a hand-over (below) are read each day, so they can be changed during a game.

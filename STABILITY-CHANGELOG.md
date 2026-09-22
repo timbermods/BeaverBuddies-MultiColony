@@ -5,6 +5,21 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta13
+
+**Clearer tooltips for the two colony settings.** Players read *Separate colonies for new games* and *Allow founding
+colonies in a shared game* as two halves of one choice, and turned the first off and the second on to get separate
+colonies in a new game. That works, but the long way round: the new game starts shared and the first founding splits
+it, so the other player's colony gets the host's Normal difficulty start instead of the new game's settings. The
+tooltips now say what each is for (Mod Settings, two lines each, still within 112 characters):
+
+- *Separate colonies for new games*: "Host only, and only for new games. On: each player gets their own colony. Off: all players share one colony." / "A save keeps the mode it started with. To split a shared save you already have, use the next setting."
+- *Allow founding colonies in a shared game*: "Host only, for a shared save (one colony for all players): lets a player without a colony found their own." / "The first one founded splits the save into separate colonies for good. Off: shared saves stay shared."
+
+The settings, their defaults and what they do are unchanged. README, TWO-COLONIES.md and the site's install page
+describe them the same way, and the StabilityTests check on the tooltips now also asks that the first names the
+second. No wire change, no save change.
+
 ## 1.4.0-beta12
 
 **A desync and network review of beta11, and its fixes.** Two review agents and the main one went over everything
