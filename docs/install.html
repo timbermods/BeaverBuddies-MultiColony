@@ -73,7 +73,7 @@
       <ol class="steps compact">
         <li>
           <h3>Download</h3>
-          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">latest release</a> and download <code><span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta11.zip</span></code>. The release also has a <code><span data-release="version">1.4.0-beta11</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
+          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a> (every release so far is a beta pre-release) and download <code><span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta11.zip</span></code> under <b>Assets</b>, not "Source code". The release also has a <code><span data-release="version">1.4.0-beta11</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
         </li>
         <li>
           <h3>Close Timberborn</h3>
@@ -87,7 +87,7 @@
         </li>
         <li>
           <h3>Keep only one BeaverBuddies</h3>
-          <p>Unsubscribe from or remove the Workshop BeaverBuddies and any other copy, including an old <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder from an earlier download. They share the same mod ID and will conflict.</p>
+          <p>Unsubscribe from or remove the Workshop BeaverBuddies and every other BeaverBuddies folder in <code>Mods</code>: the Stability Fork (<code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code>) and any older MultiColony copy. They change the same parts of the game and cannot run together; if one is still enabled, the main menu names it.</p>
         </li>
         <li>
           <h3>Start Timberborn and enable the mods</h3>
@@ -100,7 +100,7 @@
       </ol>
       <div class="callout warn">
         <strong class="label">Updating from an earlier download?</strong>
-        <p>Earlier downloads used a folder named <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code>. Delete it from <code>Mods</code> before you copy in the new folder. The two share a mod ID, so having both would conflict.</p>
+        <p>Replace your <code>BeaverBuddies-MultiColony</code> folder with the new one. If you still have a <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder (the Stability Fork, or an early two-colony build), delete it: only one BeaverBuddies can run at a time.</p>
       </div>
       <p>To check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.4.0-beta11</span>-SHA256SUMS.txt</code>:</p>
       <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta11.zip</span> -Algorithm SHA256</code></pre>
@@ -111,7 +111,7 @@
       <ul>
         <li>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with version <b><span data-release="version">1.4.0-beta11</span></b>.</li>
         <li>The main menu has a <b>Join co-op game</b> button.</li>
-        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies v<span data-release="version">1.4.0-beta11</span> is loaded!</code></li>
+        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-beta11</span> is loaded!</code></li>
       </ul>
       <p>If it is not there, see <a href="troubleshooting.html#not-loading">The mod does not load</a>.</p>
     </section>
@@ -131,7 +131,7 @@
       <p>Make sure <b>Enable Steam Networking</b> is on in Mod Settings (it is by default), choose <b>Invite Friends</b>, and pick your friend in Steam's overlay. No port forwarding or extra software is needed. If nothing happens the first moment after hosting starts, click the button again: the Steam lobby is still being created.</p>
 
       <h3>Option 2: Direct IP</h3>
-      <p>Give your friend your IP address. The default port is <b>25565</b>, and your router must forward it to your computer. Direct IP is offered at the same time as Steam invites.</p>
+      <p>Give your friend your IP address. The default port is <b>25565</b>, and your router must forward it to your computer. Direct IP is offered at the same time as Steam invites: whenever you host, anyone who can reach that port can join until the game starts, and the host cannot check who they are. Forward the port only while you play by IP with people you trust (see the <a href="faq.html#privacy">FAQ</a>).</p>
 
       <h3>Option 3: Hamachi or another virtual network</h3>
       <p>A virtual LAN such as Hamachi avoids port forwarding, and has been tested and works. Give your friend the address the virtual network assigns you, then join by direct IP.</p>
@@ -145,13 +145,13 @@
       <p>From the main menu choose <b>Join co-op game</b> and enter the host's IP address or domain name.</p>
       <p>Guests receive a copy of the host's save. It is kept under <b>Online Games</b>.</p>
       <h3>Found your colony</h3>
-      <p>Once the host unpauses, a message offers you a district center to place (or press <b>Ctrl+K</b> later). Put it at least 20 tiles from other colonies' buildings and paths: it appears already built, with starting beavers, food and water. On a BeaverBuddies multi-start map you get the next starting location instead. The save remembers your colony by your Steam account, whoever hosts.</p>
+      <p>Once the host unpauses, a message offers you a district center to place (or press <b>Ctrl+K</b> later). Put it at least 20 tiles from other colonies' buildings and paths: it appears already built, with starting beavers, food and water. On a BeaverBuddies multi-start map you get the next starting location instead. The save remembers your colony by your Steam ID (without Steam, by an id kept on your computer), whoever hosts.</p>
     </section>
 
     <section id="playing">
       <h2>While you play</h2>
       <ul>
-        <li>The <a href="index.html#panel">connection panel</a> shows who is connected and which colony they run, their ping, whether you are in sync and the tick rate. Click its title to collapse it.</li>
+        <li>The <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/CONNECTION-PANEL.md">connection panel</a> shows who is connected and which colony they run, their ping, whether you are in sync and the tick rate. Click its title to collapse it.</li>
         <li>Your land is outlined in your colony's color while you hold a tool, or with <b>Ctrl+L</b>. <b>Ctrl+T</b> lists your trading posts and every colony. The rules are in <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">TWO-COLONIES.md</a>.</li>
         <li>Teammates' cursors and selections appear on your screen. Change how each looks in <b>Options</b> (Esc), <b>Player cursors</b>; the same dialog sets the color you see your own name in, in the chat.</li>
         <li>To ping a location on the map for everyone, bind a key for <b>Ping Location</b> in the game's keybinding settings.</li>
@@ -164,7 +164,7 @@
       <p>A desync means the players' games have drifted apart. The game tells you, and the host should:</p>
       <ol>
         <li>Choose <b>Save and Rehost</b>.</li>
-        <li>Steam guests accept a fresh invite; direct IP guests reconnect.</li>
+        <li>Guests choose <b>Reconnect (wait for Rehost)</b>. A direct IP guest redials the address it used; a Steam guest joins the host's new lobby when Steam shows it (the host needs <b>Allow Friends to Join Directly via Steam</b> on), or else accepts a fresh invite.</li>
       </ol>
       <p>If the game says multiplayer has stopped because an action could not be completed, return to the main menu and reload a known-good save. Do not overwrite your good save with that session. More help is in <a href="troubleshooting.html#desync">Troubleshooting</a>.</p>
     </section>
@@ -176,7 +176,11 @@
         <table>
           <thead><tr><th>Setting</th><th>Default</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><b>Enable Steam Networking</b></td><td>On</td><td>Lets players join your games through Steam.</td></tr>
+            <tr><td><b>Separate colonies for new games (beta)</b></td><td>On</td><td>Host only. A new game gives each player their own colony. Off: one shared colony, as in the Stability Fork. A save keeps the mode it was started in.</td></tr>
+            <tr><td><b>Allow founding colonies in a shared game (beta)</b></td><td>Off</td><td>Host only. Lets a player found their own colony in a shared save, which splits it into separate colonies for good.</td></tr>
+            <tr><td><b>Separate science and unlocks per colony (beta)</b></td><td>On</td><td>Host only. Each colony earns its own science and unlocks its own buildings. Fixed for the save once a separate-colonies game begins.</td></tr>
+            <tr><td><b>Hand over a colony after its player is away (days)</b></td><td>7</td><td>Host only. Days of hosted play a player may miss before their colony goes to another player. 0 means never.</td></tr>
+            <tr><td><b>Enable Steam Networking</b></td><td>On</td><td>Lets players join your games through Steam. Joining by IP still works.</td></tr>
             <tr><td><b>Allow Friends to Join Directly via Steam</b></td><td>On</td><td>Friends can join from Steam's friends list without an invite.</td></tr>
             <tr><td><b>Player activity indicators</b></td><td>On</td><td>Shares your cursor, selection and recent edits and shows other players'.</td></tr>
             <tr><td><b>Ping Display Name</b></td><td>Player</td><td>The name others see next to your pings, cursor and edits.</td></tr>
@@ -207,7 +211,7 @@
     <div class="footer-grid">
       <div>
         <h2>BeaverBuddies MultiColony</h2>
-        <p>Multiplayer co-op for Timberborn, with Steam friend invites, a connection panel and stability fixes. Free and open source under the GPL-3.0.</p>
+        <p>Multiplayer co-op for Timberborn with a colony each, trading posts, Steam friend invites, a connection panel and stability fixes. Free and open source under the GPL-3.0.</p>
       </div>
       <div>
         <h2>Guides</h2>
@@ -224,10 +228,11 @@
           <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">All releases</a></li>
           <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">Changelog</a></li>
           <li><a href="https://github.com/thomaswp/BeaverBuddies">The original BeaverBuddies</a></li>
+          <li><a href="https://timbermods.github.io/">More mods from Timbermods</a></li>
         </ul>
       </div>
     </div>
-    <p class="fineprint">An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. Timberborn is made by Mechanistry; this is an unofficial community mod and is not affiliated with or endorsed by them.</p>
+    <p class="fineprint">Built on the BeaverBuddies Stability Fork and on BeaverBuddies by thomaswp and contributors, who created its multiplayer design. Maintained by <a href="https://github.com/timbermods">Timbermods</a>. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry.</p>
   </div>
 </footer>
 <script src="assets/site.js" defer></script>

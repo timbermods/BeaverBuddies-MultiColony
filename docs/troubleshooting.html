@@ -76,7 +76,7 @@
             <li>Make sure <b>Harmony</b> and <b>Mod Settings</b> are installed and enabled. The mod needs both.</li>
             <li>Enable <b>BeaverBuddies MultiColony (beta)</b> in the mod manager and restart the game.</li>
             <li>The mod is built for Timberborn 1.1 (tested on 1.1.2.4). Older game versions will not run it.</li>
-            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies v<span data-release="version">1.4.0-beta11</span> is loaded!</code>. If it is there, the mod loaded and the problem is elsewhere.</li>
+            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-beta11</span> is loaded!</code>. If it is there, the mod loaded and the problem is elsewhere.</li>
           </ol>
         </div>
       </details>
@@ -85,7 +85,7 @@
         <summary>There are two BeaverBuddies in the mod list, or things behave strangely</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>Only one BeaverBuddies can run at a time: MultiColony, the Workshop BeaverBuddies and the Stability Fork all change the same parts of the game. If another one is enabled, the main menu names it and MultiColony does not start. A second copy of MultiColony in your <code>Mods</code> folder, or an old <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder left over from an earlier download, conflicts the same way.</p>
+          <p>Only one BeaverBuddies can run at a time: MultiColony, the Workshop BeaverBuddies and the Stability Fork all change the same parts of the game. If another one is enabled, the main menu names it and MultiColony does not start. A second copy of MultiColony in your <code>Mods</code> folder, or a <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder (the Stability Fork, or an early two-colony build), conflicts the same way.</p>
           <p class="sub">Try this</p>
           <p>Keep exactly one BeaverBuddies. Unsubscribe from the Workshop version, delete any extra copy (and the old <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder) from <code>Documents\Timberborn\Mods</code>, then restart the game.</p>
         </div>
@@ -102,7 +102,7 @@
           <p>When someone joins, the mod compares the game version, the mod version and the mod's own files, before the save is sent. It refuses any difference, because two different builds cannot stay in sync. A copy someone compiled themselves can be refused even when the version number matches, and an old version still running in memory is detected too.</p>
           <p class="sub">Try this</p>
           <ol>
-            <li>Have everyone download the <b>same zip</b> from the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">latest release</a>.</li>
+            <li>Have everyone download the <b>same zip</b> from the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a>.</li>
             <li>Replace the <code>BeaverBuddies-MultiColony</code> folder, then <b>fully restart</b> Timberborn on every computer.</li>
             <li>Check that the game versions match.</li>
           </ol>
@@ -142,9 +142,9 @@
         <summary>The invite says the host has already started</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>Nobody can join once the host chooses <b>Start Game</b>, or once the host has placed or marked anything while waiting paused (the message then says the host already changed the game). An old invite explains that instead of hanging.</p>
+          <p>Nobody can join once the host unpauses (the game's first tick), or once the host has placed or marked anything while waiting paused (the message then says the host already changed the game). An old invite explains that instead of hanging.</p>
           <p class="sub">Try this</p>
-          <p>The host saves and hosts again, then sends a fresh invite. Have your friend join before the host starts, and the host builds nothing until everyone is in.</p>
+          <p>The host saves and hosts again, then sends a fresh invite. Have your friend join before the host unpauses, and the host builds nothing until everyone is in.</p>
         </div>
       </details>
 
@@ -168,7 +168,7 @@
         <div class="answer">
           <p class="sub">Try this</p>
           <ol>
-            <li>The host must already be hosting and must not have chosen <b>Start Game</b>.</li>
+            <li>The host must already be hosting, and must not have unpaused or changed anything yet.</li>
             <li>Use the right address: your public IP for the internet, or the virtual-network address (for example from Hamachi) if you use one.</li>
             <li>The default port is <b>25565</b>. Your router must forward it to the host's computer, and your firewall must allow Timberborn.</li>
             <li>Port forwarding is the hard part. A virtual LAN such as Hamachi avoids it and has been tested. So does a <a href="install.html#host">Steam invite</a>.</li>
@@ -255,7 +255,7 @@
             <li>Turn off <b>Always Use Detailed Logging</b> in Mod Settings, on <b>both</b> computers. It records a lot of extra detail for diagnosing desyncs and noticeably slows the game. It is off by default.</li>
             <li>Look at the connection panel. A red ping or a high <b>Behind host</b> value means the connection is the problem, not the game.</li>
             <li>Try a lower game speed if a slower computer keeps falling behind, or, as the host, click <b>Ease off below</b> in the connection panel and pick a frame rate: the game then slows a little while a guest stays under it.</li>
-            <li>Make sure both players run the latest release, which does less work every tick and every frame.</li>
+            <li>Make sure everyone runs the newest release, which does less work every tick and every frame.</li>
           </ol>
         </div>
       </details>
@@ -299,6 +299,7 @@
         <li>Close the game so the log is complete.</li>
         <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn</code> in Explorer (paste it into the address bar).</li>
         <li>Copy <code>Player.log</code>. If the problem happened in an earlier session, also copy <code>Player-prev.log</code>, the log of the session before.</li>
+        <li>In a separate-colonies game, also copy your newest report from the <code>BeaverBuddies-Reports</code> folder next to the logs. <b>Ctrl+Shift+J</b> writes one, and every computer writes one by itself when a player desyncs.</li>
         <li>If a desync happened with detailed logging on, the water diagnostics are saved in the <code>BeaverBuddiesDiagnostics</code> folder next to the logs. They are written only on your computer and are never uploaded.</li>
       </ol>
       <div class="callout">
@@ -329,7 +330,7 @@
     <div class="footer-grid">
       <div>
         <h2>BeaverBuddies MultiColony</h2>
-        <p>Multiplayer co-op for Timberborn, with Steam friend invites, a connection panel and stability fixes. Free and open source under the GPL-3.0.</p>
+        <p>Multiplayer co-op for Timberborn with a colony each, trading posts, Steam friend invites, a connection panel and stability fixes. Free and open source under the GPL-3.0.</p>
       </div>
       <div>
         <h2>Guides</h2>
@@ -346,10 +347,11 @@
           <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">All releases</a></li>
           <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">Changelog</a></li>
           <li><a href="https://github.com/thomaswp/BeaverBuddies">The original BeaverBuddies</a></li>
+          <li><a href="https://timbermods.github.io/">More mods from Timbermods</a></li>
         </ul>
       </div>
     </div>
-    <p class="fineprint">An independent fork of BeaverBuddies by thomaswp and contributors, whose multiplayer design this builds on. Timberborn is made by Mechanistry; this is an unofficial community mod and is not affiliated with or endorsed by them.</p>
+    <p class="fineprint">Built on the BeaverBuddies Stability Fork and on BeaverBuddies by thomaswp and contributors, who created its multiplayer design. Maintained by <a href="https://github.com/timbermods">Timbermods</a>. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry.</p>
   </div>
 </footer>
 <script>

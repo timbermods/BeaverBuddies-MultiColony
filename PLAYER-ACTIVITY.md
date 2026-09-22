@@ -126,7 +126,7 @@ every player in a session has this feature or none of them do.
 
 ## Validation
 
-`dotnet run --project StabilityTests` (263 checks in 1.4.0-alpha19, of which the activity checks are described
+`dotnet run --project StabilityTests` (348 checks in 1.4.0-beta11, of which the activity checks are described
 here) covers:
 
 - the production transport over in-memory streams with a host and two guests:
@@ -143,7 +143,7 @@ here) covers:
   for present in the English file.
 
 `dotnet run --project RuntimeChecks -- <BeaverBuddies.dll> <Timberborn Managed>
-<Harmony dir> <ModSettings Scripts dir>` (229 checks in 1.4.0-alpha19) still passes against the
+<Harmony dir> <ModSettings Scripts dir>` (278 checks in 1.4.0-beta11) still passes against the
 compiled mod.
 
 **Not covered by automated tests:** how the cursor, labels and outlines actually
