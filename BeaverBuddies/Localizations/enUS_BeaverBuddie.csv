@@ -307,6 +307,8 @@ BeaverBuddies.Colony.Trade.LedgerTooltip,"Every round that crossed at this Tradi
 BeaverBuddies.Colony.Trade.LedgerEmpty,"No round has crossed here yet.",""
 BeaverBuddies.Colony.Trade.LedgerGave,"gave",""
 BeaverBuddies.Colony.Trade.LedgerGot,"got",""
+BeaverBuddies.Colony.Trade.LedgerYouGave,"You gave",""
+BeaverBuddies.Colony.Trade.LedgerTheyGave,"{0} gave",""
 BeaverBuddies.Colony.Trade.LedgerMore,"and {0} earlier",""
 BeaverBuddies.Colony.Trade.TradedWith,"Traded with {0} (all posts)",""
 BeaverBuddies.Colony.Trade.YouSent,"You sent",""

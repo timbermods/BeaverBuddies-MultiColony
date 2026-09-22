@@ -1048,22 +1048,31 @@ namespace BeaverBuddies.Colonies
                 date.style.flexShrink = 0;
                 _tooltipRegistrar.Register(date, _timestampFormatter.FormatLongLocalized(record.Cycle, record.Day));
                 row.Add(date);
-                row.Add(LedgerPart(T("BeaverBuddies.Colony.Trade.LedgerGave"), record.Gave, record.GaveAmount));
-                row.Add(LedgerPart(T("BeaverBuddies.Colony.Trade.LedgerGot"), record.Got, record.GotAmount));
+                // Both sides named: "You gave [icon] 100", "Sarah gave [icon] 25" (the partner in their colour).
+                row.Add(LedgerPart(T("BeaverBuddies.Colony.Trade.LedgerYouGave"), record.Gave, record.GaveAmount));
+                row.Add(LedgerPart(string.Format(T("BeaverBuddies.Colony.Trade.LedgerTheyGave"), ColoredName(partnerSlot)), record.Got, record.GotAmount));
                 ledgerRows.Add(row);
             }
             if (records.Count > LedgerShown)
                 ledgerRows.Add(NativeElements.MutedText(string.Format(T("BeaverBuddies.Colony.Trade.LedgerMore"), records.Count - LedgerShown)));
         }
 
-        /// <summary>"gave [icon] 100", or "gave nothing".</summary>
+        /// <summary>"You gave [icon] 100", "Sarah gave [icon] 25", or "... gave nothing". The caption may carry rich text (a name in its colour).</summary>
         private VisualElement LedgerPart(string caption, string item, int amount)
         {
             VisualElement part = NativeElements.Row();
-            part.style.width = 110;
+            part.style.flexGrow = 1;
+            part.style.flexBasis = 0;
             part.style.flexShrink = 1;
-            Label label = NativeElements.MutedText(caption);
+            part.style.minWidth = 0;
+            Label label = RichText(12);
+            label.style.color = NativeElements.Muted;
             label.style.marginRight = 4;
+            label.style.flexShrink = 1;
+            label.style.overflow = Overflow.Hidden;
+            label.style.textOverflow = TextOverflow.Ellipsis;
+            label.style.whiteSpace = WhiteSpace.NoWrap;
+            NativeElements.SetText(label, caption);
             part.Add(label);
             if (amount <= 0 || item == null)
             {

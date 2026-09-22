@@ -5,6 +5,16 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-alpha22
+
+**The Trading Post's ledger names both sides.** Each row read *gave [icon] 100 · got [icon] 25*; it now reads
+*You gave [icon] 100 · Sarah gave [icon] 25*, with the partner's name in their colour, as the rest of the panel
+names them (the player who runs the colony, or *Colony N* while nobody does). The two parts share the row's width
+and a long name is cut short with an ellipsis instead of pushing the amounts out. The cycle-day stamp is unchanged.
+- Strings: `Colony.Trade.LedgerYouGave`, `Colony.Trade.LedgerTheyGave` (English only, like the rest).
+- Checks unchanged: StabilityTests 263; RuntimeChecks 229.
+- The site's interactive panel (the docs site) shows the same rows.
+
 ## 1.4.0-alpha21
 
 **The in-game changelog and the Doc folder describe MultiColony.** No code change.

@@ -1,6 +1,9 @@
-v1.4.0-alpha21 (BeaverBuddies MultiColony)
-* Documentation only: this in-game changelog and the Doc folder describe MultiColony. Nothing in the game changed since alpha14.
+v1.4.0-alpha22 (BeaverBuddies MultiColony)
+* The Trading Post's ledger names both sides: "You gave 100 Logs, Sarah gave 25 Gears", the partner in their colour.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
+v1.4.0-alpha21
+* Documentation only: this in-game changelog and the Doc folder describe MultiColony. Nothing in the game changed since alpha14.
 
 v1.4.0-alpha15 to alpha20 (documentation)
 * The test scripts, README, TWO-COLONIES, CONNECTION-PANEL, STEAM-INVITES, PLAYER-ACTIVITY and WORKSHOP guides, and the docs site, brought up to date with alpha11 to alpha14. No code change.

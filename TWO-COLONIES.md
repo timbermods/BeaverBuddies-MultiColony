@@ -131,7 +131,7 @@ description's blue cards, the game's wooden and red buttons, input boxes, progre
 warehouse's goods grid). On your half it shows who you trade with in their colour, with **All posts**; the exchange
 (the offer form, an offer waiting for an answer, or the round under way with each side's bar, what it waits for, and
 ending it); what waits on the half (only when something does); the post's **ledger** (the last rounds that crossed,
-with the cycle and day, what you gave and what you got); and what has passed each way between the two colonies (all
+with the cycle and day, what you gave and what the other player gave, by name); and what has passed each way between the two colonies (all
 trading posts), as icons with amounts. When the game's sections above it leave too little room on the screen, its
 content scrolls instead of running off the bottom.
 
