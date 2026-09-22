@@ -187,6 +187,11 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     note the tick rate on each computer and the guest's *Behind host* for a minute. Pause and unpause: the speed
     comes back at 9x, not more. Type something in the box and press Esc: nothing changes. Set the boost back to 0
     with **-** or by typing 0. Host again: it starts at 0.
+8l. **Your own chat color (beta6).** Options, **Player cursors**: the first card, **You, in the chat**, shows your
+    default swatch (orange for the host, blue for the guest, or your Ping Color if you changed it). Pick a preset:
+    your name in the chat changes on your screen within a moment, and not on the other player's. Drag a slider:
+    the same. **Reset**: back to the default. Restart the game and host again: the color is remembered. The other
+    player's card still has Size and Transparency; yours does not.
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*

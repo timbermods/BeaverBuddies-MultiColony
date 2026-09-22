@@ -242,10 +242,12 @@ namespace BeaverBuddies.Panel
         // color they chose for themselves, or the one you set for them in the player cursors settings.
         string ChatColorOf(ChatMessage message)
         {
-            // Nobody sets a color for their own cursor: others see your Ping Color, or the color for your player
-            // number while it is still the default (Stability Fork 1.1.11).
+            // Your own name: the color you picked for it under Player cursors (only you see it), else what others
+            // see by default: your Ping Color, or the color for your player number while it is still the default
+            // (Stability Fork 1.1.11).
             if (myPlayerIdKnown && message.PlayerId == myPlayerId)
-                return PlayerColors.Effective(ColorUtility.ToHtmlStringRGB(Settings.PingColorValue), myPlayerId);
+                return PlayerActivityService.Preferences.OwnChatColor
+                    ?? PlayerColors.Effective(ColorUtility.ToHtmlStringRGB(Settings.PingColorValue), myPlayerId);
             var activity = SingletonManager.GetSingleton<PlayerActivityService>();
             if (activity != null && activity.TryGetCursorColor(message.PlayerId, out Color cursor)) return ColorUtility.ToHtmlStringRGB(cursor);
             // No cursor for them now (they left, or player activity is off): the color you saved for them, if any,
@@ -315,6 +317,15 @@ namespace BeaverBuddies.Panel
 
         static TimberNetBase CurrentNetwork() => EventIO.Get() is ServerEventIO host ? host.NetBase :
             EventIO.Get() is ClientEventIO guest ? guest.NetBase : null;
+
+        /// <summary>This player's number in the session (the host is 0), or -1 with no session or before the host has said.</summary>
+        public static int LocalPlayerId()
+        {
+            var net = CurrentNetwork();
+            if (net == null) return -1;
+            NetworkStatus status = net.GetNetworkStatus();
+            return status.IsHost ? 0 : status.YourPlayerId;
+        }
 
         PanelInputs Collect(TimberNetBase net, ReplayService replay, float now)
         {

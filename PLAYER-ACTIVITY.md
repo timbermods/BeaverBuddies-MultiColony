@@ -59,6 +59,13 @@ The color also applies to that player's name label, their selection outline and 
 chat in the connection panel, so a player always looks like one consistent color. The swatch in each card previews the
 color and transparency live, and **Reset** returns that player to the defaults.
 
+The first card, **You, in the chat** (1.4.0-beta6), is for your own name in the chat as you see it: the
+**Default** swatch (what others see: your Ping Color, or the color for your player number while it is
+still the default), the same ten presets, or the Red/Green/Blue sliders; **Reset** returns to the default.
+It has no size or transparency, since there is no cursor of your own to draw, and it is on your screen
+only: nothing is sent, and other players' choices for you still win on their screens. It is saved with
+the other styles, under the key `#you`.
+
 These are **display-only, local choices**. They are never sent over the network, so
 each player can style everyone else differently, and they cannot affect the
 simulation.
@@ -84,7 +91,8 @@ While **Ping Color** is left on its default yellow, other players see a color of
 number instead (the host orange, then blue, green, pink, purple, teal, red and lime for the guests as
 they join, repeating after eight), so players who never touch the setting still look different. Any
 other color, even a slightly different yellow, is kept as chosen. The swatch called **Their color** in
-**Player cursors** shows that color, and your own choices there still win. Pings always use the Ping
+**Player cursors** shows that color, and your own choices there still win. The color you see your own
+name in, in the chat, is the **You, in the chat** card's there (1.4.0-beta6). Pings always use the Ping
 Color as set, yellow by default. (From Stability Fork 1.1.11.)
 A host who disables their own display still relays other guests' activity.
 
@@ -129,7 +137,10 @@ here) covers:
 - message validation, name sanitizing, the latest-wins mailbox and its cap, and the
   outgoing coalescing channel;
 - the per-player style store: clamping, hostile or damaged files, entry caps, atomic
-  save and reload, unwritable locations, and name-collision keys.
+  save and reload, unwritable locations, and name-collision keys;
+- your own chat color (1.4.0-beta6): kept under a key no name can take, dropped when back to
+  the default, saved and reloaded, an older file read as before, and every string the dialog asks
+  for present in the English file.
 
 `dotnet run --project RuntimeChecks -- <BeaverBuddies.dll> <Timberborn Managed>
 <Harmony dir> <ModSettings Scripts dir>` (229 checks in 1.4.0-alpha19) still passes against the
@@ -153,7 +164,9 @@ game.
 5. Open Options -> **Player cursors**. Check the other player's card and that
    dragging each slider updates their cursor live: color presets, RGB, Size and
    Transparency. Use **Reset**, close and reopen the dialog, then restart the game and
-   confirm the style is remembered.
+   confirm the style is remembered. In the first card, **You, in the chat**, pick a
+   preset: your own name in the chat changes on your screen within a moment and not on
+   the other player's; **Reset** returns it to the default.
 6. Have a third player join (or rename one) while the dialog is open and confirm the
    list updates. Try two players with the same name.
 7. Repeat while paused and at faster speeds. Hover UI, alt-tab, disable and re-enable

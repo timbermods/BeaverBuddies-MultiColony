@@ -237,7 +237,8 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   game never runs below 0.5x or above 30x). Collapse the panel by clicking its title; hide or move it in Mod
   Settings. Chat names are drawn in each
   player's cursor color, and a player who has not chosen one gets a color of their own by player number (the host
-  orange, then blue, green, pink, purple, teal, red and lime), so nobody starts out yellow.
+  orange, then blue, green, pink, purple, teal, red and lime), so nobody starts out yellow. The color you see your
+  own name in is yours to pick under Options, **Player cursors** (only you see it).
 - **A guest's actions** go to the host and back before they happen. While they travel, the tiles of what you placed
   or marked are tinted (red for a removal); if the host refuses the action, a notice says why.
 - **Mismatched mods** are flagged when someone joins. It's a warning, but a mod that changes the simulation will

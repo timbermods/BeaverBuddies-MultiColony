@@ -27,4 +27,6 @@ lines 15 to 19 (joined roads, a refused Trading Post half, gates, automation, th
 - an *Editing* label on another colony's building for a change that was refused (known, presentation only);
 - the speed boost row at the top of the chat (beta5, Script B line 8k): whether the game's small - and + draw in the
   dark panel, whether the box gives the keyboard back after Enter or Esc, and where the tick rate settles above
-  speed 7 on real computers.
+  speed 7 on real computers;
+- the *You, in the chat* card at the top of Player cursors (beta6, Script B line 8l): whether it draws above the
+  players' cards, and whether your own chat name follows a pick there on your screen only.

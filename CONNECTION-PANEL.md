@@ -134,7 +134,9 @@ Sarah: on it
   still the default yellow) gets a color of their own by player number, so two players are not both yellow:
   the host is orange, and the guests are blue, green, pink, purple, teal, red and lime as they join (past
   eight the colors repeat). A player who leaves and joins again gets a new number, and so a new color. Your
-  own name uses your **Ping Color**, or the color for your player number while it is still the default. A
+  own name uses the color you pick for it under Options, **Player cursors** (the **You, in the chat** card,
+  1.4.0-beta6; only you see it), or, with none picked, your **Ping Color**, or the color for your player number
+  while it is still the default. A
   player who has left, or whose cursor is off, keeps the color you saved for them, else the one their
   messages carried. A very dark color is lightened so it can be read on the dark panel. Names are the same
   **Ping Display Name** as cursors and pings. Chat lines have no "(Host)" or "(P2)" tag, so two players who
@@ -272,6 +274,7 @@ the game's hotkeys really stay off while you type and come back after, how a lon
 you scroll up, and that the mouse wheel over the chat scrolls it without also zooming the camera (the game skips zooming while the pointer is
 over its interface, which this relies on). The speed boost row (1.4.0-beta5) has not been seen at all: the game's small - and + in the dark panel,
 the box taking and giving back the keyboard, the game's `x3.5` on its last speed button, and what a real colony's tick rate does above speed 7.
+Nor has the **You, in the chat** card (1.4.0-beta6): that your own name follows a pick there on your screen only.
 
 ## Known limits
 

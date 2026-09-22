@@ -5,6 +5,30 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta6
+
+**Your own name in the chat, in a color you pick.** The chat colored your own name the way others see it: your Ping
+Color, or the color for your player number while that is still the default (orange for the host, blue for the
+first guest, and so on). Under Options, **Player cursors**, a card at the top, **You, in the chat**, now lets you
+pick the color you see your own name in: the **Default** swatch (what others see), the same ten presets as a
+player's card, or the Red/Green/Blue sliders; **Reset** returns to the default. It is on your screen only: nothing
+is sent, others still see your Ping Color or your number's color, and their own choices for you still win on their
+screens. Lines already written change color within a moment, as a player's do.
+- Kept with the player styles in `BeaverBuddiesCursorStyles.json`, under the reserved key `#you`, so the file keeps
+  its shape: an older build reads it as before, and this one reads an older file. A player who calls themselves
+  `#you` is kept apart from it (`PlayerCursorPreferences.SelfKey`, `OwnChatColor`, `SetOwnChatColor`; `KeyFor`
+  steps aside).
+- The card has no size or transparency: there is no cursor of your own to draw. `PlayerCursorSettingsUI.BuildCard`
+  now builds both kinds of card; `ConnectionPanelService.ChatColorOf` reads the choice first for your own
+  messages, and `LocalPlayerId()` gives the dialog your player number for the default swatch.
+- Docs: PLAYER-ACTIVITY.md, CONNECTION-PANEL.md, README, the site, ALPHA-TEST-SCRIPTS.md (B8l), `Doc/ToTestV6.md`
+  and the in-game changelog.
+- Checks: StabilityTests 299 (3 new: the color kept under a key no name can take and dropped when back to the
+  default; a save and reload, and an older file read as before; every string the dialog asks for in the English
+  file); RuntimeChecks 233. Both builds, 0 warnings.
+- Not seen in a game: the card at the top of the dialog, and the chat line changing after a pick. Script B line 8l
+  is this release's.
+
 ## 1.4.0-beta5
 
 **A speed boost, from the chat box.** A row at the top of the chat, `Speed boost [-] [0] [+]`, adds a constant to
