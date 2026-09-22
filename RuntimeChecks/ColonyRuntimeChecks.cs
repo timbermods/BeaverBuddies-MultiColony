@@ -736,6 +736,18 @@ internal static class ColonyRuntimeChecks
             var found = forbidden.Where(calls.Contains).ToList();
             if (found.Count > 0) throw new Exception("calls " + string.Join(", ", found));
         });
+
+        // MC6: every computer that plays a ClientDesyncedEvent logs its last colony changes, in a separate-colonies game
+        // only (a shared game keeps none), and before anything else the event does, so nothing below can stop it.
+        test("Colony: a desync logs the last colony changes first, only with separate colonies", () =>
+        {
+            var desynced = mod.GetType("BeaverBuddies.Events.ClientDesyncedEvent", true)!;
+            var calls = MethodsCalled(desynced.GetMethod("Replay", all)!).Select(m => m.DeclaringType!.Name + "." + m.Name).ToList();
+            int asks = calls.IndexOf("ColonyModeService.get_IsSeparateColonies"), described = calls.IndexOf("ColonyDigest.DescribeRecent");
+            int logged = calls.IndexOf("Plugin.LogWarning"), reset = calls.IndexOf("MultiplayerInputRecovery.RequestReset");
+            if (asks < 0 || described < 0 || logged < 0 || reset < 0 || !(asks < described && described < logged && logged < reset))
+                throw new Exception("it now calls: " + string.Join(", ", calls));
+        });
     }
 
     static IEnumerable<Type> LoadableTypes(Assembly assembly)

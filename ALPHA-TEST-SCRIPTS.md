@@ -175,7 +175,10 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
 8a. **Every tick compared (alpha13).** Play a quarter of an hour at speed 1 to 3 with building, marking and an
     exchange, across a day change. Expect **no** desync dialog. If one appears and the log says `Colony state differs
     from the host's at tick …` (not `Random state mismatch`), that is this build's digest disagreeing, not your game:
-    send both `Player.log` files; the two change counts in that line say which side counted one more.
+    send both `Player.log` files; the two change counts in that line say which side counted one more, and each log's
+    `Colony changes here as … desynced` list (that computer's last 256 changes), lined up by change number `#n`,
+    shows the first one that differs, unless the host's list already starts after the guest's change count (the host
+    logs a tick or more later; a large mark counts a change per tile).
 8b. **Refusals a guest sees (alpha12).** A guest who is not seated in a colony (a helper: join a game with every
     colony taken) changes the working hours: refused, and the panel goes back to the colony's hours. With the host's
     dev mode off, the guest Ctrl-clicks a locked building: the tool does **not** open; the host's refusal notice

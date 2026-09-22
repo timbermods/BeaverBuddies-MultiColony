@@ -86,6 +86,8 @@ namespace BeaverBuddies
             if (digest == null || !(EventIO.Get() is ClientEventIO) || digest.Value == ColonyDigest.Value) return;
             Plugin.LogWarning($"[Colony] Colony state differs from the host's at tick {ticksSinceLoad}: " +
                 $"host digest {digest.Value:x16} after {changes} changes, here {ColonyDigest.Describe()}");
+            // This computer logs its last colony changes as it stops (ClientDesyncedEvent), and the host logs its own as
+            // word of it arrives: in the host's list, change #changes is the one that left this digest.
             context.GetSingleton<ReplayService>()?.HandleDesync();
         }
     }

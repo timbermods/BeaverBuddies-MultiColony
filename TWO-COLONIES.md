@@ -367,9 +367,14 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - In a separate-colonies game, every tick the host's heartbeat carries a running digest of every colony state change (owners, marks, science,
   exchanges, the ledger, land, presence, hand-overs, working hours), and each guest compares it with its own at the
   same point: a difference stops that guest with the desync dialog that tick, with both digests and the number of
-  changes each side counted in the log. Once a day the host also sends its full colony check with the day's presence,
-  and a guest that differs stops too. Colony code draws no random numbers, so without these a difference showed only
-  once it changed a beaver's random draw, or never.
+  changes each side counted in the log. As any player desyncs, every computer also logs its last 256 colony changes
+  (`Colony changes here as …`, each with its number and the digest it left). Line two players' lists up by change
+  number (`#n`): the first number whose line differs is the change their computers did not make alike. The host logs
+  its list only when word of the desync arrives, a tick or more later, and one large mark can count hundreds of
+  changes (one per tile), so the host's list may already start after the change count the guest reported; then it
+  has moved on too far to show the diverging change. Once a day the host also sends its full colony
+  check with the day's presence, and a guest that differs stops too. Colony code draws no random numbers, so without
+  these a difference showed only once it changed a beaver's random draw, or never.
 - Two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest from the
   connection panel.
 - The days of food and water in the Ctrl+T window are an estimate from yesterday's use (today's, scaled, before a
@@ -401,7 +406,9 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   `TemplateCollections`) as well as the game and mod versions.
 - **Every colony state change** (owners, marks, science and unlocks, exchanges and their ledger, land, traded
   beavers, presence, hand-overs, working hours) made inside a tick or a replayed action folds into a running digest.
-  The host sends it with every heartbeat; a guest whose own differs stops that tick. A shared game has none.
+  The host sends it with every heartbeat; a guest whose own differs stops that tick. The last 256 changes are kept
+  (`ColonyDigest.Recent`) and logged by every computer as a player desyncs; nothing kept is hashed or sent. A shared
+  game has none.
 - **Ownership is saved**: on the district centers, on every building (the colony that placed it, from its first
   moment as a construction site) and on map marks. Land is worked out from the buildings standing, the same on every
   computer. Beavers choose their work from these only, so every computer's beavers choose alike. A shared game

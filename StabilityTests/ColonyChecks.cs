@@ -504,6 +504,63 @@ static class ColonyChecks
             Equal(0L, ColonyDigest.Of(null));
         });
 
+        yield return ("Colony: the colony digest keeps its last 256 changes in order, from load, only those it counted, allocating nothing", () =>
+        {
+            ColonyDigest.Gate = () => true;
+            ColonyDigest.Reset();
+            Equal(0, ColonyDigest.Recent().Length);
+            for (int i = 1; i <= 300; i++) ColonyDigest.Note(i % 2 == 0 ? "stamp" : "land", i, -i, i * 10L, long.MaxValue - i);
+            var recent = ColonyDigest.Recent();
+            Equal(256, ColonyDigest.RecentSize); Equal(256, recent.Length); Equal(300, ColonyDigest.Changes);
+            for (int k = 0; k < recent.Length; k++)
+            {
+                int i = 45 + k;
+                Equal(i, recent[k].Number); Equal(i % 2 == 0 ? "stamp" : "land", recent[k].What);
+                Equal((long)i, recent[k].A); Equal((long)-i, recent[k].B); Equal(i * 10L, recent[k].C); Equal(long.MaxValue - i, recent[k].D);
+            }
+            // The newest carries the digest it left, the one a heartbeat would carry now.
+            Equal(ColonyDigest.Value, recent[255].After);
+            Check(recent[254].After != recent[255].After, "each change carries the digest after it");
+            // Printed oldest first, a change a line, to set two players' logs side by side. The same text whatever the
+            // computer's culture: Swedish writes a negative number with U+2212, not '-'.
+            string text;
+            var culture = System.Globalization.CultureInfo.CurrentCulture;
+            try
+            {
+                System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("sv-SE");
+                text = ColonyDigest.DescribeRecent();
+            }
+            finally { System.Globalization.CultureInfo.CurrentCulture = culture; }
+            Check(text.Contains($"#45 land 45 -45 450 {long.MaxValue - 45} -> {recent[0].After:x16}"), "the oldest change kept is printed");
+            Check(text.IndexOf("#45 ") < text.IndexOf("#300 "), "oldest first");
+            Check(!text.Contains("#44 "), "a change pushed out is not printed");
+            // A change costs no allocation once it is full. The best of five passes counts, so that the runtime's own
+            // work landing on this thread by chance (the loop compiled again mid-way) cannot fail it.
+            long least = long.MaxValue;
+            for (int pass = 0; pass < 5 && least > 0; pass++)
+            {
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                for (int i = 0; i < 1000; i++) ColonyDigest.Note("science", 1, i, i);
+                least = Math.Min(least, GC.GetAllocatedBytesForCurrentThread() - before);
+            }
+            Equal(0L, least);
+            // A load clears it.
+            ColonyDigest.Reset();
+            Equal(0, ColonyDigest.Recent().Length);
+            Check(!ColonyDigest.DescribeRecent().Contains("#"), "nothing printed after a reset");
+            // Outside the simulation nothing is kept either.
+            ColonyDigest.Note("stamp", 1, 1);
+            ColonyDigest.Gate = () => false;
+            ColonyDigest.Note("owner", 2, 2);
+            ColonyDigest.Gate = () => true;
+            ColonyDigest.Note("land", 3, 3);
+            recent = ColonyDigest.Recent();
+            Equal(2, recent.Length);
+            Equal("stamp", recent[0].What); Equal(1, recent[0].Number);
+            Equal("land", recent[1].What); Equal(2, recent[1].Number);
+            ColonyDigest.Reset();
+        });
+
         yield return ("Colony: a Trading Post is removed by either of its partners, and by nobody else", () =>
         {
             var w = new FakeWorld().Crossing("post", 0, 1).Own("post", 0);
