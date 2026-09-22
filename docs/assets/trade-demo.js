@@ -23,7 +23,8 @@
   function nameOf(id, n) { var g = good(id); if (id === BEAVERS) return n === 1 ? 'Beaver' : 'Beavers'; return g.plural; }
   function amountOf(n, id) { return n + ' ' + nameOf(id, n); }
 
-  var COLONY = ['Colony 1', 'Colony 2'];
+  // The panel names a colony by its player (the seat table), as the mod does; 'Colony N' only for an unclaimed one.
+  var COLONY = ['Kyler', 'Sarah'];
   var CLS = ['tp-c1', 'tp-c2'];
   function colored(slot) { return '<b class="' + CLS[slot] + '">' + COLONY[slot] + '</b>'; }
 
@@ -48,7 +49,7 @@
       serial: 0
     };
     render();
-    say('Demo reset. You are ' + colored(0) + ', at your half of the post.');
+    say('Demo reset. You are ' + colored(0) + ' (colony 1), at your half of the post.');
   }
 
   // ---- rules (TradeOfferForm.Judge) ----
@@ -207,13 +208,13 @@
     if (!L.length) h += '<div class="tp-muted">No round has crossed here yet.</div>';
     for (var i = 0; i < Math.min(L.length, 4); i++) {
       var r = L[i];
-      h += '<div class="tp-ledger-row"><span class="tp-date" title="Cycle ' + r.cycle + ', day ' + r.day + '">C' + r.cycle + ' D' + r.day + '</span>'
-        + ledgerPart('gave', r.gave, r.gaveN) + ledgerPart('got', r.got, r.gotN) + '</div>';
+      h += '<div class="tp-ledger-row"><span class="tp-date" title="Cycle ' + r.cycle + ', day ' + r.day + '">' + r.cycle + '-' + r.day + '</span>'
+        + ledgerPart(colored(me) + ' gave', r.gave, r.gaveN) + ledgerPart(colored(them) + ' gave', r.got, r.gotN) + '</div>';
     }
     if (L.length > 4) h += '<div class="tp-muted">and ' + (L.length - 4) + ' earlier</div>';
     // totals
     h += '<div class="tp-rule"></div><span class="tp-caption">Traded with ' + esc(COLONY[them]) + ' (all posts)</span>';
-    h += chips('You sent', S.totals[me + '>' + them]) + chips('You received', S.totals[them + '>' + me]);
+    h += chips(colored(me) + ' sent', S.totals[me + '>' + them]) + chips(colored(them) + ' sent', S.totals[them + '>' + me]);
     root.innerHTML = h;
     renderClock();
     renderSide();
@@ -341,7 +342,7 @@
     q('[data-me="1"]').setAttribute('aria-pressed', S.me === 1);
     q('[data-auto]').checked = S.auto;
     var w = q('[data-workers]'); if (w) w.value = S.workers[S.me];
-    var head = document.querySelector('[data-tp-half]'); if (head) head.textContent = COLONY[S.me] + "'s half";
+    var head = document.querySelector('[data-tp-half]'); if (head) head.textContent = COLONY[S.me] + "'s half (colony " + (S.me + 1) + ")";
     var wl = document.querySelector('[data-tp-workers]'); if (wl) wl.textContent = S.workers[S.me];
   }
 
@@ -408,7 +409,7 @@
     logEl = document.querySelector('[data-tp-log]');
     if (!root || !side) return;
     Array.prototype.forEach.call(side.querySelectorAll('[data-me]'), function (el) {
-      el.addEventListener('click', function () { S.me = parseInt(el.getAttribute('data-me'), 10); S.pickerOpen = null; render(true); say('You are now looking at ' + colored(S.me) + "'s half."); });
+      el.addEventListener('click', function () { S.me = parseInt(el.getAttribute('data-me'), 10); S.pickerOpen = null; render(true); say('You are now ' + colored(S.me) + ' (colony ' + (S.me + 1) + '), at their half.'); });
     });
     Array.prototype.forEach.call(side.querySelectorAll('[data-preset]'), function (el) {
       el.addEventListener('click', function () { preset(el.getAttribute('data-preset')); });

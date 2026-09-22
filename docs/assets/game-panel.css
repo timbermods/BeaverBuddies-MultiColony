@@ -152,12 +152,12 @@
 
 /* ledger and totals */
 .tp-ledger-row { display: flex; align-items: center; margin-top: 2px; height: 20px; font-size: 12px; }
-.tp-ledger-row .tp-date { width: 42px; flex: none; color: var(--g-muted); }
-.tp-ledger-row .tp-part { display: flex; align-items: center; width: 110px; flex-shrink: 1; }
+.tp-ledger-row .tp-date { width: 36px; flex: none; color: var(--g-muted); }
+.tp-ledger-row .tp-part { display: flex; align-items: center; flex: 1 1 0; min-width: 0; white-space: nowrap; }
 .tp-ledger-row .tp-part .tp-muted { margin-right: 4px; }
 .tp-ledger-row img { width: 18px; height: 18px; margin-right: 2px; }
 .tp-chips { display: flex; align-items: flex-start; margin-top: 2px; }
-.tp-chips .tp-muted { width: 84px; flex: none; margin-top: 1px; }
+.tp-chips .tp-muted { width: 84px; flex: none; margin-top: 1px; white-space: nowrap; }
 .tp-chips .tp-chiplist { display: flex; flex-wrap: wrap; flex: 1 1 0; }
 .tp-chip { display: inline-flex; align-items: center; height: 20px; margin-right: 8px; font-size: 12px; }
 .tp-chip img { width: 18px; height: 18px; margin-right: 2px; }
