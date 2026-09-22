@@ -108,11 +108,13 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>
-        /// Founding waits for the host's first tick, while other players can still join (ColonyRules.WaitsForStart).
-        /// A guest's own tick count is the host's: it loads the same save and plays the host's ticks.
+        /// Founding waits for the host's first tick, while other players can still join (ColonyRules.WaitsForStart); in a
+        /// game started from a waiting room it doesn't. A guest's own tick count is the host's: it loads the same save and
+        /// plays the host's ticks; it learns the host's flag from the host's first message.
         /// </summary>
         private static bool WaitingForStart =>
-            ColonyRules.WaitsForStart(true, SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1);
+            ColonyRules.WaitsForStart(true, SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1,
+                ColonySession.JoiningClosedAtStart);
 
         private static bool FoundingAllowed => ColonyModeService.IsSeparateColonies || ColonySession.HostAllowsFounding;
 

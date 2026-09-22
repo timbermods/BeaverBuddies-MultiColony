@@ -367,7 +367,13 @@ namespace BeaverBuddies.Panel
             if (status.IsHost)
             {
                 result.Players.Add(new PanelPlayer { Id = 0, Name = me, IsYou = true, IsHost = true });
-                foreach (var peer in status.Peers) result.Players.Add(FromPeer(peer, NameOf(peer.PlayerId, names), false));
+                foreach (var peer in status.Peers)
+                {
+                    PanelPlayer guest = FromPeer(peer, NameOf(peer.PlayerId, names), false);
+                    // Seated once its hello is played, which it sends as soon as its game has loaded.
+                    guest.Loading = BeaverBuddies.Colonies.ColonySession.SeatOfPlayer(peer.PlayerId) < 0;
+                    result.Players.Add(guest);
+                }
             }
             else
             {

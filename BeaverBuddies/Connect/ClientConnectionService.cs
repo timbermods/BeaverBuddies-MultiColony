@@ -15,6 +15,7 @@ using Timberborn.WebNavigation;
 using TimberNet;
 using System.Linq;
 using Timberborn.SettlementNameSystem;
+using BeaverBuddies.Lobby;
 
 namespace BeaverBuddies.Connect
 {
@@ -26,6 +27,10 @@ namespace BeaverBuddies.Connect
         private UrlOpener _urlOpener;
         private ClientEventIO client;
         private Settings _settings;
+        private PanelStack _panelStack;
+        private VisualElementLoader _visualElementLoader;
+        // "Connecting to …" while a join is under way (see ConnectingBox).
+        private ConnectingBox connectingBox;
 
         // How this player last joined a host, for the desync dialog's reconnect (see Reconnect). Static because it
         // must outlive the scene that joined: the join loads the host's game, which has a new instance of this service.
@@ -36,7 +41,9 @@ namespace BeaverBuddies.Connect
             GameSaveRepository gameSaveRepository,
             DialogBoxShower dialogBoxShower,
             UrlOpener urlOpener,
-            Settings settings
+            Settings settings,
+            PanelStack panelStack,
+            VisualElementLoader visualElementLoader
         )
         {
             _gameSceneLoader = gameSceneLoader;
@@ -44,6 +51,8 @@ namespace BeaverBuddies.Connect
             _dialogBoxShower = dialogBoxShower;
             _urlOpener = urlOpener;
             _settings = settings;
+            _panelStack = panelStack;
+            _visualElementLoader = visualElementLoader;
         }
 
         public bool TryToConnect(CSteamID friendID)
@@ -102,6 +111,7 @@ namespace BeaverBuddies.Connect
 
             if (!TryToConnect(new TCPClientWrapper(address, port))) return false;
             lastJoin = JoinRoute.ViaAddress(typed);
+            ShowConnecting(typed);
             return true;
         }
 
@@ -114,7 +124,11 @@ namespace BeaverBuddies.Connect
                 // exists, a lost connection is reported by that game, because this service's dialogs belong to the
                 // scene that started the join. In 1.0.4 showing one after the game loaded threw, and the uncaught
                 // exception crashed the game.
-                ShowSafely(() => ShowError("BeaverBuddies.JoinCoopGame.Error.CouldNotConnect", error));
+                ShowSafely(() =>
+                {
+                    CloseConnectingBox();
+                    ShowError("BeaverBuddies.JoinCoopGame.Error.CouldNotConnect", error);
+                });
             });
             
             if (client == null)
@@ -198,7 +212,42 @@ namespace BeaverBuddies.Connect
         /// <summary>Shows the standard "could not join" dialog with a specific reason.</summary>
         public void ShowJoinError(string reasonKey, string details = null)
         {
-            ShowSafely(() => ShowError(reasonKey, details));
+            ShowSafely(() =>
+            {
+                CloseConnectingBox();
+                ShowError(reasonKey, details);
+            });
+        }
+
+        /// <summary>
+        /// "Connecting to …" with Cancel, until the host's waiting room opens, its save arrives or an error is shown
+        /// (D21). <paramref name="host"/> is the host's name or the address typed; null says only "Connecting…".
+        /// </summary>
+        public void ShowConnecting(string host)
+        {
+            ShowSafely(() =>
+            {
+                CloseConnectingBox();
+                string message = string.IsNullOrEmpty(host)
+                    ? RegisteredLocalizationService.T("BeaverBuddies.Lobby.ConnectingAnyone")
+                    : RegisteredLocalizationService.T("BeaverBuddies.Lobby.Connecting", host);
+                ClientEventIO joining = client;
+                connectingBox = ConnectingBox.Show(_visualElementLoader, _panelStack, message, () =>
+                {
+                    Plugin.Log("The player cancelled joining");
+                    EventIO.ResetIf(joining);
+                    if (ReferenceEquals(client, joining)) client = null;
+                });
+            });
+        }
+
+        /// <summary>Takes the Connecting box away (the waiting room opened, or an error is about to be shown).</summary>
+        public void CloseConnectingBox()
+        {
+            ConnectingBox box = connectingBox;
+            if (box == null) return;
+            try { box.Close(); }
+            catch (Exception error) { Plugin.LogWarning("Could not close the Connecting box: " + error.Message); }
         }
 
         // These are reached from Steam callbacks, which do not care which scene is loaded. A message that
@@ -209,18 +258,17 @@ namespace BeaverBuddies.Connect
             catch (Exception error) { Plugin.LogWarning("Could not show a multiplayer message: " + error.Message); }
         }
 
-        public void ShowConnectionMessage(bool success)
+        public void ShowConnectionMessage(bool success, string hostName = null)
         {
             ShowSafely(() =>
             {
                 if (success)
                 {
-                    _dialogBoxShower.Create()
-                        .SetLocalizedMessage("BeaverBuddies.JoinCoopGame.Success")
-                        .Show();
+                    ShowConnecting(hostName);
                 }
                 else
                 {
+                    CloseConnectingBox();
                     ShowError("BeaverBuddies.JoinCoopGame.ConnectionFailedMessage");
                 }
             });
@@ -289,14 +337,52 @@ namespace BeaverBuddies.Connect
             // Set the RNG seed before loading the map
             // The server does the same
             DeterminismService.InitGameStartState(mapBytes);
-            _gameSceneLoader.StartSaveGame(saveRef);
+            // From a new game's waiting room, the loading screen says whose game this is.
+            string waitingRoomHost = lobbyHostName;
+            lobbyHostName = null;
+            if (waitingRoomHost != null)
+                _gameSceneLoader._sceneLoader.LoadScene(GameSceneParameters.CreateGameSaveParameters(saveRef),
+                    RegisteredLocalizationService.T("BeaverBuddies.Lobby.Tip.GuestLoading", waitingRoomHost));
+            else
+                _gameSceneLoader.StartSaveGame(saveRef);
         }
+
+        // The host's name, once a waiting room has welcomed this guest (for the loading screen).
+        private static string lobbyHostName;
 
         public void UpdateSingleton()
         {
+            connectingBox?.Poll();
             if (client == null) return;
             //Plugin.Log("Updating client!");
             client.Update();
+            CheckWaitingRoom();
+        }
+
+        /// <summary>
+        /// A host's waiting room has welcomed this guest. In the main menu its page takes over (LobbyGuestPanel); in a
+        /// game (an invite accepted while playing, or the in-game Join) the guest leaves it and says why (D20).
+        /// </summary>
+        private void CheckWaitingRoom()
+        {
+            TimberClient net = client?.NetBase;
+            if (net == null || net.IsStopped) return;
+            LobbyView view = net.Lobby.View();
+            if (!view.Welcomed) return;
+            lobbyHostName = view.Summary?.HostName;
+            if (SingletonManager.GetSingleton<LobbyGuestPanel>() != null) return;
+            Plugin.Log("[Lobby] A host's waiting room answered while this player is in a game; leaving it");
+            ClientEventIO joining = client;
+            client = null;
+            lobbyHostName = null;
+            EventIO.ResetIf(joining);
+            ShowSafely(() =>
+            {
+                CloseConnectingBox();
+                _dialogBoxShower.Create()
+                    .SetMessage(RegisteredLocalizationService.T("BeaverBuddies.Lobby.InGameInvite", view.Summary?.HostName ?? ""))
+                    .Show();
+            });
         }
 
         /// <summary>

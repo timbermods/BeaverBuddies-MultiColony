@@ -94,9 +94,10 @@ namespace BeaverBuddies.Colonies
             }
 
             int hostTicks = SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1;
-            // Founding, handing over and switching colonies wait for the first tick, in every game (ColonyRules.WaitsForStart).
+            // Founding, handing over and switching colonies wait for the first tick, unless the game began from a waiting
+            // room with joining already closed (ColonyRules.WaitsForStart).
             if (ColonyRules.WaitsForStart(replayEvent is FoundColonyEvent || replayEvent is ColonyHandoverEvent || replayEvent is ActAsColonyEvent,
-                hostTicks))
+                hostTicks, ColonySession.JoiningClosedAtStart))
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: the game has not started, players can still join");
                 refusal = ColonyRefusal.NotStartedYet;

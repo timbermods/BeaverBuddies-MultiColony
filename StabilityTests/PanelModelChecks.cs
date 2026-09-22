@@ -26,6 +26,7 @@ static class PanelModelChecks
         ["BeaverBuddies.Panel.LabelJoining"] = "Joining",
         ["BeaverBuddies.Panel.RowTooltip"] = "Click to take your camera to {0}.", ["BeaverBuddies.Panel.RowYouTooltip"] = "Click to go back to your colony (also the Home key).",
         ["BeaverBuddies.Panel.PlayerNotOnMap"] = "{0}'s cursor is not on the map right now.",
+        ["BeaverBuddies.Panel.Loading"] = "{0} (loading)",
     };
     static string T(string key, object[] args) => string.Format(CultureInfo.InvariantCulture, English[key], args);
 
@@ -112,6 +113,13 @@ static class PanelModelChecks
             Equal("190 ms", model.Rows[2].PingText); Equal(Quality.Poor, model.Rows[2].Quality);
             Check(model.BehindText == null, "the host has no 'behind' figure");
             Equal("Direct", model.LinkText);
+        });
+        yield return ("Host view: a guest still loading the save says so, and only until it is in", () =>
+        {
+            var loading = P(1, "Anna", rtt: 40, silence: .2, via: "Steam");
+            loading.Loading = true;
+            var model = PanelModelBuilder.Build(HostView(loading, P(2, "Bob", rtt: 50, silence: .2, via: "Steam")), T);
+            Equal("Kyler,Anna (loading),Bob", string.Join(",", model.Rows.Select(r => r.Name)));
         });
         yield return ("Guest view: your own ping on the pill, host first, others listed", () =>
         {

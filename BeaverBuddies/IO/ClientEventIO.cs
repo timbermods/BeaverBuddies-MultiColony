@@ -94,6 +94,8 @@ namespace BeaverBuddies.IO
             // One failure is one report: a second error queued behind the first (a save that then failed to load, say)
             // must not show a second dialog.
             if (FailedToConnect) return;
+            // A host's waiting room that ended (closed, this guest removed, the start failed) said why on its page.
+            bool waitingRoomEnded = NetBase?.Lobby.View().Ended == true;
             CleanUp();
             FailedToConnect = true;
 
@@ -104,7 +106,7 @@ namespace BeaverBuddies.IO
                     // Nothing came of this join, so nothing should stay installed: a session that is over but still
                     // installed turns the next game loaded from this menu into one that is paused for good.
                     EventIO.ResetIf(this);
-                    onError(error);
+                    if (!waitingRoomEnded) onError(error);
                     break;
                 case ConnectionErrorPlan.EndRunningGame:
                     // The game's own dialog: the join attempt's belongs to a menu that no longer exists. With no

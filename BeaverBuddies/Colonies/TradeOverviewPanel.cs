@@ -422,7 +422,8 @@ namespace BeaverBuddies.Colonies
             // Players who could look after a colony: everyone the session knows but this player.
             var others = (slotService?.Players ?? Enumerable.Empty<(int player, string id, string name)>())
                 .Where(p => p.id != myId).GroupBy(p => p.id).Select(g => g.First()).ToList();
-            bool started = lifecycle != null && !ColonyRules.WaitsForStart(true, SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1);
+            bool started = lifecycle != null && !ColonyRules.WaitsForStart(true, SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1,
+                ColonySession.JoiningClosedAtStart);
             string coloniesKey = string.Join(",", slots) + "|" + string.Join(",", handovers.Select(h => $"{h.from}>{h.to}"))
                 + "|" + me + "/" + seat + "|" + string.Join(",", others.Select(p => p.id)) + "|" + string.Join(",", present)
                 + "|" + (stewards?.Fingerprint() ?? "") + "|" + (wishlist?.Fingerprint() ?? "") + "|" + (started ? "s" : "w");

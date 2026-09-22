@@ -108,8 +108,9 @@ namespace BeaverBuddies
             //new ReportingService().PostDesync("test").ContinueWith(result => Plugin.Log($"Posted: {result.Result}"));
             containerDefinition.Bind<SteamOverlayConnectionService>().AsSingleton();
             containerDefinition.Bind<DuplicateModWarning>().AsSingleton();
-            // A new game's waiting room (Host co-op game on the Game Mode page).
+            // A new game's waiting room (Host co-op game on the Game Mode page), and a guest's page in one.
             containerDefinition.Bind<BeaverBuddies.Lobby.LobbyHostPanel>().AsSingleton();
+            containerDefinition.Bind<BeaverBuddies.Lobby.LobbyGuestPanel>().AsSingleton();
 
             //ReflectionUtils.PrintChildClasses(typeof(MonoBehaviour),
             //    "Start", "Awake", "Update", "FixedUpdate", "LateUpdate", "OnEnable", "OnDisable", "OnDestroy");

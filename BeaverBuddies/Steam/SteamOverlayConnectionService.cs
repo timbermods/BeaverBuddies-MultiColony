@@ -27,6 +27,7 @@ namespace BeaverBuddies.Steam
         private Settings _settings;
 
         private bool? _lastSuccess = null;
+        private string _lastHostName = null;
 
         private static List<IDisposable> callbacks = new List<IDisposable>();
 
@@ -152,7 +153,7 @@ namespace BeaverBuddies.Steam
         public void OnPanelHidden(PanelHiddenEvent panelHiddenEvent)
         {
             if (!_lastSuccess.HasValue) return;
-            _clientConnectionService.ShowConnectionMessage(_lastSuccess.Value);
+            _clientConnectionService.ShowConnectionMessage(_lastSuccess.Value, _lastHostName);
             ClearWaitForSteamOverlay();
         }
 
@@ -193,13 +194,15 @@ namespace BeaverBuddies.Steam
                 }
                 Plugin.Log("Joining another's lobby...");
                 bool success = _clientConnectionService.TryToConnect(owner);
+                try { _lastHostName = SteamFriends.GetFriendPersonaName(owner); }
+                catch (Exception) { _lastHostName = null; }
                 if (_panelStack.IsPanelOnTop(_inputBlocker))
                 {
                     WaitForSteamOverlayToClose(success);
                 }
                 else
                 {
-                    _clientConnectionService.ShowConnectionMessage(success);
+                    _clientConnectionService.ShowConnectionMessage(success, _lastHostName);
                 }
             }
         }

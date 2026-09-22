@@ -235,6 +235,61 @@ static class LobbyChecks
             Check(BeaverBuddies.Lobby.LobbyRules.Tag(new LobbyPlayer(1, "A", true, false, false, null)) == null, "a shared-game guest got a tag");
         });
 
+        yield return ("The waiting room's order seats its guests: the host colony 1, guests 2 to 4, then helpers", () =>
+        {
+            // As LobbyWorldMaker fills the table before the world's first save, from the room's snapshot.
+            var table = new BeaverBuddies.Colonies.ColonySlotTable();
+            Check(table.Resolve("steam:100", "Kyler") == 0);
+            Check(table.Resolve("steam:201", "Anna") == 1);
+            Check(table.Resolve("local:direct", "Bob") == 2);
+            Check(table.Resolve("steam:203", "Cy") == 3);
+            Check(table.Resolve("steam:204", "Dee") == null, "a fifth colony");
+            var saved = BeaverBuddies.Colonies.ColonySlotTable.Decode(BeaverBuddies.Colonies.ColonySlotTable.Encode(table.Entries));
+            var loaded = new BeaverBuddies.Colonies.ColonySlotTable();
+            loaded.Set(saved);
+            // Each guest's hello in the game finds the colony the room showed: over Steam by the proved id, over a direct
+            // connection by the id it said in the room (the same LocalPlayerIdentity.Id).
+            Check(loaded.SeatHello("steam:201", "steam:201", null, "Anna").Slot == 1);
+            Check(loaded.SeatHello("local:direct", null, null, "Bob").Slot == 2);
+            Check(loaded.SeatHello("local:other", "steam:203", null, "Cy").Slot == 3, "the proved Steam id did not win");
+            // The same rule the room shows its rows by.
+            Check(Enumerable.Range(0, 5).Select(i => LobbyRoom.ColonyOf(i, true)).SequenceEqual(new int?[] { 1, 2, 3, 4, 0 }));
+        });
+
+        yield return ("Every waiting-room string exists in the English file, and the pages use only the main menu's style sheets", () =>
+        {
+            string root = AppContext.BaseDirectory;
+            while (root != null && !File.Exists(Path.Combine(root, "BeaverBuddies.sln"))) root = Path.GetDirectoryName(root)!;
+            Check(root != null, "could not find the repository root");
+            string csv = File.ReadAllText(Path.Combine(root!, "BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv"));
+            var defined = new HashSet<string>(System.Text.RegularExpressions.Regex.Matches(csv, "^([A-Za-z0-9.]+),",
+                System.Text.RegularExpressions.RegexOptions.Multiline).Select(m => m.Groups[1].Value));
+            string lobby = Path.Combine(root!, "BeaverBuddies", "Lobby");
+            var files = Directory.GetFiles(lobby, "*.cs").Append(Path.Combine(root!, "BeaverBuddies", "Connect", "ClientConnectionService.cs"));
+            var missing = new List<string>();
+            int used = 0;
+            foreach (string file in files)
+            {
+                string text = File.ReadAllText(file);
+                foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text, "\"(BeaverBuddies\\.Lobby\\.[A-Za-z.]+)\""))
+                { used++; if (!defined.Contains(m.Groups[1].Value)) missing.Add(m.Groups[1].Value); }
+                foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text, "KeyPrefix \\+ \"([A-Za-z.]+)\""))
+                { used++; string key = "BeaverBuddies.Lobby." + m.Groups[1].Value; if (!defined.Contains(key)) missing.Add(key); }
+            }
+            Check(used > 30, "found only " + used + " keys; the check is not looking in the right place");
+            Check(missing.Count == 0, "missing from enUS_BeaverBuddie.csv: " + string.Join(", ", missing.Distinct()));
+            Check(!System.Text.RegularExpressions.Regex.IsMatch(string.Join(",", defined.Where(k => k.StartsWith("BeaverBuddies.Lobby."))), "[0-9]"),
+                "a waiting-room key has a digit");
+            // The main menu loads CommonStyle, CoreStyle, OptionsStyle, MainMenuStyle, MainMenuMiscStyle and ModdingStyle,
+            // not the in-game sheets: their classes (and NativeElements, built on them) would draw nothing there.
+            string[] inGameOnly = { "entity-panel__text", "entity-sub-panel", "game-scroll-view", "entity-panel__toggle", "progress-bar--green", "NativeElements." };
+            foreach (string file in Directory.GetFiles(lobby, "*.cs"))
+            {
+                string text = File.ReadAllText(file);
+                foreach (string name in inGameOnly) Check(!text.Contains(name), $"{Path.GetFileName(file)} uses {name}");
+            }
+        });
+
         yield return ("Waiting-room frames round-trip, and bad ones are refused", () =>
         {
             var summary = new LobbySummary("Folktails", "Diorama", "NewGameMode.Hard", "Beaverton", "Kyler", true);

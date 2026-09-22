@@ -617,11 +617,19 @@ static class ColonyChecks
         yield return ("Colony: founding and hand-over wait for the host's first tick, while players can still join", () =>
         {
             // Before the first tick a later joiner is sent the save without them (F1 of the alpha10 review).
-            Check(ColonyRules.WaitsForStart(foundingOrHandover: true, hostTicksSinceLoad: 0));
-            Check(!ColonyRules.WaitsForStart(true, 1));
-            Check(!ColonyRules.WaitsForStart(true, 500));
+            Check(ColonyRules.WaitsForStart(foundingOrHandover: true, hostTicksSinceLoad: 0, joiningClosedAtStart: false));
+            Check(!ColonyRules.WaitsForStart(true, 1, false));
+            Check(!ColonyRules.WaitsForStart(true, 500, false));
             // Everything else at tick 0 closes joining instead (ReplayService), so it is never held back.
-            Check(!ColonyRules.WaitsForStart(false, 0));
+            Check(!ColonyRules.WaitsForStart(false, 0, false));
+        });
+
+        yield return ("Colony: after a waiting room (joining closed at Start) founding, hand-over and switching don't wait", () =>
+        {
+            // Everyone came in before the world was made: nobody can join late and miss a founding at tick 0.
+            Check(!ColonyRules.WaitsForStart(foundingOrHandover: true, hostTicksSinceLoad: 0, joiningClosedAtStart: true));
+            Check(!ColonyRules.WaitsForStart(true, 1, true));
+            Check(!ColonyRules.WaitsForStart(false, 0, true));
         });
 
         yield return ("Colony: the join check changes when a blueprint file changes, and matches between two copies", () =>

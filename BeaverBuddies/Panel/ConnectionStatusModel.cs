@@ -60,6 +60,8 @@ namespace BeaverBuddies.Panel
         public int? TicksBehind;
         /// <summary>Host only: the frames per second this guest last reported. Null if it has not reported one.</summary>
         public int? Fps;
+        /// <summary>Host only: a guest connected but still loading the save (its hello has not been played yet).</summary>
+        public bool Loading;
     }
 
     /// <summary>Everything the panel needs, gathered by the game and free of any game types.</summary>
@@ -149,7 +151,9 @@ namespace BeaverBuddies.Panel
             var you = input.Players.FirstOrDefault(p => p.IsYou);
             foreach (var player in OrderedPlayers(input.Players))
             {
-                var row = new PanelRow { Id = player.Id, Name = player.Name, IsYou = player.IsYou };
+                // A guest still loading says so, so the host knows when everyone is in before unpausing.
+                string name = player.Loading ? t("BeaverBuddies.Panel.Loading", new object[] { player.Name }) : player.Name;
+                var row = new PanelRow { Id = player.Id, Name = name, IsYou = player.IsYou };
                 if (player.IsYou)
                 {
                     row.PingText = YourPingText;

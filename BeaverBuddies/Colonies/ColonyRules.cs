@@ -300,9 +300,14 @@ namespace BeaverBuddies.Colonies
         /// owner there, silently. After the first tick nobody can join, so nobody can miss it. Every other action at
         /// tick 0 closes joining instead (see ReplayService); these two are held back because the founding prompt
         /// invites every guest to act the moment they are seated, while others are still on their way.
+        /// <para>
+        /// A game started from a new game's waiting room (<paramref name="joiningClosedAtStart"/>, ColonySession) has no
+        /// late joiners: everyone came in before the world was made, and joining closed at Start. Nothing waits there, so
+        /// a guest founds its colony while the game is still paused (D4 of design/PRE-GAME-LOBBY-PLAN.md).
+        /// </para>
         /// </summary>
-        public static bool WaitsForStart(bool foundingOrHandover, int hostTicksSinceLoad) =>
-            foundingOrHandover && hostTicksSinceLoad < 1;
+        public static bool WaitsForStart(bool foundingOrHandover, int hostTicksSinceLoad, bool joiningClosedAtStart) =>
+            foundingOrHandover && hostTicksSinceLoad < 1 && !joiningClosedAtStart;
 
         /// <summary>
         /// Whether a player may found a colony now. Once per player: only a player whose slot owns no district center
