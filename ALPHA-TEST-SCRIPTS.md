@@ -231,6 +231,19 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     minute, then **Save and Rehost**; the friend enables the mod and joins again. The other way round (the friend has
     the mod, the host does not): the friend's allocation change is refused with *The host could not accept that
     action*, and nothing else the friend does is refused.
+8q. **The fuller desync check (beta10).** Play a quarter of an hour at speed 3, then five minutes at speed 7, both
+    players building and marking, with at least 100 beavers. Expect **no** desync dialog and, in neither log, an
+    `Entity mismatch` or `Walker mismatch` line (logged once, the game goes on) or a `Random state mismatch: the
+    first word agrees but the rest does not` line (that one stops the game). Any of them in a healthy game is a false
+    alarm of the new check: send both `Player.log` files.
+8r. **Reconnect after a desync (beta10).** Only if a desync happens: the host chooses **Save and Rehost**; a Steam
+    guest chooses **Reconnect (wait for Rehost)** and joins the host's new lobby (with the host's **Allow Friends to
+    Join Directly via Steam** on), or is told to accept a fresh invite; a direct-IP guest redials the address it
+    typed.
+8s. **Tick once while a guest waits (beta10).** On a guest, press the period key while the game runs at speed 7 and
+    the guest briefly waits for the host (the connection panel's *Waiting for host*), or on a host easing off for a
+    slow guest: the game pauses for everyone, as the pause button does, and no *Tick once is off* notice shows. Press
+    it again while paused: the notice shows and nothing ticks.
 8e. **The guest's smoothness (beta1).** Play ten minutes at speed 7 with 150 or more beavers, both players building
     and marking. On the guest, the beavers should not stand still for a moment at every tick (note it if they do, and
     at what speed it starts); in the diagnostics report (Ctrl+Shift+J) *Waited for the host at the start of a tick*

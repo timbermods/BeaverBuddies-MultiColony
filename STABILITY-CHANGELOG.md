@@ -5,6 +5,57 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta10
+
+**Built on the Stability Fork 1.1.12**, and on the change the fork merged after it (its PR #50). Most of 1.1.12 was
+MultiColony's own fixes ported into the fork (planting with sliced views, the placement replay validator, tick once,
+dev mode's Ctrl keys, closing joining at tick 0, the frame type binder); the fork's own changes are ported here, with
+the fixes the fork's reviews made to MultiColony's code. MultiColony keeps its own behaviour where it went further (a
+guest that cannot read the host's action leaves quietly, and the host keeps a group's readable actions; beta9).
+- **A fuller desync check** (fork SF6, SF-NF1). A guest compared only `Random.state.s0`, one of the xorshift state's
+  four words. Every event now also carries a hash of all four (`ReplayEvent.randomStateHashBefore`), and every
+  heartbeat the host's entity-order hash (each tick bucket's size and a rotating eighth of its entity IDs) and
+  walker-position hash (every walker's root position as exact float bits), taken as the tick starts
+  (`HeartbeatEvent.entityOrderHash`, `walkerPositionHash`; `DesyncDetecter/DesyncCheck.cs`). A random state that
+  differs stops the session as before; an entity or walker difference alone is logged once per game (`Entity
+  mismatch`, `Walker mismatch`) and the game goes on, so a later desync says when the games first differed.
+  `TEBPatcher` keeps its hashes in every multiplayer game now, reset as a game loads. What the check found travels as
+  the desync's trace, so the host's log and the report name it; MultiColony's colony-digest line does the same. The
+  colony digest, the daily colony check and beta9's lists of colony changes are unchanged.
+  `ReplayService.HandleDesync(reason, colonyHostChanges)` is one method for both. **Wire change.**
+- **Direct TCP sends at once** (SF7): `NoDelay` on every socket the mod makes or accepts (`TCPClientWrapper`), and
+  `SendDataWithLength` sleeps between chunks only for the save sent to a joining guest (on that guest's own thread);
+  a gameplay frame over one chunk used to stall the host's game thread about 31 ms per extra 32 KB. Ending the
+  session no longer waits for a joining guest's paced save. MultiColony's single first write (the length and the
+  frame's start together) stays.
+- **The desync dialog** (SF5): the sentence asking to press Enable Logging shows only with that button (public builds
+  have no upload token), and a guest's **Reconnect (wait for Rehost)** joins the way it joined: the address it
+  typed, or the host's new Steam lobby when Steam shows it, else a notice to accept a fresh invite
+  (`Connect/DesyncDialogPlan.cs`, `ClientConnectionService.Reconnect`). It used to dial the saved direct-IP address,
+  127.0.0.1 unless changed, for a Steam guest too.
+- **Every recording prefix runs first** (the fork's #50, done for MultiColony by its own PR #9, whose version and
+  check this build keeps). A prefix that records a player's action carries `[HarmonyPriority(Priority.First)]` (65,
+  tick once's shared pause among them): another mod's prefix on the same method now runs inside the replay on every
+  computer, not at the click on one, and cannot stop the action from being recorded (Harmony skips later bool
+  prefixes after one returns false). MixedStorage's `SingleGoodAllower` prefixes rely on it. Prefixes that replace
+  the game's method run `Priority.Last` (now also `DistrictPreviewsValidatorReplayPatcher` and dev mode's two
+  Ctrl-key prefixes). RuntimeChecks finds the recording prefixes in the compiled IL and requires First.
+- **From the fork's reviews of MultiColony's code:** tick once after a failed multiplayer action no longer ticks the
+  stopped game, and pressed on a computer held at speed 0 while the shared game runs (a guest waiting for the host,
+  a host easing off) it records the shared pause instead of the *Tick once is off* notice. Closing joining is safe
+  inside a replay (a server that never started, a Steam lobby that throws). A guest refused because joining closed
+  during the build check is told why, and the refusal is written outside the lock every broadcast takes.
+- **New here:** joining closes as the first tick starts, before anything of it is sent. It closed after tick 1's
+  events went out, so a guest admitted in between had the tick-0 save and never got tick 1 (the fork's reviewer
+  noted it; neither had fixed it).
+- The unused file-replay classes are gone (`RecordToFileService`, `FileWriteIO`, `FileReadIO`; fork #42). Tests: the
+  status-traffic check waits for the init event and the two ping sessions run one after the other (fork #40, both
+  flaky on a runner); CI pins the .NET 8 SDK and restores from nuget.org.
+- Not ported: the fork's identity, version and site changes; its end-to-end planting check (MultiColony's planting
+  code is the fork's, and its own checks cover the colony parts). History: the fork's `main` at `3a2cc2f` is recorded
+  as merged (an ours-merge, as for 1.1.11).
+- Checks: StabilityTests 347 (25 new), RuntimeChecks 278 (8 new). Not played.
+
 ## 1.4.0-beta9
 
 **The four things beta8 left.**

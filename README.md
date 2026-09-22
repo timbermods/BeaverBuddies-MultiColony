@@ -18,7 +18,7 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > ([how](#troubleshooting-and-reporting-problems)).
 
 MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
-(1.1.11), which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything
+(1.1.12, and the change after it that runs the mod's recording patches first), which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything
 those do still works: Steam invites, the connection panel and chat, pings, player cursors, and ordinary
 shared-colony co-op, which plays as in the Stability Fork (see [One shared colony](#one-shared-colony)).
 
@@ -266,9 +266,18 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   game at the first such action, with a message naming the mod; the host and the other players play on. An action a
   guest sends that the host cannot read is refused, and the guest's other actions of that moment still happen. This mod's own files are checked, not warned
   about: a different zip, or a missing or edited `Buildings` or `TemplateCollections` folder, is refused at the join.
-- **Desyncs** can still happen. In a separate-colonies game, colony state (owners, marks, science, exchanges, land)
-  is compared with the host's every tick, and in full once a day, so one is caught when it happens. The host uses
-  **Save and Rehost**.
+- **Desyncs** can still happen. Every tick each guest compares all of the host's random-number state with its own
+  (it used to be one word of four), and which entities tick and where every walking character stands: a random
+  state that differs stops the game, an entity or walker difference is written to the log once (`Entity mismatch`,
+  `Walker mismatch`) so a later desync says when the games first differed. In a separate-colonies game, colony state
+  (owners, marks, science, exchanges, land) is compared with the host's every tick too, and in full once a day, so
+  one is caught when it happens. The host uses **Save and Rehost**, then guests choose **Reconnect (wait for
+  Rehost)**, which joins the way they joined: a direct-IP guest redials the address it used, and a Steam guest joins
+  the host's new Steam lobby when Steam shows it (the host has **Allow Friends to Join Directly via Steam** on);
+  otherwise a Steam guest accepts a fresh invite.
+- **Direct connections send at once:** Nagle's algorithm is off on every direct (IP) socket, and only the save sent to
+  a joining player is paced (the host's game thread used to pause about 31 ms for every 32 KB of a large tick's
+  events beyond the first).
 
 ## Troubleshooting and reporting problems
 

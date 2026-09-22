@@ -1,3 +1,11 @@
+v1.4.0-beta10 (BeaverBuddies MultiColony)
+* Built on the Stability Fork 1.1.12. Each guest now compares all of the host's random-number state every tick (it was one word of four), and which entities tick and where every walking character stands (a difference there is logged once).
+* Direct (IP) connections send each message at once, and the host's game thread no longer pauses while sending a large tick.
+* After a desync, a guest's Reconnect joins the way it joined: a Steam guest through the host's new lobby, a direct-IP guest to the address it used.
+* Every patch that records a player's action runs before other mods' patches on the same method, so another mod cannot act on one computer only or stop an action from being sent.
+* The period key on a computer waiting for the others pauses everyone; after a failed multiplayer action it no longer ticks the game.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta9 (BeaverBuddies MultiColony)
 * A guest that gets an action it cannot read (from a mod only the host has) now leaves the game on its own, with a message saying nothing was played and how to join again. The host and the other players play on; before, everyone was stopped and told to reload a save.
 * The host refuses only the action of a guest it cannot read, not everything else that guest did in the same moment.
@@ -82,9 +90,10 @@ v1.4.0-alpha1 to alpha9
 * Exchanges between colonies, the colonies window (Ctrl+T), land outlines (Ctrl+L), a diagnostics report (Ctrl+Shift+J).
 * A guest sees its own actions sooner, with its click marked until the host answers and refusals explained.
 
-v1.1.10 and v1.1.11 (BeaverBuddies Stability Fork, which MultiColony is built on)
+v1.1.10 to v1.1.12 (BeaverBuddies Stability Fork, which MultiColony is built on)
 * Steam friend invites over Valve's current networking API, a connection panel with chat, player cursors and selections, and fixes for water, animation, random-number, saving, demolition and input desyncs and crashes.
 * 1.1.11 (in MultiColony since 1.4.0-beta4): every player gets a colour of their own until they choose one, and only the name is coloured in the chat.
+* 1.1.12 (in MultiColony since 1.4.0-beta10): the fuller desync check, direct connections sending at once, the desync dialog's reconnect; its other fixes came from MultiColony.
 
 v1.1.0-1.0.1
 * Fixed a build bug where Steam options were not included

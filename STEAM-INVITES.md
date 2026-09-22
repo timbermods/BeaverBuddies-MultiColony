@@ -133,7 +133,9 @@ Steam's numeric end reason and debug text, which is what makes a failure diagnos
 
 - Both players must be online in Steam, and the friend must own Timberborn.
 - Joining after **Start Game**, or after the host changed anything while waiting paused, is not possible.
-  After a desync, the host uses **Save and rehost** and Steam guests accept a fresh invite; in MultiColony a
+  After a desync, the host uses **Save and rehost**. A Steam guest's **Reconnect (wait for Rehost)** joins the
+  host's new lobby when Steam shows it (the host has **Allow Friends to Join Directly via Steam** on); otherwise the
+  guest is told to accept a fresh invite. In MultiColony a
   guest whose colony state differs from the host's stops the tick it happens (since 1.4.0-alpha13), so the
   rehost may come sooner than the game's random-state check alone would have asked for.
 - The **Invite Friends** button does nothing for the first moment after hosting starts,

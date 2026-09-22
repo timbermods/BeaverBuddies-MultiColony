@@ -72,7 +72,7 @@ RuntimeChecks also checks the order of the mod's prefixes against other mods'. A
 method runs last (`Priority.Last`). A prefix that records a player's action runs first (`Priority.First`): one that
 ran before it would act at the click on one computer only, and one that skipped the method would stop the action
 being sent. The check finds the recording prefixes in the compiled mod's code (the prefix, or a helper or lambda it
-uses, calls `ReplayEvent.DoPrefix`, `DoEntityPrefix` or `ReplayService.RecordEvent`; 64 in 1.4.0-beta8, the
+uses, calls `ReplayEvent.DoPrefix`, `DoEntityPrefix` or `ReplayService.RecordEvent`; 65 in 1.4.0-beta10, the
 automation settings' hand-made patch among them), reads the priority Harmony gives each, and fails if one does not
 run first, or if it finds fewer than 60. It also fails when another patch of the mod is on a method a recording
 prefix patches.

@@ -203,11 +203,11 @@
         <summary>A desync: "A connected player desynced and cannot continue playing"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>The players' games have drifted apart. Every copy of the game must make exactly the same decisions, and something made one of them differ. Known causes are removed, but none of that is a promise. In MultiColony the log says which check caught it: <code>Random state mismatch</code> (the game's random state at an action) or <code>Colony state differs</code> (the colony check, every tick or daily, in a separate-colonies game; a difference there may be a bug in the check itself, so send both players' logs).</p>
+          <p>The players' games have drifted apart. Every copy of the game must make exactly the same decisions, and something made one of them differ. Known causes are removed, but none of that is a promise. In MultiColony the log says which check caught it: <code>Random state mismatch</code> (the game's random state at an action, all of it since 1.4.0-beta10) or <code>Colony state differs</code> (the colony check, every tick or daily, in a separate-colonies game; a difference there may be a bug in the check itself, so send both players' logs). An earlier <code>Entity mismatch</code> or <code>Walker mismatch</code> line, which does not stop the game by itself, says when the two games first differed.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>The host chooses <b>Save and Rehost</b>.</li>
-            <li>Steam guests accept a fresh invite; direct IP guests reconnect.</li>
+            <li>Guests choose <b>Reconnect (wait for Rehost)</b>: a direct IP guest redials the address it used, and a Steam guest joins the host's new lobby when Steam shows it (otherwise it accepts a fresh invite).</li>
             <li>You may need to restart the game if problems persist.</li>
           </ol>
           <p class="sub">Things that cause it</p>
