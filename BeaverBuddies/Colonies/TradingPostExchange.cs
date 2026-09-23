@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using Timberborn.BaseComponentSystem;
 using Timberborn.Beavers;
+using Timberborn.BlockingSystem;
 using Timberborn.Carrying;
 using Timberborn.DistributionSystem;
 using Timberborn.EntityNaming;
@@ -20,46 +21,12 @@ using Timberborn.Persistence;
 using Timberborn.ResourceCountingSystem;
 using Timberborn.SingletonSystem;
 using Timberborn.TickSystem;
+using Timberborn.WorkSystem;
 using Timberborn.WorldPersistence;
 
 namespace BeaverBuddies.Colonies
 {
     public enum ExchangeState { None = 0, Proposed = 1, Active = 2 }
-
-    /// <summary>One round of an exchange that crossed a Trading Post, seen from one half: what its colony gave and got.</summary>
-    public readonly struct TradeRecord
-    {
-        public readonly int Cycle, Day;
-        public readonly string Gave, Got;
-        public readonly int GaveAmount, GotAmount;
-
-        public TradeRecord(int cycle, int day, string gave, int gaveAmount, string got, int gotAmount)
-        {
-            Cycle = cycle;
-            Day = day;
-            Gave = gaveAmount > 0 ? gave : null;
-            GaveAmount = Math.Max(0, gaveAmount);
-            Got = gotAmount > 0 ? got : null;
-            GotAmount = Math.Max(0, gotAmount);
-        }
-
-        public string Encode() => string.Join("|", Cycle.ToString(CultureInfo.InvariantCulture), Day.ToString(CultureInfo.InvariantCulture),
-            Gave ?? "", GaveAmount.ToString(CultureInfo.InvariantCulture), Got ?? "", GotAmount.ToString(CultureInfo.InvariantCulture));
-
-        public static bool TryDecode(string text, out TradeRecord record)
-        {
-            record = default;
-            string[] parts = (text ?? "").Split('|');
-            if (parts.Length != 6
-                || !int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int cycle)
-                || !int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int day)
-                || !int.TryParse(parts[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out int gave)
-                || !int.TryParse(parts[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out int got))
-                return false;
-            record = new TradeRecord(cycle, day, parts[2], gave, parts[4], got);
-            return true;
-        }
-    }
 
     /// <summary>
     /// One side of an exchange at a Trading Post, saved with its half: the item this half's colony gives each round and
@@ -67,7 +34,7 @@ namespace BeaverBuddies.Colonies
     /// ledger of rounds that crossed. The partner half holds the other side. Both sides are set, and cleared, together,
     /// by the same action or tick on every computer.
     /// </summary>
-    public class CrossingExchange : BaseComponent, IAwakableComponent, IPersistentEntity, IPostInitializableEntity
+    public class CrossingExchange : BaseComponent, IAwakableComponent, IPersistentEntity, IPostInitializableEntity, IDeletableEntity
     {
         /// <summary>How many crossed rounds a half remembers.</summary>
         public const int LedgerLength = 20;
@@ -298,6 +265,18 @@ namespace BeaverBuddies.Colonies
             }
             if (held > 0) inventory.ReserveStock(new GoodAmount(GoodId, held));
         }
+
+        /// <summary>
+        /// The Trading Post is being removed with an exchange open (a player's deletion, a blast, the ground taken from
+        /// under it): both halves go at once, and what waited on them is left as recovered goods where they stood (the
+        /// game's own, which reads the halves' stock after this). The offering half says so, once for the post (C5).
+        /// </summary>
+        public void DeleteEntity()
+        {
+            if (!ColonyModeService.IsSeparateColonies || !IsOpen || !ProposedHere) return;
+            ColonyExchangeService exchanges = ColonyExchangeService.Instance;
+            exchanges?.OnPostRemoved(GetComponent<DistrictCrossing>(), this);
+        }
     }
 
     /// <summary>
@@ -322,7 +301,15 @@ namespace BeaverBuddies.Colonies
         private readonly GameCycleService _gameCycleService;
         private readonly MigrationService _migrationService;
         private readonly ResourceCountingService _resourceCountingService;
+        private readonly DistrictCenterRegistry _districtCenterRegistry;
         private int ticks;
+        // The crossings checked this time (kept, so the check allocates no list; the registry's order, the same on
+        // every computer), and the adults counted or moved (the game's main thread only).
+        private readonly List<DistrictCrossing> halves = new List<DistrictCrossing>();
+        private readonly List<Beaver> movable = new List<Beaver>();
+        // The daily trade check: the day last checked, and the totals then (for the detailed log's "crossed today").
+        private int checkedDay = int.MinValue;
+        private TradeTotals totalsAtDayStart;
         /// <summary>Diagnostics: the crossing phase (not saved; the same on every computer that loaded together).</summary>
         public int Ticks => ticks;
 
@@ -333,7 +320,7 @@ namespace BeaverBuddies.Colonies
 
         public ColonyExchangeService(IGoodService goodService, ColonyRulesService colonyRulesService,
             EntityComponentRegistry entityComponentRegistry, NotificationBus notificationBus, GameCycleService gameCycleService,
-            MigrationService migrationService, ResourceCountingService resourceCountingService)
+            MigrationService migrationService, ResourceCountingService resourceCountingService, DistrictCenterRegistry districtCenterRegistry)
         {
             _goodService = goodService;
             _colonyRulesService = colonyRulesService;
@@ -342,6 +329,7 @@ namespace BeaverBuddies.Colonies
             _gameCycleService = gameCycleService;
             _migrationService = migrationService;
             _resourceCountingService = resourceCountingService;
+            _districtCenterRegistry = districtCenterRegistry;
         }
 
         // Loadable only so the game builds it at load: it is found through SingletonManager, not injected.
@@ -407,6 +395,42 @@ namespace BeaverBuddies.Colonies
         public bool IsHeldByFloor(DistrictCrossing half, CrossingExchange side) =>
             side.Total > 0 && side.Keep > 0 && !IsIn(half, side) && !ExchangeTerms.CanSpare(HaveOf(half, side), side.Total, side.Keep);
 
+        /// <summary>
+        /// Display and the diagnostics report: why a side giving goods is not in yet (T5: a stall says why). Reads the
+        /// half as it is; changes nothing.
+        /// </summary>
+        public ExchangeTerms.GoodsWait WhyWaiting(DistrictCrossing half, CrossingExchange side)
+        {
+            DistrictCrossingInventory crossingInventory = half ? half.GetComponent<DistrictCrossingInventory>() : null;
+            Inventory inventory = crossingInventory?.Inventory;
+            if (inventory == null || !side.GivesGoods) return ExchangeTerms.GoodsWait.Bringing;
+            bool blocked = !(half.GetComponent<BlockableObject>()?.IsUnblocked ?? true);
+            int workers = half.GetComponent<Workplace>()?.NumberOfAssignedWorkers ?? 0;
+            int onTheWay = TradingPosts.Partner(half) ? crossingInventory.IncomingStock(side.GoodId) : 0;
+            int room = inventory.UnreservedCapacity(side.GoodId);
+            int elsewhere = StockOf(half, side.GoodId) - inventory.AmountInStock(side.GoodId);
+            return ExchangeTerms.WhyGoodsWait(blocked, workers, onTheWay, room, elsewhere);
+        }
+
+        /// <summary>The diagnostics report: why a side of a running exchange is not in, in a few words, or "" when it is.</summary>
+        public string WhyNotIn(DistrictCrossing half, CrossingExchange side)
+        {
+            if (side.Total <= 0 || side.GoodId == null || IsIn(half, side)) return "";
+            if (side.GoodId == ExchangeTerms.Science) return $"has {ScienceToSpare(OwnerOf(half))} of {side.Total} science";
+            if (side.GoodId == ExchangeTerms.Beavers)
+                return $"can spare {BeaversToSpare(half)} of {side.Total} beavers (free to go: carrying nothing, able to walk there)";
+            string held = $"{side.Held} of {side.Total} delivered";
+            if (IsHeldByFloor(half, side)) return $"keeps {side.Keep} back; {held}";
+            switch (WhyWaiting(half, side))
+            {
+                case ExchangeTerms.GoodsWait.Blocked: return "its half is paused or flooded; " + held;
+                case ExchangeTerms.GoodsWait.NoWorkers: return "no workers on its half; " + held;
+                case ExchangeTerms.GoodsWait.NoRoom: return "no room on its half (the other colony's goods are not being hauled away); " + held;
+                case ExchangeTerms.GoodsWait.NoStock: return "none left in its district; " + held;
+                default: return held;
+            }
+        }
+
         /// <summary>The good this half's workers bring in a running exchange, or null.</summary>
         public static string GoodGiven(DistrictCrossing half)
         {
@@ -435,70 +459,114 @@ namespace BeaverBuddies.Colonies
 
         public void Tick()
         {
-            if (!ColonyModeService.IsSeparateColonies || ++ticks % CrossingInterval != 0) return;
-            long started = ColonyProfiler.Start();
-            try
+            if (!ColonyModeService.IsSeparateColonies) return;
+            if (++ticks % CrossingInterval == 0)
             {
-                CheckTradingPosts();
+                long started = ColonyProfiler.Start();
+                try
+                {
+                    CheckTradingPosts();
+                }
+                finally
+                {
+                    ColonyProfiler.Stop(Exchanges, started);
+                }
             }
-            finally
-            {
-                ColonyProfiler.Stop(Exchanges, started);
-            }
+            int day = _gameCycleService.Cycle * 1000 + _gameCycleService.CycleDay;
+            if (day == checkedDay) return;
+            bool first = checkedDay == int.MinValue;
+            checkedDay = day;
+            if (first) totalsAtDayStart = ColonyTradeLedger.Instance?.Totals.Copy();
+            else DailyCheck();
         }
 
         private void CheckTradingPosts()
         {
             // The registry's order is the same on every computer; each post is checked once, from its offering half.
-            foreach (DistrictCrossing half in _entityComponentRegistry.GetEnabled<DistrictCrossing>().ToList())
+            halves.Clear();
+            foreach (DistrictCrossing crossing in _entityComponentRegistry.GetEnabled<DistrictCrossing>()) halves.Add(crossing);
+            for (int i = 0; i < halves.Count; i++)
             {
+                DistrictCrossing half = halves[i];
                 CrossingExchange mine = Of(half);
                 if (mine == null || !mine.IsOpen) continue;
                 DistrictCrossing partner = TradingPosts.Partner(half);
                 CrossingExchange theirs = Of(partner);
-                if (theirs == null || !theirs.IsOpen)
+                bool partnerOpen = theirs != null && theirs.IsOpen;
+                // The other half speaks for the post (ExchangeTerms.Ending: NotThisHalf); nothing to work out here.
+                if (partnerOpen && !mine.ProposedHere) continue;
+                int owner = OwnerOf(half), partnerOwner = OwnerOf(partner);
+                bool trading = partnerOpen && TradingPosts.IsTradingPost(half);
+                // A mixed-factions game: terms the factions no longer allow (a colony founded again as another faction),
+                // judged only while the post trades (C1).
+                bool factionsAllow = !trading || FactionsAllow(owner, partnerOwner, mine.Total > 0 ? mine.GoodId : null,
+                    theirs.Total > 0 ? theirs.GoodId : null);
+                switch (ExchangeTerms.Ending(partnerOpen, mine.ProposedHere, mine.Colony, owner, theirs?.Colony ?? -1, partnerOwner,
+                    trading, factionsAllow))
                 {
-                    // One half cannot hold an exchange alone (only a damaged or older save leaves one so).
-                    End(half, partner, "the other half has no exchange");
-                    continue;
+                    case ExchangeTerms.PostCheck.EndAlone:
+                        // One half cannot hold an exchange alone (only a damaged or older save leaves one so).
+                        End(half, partner, "the other half has no exchange");
+                        continue;
+                    case ExchangeTerms.PostCheck.EndColonies:
+                    {
+                        int a = mine.Colony, b = theirs.Colony;
+                        End(half, partner, $"the halves now belong to slots {owner} and {partnerOwner}");
+                        Tell(() => a, () => b, () => T("BeaverBuddies.Colony.Trade.Notice.Void"), warning: true);
+                        continue;
+                    }
+                    case ExchangeTerms.PostCheck.EndFactions:
+                    {
+                        int a = mine.Colony, b = theirs.Colony;
+                        End(half, partner, "the factions no longer allow its terms");
+                        Tell(() => a, () => b, () => T("BeaverBuddies.Colony.Trade.Notice.VoidFaction"), warning: true);
+                        continue;
+                    }
+                    case ExchangeTerms.PostCheck.GoesOn:
+                        break;
+                    default:
+                        continue;
                 }
-                if (!mine.ProposedHere) continue;
-                if (ColoniesChanged(half, mine) || ColoniesChanged(partner, theirs))
-                {
-                    int a = mine.Colony, b = theirs.Colony;
-                    End(half, partner, $"the halves now belong to slots {OwnerOf(half)} and {OwnerOf(partner)}");
-                    Tell(() => a, () => b, () => T("BeaverBuddies.Colony.Trade.Notice.Void"), warning: true);
-                    continue;
-                }
-                // A mixed-factions game: terms the factions no longer allow (a colony founded again as another faction).
-                if (!FactionsAllow(OwnerOf(half), OwnerOf(partner), mine.Total > 0 ? mine.GoodId : null, theirs.Total > 0 ? theirs.GoodId : null))
-                {
-                    int a = mine.Colony, b = theirs.Colony;
-                    End(half, partner, "the factions no longer allow its terms");
-                    Tell(() => a, () => b, () => T("BeaverBuddies.Colony.Trade.Notice.VoidFaction"), warning: true);
-                    continue;
-                }
-                if (!mine.IsActive || !TradingPosts.IsTradingPost(half) || mine.CancelAsked || theirs.CancelAsked) continue;
-                if (IsIn(half, mine) && IsIn(partner, theirs)) Cross(half, partner);
+                if (!ExchangeTerms.RoundMayCross(mine.IsActive, trading, mine.CancelAsked || theirs.CancelAsked)) continue;
+                // What already waits on a giving half counts toward its round (C4), before the sides are judged.
+                HoldWaiting(half, mine);
+                HoldWaiting(partner, theirs);
+                if (IsIn(half, mine, owner) && IsIn(partner, theirs, partnerOwner)) Cross(half, partner, owner, partnerOwner);
             }
+            halves.Clear();
         }
 
-        /// <summary>The half belongs to another colony than when the exchange was offered (a handover, other roads).</summary>
-        private static bool ColoniesChanged(DistrictCrossing half, CrossingExchange side)
+        /// <summary>
+        /// Goods of the round's item already waiting unreserved on the giving half are held for the round now, as an
+        /// arriving load is (ExchangeTerms.ToHoldWaiting): what an ended exchange left there, what was left over from a
+        /// load, what arrived while the post was paused, or what the other colony sent earlier. Workers otherwise only
+        /// ever hold what they bring, so goods filling the half's room were never held, and the round never filled (C4).
+        /// </summary>
+        private void HoldWaiting(DistrictCrossing half, CrossingExchange side)
         {
-            int owner = OwnerOf(half);
-            return owner >= 0 && side.Colony >= 0 && owner != side.Colony;
+            if (!side.GivesGoods || side.Held >= side.Total) return;
+            Inventory inventory = half.GetComponent<DistrictCrossingInventory>()?.Inventory;
+            if (inventory == null) return;
+            int waiting = inventory.UnreservedAmountInStock(side.GoodId);
+            if (waiting <= 0) return;
+            int have = side.Keep > 0 ? StockOf(half, side.GoodId) : 0;
+            int held = Math.Min(ExchangeTerms.ToHoldWaiting(side.Total, side.Held, waiting, have, side.Keep), waiting);
+            if (held <= 0) return;
+            inventory.ReserveStock(new GoodAmount(side.GoodId, held));
+            side.Hold(held);
         }
 
         /// <summary>
         /// A side is in when all its goods wait on its half; a side of science or beavers when its colony can pay it now.
         /// A side giving nothing always is.
         /// </summary>
-        public bool IsIn(DistrictCrossing half, CrossingExchange side)
+        public bool IsIn(DistrictCrossing half, CrossingExchange side) => IsIn(half, side, OwnerOf(half));
+
+        private bool IsIn(DistrictCrossing half, CrossingExchange side, int owner)
         {
             if (side.Total <= 0) return true;
             // Science and beavers are paid as the round crosses: a reserve holds the payment back.
-            if (side.GoodId == ExchangeTerms.Science) return ExchangeTerms.CanSpare(ScienceToSpare(OwnerOf(half)), side.Total, side.Keep);
+            if (side.GoodId == ExchangeTerms.Science) return ExchangeTerms.CanSpare(ScienceToSpare(owner), side.Total, side.Keep);
             if (side.GoodId == ExchangeTerms.Beavers) return ExchangeTerms.CanSpare(BeaversToSpare(half), side.Total, side.Keep);
             return ExchangeTerms.IsDelivered(side.Total, side.Held);
         }
@@ -511,16 +579,46 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>
-        /// How many adults the half's district can give now (the last adult always stays). In a mixed-factions game only
+        /// How many adults the half's district can give now (the last adult always stays): exactly those a crossing round
+        /// moves (Movable), so a round that is in moves all it agreed to (C2: beavers carrying something, or unable to walk
+        /// to the other district, were counted but not moved, and the round crossed short). In a mixed-factions game only
         /// beavers of the other colony's faction count: no other may join it (D20).
         /// </summary>
         public int BeaversToSpare(DistrictCrossing half)
         {
             DistrictPopulation population = TradingPosts.DistrictOf(half)?.DistrictPopulation;
             if (population == null) return 0;
-            int target = OwnerOf(TradingPosts.Partner(half));
-            return ExchangeTerms.BeaversToSpare(population.NumberOfAdults, population.Adults
-                .Count(beaver => _migrationService.IsNotContaminated(beaver) && BeaverBuddies.Factions.FactionTrade.BeaverMayJoin(beaver, target)));
+            Movable(half, movable);
+            int spare = ExchangeTerms.BeaversToSpare(population.NumberOfAdults, movable.Count);
+            movable.Clear();
+            return spare;
+        }
+
+        /// <summary>
+        /// The adults of the half's district who could move to the other half's district now, in the district's order:
+        /// not contaminated; of the receiving colony's faction (a mixed game, D20); carrying nothing (what a beaver
+        /// carries would cross uncounted); and able to walk to the new district (the game reassigns one who cannot to
+        /// the nearest district of any colony, possibly its old one).
+        /// </summary>
+        private void Movable(DistrictCrossing half, List<Beaver> into)
+        {
+            into.Clear();
+            DistrictCenter source = TradingPosts.DistrictOf(half);
+            DistrictCrossing partner = TradingPosts.Partner(half);
+            DistrictCenter target = TradingPosts.DistrictOf(partner);
+            if (!source || !target) return;
+            int targetSlot = OwnerOf(partner);
+            var adults = source.DistrictPopulation.Adults;
+            for (int i = 0; i < adults.Count; i++)
+            {
+                Beaver beaver = adults[i];
+                if (beaver.GetComponent<GoodCarrier>()?.IsCarrying ?? false) continue;
+                if (!_migrationService.IsNotContaminated(beaver)) continue;
+                if (!BeaverBuddies.Factions.FactionTrade.BeaverMayJoin(beaver, targetSlot)) continue;
+                Citizen citizen = beaver.GetComponent<Citizen>();
+                if (citizen == null || !target.IsGloballyReachableFromCitizen(citizen)) continue;
+                into.Add(beaver);
+            }
         }
 
         /// <summary>
@@ -535,10 +633,9 @@ namespace BeaverBuddies.Colonies
         public const string FactionsRefuse = "the factions do not allow these terms";
 
         /// <summary>Both sides are in: everything crosses at once, the ledgers note the round, and the next begins (or it ends).</summary>
-        private void Cross(DistrictCrossing a, DistrictCrossing b)
+        private void Cross(DistrictCrossing a, DistrictCrossing b, int aSlot, int bSlot)
         {
             CrossingExchange ax = Of(a), bx = Of(b);
-            int aSlot = OwnerOf(a), bSlot = OwnerOf(b);
             // The state is settled first; the moves below cannot fail the round once they start.
             string aGood = ax.GoodId, bGood = bx.GoodId;
             int aTotal = ax.Total, bTotal = bx.Total, aHeld = ax.Held, bHeld = bx.Held;
@@ -554,8 +651,9 @@ namespace BeaverBuddies.Colonies
             {
                 Crossing = false;
             }
-            MoveSpecial(a, b, aSlot, bSlot, aGood, aTotal);
-            MoveSpecial(b, a, bSlot, aSlot, bGood, bTotal);
+            // What actually moved goes in the ledgers (a round that is in moves all of it; see BeaversToSpare).
+            aTotal = MoveSpecial(a, b, aSlot, bSlot, aGood, aTotal);
+            bTotal = MoveSpecial(b, a, bSlot, aSlot, bGood, bTotal);
             ColonyTradeLedger totals = ColonyTradeLedger.Instance;
             if (aTotal > 0) totals?.Record(aSlot, bSlot, aGood, aTotal);
             if (bTotal > 0) totals?.Record(bSlot, aSlot, bGood, bTotal);
@@ -584,41 +682,42 @@ namespace BeaverBuddies.Colonies
             crossingInventory.TransferStock(goodId, held);
         }
 
-        private void MoveSpecial(DistrictCrossing from, DistrictCrossing to, int fromSlot, int toSlot, string item, int amount)
+        /// <summary>Science or beavers pass as the round crosses; returns how much did (goods, already moved, pass as agreed).</summary>
+        private int MoveSpecial(DistrictCrossing from, DistrictCrossing to, int fromSlot, int toSlot, string item, int amount)
         {
-            if (amount <= 0) return;
+            if (amount <= 0) return amount;
             if (item == ExchangeTerms.Science)
             {
                 ColonyScienceService science = ColonyScienceService.Instance;
-                if (science == null || !science.Enabled || fromSlot < 0 || toSlot < 0) return;
+                if (science == null || !science.Enabled || fromSlot < 0 || toSlot < 0) return 0;
                 science.Subtract(fromSlot, amount);
                 science.Add(toSlot, amount);
             }
             else if (item == ExchangeTerms.Beavers)
             {
-                MoveBeavers(from, to, fromSlot, amount);
+                return MoveBeavers(from, to, fromSlot, amount);
             }
+            return amount;
         }
 
         /// <summary>
-        /// Adults move to the receiving half's district, chosen as the game chooses who migrates (not contaminated; those
-        /// who work, and those with a home, last; the youngest first). Each one's arrival goes in the population log.
+        /// Adults move to the receiving half's district, chosen from those able to move (Movable, as BeaversToSpare counts
+        /// them) as the game chooses who migrates (those who work, and those with a home, last; the youngest first).
+        /// Each one's arrival goes in the population log. Returns how many moved.
         /// </summary>
-        private void MoveBeavers(DistrictCrossing from, DistrictCrossing to, int fromSlot, int amount)
+        private int MoveBeavers(DistrictCrossing from, DistrictCrossing to, int fromSlot, int amount)
         {
             DistrictCenter source = TradingPosts.DistrictOf(from), target = TradingPosts.DistrictOf(to);
-            if (!source || !target) return;
-            // Only a beaver who can walk to the new district (the game reassigns one who cannot to the nearest district
-            // of any colony, possibly its old one) and carries nothing (what it carries would cross uncounted).
-            // A mixed-factions game: only beavers of the receiving colony's faction (D20).
-            int targetSlot = OwnerOf(to);
-            List<Beaver> movers = source.DistrictPopulation.Adults.Where(_migrationService.IsNotContaminated)
-                .Where(beaver => BeaverBuddies.Factions.FactionTrade.BeaverMayJoin(beaver, targetSlot))
-                .Where(beaver => target.IsGloballyReachableFromCitizen(beaver.GetComponent<Citizen>()))
-                .Where(beaver => !(beaver.GetComponent<GoodCarrier>()?.IsCarrying ?? false))
+            if (!source || !target) return 0;
+            Movable(from, movable);
+            int count = Math.Min(amount, ExchangeTerms.BeaversToSpare(source.DistrictPopulation.NumberOfAdults, movable.Count));
+            List<Beaver> movers = movable
                 .OrderBy(_migrationService.RefusesWork).ThenBy(_migrationService.IsEmployed).ThenBy(_migrationService.HasHome)
                 .ThenByDescending(_migrationService.GetDayOfBirth)
-                .Take(Math.Min(amount, BeaversToSpare(from))).ToList();
+                .Take(count).ToList();
+            movable.Clear();
+            if (movers.Count < amount)
+                Plugin.LogWarning($"[Colony] Only {movers.Count} of {amount} beavers could move from slot {fromSlot} (the round was judged in)");
             string colony = ColonyName(fromSlot);
             ColonyDigest.Note("beavers", fromSlot, movers.Count, target.GetComponent<EntityComponent>()?.EntityId.GetHashCode() ?? 0);
             foreach (Beaver beaver in movers)
@@ -627,6 +726,7 @@ namespace BeaverBuddies.Colonies
                 string name = beaver.GetComponent<NamedEntity>()?.EntityName ?? "";
                 _notificationBus.Post(string.Format(T("BeaverBuddies.Colony.Trade.Notification.Joined"), name, colony), beaver);
             }
+            return movers.Count;
         }
 
         // ---- the actions, played on every computer (only saved state is read) ----
@@ -829,6 +929,129 @@ namespace BeaverBuddies.Colonies
                 if (reserved > 0) inventory.UnreserveStock(new GoodAmount(side.GoodId, reserved));
             }
             side.Clear();
+        }
+
+        /// <summary>
+        /// A Trading Post with an open exchange is being removed (CrossingExchange.DeleteEntity, on its offering half): it
+        /// ends with the post. What waited on each half is left as recovered goods where it stood, as the game leaves any
+        /// building's stock, for whichever colony's workers reach it first. Played on every computer as the deletion is;
+        /// it only logs what was waiting and tells the two colonies (C5).
+        /// </summary>
+        internal void OnPostRemoved(DistrictCrossing half, CrossingExchange side)
+        {
+            CrossingExchange other = Of(TradingPosts.Partner(half));
+            int a = side.Colony, b = other?.Colony ?? -1;
+            Plugin.Log($"[Colony] Exchange {side.Serial} ended with its Trading Post, which was removed: {side.Held}/{side.Total} {side.GoodId} "
+                + $"and {other?.Held ?? 0}/{other?.Total ?? 0} {other?.GoodId} were waiting (left as recovered goods)");
+            Tell(() => a, () => b, () => T("BeaverBuddies.Colony.Trade.Notice.PostRemoved"), warning: true);
+        }
+
+        // ---- once a day (every computer): the trade's own check, and with detailed logging its line (T3) ----
+
+        private static readonly ColonyProfiler.Spot DailyTrade = ColonyProfiler.Declare("Trading post daily check");
+
+        /// <summary>
+        /// Once a day, cheap (every crossing half once): that the goods each running exchange holds are on its half and
+        /// reserved there, and that no post holds more of a good on its two halves than its room. A broken one is a bug:
+        /// it is logged as a warning (the game would throw when such a round crossed). With detailed logging on, a line
+        /// adds up the trade: exchanges, goods held and waiting to be hauled away, what crossed since yesterday, and each
+        /// colony's stock of those goods. It reads the simulation and changes nothing, so it is the same on every
+        /// computer that agrees.
+        /// </summary>
+        private void DailyCheck()
+        {
+            long started = ColonyProfiler.Start();
+            try
+            {
+                int postHalves = 0, running = 0, offered = 0, problems = 0;
+                var held = new SortedDictionary<string, int>(StringComparer.Ordinal);
+                var waiting = new SortedDictionary<string, int>(StringComparer.Ordinal);
+                foreach (DistrictCrossing half in _entityComponentRegistry.GetEnabled<DistrictCrossing>())
+                {
+                    CrossingExchange side = Of(half);
+                    Inventory inventory = half.GetComponent<DistrictCrossingInventory>()?.Inventory;
+                    if (side == null || !side.AtTradingPost || inventory == null) continue;
+                    DistrictCrossing partner = TradingPosts.Partner(half);
+                    Inventory partnerInventory = partner ? partner.GetComponent<DistrictCrossingInventory>()?.Inventory : null;
+                    postHalves++;
+                    if (side.ProposedHere && side.IsActive) running++;
+                    if (side.ProposedHere && side.State == ExchangeState.Proposed) offered++;
+                    int heldHere = side.IsActive && side.GivesGoods ? side.Held : 0;
+                    if (heldHere > 0 && (inventory.AmountInStock(side.GoodId) < heldHere || inventory._reservedStock.Amount(side.GoodId) < heldHere))
+                    {
+                        problems++;
+                        Plugin.LogWarning($"[Colony] Trade check: exchange {side.Serial} holds {heldHere} {side.GoodId} on slot {OwnerOf(half)}'s half, "
+                            + $"which has {inventory.AmountInStock(side.GoodId)} ({inventory._reservedStock.Amount(side.GoodId)} reserved)");
+                    }
+                    var stock = inventory.Stock;
+                    for (int i = 0; i < stock.Count; i++)
+                    {
+                        string good = stock[i].GoodId;
+                        int amount = stock[i].Amount;
+                        int ours = good == side.GoodId ? heldHere : 0;
+                        if (ours > 0) Add(held, good, Math.Min(ours, amount));
+                        if (amount > ours) Add(waiting, good, amount - ours);
+                        // Each pair once: from the half whose partner has the higher id.
+                        int theirs = partnerInventory?.AmountInStock(good) ?? 0;
+                        if (amount + theirs > ExchangeTerms.MaxAmount && string.CompareOrdinal(Id(half), Id(partner)) < 0)
+                        {
+                            problems++;
+                            Plugin.LogWarning($"[Colony] Trade check: a Trading Post's halves hold {amount} and {theirs} {good}, more than its room of {ExchangeTerms.MaxAmount}");
+                        }
+                    }
+                }
+                TradeTotals totals = ColonyTradeLedger.Instance?.Totals;
+                if (Settings.Debug)
+                {
+                    var crossed = totals?.Since(totalsAtDayStart) ?? new List<(int, int, string, int)>();
+                    string stockOfCrossed = string.Join(", ", crossed.Select(c => c.Item3).Distinct().OrderBy(g => g, StringComparer.Ordinal)
+                        .Select(good => good + " " + string.Join(" ", Enumerable.Range(0, ColonySlotTable.MaxSlots)
+                            .Where(slot => OwnsDistrict(slot)).Select(slot => $"{slot}:{ColonyStockOf(slot, good)}"))));
+                    Plugin.Log($"[Colony] Day {_gameCycleService.Cycle}-{_gameCycleService.CycleDay} trade: {postHalves / 2} posts, {running} exchanges running, "
+                        + $"{offered} offered; held {Describe(held)}; waiting to be hauled away {Describe(waiting)}; crossed since yesterday "
+                        + $"{(crossed.Count == 0 ? "nothing" : string.Join(", ", crossed.Select(c => $"{c.Item1}>{c.Item2} {c.Item3} {c.Item4}")))}; "
+                        + $"stock {(stockOfCrossed.Length == 0 ? "-" : stockOfCrossed)}; checks {(problems == 0 ? "ok" : problems + " broken")}");
+                }
+                totalsAtDayStart = totals?.Copy();
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Colony] Trade check failed: " + error.Message);
+            }
+            finally
+            {
+                ColonyProfiler.Stop(DailyTrade, started);
+            }
+        }
+
+        private static void Add(SortedDictionary<string, int> tally, string good, int amount)
+        {
+            tally.TryGetValue(good, out int total);
+            tally[good] = total + amount;
+        }
+
+        private static string Describe(SortedDictionary<string, int> tally) =>
+            tally.Count == 0 ? "nothing" : string.Join(", ", tally.Select(t => $"{t.Key} {t.Value}"));
+
+        private static string Id(DistrictCrossing half) => ReplayEvent.GetEntityID(half) ?? "";
+
+        private bool OwnsDistrict(int slot)
+        {
+            foreach (DistrictCenter districtCenter in _districtCenterRegistry.FinishedDistrictCenters)
+                if (DistrictOwner.OwnerOfDistrict(districtCenter) == slot) return true;
+            return false;
+        }
+
+        private int ColonyStockOf(int slot, string goodId)
+        {
+            if (!_goodService.HasGood(goodId)) return 0;
+            int total = 0;
+            foreach (DistrictCenter districtCenter in _districtCenterRegistry.FinishedDistrictCenters)
+            {
+                if (DistrictOwner.OwnerOfDistrict(districtCenter) != slot) continue;
+                total += _resourceCountingService.GetDistrictResourceCounter(districtCenter).GetResourceCount(goodId).AvailableStock;
+            }
+            return total;
         }
 
         // ---- notices (display only: shown to whichever player the news is for) ----

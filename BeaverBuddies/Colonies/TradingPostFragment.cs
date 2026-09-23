@@ -1274,23 +1274,51 @@ namespace BeaverBuddies.Colonies
                 return string.Format(T("BeaverBuddies.Colony.Trade.StatusYourReserve"), Count(ax.Keep), _items.Name(ax.GoodId));
             if (mineIn && !theirsIn && exchanges != null && exchanges.IsHeldByFloor(TradingPosts.Partner(crossing), bx))
                 return string.Format(T("BeaverBuddies.Colony.Trade.StatusTheirReserve"), partner);
+            DistrictCrossing theirHalf = TradingPosts.Partner(crossing);
             if (!mineIn)
             {
                 if (ax.GoodId == ExchangeTerms.Science)
                     return string.Format(T("BeaverBuddies.Colony.Trade.StatusYourScience"), Count(ax.Total - ColonyExchangeService.ScienceToSpare(me)));
                 if (ax.GoodId == ExchangeTerms.Beavers)
                     return string.Format(T("BeaverBuddies.Colony.Trade.StatusYourBeavers"), Count(ax.Total));
-                if (crossing.GetComponent<Workplace>()?.NumberOfAssignedWorkers == 0) return T("BeaverBuddies.Colony.Trade.StatusNoWorkers");
+                // Why the round waits for this side (T5): each stall says why.
+                switch (exchanges?.WhyWaiting(crossing, ax) ?? ExchangeTerms.GoodsWait.Bringing)
+                {
+                    case ExchangeTerms.GoodsWait.Blocked: return T("BeaverBuddies.Colony.Trade.StatusYourHalfBlocked");
+                    case ExchangeTerms.GoodsWait.NoWorkers: return T("BeaverBuddies.Colony.Trade.StatusNoWorkers");
+                    case ExchangeTerms.GoodsWait.NoRoom:
+                        // The post's room for the good is shared: last round's still waits on their half.
+                        int onTheirs = AmountOn(theirHalf, ax.GoodId);
+                        if (onTheirs > 0) return string.Format(T("BeaverBuddies.Colony.Trade.StatusNoRoom"), partner, _items.Name(ax.GoodId), Count(onTheirs));
+                        break;
+                    case ExchangeTerms.GoodsWait.NoStock: return string.Format(T("BeaverBuddies.Colony.Trade.StatusNoStock"), _items.Name(ax.GoodId));
+                }
                 return string.Format(T("BeaverBuddies.Colony.Trade.StatusYouBring"), Count(ax.Total - ax.Held), _items.Name(ax.GoodId));
             }
             if (!theirsIn)
             {
                 if (ExchangeTerms.IsSpecial(bx.GoodId))
                     return string.Format(T("BeaverBuddies.Colony.Trade.StatusTheirSpecial"), partner, _items.Name(bx.GoodId));
+                switch (exchanges?.WhyWaiting(theirHalf, bx) ?? ExchangeTerms.GoodsWait.Bringing)
+                {
+                    case ExchangeTerms.GoodsWait.Blocked: return string.Format(T("BeaverBuddies.Colony.Trade.StatusTheirHalfBlocked"), partner);
+                    case ExchangeTerms.GoodsWait.NoWorkers: return string.Format(T("BeaverBuddies.Colony.Trade.StatusTheirNoWorkers"), partner);
+                    case ExchangeTerms.GoodsWait.NoRoom:
+                        // What crossed to this half last round fills the post's room for their good: this colony's to haul away.
+                        int onMine = AmountOn(crossing, bx.GoodId);
+                        if (onMine > 0) return string.Format(T("BeaverBuddies.Colony.Trade.StatusHaulAway"), Count(onMine), _items.Name(bx.GoodId), partner);
+                        break;
+                    case ExchangeTerms.GoodsWait.NoStock:
+                        return string.Format(T("BeaverBuddies.Colony.Trade.StatusTheirNoStock"), partner, _items.Name(bx.GoodId));
+                }
                 return string.Format(T("BeaverBuddies.Colony.Trade.StatusTheyBring"), partner, Count(bx.Total - bx.Held), _items.Name(bx.GoodId));
             }
             return T("BeaverBuddies.Colony.Trade.StatusCrossing");
         }
+
+        /// <summary>How much of a good lies on a half (held for a round, or waiting to be hauled away).</summary>
+        private static int AmountOn(DistrictCrossing half, string goodId) =>
+            half ? half.GetComponent<DistrictCrossingInventory>()?.Inventory?.AmountInStock(goodId) ?? 0 : 0;
 
         /// <summary>
         /// Ending the exchange takes both colonies: ask, withdraw the request, or answer the other colony's. A paused

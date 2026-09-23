@@ -89,16 +89,13 @@ namespace BeaverBuddies.Colonies
         private static readonly ListKey<string> EntriesKey = new ListKey<string>("Entries");
 
         private readonly ISingletonLoader _singletonLoader;
-        // (from, to, good) -> amount; sorted so saving never depends on the order trades happened in.
-        private readonly SortedDictionary<(int, int, string), int> totals =
-            new SortedDictionary<(int, int, string), int>(Comparer<(int, int, string)>.Create((a, b) =>
-            {
-                int c = a.Item1.CompareTo(b.Item1);
-                if (c == 0) c = a.Item2.CompareTo(b.Item2);
-                return c != 0 ? c : string.CompareOrdinal(a.Item3, b.Item3);
-            }));
+        // (from, to, good) -> amount (ExchangeTerms.cs, where it is checked headless).
+        private readonly TradeTotals totals = new TradeTotals();
 
         public static ColonyTradeLedger Instance => SingletonManager.GetSingleton<ColonyTradeLedger>();
+
+        /// <summary>Every total, read only (the daily trade check compares them from day to day).</summary>
+        public TradeTotals Totals => totals;
 
         public ColonyTradeLedger(ISingletonLoader singletonLoader)
         {
@@ -108,43 +105,27 @@ namespace BeaverBuddies.Colonies
         public void Load()
         {
             if (!_singletonLoader.TryGetSingleton(LedgerKey, out IObjectLoader loader) || !loader.Has(EntriesKey)) return;
-            foreach (string entry in loader.Get(EntriesKey))
-            {
-                string[] parts = entry.Split('|');
-                if (parts.Length == 4 && int.TryParse(parts[0], out int from) && int.TryParse(parts[1], out int to)
-                    && int.TryParse(parts[3], out int amount))
-                    totals[(from, to, parts[2])] = amount;
-            }
+            totals.Decode(loader.Get(EntriesKey));
         }
 
         public void Save(ISingletonSaver singletonSaver)
         {
             // Separate colonies only: a shared game's save holds only what the Stability Fork's does.
             if (!ColonyModeService.IsSeparateColonies || totals.Count == 0) return;
-            singletonSaver.GetSingleton(LedgerKey).Set(EntriesKey,
-                totals.Select(t => $"{t.Key.Item1}|{t.Key.Item2}|{t.Key.Item3}|{t.Value}").ToList());
+            singletonSaver.GetSingleton(LedgerKey).Set(EntriesKey, totals.Encode());
         }
 
         public void Record(int from, int to, string goodId, int amount)
         {
-            totals.TryGetValue((from, to, goodId), out int total);
-            totals[(from, to, goodId)] = total + amount;
-            ColonyDigest.Note("totals", from, to, ColonyDigest.Of(goodId), total + amount);
+            int total = totals.Record(from, to, goodId, amount);
+            ColonyDigest.Note("totals", from, to, ColonyDigest.Of(goodId), total);
         }
 
         /// <summary>Diagnostics: a hash of every total (sorted, so the order trades happened in plays no part).</summary>
-        public long Fingerprint()
-        {
-            long hash = 0;
-            foreach (var t in totals) hash = hash * 31 + (t.Key.Item1 * 7 + t.Key.Item2 * 13 + ColonyDigest.Of(t.Key.Item3) * 17 + t.Value);
-            return hash;
-        }
+        public long Fingerprint() => totals.Fingerprint();
 
         /// <summary>Goods that went from <paramref name="from"/> to <paramref name="to"/>, most first.</summary>
-        public List<KeyValuePair<string, int>> Sent(int from, int to) =>
-            totals.Where(t => t.Key.Item1 == from && t.Key.Item2 == to)
-                .Select(t => new KeyValuePair<string, int>(t.Key.Item3, t.Value))
-                .OrderByDescending(t => t.Value).ThenBy(t => t.Key, StringComparer.Ordinal).ToList();
+        public List<KeyValuePair<string, int>> Sent(int from, int to) => totals.Sent(from, to);
     }
 
     // ---- the crossing's buffer ----
