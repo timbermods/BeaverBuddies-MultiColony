@@ -380,6 +380,99 @@ static class LobbyChecks
             Check(LobbyRoom.ColonyOf(0, true) == 1 && LobbyRoom.ColonyOf(3, true) == 4 && LobbyRoom.ColonyOf(4, true) == 0
                 && LobbyRoom.ColonyOf(1, false) == null);
         });
+
+        // ---- mixed factions (design/MIXED-FACTIONS-PLAN.md §6) ----
+
+        yield return ("Factions: a waiting room that is not mixed sends what 1.4.0-beta19 sent, with no faction fields", () =>
+        {
+            JObject summary = new LobbySummary("Folktails", "Diorama", null, "Town", "Host", true).ToJson();
+            Check(summary["mixed"] == null && summary["factions"] == null, summary.ToString());
+            JObject row = new LobbyPlayer(1, "Anna", true, false, false, 2).ToJson();
+            Check(row["faction"] == null && row["pick"] == null, row.ToString());
+            // A mixed summary with no factions to offer is not mixed.
+            Check(!new LobbySummary("Folktails", "Diorama", null, "Town", "Host", true, true, Array.Empty<string>()).Mixed);
+        });
+
+        yield return ("Factions: a mixed summary and its rows round-trip, and bad faction fields are refused", () =>
+        {
+            var summary = new LobbySummary("Folktails", "Diorama", null, "Town", "Host", true, true, new[] { "Folktails", "IronTeeth", "bad id!" });
+            Check(summary.Mixed && summary.Factions.SequenceEqual(new[] { "Folktails", "IronTeeth" }), "an unusable id was offered");
+            Check(LobbySummary.TryParse(summary.ToJson(), out LobbySummary? back) && back!.Mixed && back.Factions.Count == 2);
+            Check(!LobbySummary.TryParse(new JObject(summary.ToJson()) { ["factions"] = "IronTeeth" }, out _), "factions not a list");
+            Check(!LobbySummary.TryParse(new JObject(summary.ToJson()) { ["factions"] = new JArray("Iron Teeth") }, out _), "a bad id");
+            var row = new LobbyPlayer(2, "Anna", true, false, false, 3, "IronTeeth", mayPick: true);
+            Check(LobbyFrames.TryParseRoster(LobbyFrames.Roster(new[] { row }), out List<LobbyPlayer> rows)
+                && rows[0].Faction == "IronTeeth" && rows[0].MayPick);
+            Check(!LobbyFrames.TryParseRoster(new JObject { ["players"] = new JArray(new JObject(row.ToJson()) { ["faction"] = 7 }) }, out _));
+            Check(LobbyFrames.TryParseFaction(LobbyFrames.Faction("IronTeeth"), out string picked) && picked == "IronTeeth");
+            Check(!LobbyFrames.TryParseFaction(new JObject { ["faction"] = "Iron\nTeeth" }, out _));
+            Check(LobbyFrames.IsGuestType(LobbyFrames.FactionType) && LobbyFrames.IsLobbyType(LobbyFrames.FactionType));
+        });
+
+        yield return ("Factions: a guest's pick in a mixed room reaches the host and every roster; picks it may not make are dropped", () =>
+        {
+            int previous = TimberServer.LobbyIntervalMs;
+            TimberServer.LobbyIntervalMs = 50;
+            var rig = new Rig(new LobbySummary("Folktails", "Diorama", null, "Beaverton", "Kyler", true, true, new[] { "Folktails", "IronTeeth" }));
+            try
+            {
+                var guest = rig.Join();
+                Check(Until(() => guest.Lobby.View().Welcomed && guest.Lobby.View().Summary!.Mixed), "not welcomed");
+                // Before its hello a guest's pick is dropped (it has no row of its own yet).
+                guest.SendLobbyFaction("IronTeeth");
+                Check(guest.SendLobbyHello("local:anna", "Anna"));
+                Check(Until(() => rig.Host.Lobby!.Snapshot().Guests.Count == 1 && rig.Host.Lobby!.Snapshot().Guests[0].SaidHello), "no hello");
+                Check(rig.Host.Lobby!.Snapshot().Guests[0].Faction == null, "a pick before the hello was taken");
+                Check(Until(() => guest.Lobby.View().Players.Count == 2 && guest.Lobby.View().Players[1].Faction == "Folktails"
+                    && guest.Lobby.View().Players[1].MayPick), "a guest without a pick shows the room's faction and may pick");
+                Check(guest.SendLobbyFaction("IronTeeth"));
+                Check(Until(() => rig.Host.Lobby!.Snapshot().Guests[0].Faction == "IronTeeth"), "the pick did not reach the host");
+                Check(Until(() => guest.Lobby.View().Players[1].Faction == "IronTeeth"), "the roster did not follow");
+                guest.SendLobbyFaction("Otters");
+                Thread.Sleep(200);
+                Check(rig.Host.Lobby!.Snapshot().Guests[0].Faction == "IronTeeth", "a faction the room does not offer was taken");
+                // The host's own pick is its row's, and reaches the guest.
+                rig.Host.SetLobbyHostFaction("IronTeeth");
+                Check(Until(() => guest.Lobby.View().Players[0].Faction == "IronTeeth"), "the host's pick did not reach the guest");
+                // After Start nothing changes any more.
+                rig.Host.CloseLobbyToNewcomers("closed");
+                guest.SendLobbyFaction("Folktails");
+                Thread.Sleep(200);
+                Check(rig.Host.Lobby!.Snapshot().Guests[0].Faction == "IronTeeth", "a pick after Start was taken");
+            }
+            finally
+            {
+                rig.Dispose();
+                TimberServer.LobbyIntervalMs = previous;
+            }
+            // A room that is not mixed takes no pick at all.
+            WithRoom(plain =>
+            {
+                var guest = plain.Join();
+                Check(Until(() => guest.Lobby.View().Welcomed));
+                Check(guest.SendLobbyHello("local:bo", "Bo") && guest.SendLobbyFaction("IronTeeth"));
+                Check(Until(() => plain.Host.Lobby!.Snapshot().Guests.Count == 1 && plain.Host.Lobby!.Snapshot().Guests[0].SaidHello));
+                Thread.Sleep(150);
+                Check(plain.Host.Lobby!.Snapshot().Guests[0].Faction == null && plain.Host.Lobby!.Snapshot().Players.All(p => p.Faction == null));
+            });
+        });
+
+        yield return ("Factions: a hosted save's room seats each row as the save does, shows its colony's faction, and lets only a founder pick", () =>
+        {
+            var summary = LobbySummary.ForSave("Beaverton", "Spring", 2, 3, "Kyler", "Folktails", true, true, new[] { "Folktails", "IronTeeth" });
+            var room = new LobbyRoom(summary)
+            {
+                HostStableId = "steam:1",
+                // The save remembers the host in colony 1 and Anna in colony 2; anyone else takes the lowest free colony.
+                Seating = ids => ids.Select(id => id == null ? (int?)null : id == "steam:1" ? 1 : id == "local:anna" ? 2 : 3).ToList(),
+                FactionOfColony = colony => colony == 1 ? "Folktails" : colony == 2 ? "IronTeeth" : null,
+            };
+            LobbySnapshot empty = room.Snapshot();
+            Check(empty.Players[0].Colony == 1 && empty.Players[0].Faction == "Folktails" && !empty.Players[0].MayPick);
+            // A save that is not mixed shows its own faction on every row, and nobody picks.
+            var plain = new LobbyRoom(LobbySummary.ForSave("Beaverton", "Spring", 2, 3, "Kyler", "IronTeeth", false, false, null));
+            Check(plain.Snapshot().Players.All(p => p.Faction == "IronTeeth" && !p.MayPick && p.Colony == null));
+        });
     }
 
     static bool ReadsEnd(PipeStream stream)

@@ -119,6 +119,7 @@ DevScienceChecks.Run(assembly, Test);
 RoadRuleChecks.Run(assembly, Path.GetDirectoryName(modPath)!, Path.GetFullPath(args[1]), Test);
 PlaytestFixChecks.Run(assembly, Test);
 LobbyRuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Test);
+FactionRuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Path.GetDirectoryName(modPath)!, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 
