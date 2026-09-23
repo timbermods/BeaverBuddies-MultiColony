@@ -10,17 +10,25 @@ using UnityEngine.UIElements;
 namespace BeaverBuddies.Lobby
 {
     /// <summary>
-    /// The game's own settlement-name box (Game/SettlementNameBox, the box a solo new game shows once its start is
-    /// placed), shown on the Game Mode page before a waiting room opens (D8). The name is checked as the game checks it
-    /// (GameSaveRepository.CreateDirectoryForSettlement, with the game's own messages) and goes into the new game's
-    /// configuration, so the made world never asks. Its "change start location" parts are hidden (they need a world),
-    /// its Start! reads Next, and a Cancel goes back.
+    /// Names the settlement before a waiting room opens (D8), in the game's own text-input dialog (Core/InputBox, the box
+    /// the game renames a beaver or a building with). It needs only CoreStyle, which every scene loads, so it looks the same
+    /// in the main menu as the game's own dialogs there. The in-game settlement box (Game/SettlementNameBox) was used
+    /// until 1.4.0-beta22: its frame and layout come from the Game scene's style sheets, and in the main menu it drew
+    /// without them (the first playtest of the waiting room).
+    /// The name is checked as the game checks it (GameSaveRepository.CreateDirectoryForSettlement, with the game's own
+    /// messages); a taken or invalid name keeps the box open. It goes into the new game's configuration, so the made world
+    /// never asks.
     /// </summary>
     internal sealed class SettlementNamePanel : IPanelController
     {
+        // The game's own limit for a settlement's name (SettlementNameBoxShower).
         private const int CharacterLimit = 50;
+        private const string MessageLocKey = "Saving.NameSettlement";
         private static readonly string TakenNameLocKey = "Saving.TakenName";
         private static readonly string InvalidNameLocKey = "Saving.InvalidName";
+
+        public static readonly string[] ClassesUsed = { "sliced-border", "sliced-border--nontransparent", "box", "box__text",
+            "box__content-margin", "text-field", "box__input", "menu-button", "menu-button--medium" };
 
         private readonly PanelStack _panelStack;
         private readonly GameSaveRepository _gameSaveRepository;
@@ -40,25 +48,22 @@ namespace BeaverBuddies.Lobby
             _dialogBoxShower = dialogBoxShower;
             _onNamed = onNamed;
 
-            _root = loader.LoadVisualElement("Game/SettlementNameBox");
-            _root.Q<Button>("RelocateButton")?.ToggleDisplayStyle(false);
-            _root.Q<Button>("ResetStartLocation")?.ToggleDisplayStyle(false);
+            // Loaded and initialised as InputBoxShower.Create does (its OK and Cancel are the game's localized buttons).
+            _root = loader.LoadVisualElement("Core/InputBox");
+            Label message = _root.Q<Label>("Message");
+            message.text = RegisteredLocalizationService.T(MessageLocKey);
+            // The box's own text class (box__text) sits left; a one-line question reads better centred, as DialogBox does.
+            message.style.unityTextAlign = UnityEngine.TextAnchor.MiddleCenter;
             _input = _root.Q<TextField>("Input");
             _input.maxLength = CharacterLimit;
             _input.SetValueWithoutNotify(initialName ?? "");
             _input.Q<TextElement>()?.SetConfirmCancelActions(inputService, () => OnUIConfirmed(), OnUICancelled);
 
+            // OK reads Next: the waiting room comes after it, as the New Game pages' Next leads on.
             Button confirm = _root.Q<Button>("ConfirmButton");
             confirm.text = RegisteredLocalizationService.T(CommonLocKeys.NavigationNextKey);
             confirm.RegisterCallback<ClickEvent>(_ => OnUIConfirmed());
-
-            // A Cancel beside it, drawn as its neighbour is (the game's box can't be cancelled: a world is waiting).
-            var cancel = new NineSliceButton { text = RegisteredLocalizationService.T(CommonLocKeys.CancelKey) };
-            cancel.AddToClassList("menu-button");
-            cancel.style.marginRight = 4;
-            confirm.parent.Insert(confirm.parent.IndexOf(confirm), cancel);
-            initializer.InitializeVisualElement(cancel);
-            cancel.clicked += OnUICancelled;
+            _root.Q<Button>("CancelButton").RegisterCallback<ClickEvent>(_ => OnUICancelled());
         }
 
         /// <summary>Asks for the settlement's name; <paramref name="onNamed"/> gets it once the game accepts it.</summary>
@@ -68,8 +73,10 @@ namespace BeaverBuddies.Lobby
         {
             var panel = new SettlementNamePanel(panelStack, gameSaveRepository, dialogBoxShower, loader, initializer, inputService,
                 initialName, onNamed);
-            panelStack.PushOverlay(panel);
+            // A dialog, as the game shows its input box: over the page, which waits under it.
+            panelStack.PushDialog(panel);
             panel._input.Focus();
+            panel._input.SelectAll();
         }
 
         public VisualElement GetPanel() => _root;

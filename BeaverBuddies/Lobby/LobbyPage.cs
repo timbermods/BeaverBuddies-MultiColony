@@ -71,16 +71,25 @@ namespace BeaverBuddies.Lobby
             _initializer = initializer;
             _tooltipRegistrar = tooltipRegistrar;
 
+            // Built as the game's own New Game pages are (NewGameModePanel.uxml, NewGameFactionPanel.uxml): a grow-centered
+            // root holding the template as an instance (width-stretch), whose content goes into the template's content slot.
+            // NewGameTemplate marks that slot (MainContent) content-container="true", so the TemplateContainer forwards its
+            // children, and ElementAt(0), to the empty slot: 1.4.0-beta18 to beta21 took ElementAt(0) for the page's root
+            // and threw ArgumentOutOfRange the moment the waiting room opened (the first playtest).
+            TemplateContainer template = loader.LoadVisualTreeAsset("MainMenu/NewGameTemplate").CloneTree();
+            template.AddToClassList("width-stretch");
+            Root = new VisualElement { pickingMode = PickingMode.Ignore };
+            Root.AddToClassList("grow-centered");
+            Root.Add(template);
             // The game's pages give the template's title a key through their own UXML (AttributeOverrides); loaded alone it
-            // has none, and the localizer would throw. So it is cloned here, keyed, and only then initialised.
-            Root = loader.LoadVisualTreeAsset("MainMenu/NewGameTemplate").CloneTree().ElementAt(0);
-            header = Root.Q<Label>("HeaderText");
+            // has none, and the localizer would throw. So it is keyed here, and only then initialised.
+            header = template.Q<Label>("HeaderText");
             if (header is LocalizableLabel localizable) localizable._textLocKey = headerLocKey;
             initializer.InitializeVisualElement(Root);
 
-            Back = Root.Q<Button>("BackButton");
-            Next = Root.Q<Button>("NextButton");
-            VisualElement main = Root.Q(className: "new-game__main-content");
+            Back = template.Q<Button>("BackButton");
+            Next = template.Q<Button>("NextButton");
+            VisualElement main = template.Q(className: "new-game__main-content") ?? template.contentContainer;
 
             // The Game Mode page's summary plate, with the faction page's logo ring beside it.
             var summaryRow = new VisualElement();

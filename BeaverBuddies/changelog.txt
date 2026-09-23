@@ -1,3 +1,7 @@
+v1.4.0-beta22 (BeaverBuddies MultiColony)
+* Host co-op game on the New Game page works: naming the settlement uses the game's own naming box, and the waiting room opens (in beta18 to beta21 the name box was drawn without its frame, and Next crashed the game).
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta21 (BeaverBuddies MultiColony)
 * The waiting room works: before this, no guest could get from a waiting room into the game (beta18 to beta20: its load failed at once and it was left on an empty main menu).
 * Mixed factions: switching an untouched colony's faction no longer leaves the old beavers behind in the game's lists, which crashed the game at the next explosion or Beehive check; a switch at the very start now takes the colony's beavers too.

@@ -91,8 +91,10 @@ internal static class LobbyRuntimeChecks
                 ["Views/MainMenu/NewGameTemplate.uxml"] = new[] { "name=\"HeaderText\"", "name=\"BackButton\"", "name=\"NextButton\"", "new-game__main-content" },
                 ["Views/Modding/ModItem.uxml"] = new[] { "name=\"PriorityWrapper\"", "name=\"ModToggle\"", "name=\"ModIcon\"", "name=\"ModName\"",
                     "name=\"ModVersion\"", "name=\"WarningIcon\"" },
-                ["Views/Game/SettlementNameBox.uxml"] = new[] { "name=\"Input\"", "name=\"ConfirmButton\"", "name=\"RelocateButton\"",
-                    "name=\"ResetStartLocation\"", "text-loc-key=\"Saving.NameSettlement\"" },
+                // The settlement's name is asked in the game's own input box (1.4.0-beta22; the in-game settlement box
+                // drew without its in-game style sheets in the main menu).
+                ["Views/Core/InputBox.uxml"] = new[] { "name=\"Message\"", "name=\"Input\"", "name=\"ConfirmButton\"", "name=\"CancelButton\"",
+                    "CoreStyle.uss" },
                 ["Views/Core/DialogBox.uxml"] = new[] { "name=\"Message\"", "name=\"CancelButton\"", "name=\"InfoButton\"", "name=\"ConfirmButton\"" },
             };
             foreach (var pair in wanted)
@@ -104,6 +106,37 @@ internal static class LobbyRuntimeChecks
             // The page is built from the template itself: its title must still need a key (the mod sets one first).
             if (Regex.IsMatch(Read(ui, "Views/MainMenu/NewGameTemplate.uxml"), "name=\"HeaderText\"[^>]*text-loc-key"))
                 throw new Exception("NewGameTemplate's title now has a key of its own: check LobbyPage still sets the right one");
+        });
+
+        test("Waiting room: a template taken as one element has no content slot (the page is built around NewGameTemplate's)", () =>
+        {
+            // A template with content-container="true" clones into a TemplateContainer that forwards its children to that
+            // slot, so ElementAt(0), which VisualElementLoader.LoadVisualElement also uses, finds the empty slot instead of
+            // the root: 1.4.0-beta18 to beta21 threw there the moment the waiting room opened. Every template the mod names
+            // next to LoadVisualElement, or next to LoadVisualTreeAsset in a method that calls ElementAt, is read here.
+            using ZipArchive ui = UiZip(managedPath);
+            var single = new SortedSet<string>();
+            foreach (Type type in mod.GetTypes())
+                foreach (MethodBase method in type.GetMethods(all | BindingFlags.DeclaredOnly).Cast<MethodBase>()
+                    .Concat(type.GetConstructors(all | BindingFlags.DeclaredOnly)))
+                {
+                    if (method.GetMethodBody() == null) continue;
+                    var code = IlScan.Instructions(method);
+                    bool elementAt = code.Any(i => i.Calls && i.Member?.Name == "ElementAt" && i.Member.DeclaringType?.Name == "VisualElement");
+                    for (int at = 1; at < code.Count; at++)
+                    {
+                        var call = code[at];
+                        if (!call.Calls || call.Member?.DeclaringType?.Name != "VisualElementLoader") continue;
+                        bool takesOne = call.Member.Name == "LoadVisualElement" || (call.Member.Name == "LoadVisualTreeAsset" && elementAt);
+                        if (takesOne && code[at - 1].Text != null) single.Add(code[at - 1].Text!);
+                    }
+                }
+            if (!single.Contains("Modding/ModItem") || !single.Contains("Core/DialogBox"))
+                throw new Exception("found only " + string.Join(", ", single) + ": the scan is not reading the mod's loads");
+            var slotted = single.Where(name => Read(ui, $"Views/{name}.uxml").Contains("content-container=\"true\"")).ToList();
+            if (slotted.Count > 0) throw new Exception("taken as one element, but it has a content slot: " + string.Join(", ", slotted));
+            if (!Read(ui, "Views/MainMenu/NewGameTemplate.uxml").Contains("content-container=\"true\""))
+                throw new Exception("NewGameTemplate has no content slot any more: check how LobbyPage builds the page");
         });
 
         test("Waiting room: every class its pages add is defined in a style sheet the main menu loads", () =>
@@ -118,6 +151,11 @@ internal static class LobbyRuntimeChecks
             var used = (string[])Mod("BeaverBuddies.Lobby.LobbyPage").GetField("ClassesUsed", all)!.GetValue(null)!;
             var missing = used.Where(c => !defined.Contains(c)).ToList();
             if (missing.Count > 0) throw new Exception("not in the main menu's style sheets: " + string.Join(", ", missing));
+            // The settlement's name box carries CoreStyle itself (Core/InputBox): its classes must be there.
+            var core = new HashSet<string>(Regex.Matches(Read(ui, "Views/Core/CoreStyle.uss"), "\\.([A-Za-z_][A-Za-z0-9_-]*)").Select(m => m.Groups[1].Value));
+            var box = (string[])Mod("BeaverBuddies.Lobby.SettlementNamePanel").GetField("ClassesUsed", all)!.GetValue(null)!;
+            var boxMissing = box.Where(c => !core.Contains(c)).ToList();
+            if (boxMissing.Count > 0) throw new Exception("not in CoreStyle, which the input box brings: " + string.Join(", ", boxMissing));
         });
 
         test("Waiting room for a save: Host co-op game opens it in the main menu, and keeps the dialog in a game", () =>
