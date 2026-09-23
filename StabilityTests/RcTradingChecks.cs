@@ -123,7 +123,7 @@ static class RcTradingChecks
             Equal(ExchangeTerms.GoodsWait.NoStock, ExchangeTerms.WhyGoodsWait(false, 2, 0, 40, 0));
             Equal(ExchangeTerms.GoodsWait.Bringing, ExchangeTerms.WhyGoodsWait(false, 2, 0, 40, 500));
             // The panel has a line for every reason, from either side, and the report a phrase.
-            string fragment = Body(Source("BeaverBuddies", "Colonies", "TradingPostFragment.cs"), "private string Status(");
+            string fragment = Body(Source("BeaverBuddies", "Colonies", "TradingPostFragment.cs"), "internal static string StatusLine(");
             foreach (string reason in new[] { "Blocked", "NoWorkers", "NoRoom", "NoStock" })
                 Check(fragment.Split("ExchangeTerms.GoodsWait." + reason).Length - 1 == 2, "the panel does not say both sides' " + reason);
             foreach (string key in new[] { "StatusYourHalfBlocked", "StatusNoWorkers", "StatusNoRoom", "StatusNoStock", "StatusTheirHalfBlocked",
@@ -135,6 +135,10 @@ static class RcTradingChecks
                 Check(csv.Contains("\nBeaverBuddies.Colony.Trade." + key + ",\""), "no English line for " + key);
             string report = Body(Source("BeaverBuddies", "Colonies", "ColonyDiagnostics.cs"), "private static string Stall(");
             Check(report.Contains("WhyNotIn("), "the diagnostics report no longer says why a round waits as the panel does");
+            // The Ctrl+T window: a round held up says why, and an exchange at a paused post reads as paused (T7).
+            string window = Body(Source("BeaverBuddies", "Colonies", "TradeOverviewPanel.cs"), "private void Describe(");
+            Check(window.Contains("TradingPostFragment.StatusLine(") && window.Contains("\"BeaverBuddies.Colony.Trade.PausedTitle\""),
+                "the trading window no longer says why a post's round waits, or that it is paused");
         });
 
         yield return ("C7: the tick's check of every post allocates no list, and counts beavers without LINQ", () =>

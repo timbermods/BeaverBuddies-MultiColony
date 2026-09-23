@@ -72,8 +72,11 @@ internal static class RcTradingRuntimeChecks
                 ("Inventory", "UnreservedCapacity"), ("DistrictCrossingInventory", "IncomingStock"), ("ExchangeTerms", "WhyGoodsWait") })
                 Need(Calls(why, type, name), $"WhyWaiting no longer reads {type}.{name}");
             Type fragment = mod.GetType("BeaverBuddies.Colonies.TradingPostFragment", true)!;
-            var status = IlScan.Instructions(Only(fragment, "Status"));
+            var status = IlScan.Instructions(Only(fragment, "StatusLine"));
             Need(status.Count(i => i.Calls && i.Member?.Name == "WhyWaiting") == 2, "the panel no longer says why either side waits");
+            Need(Calls(Only(fragment, "Status"), fragment.Name, "StatusLine"), "the panel's status is no longer its StatusLine");
+            Type window = mod.GetType("BeaverBuddies.Colonies.TradeOverviewPanel", true)!;
+            Need(Calls(Only(window, "Describe"), fragment.Name, "StatusLine"), "the trading window no longer says why a post's round waits");
             foreach (string key in new[] { "StatusYourHalfBlocked", "StatusNoRoom", "StatusNoStock", "StatusTheirHalfBlocked", "StatusTheirNoWorkers",
                 "StatusTheirNoStock", "StatusHaulAway" })
                 Need(status.Any(i => i.Text == "BeaverBuddies.Colony.Trade." + key), "the panel no longer shows " + key);
