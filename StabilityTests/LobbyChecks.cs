@@ -325,6 +325,42 @@ static class LobbyChecks
             }
         });
 
+        yield return ("A save's waiting room tells its guests the save's name and date, and predicts no colonies", () =>
+        {
+            int previous = TimberServer.LobbyIntervalMs;
+            TimberServer.LobbyIntervalMs = 50;
+            var rig = new Rig(LobbySummary.ForSave("Beaverton", "Before the drought", 3, 7, "Kyler"));
+            try
+            {
+                var guest = rig.Join();
+                Check(Until(() => guest.Lobby.View().Welcomed && guest.Lobby.View().Players.Count == 2), "not welcomed");
+                LobbySummary summary = guest.Lobby.View().Summary!;
+                Check(summary.IsSave && summary.SaveName == "Before the drought" && summary.Cycle == 3 && summary.Day == 7
+                    && summary.Settlement == "Beaverton" && !summary.SeparateColonies);
+                // The save seats each player by who it remembers: the room guesses no colony, for the host or a guest.
+                Check(guest.Lobby.View().Players.All(p => p.Colony == null));
+                byte[]? map = null;
+                guest.OnMapReceived += bytes => map = bytes;
+                rig.Host.CloseLobbyToNewcomers("closed");
+                rig.Host.SetLobbyStage(LobbyStage.SendingWorld);
+                rig.Host.ReleaseLobby(new byte[] { 4, 5, 6 });
+                Check(Until(() => { guest.Update(); return map != null; }), "no save");
+            }
+            finally
+            {
+                rig.Dispose();
+                TimberServer.LobbyIntervalMs = previous;
+            }
+            // A new game's summary says it is not a save, and one from an older frame without "save" reads as a new game.
+            var newGame = new LobbySummary("Folktails", "Diorama", null, "Town", "Host", true);
+            Check(LobbySummary.TryParse(newGame.ToJson(), out LobbySummary? back) && !back!.IsSave);
+            var withoutSave = newGame.ToJson();
+            withoutSave.Remove("save");
+            Check(LobbySummary.TryParse(withoutSave, out LobbySummary? old) && !old!.IsSave);
+            Check(!LobbySummary.TryParse(new JObject(newGame.ToJson()) { ["save"] = new JObject { ["name"] = 5 } }, out _),
+                "a save without a name was taken");
+        });
+
         yield return ("Waiting-room frames round-trip, and bad ones are refused", () =>
         {
             var summary = new LobbySummary("Folktails", "Diorama", "NewGameMode.Hard", "Beaverton", "Kyler", true);
@@ -384,12 +420,12 @@ static class LobbyChecks
         readonly List<PipeStream> raws = new();
         public TimberServer Host { get; }
 
-        public Rig()
+        public Rig(LobbySummary? summary = null)
         {
             Host = new TimberServer(listener, () => throw new InvalidOperationException("a waiting room never asks for a map"),
                 () => new JObject { [TimberNetBase.TYPE_KEY] = "InitProbe", [TimberNetBase.TICKS_KEY] = 0 })
             { CompatibilityIdentity = "same" };
-            Host.OpenLobby(new LobbyRoom(new LobbySummary("Folktails", "Diorama", "NewGameMode.Normal", "Beaverton", "Kyler", true)));
+            Host.OpenLobby(new LobbyRoom(summary ?? new LobbySummary("Folktails", "Diorama", "NewGameMode.Normal", "Beaverton", "Kyler", true)));
             Host.Start();
         }
 

@@ -120,6 +120,31 @@ internal static class LobbyRuntimeChecks
             if (missing.Count > 0) throw new Exception("not in the main menu's style sheets: " + string.Join(", ", missing));
         });
 
+        test("Waiting room for a save: Host co-op game opens it in the main menu, and keeps the dialog in a game", () =>
+        {
+            // LoadAndHost opens the waiting room when the host page is there (the main menu binds it; a game does not),
+            // and otherwise goes on to its own server and dialog (Options → Load and Save and Rehost in a game).
+            MethodInfo loadAndHost = Mod("BeaverBuddies.Connect.ServerHostingUtils").GetMethod("LoadAndHost", all)!;
+            var code = IlScan.Instructions(loadAndHost);
+            if (!code.Any(i => i.Calls && i.Is("BeaverBuddies.Lobby.LobbyHostPanel", "OpenForSave")))
+                throw new Exception("Host co-op game on a save no longer opens the waiting room");
+            if (!code.Any(i => i.Op == OpCodes.Newobj && i.Member?.DeclaringType?.FullName == "BeaverBuddies.IO.ServerEventIO"))
+                throw new Exception("hosting from inside a game lost its own dialog");
+            // Only the main menu has the page.
+            var menu = Mod("BeaverBuddies.ConnectionMenuConfigurator").GetMethod("Configure", all)!;
+            var game = Mod("BeaverBuddies.ReplayConfigurator").GetMethod("Configure", all)!;
+            bool Binds(MethodInfo configure) => IlScan.Instructions(configure).Any(i => i.Calls && i.Member is MethodInfo m
+                && m.IsGenericMethod && m.GetGenericArguments().Any(t => t.FullName == "BeaverBuddies.Lobby.LobbyHostPanel"));
+            if (!Binds(menu)) throw new Exception("the main menu no longer binds the host page");
+            if (Binds(game)) throw new Exception("a game binds the host page: hosting from a game would open the waiting room");
+            // What the page reads of a save: its date from the metadata, worded as the Load Game box words it.
+            Has(Game("Timberborn.GameSaveRepositorySystem", "Timberborn.GameSaveRepositorySystem.GameSaveDeserializer"), "ReadFromSaveFile", "the save's date");
+            Type metadata = Game("Timberborn.SaveMetadataSystem", "Timberborn.SaveMetadataSystem.SaveMetadata");
+            Has(metadata, "Cycle", "the save's date");
+            Has(metadata, "Day", "the save's date");
+            Has(Game("Timberborn.UIFormatters", "Timberborn.UIFormatters.TimestampFormatter"), "FormatLongLocalized", "the save's date");
+        });
+
         test("Waiting room: the host's word that joining closed at Start survives the trip through the event JSON", () =>
         {
             Type replayEvent = Mod("BeaverBuddies.Events.ReplayEvent");

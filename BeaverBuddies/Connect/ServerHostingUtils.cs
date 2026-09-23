@@ -145,6 +145,18 @@ namespace BeaverBuddies.Connect
             byte[] data = GetMapBtyes(repository, saveReference);
             Plugin.Log($"Reading map with length {data.Length}");
 
+            // In the main menu a save opens the waiting room (1.4.0-beta19): players join and ready up, and everyone loads
+            // the save together at Start. From inside a game (Options → Load, Save and Rehost) this dialog stays: the
+            // waiting room is a main-menu page, and a rehost's guests reconnect to it as before.
+            BeaverBuddies.Lobby.LobbyHostPanel waitingRoom = SingletonManager.GetSingleton<BeaverBuddies.Lobby.LobbyHostPanel>();
+            if (waitingRoom != null)
+            {
+                // Hosting starts here: a join or session left from before ends, as EventIO.Set below would end it.
+                EventIO.Reset();
+                waitingRoom.OpenForSave(saveReference, data);
+                return;
+            }
+
             ServerEventIO io = new ServerEventIO();
             EventIO.Set(io);
             io.Start(data);

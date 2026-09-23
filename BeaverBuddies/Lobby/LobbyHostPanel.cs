@@ -9,6 +9,8 @@ using Timberborn.GameSaveRepositorySystem;
 using Timberborn.InputSystem;
 using Timberborn.MainMenuPanels;
 using Timberborn.NewGameConfigurationSystem;
+using Timberborn.SaveMetadataSystem;
+using Timberborn.UIFormatters;
 using Timberborn.SceneLoading;
 using Timberborn.SingletonSystem;
 using Timberborn.TooltipSystem;
@@ -20,7 +22,8 @@ namespace BeaverBuddies.Lobby
 {
     /// <summary>
     /// The host's Co-op Game page, the New Game wizard's page after Game Mode (D7): opened by Host co-op game (after the
-    /// settlement's name), it shows the room as it fills, and Start Game starts the new co-op game (LobbySession).
+    /// settlement's name), it shows the room as it fills, and Start Game starts the new co-op game (LobbySession). Since
+    /// 1.4.0-beta19 it is also what Host co-op game on the main menu's Load Game box opens for a save (OpenForSave).
     /// </summary>
     public class LobbyHostPanel : RegisteredSingleton, IPanelController, IUpdatableSingleton
     {
@@ -32,9 +35,14 @@ namespace BeaverBuddies.Lobby
         private readonly ISceneLoader _sceneLoader;
         private readonly GameSaveRepository _gameSaveRepository;
         private readonly InputService _inputService;
+        private readonly GameSaveDeserializer _gameSaveDeserializer;
+        private readonly SaveMetadataSerializer _saveMetadataSerializer;
+        private readonly TimestampFormatter _timestampFormatter;
 
         private LobbyPage page;
         private LobbySession session;
+        // A save's room after Start: its bytes are going out, and this page loads it once every guest is queued.
+        private LobbySession sending;
         private FactionSpec faction;
         private int shownVersion = -1;
         private bool starting;
@@ -42,8 +50,12 @@ namespace BeaverBuddies.Lobby
 
         public LobbyHostPanel(VisualElementLoader loader, VisualElementInitializer initializer, PanelStack panelStack,
             DialogBoxShower dialogBoxShower, ITooltipRegistrar tooltipRegistrar, ISceneLoader sceneLoader,
-            GameSaveRepository gameSaveRepository, InputService inputService)
+            GameSaveRepository gameSaveRepository, InputService inputService, GameSaveDeserializer gameSaveDeserializer,
+            SaveMetadataSerializer saveMetadataSerializer, TimestampFormatter timestampFormatter)
         {
+            _gameSaveDeserializer = gameSaveDeserializer;
+            _saveMetadataSerializer = saveMetadataSerializer;
+            _timestampFormatter = timestampFormatter;
             _loader = loader;
             _initializer = initializer;
             _panelStack = panelStack;
@@ -77,6 +89,37 @@ namespace BeaverBuddies.Lobby
                 });
         }
 
+        /// <summary>
+        /// Host co-op game on the main menu's Load Game box, once the game's own checks of the save have passed
+        /// (ServerHostingUtils.LoadAndHost): the waiting room for that save, with <paramref name="bytes"/> as everyone's copy.
+        /// </summary>
+        public void OpenForSave(SaveReference save, byte[] bytes)
+        {
+            if (session != null || sending != null) return;
+            faction = null;
+            int cycle = 0, day = 0;
+            try
+            {
+                SaveMetadata metadata = _gameSaveDeserializer.ReadFromSaveFile(save, _saveMetadataSerializer);
+                if (metadata != null)
+                {
+                    cycle = metadata.Cycle;
+                    day = metadata.Day;
+                }
+            }
+            catch (Exception error) { Plugin.LogWarning("[Lobby] Could not read the save's date: " + error.Message); }
+            string settlement = save.SettlementReference.SettlementName;
+            OpenRoom(new LobbySetup
+            {
+                Save = save,
+                SaveBytes = bytes,
+                Cycle = cycle,
+                Day = day,
+                Settlement = settlement,
+                SummaryText = settlement,
+            });
+        }
+
         private void OpenRoom(LobbySetup setup)
         {
             session = LobbySession.Open(setup);
@@ -92,7 +135,8 @@ namespace BeaverBuddies.Lobby
             page.Next.clicked += () => OnUIConfirmed();
             page.Invite.clicked += () => session?.IO.SteamListener?.ShowInviteFriendsPanel();
             page.RemoveClicked += ConfirmRemove;
-            page.SetSummary(setup.SummaryText, faction, setup.Settlement);
+            page.SetSummary(setup.SummaryText, faction,
+                setup.IsSave ? LobbyPage.SaveLine(_timestampFormatter, setup.Save.SaveName, setup.Cycle, setup.Day) : setup.Settlement);
             page.DirectIp.text = RegisteredLocalizationService.T("BeaverBuddies.Lobby.DirectIp", Settings.Port);
             shownVersion = -1;
             starting = false;
@@ -124,7 +168,7 @@ namespace BeaverBuddies.Lobby
             return true;
         }
 
-        // Esc, or Cancel: back to the Game Mode page, and everyone in the room is told.
+        // Esc, or Cancel: back to the Game Mode page (or the Load Game box), and everyone in the room is told.
         public void OnUICancelled()
         {
             if (starting || session == null) return;
@@ -136,6 +180,12 @@ namespace BeaverBuddies.Lobby
 
         public void UpdateSingleton()
         {
+            if (sending != null)
+            {
+                try { SendSave(); }
+                catch (Exception error) { sending.Fail(error.Message); }
+                return;
+            }
             if (page == null || session == null || starting) return;
             try { Refresh(); }
             catch (Exception error) { Plugin.LogWarning("[Lobby] Could not update the waiting room: " + error.Message); }
@@ -161,11 +211,36 @@ namespace BeaverBuddies.Lobby
             page.Next.SetEnabled(false);
             page.SetStatus(new LobbyText(LobbyRules.KeyPrefix + "Status.Starting"));
             LobbySession started = session;
-            // The menu scene ends here; the session carries on (LobbyWorldMaker).
+            // The menu scene ends here for a new game; the session carries on (LobbyWorldMaker).
             session = null;
             started.Start(_sceneLoader, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Tip.Creating"));
+            if (started.State == LobbySessionState.SendingWorld)
+            {
+                // A save: its bytes are going out; this page stays up (Starting...) until it loads (SendSave).
+                sending = started;
+                return;
+            }
             if (started.State != LobbySessionState.Failed) return;
-            // The world could not even begin to load: back to the Game Mode page, with the reason.
+            ShowFailure();
+        }
+
+        // A save's room after Start: the session loads the save once every guest's join is queued.
+        private void SendSave()
+        {
+            sending.Update(_sceneLoader, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Tip.Loading"));
+            if (sending.State == LobbySessionState.Loading)
+            {
+                sending = null;
+                return;
+            }
+            if (sending.State != LobbySessionState.Failed) return;
+            sending = null;
+            ShowFailure();
+        }
+
+        // Back to the page before the room (the Game Mode page, or the Load Game box), with the reason.
+        private void ShowFailure()
+        {
             starting = false;
             if (_panelStack.IsPanelOnTop(this)) _panelStack.Pop(this);
             page = null;

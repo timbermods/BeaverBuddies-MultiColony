@@ -13,9 +13,21 @@ using TimberNet;
 
 namespace BeaverBuddies.Lobby
 {
-    /// <summary>The new game a waiting room is for, as the host set it up on the game's Game Mode page.</summary>
+    /// <summary>
+    /// The game a waiting room is for: a new game as the host set it up on the game's Game Mode page, or a save chosen on
+    /// the main menu's Load Game box (<see cref="Save"/> set).
+    /// </summary>
     public sealed class LobbySetup
     {
+        /// <summary>A hosted save (Load Game → Host co-op game in the main menu); null for a new game.</summary>
+        public SaveReference Save { get; set; }
+        /// <summary>The save's bytes, read once: every guest and the host load exactly these.</summary>
+        public byte[] SaveBytes { get; set; }
+        /// <summary>The save's in-game date (from its metadata; 0 when unknown).</summary>
+        public int Cycle { get; set; }
+        public int Day { get; set; }
+        public bool IsSave => Save != null;
+
         public string FactionId { get; set; }
         public MapFileReference Map { get; set; }
         public string MapName { get; set; }
@@ -93,8 +105,12 @@ namespace BeaverBuddies.Lobby
         public static LobbySession Open(LobbySetup setup)
         {
             EndStale("a new waiting room opened");
-            var summary = new LobbySummary(setup.FactionId, setup.MapName, setup.ModeLocKey, setup.Settlement,
-                Settings.PingDisplayName, Settings.SeparateColoniesForNewGames);
+            // A save seats each player by who it remembers (the colony slot table in the save), which the menu can't read:
+            // its rows show no colony.
+            LobbySummary summary = setup.IsSave
+                ? LobbySummary.ForSave(setup.Settlement, setup.Save.SaveName, setup.Cycle, setup.Day, Settings.PingDisplayName)
+                : new LobbySummary(setup.FactionId, setup.MapName, setup.ModeLocKey, setup.Settlement,
+                    Settings.PingDisplayName, Settings.SeparateColoniesForNewGames);
             var room = new LobbyRoom(summary);
             var io = new ServerEventIO();
             io.StartLobby(room);
@@ -104,13 +120,16 @@ namespace BeaverBuddies.Lobby
                 return null;
             }
             Current = new LobbySession(io, setup, room);
-            Plugin.Log($"[Lobby] Waiting room open for a new game: {setup.SummaryText}, settlement \"{setup.Settlement}\"");
+            Plugin.Log(setup.IsSave
+                ? $"[Lobby] Waiting room open for the save \"{setup.Save.SaveName}\" of \"{setup.Settlement}\" ({setup.SaveBytes?.Length ?? 0} bytes)"
+                : $"[Lobby] Waiting room open for a new game: {setup.SummaryText}, settlement \"{setup.Settlement}\"");
             return Current;
         }
 
         /// <summary>
         /// The host pressed Start (and answered any question, D2): nobody new comes in, and the world is made behind the
-        /// loading screen. From here the menu scene is gone.
+        /// loading screen. From here the menu scene is gone. A save is not made: its bytes go to the guests at once, and
+        /// the host's page calls <see cref="Update"/> each frame until it loads.
         /// </summary>
         public void Start(ISceneLoader sceneLoader, string tip)
         {
@@ -119,6 +138,14 @@ namespace BeaverBuddies.Lobby
             StartedWith = snapshot.Guests;
             IO.CloseLobby(ClosedMessage);
             ColonySession.CloseJoiningAtStart();
+            Plugin.Log($"[Lobby] Starting with {StartedWith.Count} guest(s): " +
+                string.Join(", ", StartedWith.Select(g => $"{g.Number} {g.Name} ({(g.Ready ? "ready" : "not ready")})")));
+            if (Setup.IsSave)
+            {
+                SetState(LobbySessionState.CreatingWorld);
+                OnWorldSaved(Setup.Save, Setup.SaveBytes);
+                return;
+            }
             Server.SetLobbyStage(LobbyStage.CreatingWorld);
             SetState(LobbySessionState.CreatingWorld);
 
@@ -130,8 +157,6 @@ namespace BeaverBuddies.Lobby
                 Plugin.Log($"[Lobby] Filling {starts} start(s) of the {multi.Players} the Players field allows");
                 mode = new MultiplayerNewGameModeSpec(multi, starts);
             }
-            Plugin.Log($"[Lobby] Starting with {StartedWith.Count} guest(s): " +
-                string.Join(", ", StartedWith.Select(g => $"{g.Number} {g.Name} ({(g.Ready ? "ready" : "not ready")})")));
             holdLoadingScreen = true;
             try
             {
@@ -150,15 +175,15 @@ namespace BeaverBuddies.Lobby
             if (State != LobbySessionState.CreatingWorld) return;
             save = saveReference;
             saveBytes = bytes;
-            Plugin.Log($"[Lobby] World saved as \"{saveReference.SaveName}\" ({bytes.Length} bytes); sending it to the guests");
+            Plugin.Log($"[Lobby] Sending \"{saveReference.SaveName}\" ({bytes.Length} bytes) to the guests");
             Server.SetLobbyStage(LobbyStage.SendingWorld);
             Server.ReleaseLobby(bytes);
             SetState(LobbySessionState.SendingWorld);
         }
 
         /// <summary>
-        /// Every frame of the scene that makes the world. Once each guest's join is queued (so it gets everything the host
-        /// plays from tick 0 on), the save is loaded as the hosted game.
+        /// Every frame of the scene that makes the world (for a save: of the menu, from the host's page). Once each guest's
+        /// join is queued (so it gets everything the host plays from tick 0 on), the save is loaded as the hosted game.
         /// </summary>
         public void Update(ISceneLoader sceneLoader, string loadingTip)
         {

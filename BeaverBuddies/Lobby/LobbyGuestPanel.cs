@@ -7,6 +7,7 @@ using Timberborn.CoreUI;
 using Timberborn.FactionSystem;
 using Timberborn.SingletonSystem;
 using Timberborn.TooltipSystem;
+using Timberborn.UIFormatters;
 using TimberNet;
 using UnityEngine.UIElements;
 
@@ -27,6 +28,7 @@ namespace BeaverBuddies.Lobby
         private readonly ITooltipRegistrar _tooltipRegistrar;
         private readonly FactionSpecService _factionSpecService;
         private readonly ClientConnectionService _clientConnectionService;
+        private readonly TimestampFormatter _timestampFormatter;
 
         private LobbyPage page;
         private ClientEventIO io;
@@ -42,8 +44,9 @@ namespace BeaverBuddies.Lobby
 
         public LobbyGuestPanel(VisualElementLoader loader, VisualElementInitializer initializer, PanelStack panelStack,
             DialogBoxShower dialogBoxShower, ITooltipRegistrar tooltipRegistrar, FactionSpecService factionSpecService,
-            ClientConnectionService clientConnectionService)
+            ClientConnectionService clientConnectionService, TimestampFormatter timestampFormatter)
         {
+            _timestampFormatter = timestampFormatter;
             _loader = loader;
             _initializer = initializer;
             _panelStack = panelStack;
@@ -127,7 +130,7 @@ namespace BeaverBuddies.Lobby
             _clientConnectionService.CloseConnectingBox();
             net.SendLobbyHello(LocalPlayerIdentity.Id, LocalPlayerIdentity.Name);
 
-            try { faction = view.Summary == null ? null : _factionSpecService.GetFaction(view.Summary.FactionId); }
+            try { faction = view.Summary == null || view.Summary.IsSave ? null : _factionSpecService.GetFaction(view.Summary.FactionId); }
             catch (Exception) { faction = null; }
             page = new LobbyPage(_loader, _initializer, _tooltipRegistrar, "BeaverBuddies.Lobby.Header.Guest");
             page.SetHeader(RegisteredLocalizationService.T("BeaverBuddies.Lobby.Header.Guest", hostName));
@@ -138,7 +141,10 @@ namespace BeaverBuddies.Lobby
             page.OwnReadyToggled += SetReady;
             page.Invite.ToggleDisplayStyle(false);
             page.DirectIp.ToggleDisplayStyle(false);
-            page.SetSummary(Summary(view.Summary), faction, view.Summary?.Settlement);
+            LobbySummary summary = view.Summary;
+            page.SetSummary(Summary(summary), faction, summary != null && summary.IsSave
+                ? LobbyPage.SaveLine(_timestampFormatter, summary.SaveName, summary.Cycle, summary.Day)
+                : summary?.Settlement);
             shown = true;
             popWhenOnTop = false;
             Plugin.Log($"[Lobby] In {hostName}'s waiting room as player {view.You}");
@@ -146,10 +152,11 @@ namespace BeaverBuddies.Lobby
             Pump();
         }
 
-        // The Game Mode page's summary, as this player's game words it.
+        // The Game Mode page's summary, as this player's game words it; a save's settlement for a save.
         private string Summary(LobbySummary summary)
         {
             if (summary == null) return "";
+            if (summary.IsSave) return summary.Settlement;
             string factionName = faction?.DisplayName.Value ?? summary.FactionId;
             string mode = RegisteredLocalizationService.T(summary.ModeLocKey ?? "NewGameConfigurationPanel.Custom");
             return factionName + " - " + summary.MapName + " - " + mode;

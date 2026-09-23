@@ -48,6 +48,7 @@ namespace BeaverBuddies.Lobby
         public Label DirectIp { get; }
 
         private readonly Label header;
+        private readonly VisualElement ring;
         private readonly VisualElement logo;
         private readonly Label summary;
         private readonly Label settlement;
@@ -82,7 +83,7 @@ namespace BeaverBuddies.Lobby
             summaryRow.style.flexDirection = FlexDirection.Row;
             summaryRow.style.alignItems = Align.Center;
             summaryRow.style.justifyContent = Justify.Center;
-            var ring = new VisualElement();
+            ring = new VisualElement();
             ring.AddToClassList("faction-item__logo-background");
             ring.AddToClassList("content-centered");
             ring.style.marginRight = 10;
@@ -159,12 +160,24 @@ namespace BeaverBuddies.Lobby
 
         public void SetHeader(string text) => header.text = text;
 
-        public void SetSummary(string text, FactionSpec faction, string settlementName)
+        /// <summary>A save's gold line: its name, and its in-game date as the Load Game box words it (when known).</summary>
+        public static string SaveLine(Timberborn.UIFormatters.TimestampFormatter formatter, string saveName, int cycle, int day)
+        {
+            if (cycle <= 0 || formatter == null) return saveName ?? "";
+            return RegisteredLocalizationService.T("BeaverBuddies.Lobby.SaveLine", saveName ?? "", formatter.FormatLongLocalized(cycle, day));
+        }
+
+        /// <summary>
+        /// The plate's text, the faction's logo ring (hidden without a faction: a save's metadata names none) and the gold
+        /// line under the plate (a new game's settlement, or a save's name and in-game date).
+        /// </summary>
+        public void SetSummary(string text, FactionSpec faction, string line)
         {
             summary.text = text;
             Sprite sprite = faction?.Logo.Asset;
             if (sprite != null) logo.style.backgroundImage = new StyleBackground(sprite);
-            settlement.text = settlementName ?? "";
+            ring.ToggleDisplayStyle(sprite != null);
+            settlement.text = line ?? "";
         }
 
         /// <summary>

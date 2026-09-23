@@ -22,7 +22,10 @@ namespace TimberNet
         Failed,
     }
 
-    /// <summary>The new game a waiting room is for, as the host chose it. Display only.</summary>
+    /// <summary>
+    /// The game a waiting room is for, as the host chose it: a new game (its faction, map and difficulty) or a save (its
+    /// name and in-game date; <see cref="IsSave"/>). Display only.
+    /// </summary>
     public sealed class LobbySummary
     {
         public string FactionId { get; }
@@ -31,9 +34,24 @@ namespace TimberNet
         public string? ModeLocKey { get; }
         public string Settlement { get; }
         public string HostName { get; }
+        /// <summary>Rows show the colony each player will play (a new game with separate colonies; a save seats by who it remembers).</summary>
         public bool SeparateColonies { get; }
+        /// <summary>A hosted save's name; null for a new game.</summary>
+        public string? SaveName { get; }
+        /// <summary>A hosted save's in-game date, for each player's game to word.</summary>
+        public int Cycle { get; }
+        public int Day { get; }
+        public bool IsSave => SaveName != null;
 
         public LobbySummary(string factionId, string mapName, string? modeLocKey, string settlement, string hostName, bool separateColonies)
+            : this(factionId, mapName, modeLocKey, settlement, hostName, separateColonies, null, 0, 0) { }
+
+        /// <summary>A hosted save: its settlement, name and in-game date.</summary>
+        public static LobbySummary ForSave(string settlement, string saveName, int cycle, int day, string hostName) =>
+            new LobbySummary("", "", null, settlement, hostName, false, saveName ?? "", cycle, day);
+
+        private LobbySummary(string factionId, string mapName, string? modeLocKey, string settlement, string hostName,
+            bool separateColonies, string? saveName, int cycle, int day)
         {
             FactionId = LobbyFrames.Clip(factionId, 64);
             MapName = LobbyFrames.Clip(mapName, 128);
@@ -41,6 +59,9 @@ namespace TimberNet
             Settlement = LobbyFrames.Clip(settlement, 64);
             HostName = PlayerActivity.CleanName(hostName);
             SeparateColonies = separateColonies;
+            SaveName = saveName == null ? null : LobbyFrames.Clip(saveName, 128);
+            Cycle = Math.Max(0, cycle);
+            Day = Math.Max(0, day);
         }
 
         public JObject ToJson() => new JObject
@@ -51,6 +72,7 @@ namespace TimberNet
             ["settlement"] = Settlement,
             ["host"] = HostName,
             ["separate"] = SeparateColonies,
+            ["save"] = SaveName == null ? null : new JObject { ["name"] = SaveName, ["cycle"] = Cycle, ["day"] = Day },
         };
 
         public static bool TryParse(JToken? token, out LobbySummary? summary)
@@ -62,7 +84,16 @@ namespace TimberNet
                 || !(json["separate"] is JValue { Type: JTokenType.Boolean } separate))
                 return false;
             string? mode = json["mode"] is JValue { Type: JTokenType.String } modeValue ? (string?)modeValue : null;
-            summary = new LobbySummary(faction, map, mode, settlement, host, (bool)separate);
+            string? saveName = null;
+            int cycle = 0, day = 0;
+            if (json["save"] is JObject save)
+            {
+                if (!LobbyFrames.TryString(save["name"], out string name)) return false;
+                saveName = name;
+                cycle = save["cycle"] is JValue { Type: JTokenType.Integer } c ? (int)c : 0;
+                day = save["day"] is JValue { Type: JTokenType.Integer } d ? (int)d : 0;
+            }
+            summary = new LobbySummary(faction, map, mode, settlement, host, (bool)separate, saveName, cycle, day);
             return true;
         }
     }
