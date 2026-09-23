@@ -93,7 +93,7 @@
       <details class="q">
         <summary>Can we play one shared colony, as in ordinary BeaverBuddies?</summary>
         <div class="answer">
-          <p>Yes. With <b>Separate colonies for new games</b> off, a new game is one colony that every player builds together, and a shared save (made that way, or in the Stability Fork) loads the same way. None of the colony model runs then: no owners or road rule, no Trading Post (not even in dev mode), District Crossings holding the game's 30 of a good, no colony check, and nothing of this mod's in the save. A shared save stays shared unless the host ticks <b>Allow founding colonies in a shared game</b>, which lets a player found their own colony and splits the save for good.</p>
+          <p>Yes. With <b>Separate colonies</b> unticked on the New Game page, a new game is one colony that every player builds together, and a shared save (made that way, or in the Stability Fork) loads the same way. None of the colony model runs then: no owners or road rule, no Trading Post (not even in dev mode), District Crossings holding the game's 30 of a good, no colony check, and nothing of this mod's in the save. A shared save stays shared, unless the host ticks <b>Separate colonies</b> on its Co-op Game page or a friend splits off from the game menu (see the next question).</p>
           <p>What does apply is what MultiColony adds to co-op in general: its desync fixes, the performance pass, the start prompt, the speed boost, going to a player, your own chat color. Every player needs MultiColony: it and the Stability Fork can't join each other's games.</p>
         </div>
       </details>
@@ -101,7 +101,12 @@
       <details class="q" id="split">
         <summary>We already share a big colony. Can we split it?</summary>
         <div class="answer">
-          <p>Yes. The host ticks <b>Allow founding colonies in a shared game (beta)</b> in Mod Settings and hosts the save; the friend presses <kbd>Ctrl</kbd>+<kbd>K</kbd> and places their district center. The colony you built together stays whole as the first colony, with its buildings, beavers, fields, science and unlocks; the friend starts from scratch with a new district center, starting beavers, food and water. The first founding makes the save separate colonies for good, so keep a copy first. <a href="index.html#start">Choose your start</a> shows both ways side by side.</p>
+          <p>Yes, two ways, and neither can be undone, so keep a copy of the save first. Either way the colony you built together stays whole as the host's, with its buildings, beavers, fields, science and unlocks, and each friend starts from scratch with a new district center, starting beavers, food and water.</p>
+          <ul>
+            <li><b>When you host it:</b> main menu &rarr; <b>Host co-op game</b>, pick the save, and tick <b>Separate colonies</b> on its Co-op Game page. At <b>Start Game</b> it becomes separate colonies; with <b>Separate science and unlocks</b> ticked, each colony earns its own science from then on.</li>
+            <li><b>Later, from inside the game:</b> a friend (not the host) opens the game menu (Esc) and chooses <b>Found your own colony</b>. It asks first; placing their district center makes the split. Science and unlocks stay one shared pool.</li>
+          </ul>
+          <p>Neither has been played yet. <a href="index.html#start">Choose your start</a> shows it beside a new game.</p>
         </div>
       </details>
 
@@ -161,7 +166,7 @@
       <details class="q">
         <summary>Can someone join after the game has started?</summary>
         <div class="answer">
-          <p>No. Everyone is sent the save the host started from, and a running game can't be handed to a newcomer. A waiting room closes at <b>Start Game</b>. Hosting from inside a game, joining closes when the host unpauses, or when the host places or marks anything while waiting (the game asks first, and the connection panel says <i>Joining: open</i> until then). To let someone in later, the host saves, hosts again and invites them.</p>
+          <p>No. Everyone is sent the save the host started from, and a running game can't be handed to a newcomer: the Co-op Game page closes at <b>Start Game</b>. To let someone in later, the host chooses <b>Save and Rehost</b> in the game menu; everyone meets on the Co-op Game page again, including the newcomer, and <b>Start Game</b> carries on.</p>
         </div>
       </details>
 
@@ -200,7 +205,7 @@
       <details class="q">
         <summary>Can Folktails and Iron Teeth play together?</summary>
         <div class="answer">
-          <p>Yes, though it hasn't been played yet. The host turns on <b>Mixed factions for new games</b> in Mod Settings, with separate colonies, and needs every faction unlocked on their own computer. In the waiting room each player picks their faction with the game's own faction switcher; each colony then has its faction's buildings, beavers, bots and storage, and colonies of different factions trade the goods both factions use, and science, but not beavers. A mixed save needs MultiColony: the plain game or the Stability Fork would load only one faction and drop the other's buildings and beavers. See <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md#mixed-factions-beta">TWO-COLONIES.md</a>.</p>
+          <p>Yes, though it hasn't been played yet. The host ticks <b>Mixed factions</b> under <b>Separate colonies</b> on the New Game page, and needs every faction unlocked on their own computer. On the Co-op Game page each player picks their faction with the game's own faction switcher; each colony then has its faction's buildings, beavers, bots and storage, and colonies of different factions trade the goods both factions use, and science, but not beavers. A mixed save needs MultiColony: the plain game or the Stability Fork would load only one faction and drop the other's buildings and beavers. See <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md#mixed-factions-beta">TWO-COLONIES.md</a>.</p>
         </div>
       </details>
 
@@ -314,7 +319,7 @@
         <div class="answer">
           <ul>
             <li>Everyone must run the exact same build. Other mods should match (you get a warning when they don't), and settings aren't compared.</li>
-            <li>Nobody can join after a waiting room's <b>Start Game</b>, or, hosting from inside a game, after the host unpauses or changes anything while waiting.</li>
+            <li>Nobody can join after <b>Start Game</b>; the host uses <b>Save and Rehost</b> to let someone in.</li>
             <li>Desyncs can still happen; a colony difference is caught the moment it happens.</li>
             <li>Beta: the colony model has had a few short playtests so far. Up to four colonies; tested on Windows with the Steam version only.</li>
             <li>Text added by this mod is English only. Other languages show the English text for those strings.</li>

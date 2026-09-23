@@ -39,21 +39,32 @@ on one map, links them only through Trading Post barter, and still offers ordina
 
 - The host reads the site first, then sends the zip or a link to a friend. Guests land on the site cold and need
   the install steps and nothing else.
-- Ways to play (names as they appear in Mod Settings → BeaverBuddies; the host sets them):
-  - **New game, a colony each:** *Separate colonies for new games (beta)*, on by default.
-  - **Split a shared save:** *Allow founding colonies in a shared game (beta)*, off by default. A player without a
-    colony founds their own, and the first founding makes the save separate colonies for good. **The existing
-    colony, with its science and unlocks, stays whole as the first colony. The second player starts from scratch**
-    (a new district center with starting beavers, food and water). Nothing divides a 300-beaver colony into two
-    halves.
-  - **One shared colony:** ordinary BeaverBuddies co-op, with MultiColony's improvements.
+- Ways to play. The host chooses where the game is made, with the **Separate colonies** checkbox; none of this is
+  in Mod Settings.
+  - **New game, a colony each:** *Separate colonies* on the New Game difficulty page (under the game's own Tutorial
+    checkbox), ticked by default; the page remembers the last choice. Under it: *Separate science and unlocks*
+    (ticked) and *Mixed factions* (unticked).
+  - **Split a shared save**, two ways, both for good:
+    - When hosting it: the save's **Co-op Game** page shows *Separate colonies* (unticked) with *Separate science and
+      unlocks*; ticked, the game becomes separate colonies at Start.
+    - Later: a player other than the host chooses **Found your own colony** in the game menu (Esc), once; science
+      stays shared.
+    - Either way **the existing colony, with its science and unlocks, stays whole as the host's. Each other player
+      starts from scratch** (a new district center with starting beavers, food and water). Nothing divides a
+      300-beaver colony into halves.
+  - **One shared colony:** *Separate colonies* unticked; ordinary BeaverBuddies co-op, with MultiColony's
+    improvements.
+  - The host's one colony setting in **Mod Settings → BeaverBuddies** is *Hand over a colony after its player is
+    away (days)*, 0 (never) by default.
 - **Features the site must include** (confirmed by the maintainer, 2026-09-23), alongside separate colonies and
   Trading Posts:
-  - **The waiting room:** the Co-op Game page for a new game or for a save hosted from the main menu. The host
-    invites (Steam or IP), friends ready up, and Start Game loads everyone together. Guests find the host's game
-    under **Join co-op game** on the main menu.
-  - **Mixed factions:** *Mixed factions for new games (beta)*, off by default. Each player picks Folktails or Iron
-    Teeth for their own colony in the waiting room.
+  - **The Co-op Game page:** every game is hosted through it. A new game (**Host co-op game** beside Start), a save
+    (**Host co-op game** on the main menu, under Load game, opens the game's save box with a gold line saying what the
+    save is), or the game you're playing (Esc → **Host co-op game**; for a co-op host, **Save and Rehost**, with
+    guests' **Rejoin** / **Reconnect** landing them on the page). The host invites (Steam or IP), friends ready up,
+    and Start Game loads everyone together. Guests find the host's game under **Join co-op game** on the main menu.
+  - **Mixed factions:** the *Mixed factions* checkbox under *Separate colonies* on the New Game page, unticked by
+    default. Each player picks Folktails or Iron Teeth for their own colony on the Co-op Game page.
   - **Away players keep their colony:** by default a colony is never handed over while its player is away. A friend
     can look after it (Ctrl+T), and automatic hand-over after a set number of days away is opt-in, for groups where
     someone may not come back.
@@ -76,7 +87,7 @@ on one map, links them only through Trading Post barter, and still offers ordina
 5. **Every player has the same game version and the exact same download. Update together:** a different build
    cannot join (*Multiplayer build mismatch*).
 
-**Status:** beta, current version **1.4.0-rc2** (a release candidate). The site names the newest published release,
+**Status:** beta, current version **1.4.0-rc4** (a release candidate). The site names the newest published release,
 and `docs/assets/release.js` fills the version badges from GitHub. 1.4.0 has not been released yet. It is built for
 Timberborn **1.1.2.4**, and only the Steam version on Windows has been tested. It passes a large automated test
 suite, but real-game play is still limited: many features are covered by checks, not yet played. Players should play
