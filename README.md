@@ -16,7 +16,9 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > this version's model (colony handover, most of the road rule), the **waiting room** (beta18 for new games, beta19
 > for saves) and most of the desync review's fixes (alpha11 onward) have **not been played yet**; they are covered by automated checks. Since
 > alpha13, in a separate-colonies game, a guest whose colony state differs from the host's stops the tick it happens,
-> so a bug in that check would also stop a healthy game; the log line says which it was. Play on a copy of your save,
+> so a bug in that check would also stop a healthy game; the log line says which it was. Until 1.4.0-beta21 no guest
+> could get from the waiting room into the game (its load failed at once; found by the beta18–20 review), so beta21 is
+> the first build whose waiting room can work at all. Play on a copy of your save,
 > keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
 
@@ -63,7 +65,8 @@ build cannot join.
   [when a colony is handed over](#when-a-colony-is-handed-over)).
 - **Mixed factions for new games (beta)**, off (1.4.0-beta20; not played yet): on, with separate colonies and every
   faction unlocked on your computer, each player picks **Folktails or Iron Teeth** for their own colony, in the
-  waiting room (see [Folktails and Iron Teeth together](#folktails-and-iron-teeth-together)).
+  waiting room (see [Folktails and Iron Teeth together](#folktails-and-iron-teeth-together)). It is made for the
+  game's two factions: with a mod that adds a faction, new games stay one faction (1.4.0-beta21).
 
 **2. Host: a new game with a waiting room** (the easy way, 1.4.0-beta18; not played yet).
 
@@ -132,7 +135,8 @@ verified](#how-it-works)).
   and goods lists are all its faction's.
 - **Trading between factions**: the 17 goods both factions use, and science. Never beavers.
 - **Changing your mind**: until your colony builds anything of its own faction, Ctrl+T offers **Play … instead**.
-- The host's unlocks decide whether Iron Teeth is there.
+- The host's unlocks decide whether Iron Teeth is there. With a mod that adds a faction installed, new games stay one
+  faction (the page says why): the feature is made and checked for Folktails and Iron Teeth.
 
 See [TWO-COLONIES.md](TWO-COLONIES.md#mixed-factions-beta) for the details.
 

@@ -11,7 +11,9 @@ science, was fixed in beta14), and in beta15 trading posts with exchanges of goo
 version's model has not been seen in a game yet**: colony handover, the road rule that replaced land in beta15, the
 waiting room (beta18 for new games, beta19 for saves), and most of the desync review's fixes (alpha11 onward) are
 covered by automated checks only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
-in that check would stop a healthy game too; the log line says which. Play on a copy of your save and keep backups.
+in that check would stop a healthy game too; the log line says which. Until 1.4.0-beta21 no guest could get from a
+waiting room into the game at all (its load failed at once; found by the review of beta18 to beta20). Play on a copy
+of your save and keep backups.
 
 ## The rules in one minute
 
@@ -104,7 +106,9 @@ centers already there are the host's colony's. Every other player **founds** the
 ## Mixed factions (beta)
 
 *1.4.0-beta20. Not played yet.* With **Mixed factions for new games** on, every colony plays a faction of its own:
-one player can run Folktails and another Iron Teeth on the same map, trading through Trading Posts.
+one player can run Folktails and another Iron Teeth on the same map, trading through Trading Posts. It is made for the
+game's two factions: with a mod that adds a faction installed, a new game stays one faction and the page says why
+(1.4.0-beta21; a third faction's content would load into every mixed game).
 
 **Picking your faction.** It is part of the waiting room (the host's **Host co-op game**):
 
@@ -454,6 +458,12 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   (before beta19 a hosted save could be joined from a game). It has no chat, map preview or mod-list
   comparison (mismatch warnings still show in the game). Its settlement-name box has no *Change start location*.
   Anyone who can reach the direct-IP port can come into the room; the host can remove them.
+- Accepting a waiting room's invite while in **someone else's co-op game** ends your part in that game before the box
+  says to go back to the main menu (the connection is replaced as the join starts). Leave the game first.
+- Over Steam, a guest who leaves a waiting room stays in the host's Steam lobby (eight places). After many leaves and
+  rejoins a friend may find it full while the room still shows free places; the host re-opening the room clears it.
+- If the host's game stops while it makes a waiting room's world, the guests wait on *Creating the world…* until they
+  press **Leave**.
 - The game ends only when every beaver on the map is gone, not per colony.
 - There is no land: where to build is the players' call. Wild bushes, ruins and piles nobody marked go to whichever
   colony's workers reach them first.

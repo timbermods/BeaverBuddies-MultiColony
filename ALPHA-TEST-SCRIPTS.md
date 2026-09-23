@@ -381,10 +381,16 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
 6. **Remove and leave.** Host: the red cross on the guest's row → confirm: the guest's page closes with *Kyler removed
    you from the waiting room.* Guest joins again by IP (**Join co-op game**). Guest: **Leave** → confirm: back to the
    main menu, and the host's list drops the row.
+6b. **Leave and come back (beta21).** Over Steam: the guest leaves and accepts the invite again, five times; each time
+   its row comes back. (Known limit: the host's Steam lobby keeps everyone who left. If a rejoin is refused as full,
+   say after how many.)
 7. **Start with someone not ready.** Guest joins again and is not ready. Host: **Start Game** → *Not everyone is
    ready (…)* → **Keep waiting**: nothing happens. Guest: ready. Host: **Start Game**. Both see the loading screen
    with the mod's line (*Creating the world…*, *Loading your co-op game…*, *Loading Kyler's co-op game…*). The host
    never sees the new world before it.
+7a. **The guest gets in (beta21).** The guest's game loads (its log has `Loading map` and no `NullReferenceException`).
+   In beta18 to beta20 no guest got past Start: its game never loaded and it was left on an empty main menu (review
+   J1).
 8. **In the game.** Both paused at the start. The host has the district center. No *Joining: open*, and placing
    something as host asks nothing. The host's connection panel shows *(loading)* after the guest's name until the
    guest is in. The guest is offered **Place your district center** at once: place it **while still paused**. The
@@ -393,11 +399,15 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
    founds anything. (`[Lobby] Filling 2 start(s)` in the host's log.)
 10. **Too late.** A third account accepts an old invite after **Start Game**: refused with "The host has already
     started the game…".
+10b. **Start at once (beta21).** Host opens a room and presses **Start Game** straight away (yes to starting alone): on a
+    friend's Steam friends list the host shows no *Join game*.
 11. **Cancel.** Host opens a waiting room, the guest joins, host **Cancel** → confirm: the guest sees *Kyler closed
     the waiting room.* The host is back on the difficulty page; **Load Game → Host co-op game** on any save still
     works as before (the guest now sees a *Connecting* box instead of "Joined! Receiving map...").
 12. **From a game.** Guest plays a solo game and accepts a waiting-room invite: a box says to go back to the main menu
     and accept it again; nothing else changes.
+12b. **From a co-op game (beta21, known limit).** Guest is in someone else's co-op game and accepts a waiting-room
+    invite: the same box shows, and the game they were in has lost its connection. Say what that game does.
 13. **Waiting.** Leave the guest on the page three minutes before Start: nothing drops. Pull the host's network
     cable for two minutes while the guest waits: the guest is asked *Keep waiting* / *Leave*.
 15. **A save (beta19).** Host, from the main menu: **Load Game** → a separate-colonies save you both played →
@@ -449,9 +459,17 @@ waiting room and of each colony help.
 11. **The switch.** A third colony (or Ctrl+Shift+K alone, debug) founds Folktails, then before building anything Ctrl+T
     → **Play Iron Teeth instead**: its district center and beavers become Iron Teeth in place. Build an Iron Teeth
     warehouse: the button is gone (a path alone would not count).
+11a. **After a switch (beta21).** Let the switched colony play a day, then set off dynamite near colony 1's beavers, or
+    leave a beaver by a Folktails Beehive for two days: no crash, and the population total equals the districts' sum.
+    (beta20's switch left the old beavers in the game's lists, and this crashed; review B-1.)
+11b. **A switch at tick 0 (beta21).** A mixed waiting-room game on a 3-start map, the guest leaving the picker alone.
+    While still paused at the start the guest accepts *Switch*: its colony's beavers are Iron Teeth (fur, needs), as
+    many as the game mode starts with (review B-2).
 12. **The save's room.** Main menu → Load Game → that save → **Host co-op game**: the ring shows Folktails, the rows
     *Host · Colony 1* with the Folktails logo and the guest's *Colony 2* with the Iron Teeth logo; nobody's switcher
     shows (both colonies have their faction).
 13. **Locked.** On a computer without Iron Teeth unlocked, Mixed factions on, a new room: the gold line says Iron
     Teeth is not unlocked and everyone plays one faction; no switcher.
+13a. **A faction mod (beta21).** With a mod that adds a faction installed, Mixed factions on, a new room: the gold line
+    says mixed factions is made for Folktails and Iron Teeth and everyone plays one faction.
 14. Send both `Player.log` files. Lines start with `[Factions]` and `[Lobby]`.

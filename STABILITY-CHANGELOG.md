@@ -5,6 +5,69 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta21
+
+**A review of beta18 to beta20, and its fixes.** The waiting room (beta18, beta19) changed how every co-op game
+starts, and mixed factions (beta20) what a game can hold; none of it had been played. A review with three reviewers
+beside the main one (`design/REVIEW-PLAN-1.4.0-beta18-20.md`; findings, evidence and what was found sound in
+`design/REVIEW-FINDINGS-1.4.0-beta18-20.md` and `design/review-1.4.0-beta18-20/`) found that no guest could get from
+a waiting room into the game, and that the faction switch left dead beavers in the game's lists; both are fixed, with
+everything else it confirmed. **Wire change** (the two faction fields below are left out when null); no save change.
+
+- **The waiting room brings its guests into the game** (J1, since beta18). `ClientConnectionService.LoadMap` emptied
+  the singleton registry and then read it for the loading screen's tip: the NullReferenceException was swallowed and
+  the load never started. In the same frame `CheckWaitingRoom` took the empty registry for "this player is in a game"
+  (D20) and dropped the connection, and the main menu's panel patches then threw, leaving an empty menu. Now the tip
+  is worded first and the reset runs just before the load; the check stands down once the save has come
+  (`Connect/JoinFlowRules.cs`, checked headless); the panel patches and `RegisteredLocalizationService.T` survive an
+  empty registry. Classic joins and D20 behave as before.
+- **The waiting room's server** (`TimberNet`).
+  - Each member's fate is claimed once (`LobbyMember.TryEnterGame` / `TryLeave`): a guest removed by the 10 s rule
+    as it entered the game was let in as a new player, then closed (J2/J4). A waiting-room server admits only its
+    members, and a guest the room has let go stays behind its gate until the connection closes: in the 2 s before,
+    its frames reached the game as player -1 actions and a session fault (A-new-3).
+  - A hello is taken once, and the room writes at most every 50 ms: one guest's frames made it rewrite the roster
+    to everyone thousands of times a second, until slower guests were taken out (J10a).
+  - Start closes the room before counting it (A-new-2); a Steam lobby made after Start opens closed (J11a).
+- **The start message** is built on a join thread while the host is still in the menu: it carried the last session's
+  speed boost (also for a classic Save and Rehost, since beta5), the speed limit's session latch recorded none, and a
+  mixed save room sent no host factions. The boost resets when hosting starts, the session is passed in, and a mixed
+  room latches the host's factions at Start; they are forgotten when a session begins, host or guest (J5a–c, C-S1).
+- **Joining shows the right boxes**: "Connecting to …" no longer comes back over the waiting room's page or after a
+  failed join (A-new-1), and a room that ended in the same frame it welcomed the guest says so (J8a).
+- **The faction switch** (`ColonyFoundingService.SwitchFaction`).
+  - It removes the old beavers with `Character.DestroyCharacter`, as the game does. A bare `EntityService.Delete` left
+    them in `CharacterPopulation` and `BeaverPopulation` after Unity destroyed them: the next explosion or Beehive
+    check read their `Transform` and threw for everyone, and a player who loaded later drew differently (B-1).
+  - A switch before the first tick (tick 0 of a waiting-room game) also takes the colony's beavers that are not yet in
+    a district (B-2), and the colony's paths repaint in the new faction (B-3).
+- **Mixed factions, sturdier.**
+  - A new game is mixed only with exactly the game's two factions: with a faction mod, its content would load into
+    every mixed game, and templates it reuses would become common to both factions. The room says why (C-C1).
+  - Its patches are applied last and on their own (`Plugin.PatchAllIsolatingFactions`, Harmony's `PatchAll` in two
+    groups): if a game update breaks one, mixed factions is off for that run instead of the whole mod failing to
+    start (C-E2).
+  - The daily check covers each character's faction and number of needs, in mixed games only (B-4). An earlier game's
+    faction icon, shaft models, warning and locked-faction notice no longer carry over (C-S1).
+- **Smaller:** `FoundColonyEvent.faction` and `InitializeClientEvent.hostFactions` are left out of the JSON when null
+  (C-E7); the founding tool's check no longer allocates for every preview block (C-E7); `SaveColonyReader`'s comment
+  says what it really costs (C-E6).
+- **Corrections to beta20's entry:** a room that is not mixed sends beta19's frames for a new game, but a save's room
+  now always sends the save's faction and colonies (a display gain for every save room); and a beaver can still eat
+  the other faction's food for its hunger, only without that food's wellbeing bonus (TWO-COLONIES corrected).
+- **Left, and why** (in the findings): accepting an invite from inside someone else's co-op game ends your part in it
+  first (E5); guests who leave stay in the host's Steam lobby (J11b); a world-making scene that stops leaves guests on
+  *Creating the world…* until they leave (J8b). All three are in TWO-COLONIES' *Known limits* and the test scripts.
+- Docs: the review's plan, findings and reports; README (the warning, mixed factions), TWO-COLONIES (state of
+  testing, the save room, food, *Known limits*), ALPHA-TEST-SCRIPTS (D6b, D7a, D10b, D12b, F11a, F11b, F13a), the site.
+- Checks: StabilityTests 410 (19 new: eleven rigs of the waiting room's server, several of which fail on beta20's
+  code; the fixed join's decisions; one check per finding that can be read from the source, each failing on beta20),
+  RuntimeChecks 359 (10 new: every service the mod binds resolves in its scene, by Bindito's own validator; every
+  patch target resolves by Harmony's own resolver; every mixed-factions patch branches on the mode first, read from
+  the IL of both builds; no member stacks two patch targets; the game facts behind the switch's fixes). Both builds,
+  0 warnings.
+- Not seen in a game. Script D (now D7a first) and Script F are owed.
+
 ## 1.4.0-beta20
 
 **Folktails and Iron Teeth together.** The maintainer's plan (`design/MIXED-FACTIONS-PLAN.md`, revision 2), built on

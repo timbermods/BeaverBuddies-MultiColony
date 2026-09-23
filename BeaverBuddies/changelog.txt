@@ -1,3 +1,11 @@
+v1.4.0-beta21 (BeaverBuddies MultiColony)
+* The waiting room works: before this, no guest could get from a waiting room into the game (beta18 to beta20: its load failed at once and it was left on an empty main menu).
+* Mixed factions: switching an untouched colony's faction no longer leaves the old beavers behind in the game's lists, which crashed the game at the next explosion or Beehive check; a switch at the very start now takes the colony's beavers too.
+* The waiting room is sturdier: a guest removed as the game starts is never let in as a new player, one guest can no longer flood the others, and the start message no longer carries the last session's speed boost (also for Save and Rehost).
+* Mixed factions needs the game's two factions: with a mod that adds a faction, new games stay one faction. If a game update breaks mixed factions, it turns itself off instead of stopping the mod.
+* From a review of beta18 to beta20 (design/REVIEW-FINDINGS-1.4.0-beta18-20.md). Not played yet.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta20 (BeaverBuddies MultiColony)
 * Folktails and Iron Teeth together: turn on Mixed factions for new games (Mod Settings, host) and each player picks their faction in the waiting room, with the game's own faction arrows. Each colony gets its faction's toolbar, beavers, bots, buildings and storage. Colonies of different factions trade the goods both factions use, and science, but not beavers. Needs every faction unlocked on the host's computer. Not played yet.
 * A save hosted from the main menu now shows each player's colony and its faction in the waiting room.
