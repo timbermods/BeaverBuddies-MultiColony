@@ -175,6 +175,9 @@ namespace BeaverBuddies
 
         public static bool ShouldUseNonGameRNG()
         {
+            // Outside a multiplayer game every draw is the game's (RandomSourceRules.Choose says so first): answered
+            // without the singleton lookup, since single player draws through here too (1.4.0-rc1 review, D-S10).
+            if (EventIO.IsNull) return false;
             DeterminismService determinismService = GetSingleton<DeterminismService>();
             return determinismService?.ShouldFreezeSeed ?? false;
         }
@@ -224,10 +227,42 @@ namespace BeaverBuddies
                 $"Last entity: {entity?.Name} - {entity?.EntityId}");
         }
 
-        [HarmonyPatch(typeof(TickableEntity), nameof(TickableEntity.Tick))]
-        static class TickableEntityTickPatcher
+        // Which entity is ticking, for the detailed-logging line of a game draw (TraceGameDraw) and nothing else. Patched
+        // only once detailed logging is on in a multiplayer game (EnsurePatched, as a tick starts: ReplayService.DoTick).
+        // As a [HarmonyPatch] it cost two calls per ticking entity per tick in every game, single player included, for a
+        // line that is only written with detailed logging on (1.4.0-rc1 review, D-S10).
+        internal static class TickableEntityTickPatcher
         {
             public static EntityComponent currentlyTickingEntity = null;
+            private static bool patched;
+
+            /// <summary>
+            /// Patches TickableEntity.Tick, once per program run, between ticks. Should it fail, the traces only lose the
+            /// ticking entity's name. Patching happens on this computer alone, in a session: Harmony's patcher asks for new
+            /// GUIDs (MonoMod names what it makes with them), which a session draws from the game's random state
+            /// (GuidPatcher), so it gets real ones here, and the random state is put back whatever else it drew.
+            /// </summary>
+            public static void EnsurePatched()
+            {
+                if (patched) return;
+                patched = true;
+                UnityEngine.Random.State randomState = UnityEngine.Random.state;
+                try
+                {
+                    GuidPatcher.WithRealGuids(() => new Harmony(Plugin.ID).Patch(AccessTools.Method(typeof(TickableEntity), nameof(TickableEntity.Tick)),
+                        prefix: new HarmonyMethod(AccessTools.Method(typeof(TickableEntityTickPatcher), nameof(Prefix))),
+                        postfix: new HarmonyMethod(AccessTools.Method(typeof(TickableEntityTickPatcher), nameof(Postfix)))));
+                    Plugin.Log("Detailed logging: the ticking entity is now named in random-draw traces");
+                }
+                catch (Exception error)
+                {
+                    Plugin.LogWarning("Detailed logging cannot name the ticking entity: " + error.Message);
+                }
+                finally
+                {
+                    UnityEngine.Random.state = randomState;
+                }
+            }
 
             static void Prefix(TickableEntity __instance)
             {
@@ -533,6 +568,8 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            // Only a multiplayer game tells the game's draws from this computer's own (ShouldUseNonGameRNG).
+            if (EventIO.IsNull) return;
             DeterminismService.SetNonGamePatcherActive(typeof(InputPatcher), true);
             __state = true;
         }
@@ -549,6 +586,8 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            // Only a multiplayer game tells the game's draws from this computer's own (ShouldUseNonGameRNG).
+            if (EventIO.IsNull) return;
             DeterminismService.SetNonGamePatcherActive(typeof(SoundsPatcher), true);
             __state = true;
         }
@@ -565,6 +604,8 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            // Only a multiplayer game tells the game's draws from this computer's own (ShouldUseNonGameRNG).
+            if (EventIO.IsNull) return;
             DeterminismService.SetNonGamePatcherActive(typeof(SoundEmitter), true);
             __state = true;
         }
@@ -581,6 +622,8 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            // Only a multiplayer game tells the game's draws from this computer's own (ShouldUseNonGameRNG).
+            if (EventIO.IsNull) return;
             DeterminismService.SetNonGamePatcherActive(typeof(DateSalterPatcher), true);
             __state = true;
         }
@@ -600,6 +643,8 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            // Only a multiplayer game tells the game's draws from this computer's own (ShouldUseNonGameRNG).
+            if (EventIO.IsNull) return;
             DeterminismService.SetGamePatcherActive(typeof(BeaverNameServiceRandomNamePatcher), true);
             __state = true;
         }
@@ -616,6 +661,8 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            // Only a multiplayer game tells the game's draws from this computer's own (ShouldUseNonGameRNG).
+            if (EventIO.IsNull) return;
             DeterminismService.SetNonGamePatcherActive(typeof(PlantableDescriberPatcher), true);
             __state = true;
         }
@@ -632,6 +679,8 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            // Only a multiplayer game tells the game's draws from this computer's own (ShouldUseNonGameRNG).
+            if (EventIO.IsNull) return;
             DeterminismService.SetNonGamePatcherActive(typeof(StockpileGoodPileVisualizerPatcher), true);
             __state = true;
         }
@@ -648,6 +697,8 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            // Only a multiplayer game tells the game's draws from this computer's own (ShouldUseNonGameRNG).
+            if (EventIO.IsNull) return;
             DeterminismService.SetNonGamePatcherActive(typeof(LoopingSoundPlayerPatcher), true);
             __state = true;
         }
@@ -664,6 +715,8 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            // Only a multiplayer game tells the game's draws from this computer's own (ShouldUseNonGameRNG).
+            if (EventIO.IsNull) return;
             DeterminismService.SetNonGamePatcherActive(typeof(BotManufactoryAnimationControllerPatcher), true);
             __state = true;
         }
@@ -680,6 +733,8 @@ namespace BeaverBuddies
         static void Prefix(out bool __state)
         {
             __state = false;
+            // Only a multiplayer game tells the game's draws from this computer's own (ShouldUseNonGameRNG).
+            if (EventIO.IsNull) return;
             DeterminismService.SetNonGamePatcherActive(typeof(TerrainBlockRandomizerPickVariationPatcher), true);
             __state = true;
         }
@@ -804,12 +859,25 @@ namespace BeaverBuddies
             return guid;
         }
 
+        /// <summary>Runs <paramref name="action"/> with real GUIDs on this thread (work done on this computer alone).</summary>
+        public static void WithRealGuids(Action action)
+        {
+            bool was = makeRealGuid;
+            makeRealGuid = true;
+            try { action(); }
+            finally { makeRealGuid = was; }
+        }
+
         static bool Prefix(ref Guid __result)
         {
 #if NO_RANDOM
             __result = GenerateIncrementally();
 #else
-            if (makeRealGuid)
+            // Outside a multiplayer game an entity's ID needs to match nobody's: a real one, as the game makes it, instead
+            // of 16 draws from the game's random state per new entity (1.4.0-rc1 review, D-S10). Every multiplayer game
+            // installs its EventIO before it loads (ServerHostingUtils, LobbySession, ClientConnectionService), so the IDs
+            // made while one loads still come from the shared random state.
+            if (makeRealGuid || EventIO.IsNull)
             {
                 return true;
             }
@@ -1007,9 +1075,13 @@ namespace BeaverBuddies
         private static readonly ConditionalWeakTable<TickableEntityBucket, EntitySlotCache<TickableEntity, MovementAnimator>>.CreateValueCallback newAnimatorCache =
             _ => new EntitySlotCache<TickableEntity, MovementAnimator>();
 
+        private static readonly Colonies.ColonyProfiler.Spot BucketSync =
+            Colonies.ColonyProfiler.Declare("Bucket hashes and walker positions before each bucket (co-op)");
+
         static void Prefix(TickableEntityBucket __instance)
         {
             if (EventIO.IsNull) return;
+            long started = Colonies.ColonyProfiler.Start();
 
             var slots = animators.GetValue(__instance, newAnimatorCache);
             var entities = __instance._tickableEntities.Values;
@@ -1111,6 +1183,7 @@ namespace BeaverBuddies
             }
             // Let go of positions past the end if entities were removed from this bucket.
             slots.Trim(__instance._tickableEntities.Count);
+            Colonies.ColonyProfiler.Stop(BucketSync, started);
         }
 
         private static string FVS(Vector3 vector)

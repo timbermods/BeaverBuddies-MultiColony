@@ -66,6 +66,9 @@ namespace BeaverBuddies.Steam
                     {
                         callback.Dispose();
                     }
+                    // Disposed, they still hold the last scene's service (and through it that scene's panels and event
+                    // bus): let them go, or every main menu and game loaded in a run stays in memory (1.4.0-rc1 review, D-S7).
+                    callbacks.Clear();
 
                     done = true;
 

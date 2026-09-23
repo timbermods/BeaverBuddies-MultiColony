@@ -150,14 +150,22 @@ namespace BeaverBuddies.Colonies
         private ZiplineTower Tower(string entityId) =>
             Guid.TryParse(entityId, out Guid guid) ? _entityRegistry.GetEntity(guid)?.GetComponent<ZiplineTower>() : null;
 
+        private static readonly ColonyProfiler.Spot ConflictWalks = ColonyProfiler.Declare("Road networks: district conflict walk");
+
         /// <summary>
         /// After the roads change (in the tick, on every computer): are any two district centers now on one road
         /// network? That breaks the game's district map; say so once, until it is resolved.
+        /// The game tells this listener only its regular updates, at most one a tick (NavigationSynchronizer.Tick; the
+        /// previews the local player drags go to preview listeners only). Each walk visits every road node of every
+        /// district, so it runs only when the roads changed: a road edge, a district obstacle or a district center, each
+        /// of which puts a road node in the update (DistrictChange.ApplyChange). A terrain-only update cannot join or part
+        /// two districts' roads (1.4.0-rc1 review, D-S4).
         /// </summary>
         public void OnNavMeshUpdated(NavMeshUpdate navMeshUpdate)
         {
-            if (!ColonyModeService.IsSeparateColonies) return;
+            if (!ColonyModeService.IsSeparateColonies || !navMeshUpdate.UpdatedRoads) return;
             bool conflict;
+            long started = ColonyProfiler.Start();
             try
             {
                 var districtService = _districtService as DistrictService;
@@ -170,6 +178,10 @@ namespace BeaverBuddies.Colonies
             {
                 Plugin.LogWarning("[Colony] Could not check the road networks: " + error.Message);
                 return;
+            }
+            finally
+            {
+                ColonyProfiler.Stop(ConflictWalks, started);
             }
             if (conflict && !conflictReported)
             {

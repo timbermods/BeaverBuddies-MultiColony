@@ -266,8 +266,10 @@ namespace BeaverBuddies.Events
             string reconnectMessage = _loc.T("BeaverBuddies.ClientDesynced.Message");
             // The report button needs an upload token, which public builds do not have, and the sentence that asks
             // every player to press Enable Logging is only added when that button is there (see DesyncDialogPlan).
-            string bugReportMessageKey = DesyncDialogPlan.ReportButtonKey(Settings.Debug, reportingService.HasAccessToken);
-            if (DesyncDialogPlan.AsksToEnableLogging(Settings.Debug, reportingService.HasAccessToken))
+            // Detailed logging would stop a large game for everyone: it is not offered there (1.4.0-rc1 review, D-S11).
+            bool largeGame = (Colonies.ColonyDiagnostics.Instance?.CharactersInDistricts() ?? 0) >= DesyncDialogPlan.LargeGameCharacters;
+            string bugReportMessageKey = DesyncDialogPlan.ReportButtonKey(Settings.Debug, reportingService.HasAccessToken, largeGame);
+            if (DesyncDialogPlan.AsksToEnableLogging(Settings.Debug, reportingService.HasAccessToken, largeGame))
             {
                 reconnectMessage += "\n\n" + _loc.T("BeaverBuddies.ClientDesynced.NeedToEnableTracing");
             }

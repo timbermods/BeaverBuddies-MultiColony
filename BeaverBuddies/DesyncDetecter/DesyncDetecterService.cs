@@ -59,6 +59,25 @@ namespace BeaverBuddies.DesyncDetecter
 
         private static readonly int maxTraceTicks = 10;
 
+        // Ticks of traces kept at most. A guest lets them go as the host's arrive (VerifyTraces), a tick or two behind.
+        // A guest whose host logs nothing never hears, and kept every tick's traces, a stack trace each, for the whole
+        // session: hundreds of megabytes an hour in a large colony (1.4.0-rc1 review, D-S7).
+        internal const int MaxKeptTicks = 128;
+
+        private static bool warnedNotDebug;
+
+        /// <summary>Ticks of traces kept, and the traces in them, for the diagnostics report.</summary>
+        internal static int KeptTicks => traces.Count;
+        internal static int KeptTraces
+        {
+            get
+            {
+                int count = 0;
+                foreach (List<Trace> tick in traces) count += tick.Count;
+                return count;
+            }
+        }
+
         private static string lastDesyncTrace = null;
 
         DesyncDetecterService()
@@ -72,6 +91,7 @@ namespace BeaverBuddies.DesyncDetecter
             WalkerDiagnostics.Reset();
             currentTick = -1;
             lastDesyncTrace = null;
+            warnedNotDebug = false;
             traces.Clear();
             traces.Add(new List<Trace>());
             if (Settings.Debug)
@@ -111,6 +131,14 @@ namespace BeaverBuddies.DesyncDetecter
                 currentTick = tick - 1;
                 traces.Clear();
             }
+            // Detailed logging switched on in a session that is already under way (the ticks were not counted while it
+            // was off): start at this tick, instead of making an empty tick of traces for every tick played so far, which
+            // a host would then send all at once.
+            if (tick - currentTick > MaxKeptTicks)
+            {
+                currentTick = tick - 1;
+                traces.Clear();
+            }
             // Each tick should be called, but if not
             // ensure that the list increments one at a time
             while (currentTick < tick)
@@ -119,6 +147,9 @@ namespace BeaverBuddies.DesyncDetecter
                 traces.Add(new List<Trace>());
                 Trace($"Tick {tick} started");
             }
+            // The oldest go (see MaxKeptTicks). VerifyTraces counts from the newest, so a tick let go here only reads as
+            // already checked.
+            while (traces.Count > MaxKeptTicks) traces.RemoveAt(0);
         }
 
         public static void Trace(string message, bool warnIfNotDebug = true, bool skipStackTrack = false)
@@ -138,6 +169,9 @@ namespace BeaverBuddies.DesyncDetecter
             }
             // Trace called before the service has been initialized
             if (traces.Count == 0) return;
+            // Nobody compares traces outside a session (single player, or after a desync ended it), and nothing lets them
+            // go there: kept, they grew without end (1.4.0-rc1 review, D-S7).
+            if (BeaverBuddies.IO.EventIO.IsNull) return;
             // Capturing the stack is much cheaper than formatting it, and most traces are never
             // looked at, so it is only turned into text if a desync report needs it.
             CurrentTrace.Add(new Trace()
@@ -162,8 +196,9 @@ namespace BeaverBuddies.DesyncDetecter
         {
             if (!Settings.Debug)
             {
-                Plugin.LogWarning("DesyncDetectorService.VerifyTraces called not in debug mode");
-                //Plugin.LogStackTrace();
+                // A host with detailed logging on sends its traces every tick: said once, not every tick.
+                if (!warnedNotDebug) Plugin.LogWarning("DesyncDetectorService.VerifyTraces called not in debug mode (the host has detailed logging on, this computer has not)");
+                warnedNotDebug = true;
                 return true;
             }
 

@@ -29,8 +29,11 @@ namespace BeaverBuddies.Colonies
     /// </summary>
     public static class TradingPosts
     {
-        // Per building spec (specs are shared objects): whether it is a Trading Post.
-        private static readonly Dictionary<BuildingSpec, bool> isTradingPostTemplate = new Dictionary<BuildingSpec, bool>();
+        // Per building spec (specs are shared objects, made again for every game loaded): whether it is a Trading Post.
+        // Weakly keyed, so a game that has been left takes its specs with it (1.4.0-rc1 review, D-S7).
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<BuildingSpec, object> isTradingPostTemplate =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<BuildingSpec, object>();
+        private static readonly object IsPost = new object(), IsNotPost = new object();
 
         public static DistrictCenter DistrictOf(BaseComponent half) =>
             half ? half.GetComponent<DistrictBuilding>()?.District : null;
@@ -48,15 +51,7 @@ namespace BeaverBuddies.Colonies
         public static bool IsTradingPostTemplate(BuildingSpec spec)
         {
             if (spec == null) return false;
-            lock (isTradingPostTemplate)
-            {
-                if (!isTradingPostTemplate.TryGetValue(spec, out bool tradingPost))
-                {
-                    tradingPost = spec.HasSpec<MultiColonyTradingPostSpec>();
-                    isTradingPostTemplate[spec] = tradingPost;
-                }
-                return tradingPost;
-            }
+            return isTradingPostTemplate.GetValue(spec, s => s.HasSpec<MultiColonyTradingPostSpec>() ? IsPost : IsNotPost) == IsPost;
         }
 
         /// <summary>The two halves stand in districts of different players (whatever the crossing is).</summary>

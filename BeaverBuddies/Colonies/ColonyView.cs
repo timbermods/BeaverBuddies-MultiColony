@@ -78,6 +78,39 @@ namespace BeaverBuddies.Colonies
             return JournalFilter.IsOwn(ColonySession.LocalSlot, owner, owner == null ? ColonyJournal.Instance?.RecordedOwnerOf(component) : null);
         }
 
+        /// <summary><see cref="IsOwn(BaseComponent)"/>, with this player's slot already read (ActiveThisFrame).</summary>
+        public static bool IsOwnFor(BaseComponent component, int localSlot)
+        {
+            if (!component) return true;
+            int? owner = DistrictOwner.OwnerOf(component);
+            return JournalFilter.IsOwn(localSlot, owner, owner == null ? ColonyJournal.Instance?.RecordedOwnerOf(component) : null);
+        }
+
+        // The alert list asks, for every alert on every frame, whether this computer filters and whose the alert is.
+        // Whether it filters and this player's seat (several lookups each) are read once a frame instead of for every
+        // alert (1.4.0-rc1 review, D-S9). Display only: nothing simulated reads them.
+        private static int filterFrame = -1;
+        private static bool filtersThisFrame;
+        private static int slotThisFrame;
+        internal static readonly ColonyProfiler.Spot Alerts = ColonyProfiler.DeclareSampled("Alerts shown only for this colony (per alert per frame)");
+
+        /// <summary><see cref="Active"/>, and this player's slot, as of the start of this frame.</summary>
+        public static bool ActiveThisFrame(out int localSlot)
+        {
+            localSlot = -1;
+            // Single player and shared games stop at two static reads, as before.
+            if (!ColonyModeService.IsSeparateColonies || EventIO.IsNull) return false;
+            int frame = UnityEngine.Time.frameCount;
+            if (frame != filterFrame)
+            {
+                filterFrame = frame;
+                filtersThisFrame = Active;
+                slotThisFrame = ColonySession.LocalSlot;
+            }
+            localSlot = slotThisFrame;
+            return filtersThisFrame;
+        }
+
         // The top bar asks once per good it shows, and the population panel and wellbeing again: one list, filled at
         // most once per frame (a district's owner and this player's seat change rarely, and never within a frame).
         private readonly List<DistrictCenter> ownDistricts = new List<DistrictCenter>();
@@ -297,7 +330,10 @@ namespace BeaverBuddies.Colonies
     {
         static void Postfix(StatusInstance statusInstance, ref bool __result)
         {
-            if (__result && ColonyViewService.Active && !ColonyViewService.IsOwn(statusInstance.StatusSubject)) __result = false;
+            if (!__result || !ColonyViewService.ActiveThisFrame(out int localSlot)) return;
+            long started = ColonyProfiler.StartSampled(ColonyViewService.Alerts);
+            if (!ColonyViewService.IsOwnFor(statusInstance.StatusSubject, localSlot)) __result = false;
+            ColonyProfiler.StopSampled(ColonyViewService.Alerts, started);
         }
     }
 
@@ -306,7 +342,10 @@ namespace BeaverBuddies.Colonies
     {
         static void Postfix(StatusInstance statusInstance, ref bool __result)
         {
-            if (__result && ColonyViewService.Active && !ColonyViewService.IsOwn(statusInstance.StatusSubject)) __result = false;
+            if (!__result || !ColonyViewService.ActiveThisFrame(out int localSlot)) return;
+            long started = ColonyProfiler.StartSampled(ColonyViewService.Alerts);
+            if (!ColonyViewService.IsOwnFor(statusInstance.StatusSubject, localSlot)) __result = false;
+            ColonyProfiler.StopSampled(ColonyViewService.Alerts, started);
         }
     }
 

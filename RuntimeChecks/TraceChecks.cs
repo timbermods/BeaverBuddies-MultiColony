@@ -25,6 +25,8 @@ internal static class TraceChecks
         {
             pluginLogger.SetValue(null, DispatchProxy.Create(loggerType, typeof(QuietLoggerProxy)));
             debug.SetValue(null, true);
+            // In a session: outside one nothing is traced (1.4.0-rc1, D-S7).
+            using var session = ScopeChecks.Multiplayer(mod);
             try
             {
                 Activator.CreateInstance(serviceType, true);

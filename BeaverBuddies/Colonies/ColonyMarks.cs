@@ -41,6 +41,9 @@ namespace BeaverBuddies.Colonies
 
         public static ColonyMarks Instance => SingletonManager.GetSingleton<ColonyMarks>();
 
+        /// <summary>Tiles with a colony's planting or cutting mark, for the diagnostics report (a long session's size).</summary>
+        public int MarkedTiles => planting.Count + cutting.Count;
+
         public ColonyMarks(ISingletonLoader singletonLoader, PlantingService plantingService, TreeCuttingArea treeCuttingArea)
         {
             _singletonLoader = singletonLoader;

@@ -120,8 +120,6 @@ namespace BeaverBuddies
         private readonly TickingService _tickingService;
         private readonly DeterminismService _determinismService;
 
-        private readonly GameSaveHelper gameSaveHelper;
-
         private List<object> singletons = new();
 
         // TODO: I believe that this could be a non-static variable
@@ -269,8 +267,6 @@ namespace BeaverBuddies
             AddSingleton(this);
 
             _eventBus.Register(this);
-
-            gameSaveHelper = new GameSaveHelper(gameSaver);
 
             _tickingService.replayService = this;
         }
@@ -926,9 +922,16 @@ namespace BeaverBuddies
         // This will be called at the very begining of a tick before
         // anything else has happened, and after everything from the prior
         // tick (including parallel things) has finished.
+        private static readonly ColonyProfiler.Spot TickStart = ColonyProfiler.Declare("Tick start: actions replayed and sent (co-op)");
+
         public void DoTick()
         {
             if (!CanAct) return;
+            long started = ColonyProfiler.Start();
+
+            // Detailed logging names the ticking entity in its random-draw lines: patched now, between ticks, and never in
+            // a game without detailed logging (DeterminismService.TickableEntityTickPatcher).
+            if (Settings.Debug) DeterminismService.TickableEntityTickPatcher.EnsurePatched();
 
             if (Settings.Debug && io.ShouldSendHeartbeat)
             {
@@ -983,13 +986,9 @@ namespace BeaverBuddies
                 $"Move hash: {TEBPatcher.PositionHash:X8}; " +
                 $"Random s0: {UnityEngine.Random.state.s0:X8}");
 
-            if (ticksSinceLoad % 20 == 0)
-            {
-                //gameSaveHelper.LogStateCheck(ticksSinceLoad);
-            }
-
             // Update speed and pause if needed for the new tick.
             UpdateSpeed();
+            ColonyProfiler.Stop(TickStart, started);
         }
 
         public void FinishFullTickIfNeededAndThen(Action action)
@@ -1034,7 +1033,30 @@ namespace BeaverBuddies
         /// a normal update, but finishing it's current bucket), but it will then resume
         /// on the following update.
         /// </summary>
-        public bool ShouldInterruptTicking { get; set; } = false;
+        public bool ShouldInterruptTicking
+        {
+            get => shouldInterruptTicking;
+            set
+            {
+                if (value && !shouldInterruptTicking) InterruptRequests++;
+                shouldInterruptTicking = value;
+            }
+        }
+        private bool shouldInterruptTicking;
+
+        // What interruptions cost, for the diagnostics report and the daily performance line (1.4.0-rc1 review, D-S2).
+        // Counted since this game loaded; nothing simulated reads them.
+        /// <summary>Frames whose ticking a creation or deletion asked to end (at most one a frame).</summary>
+        public long InterruptRequests { get; private set; }
+        /// <summary>Frames that ended with buckets of their time still unticked because of one.</summary>
+        public long FramesCutShort { get; private set; }
+        /// <summary>Buckets those frames handed back to the game's ticker, and the part the one-tick cap threw away.</summary>
+        public long BucketsGivenBack { get; private set; }
+        public long BucketsLost { get; private set; }
+        /// <summary>Frames that ticked at least one bucket.</summary>
+        public long FramesTicking { get; private set; }
+
+        private static readonly Colonies.ColonyProfiler.Spot Ticking = Colonies.ColonyProfiler.Declare("Ticking, the game's and the mod's (co-op, per frame)");
         public bool ShouldCompleteFullTick { get; private set; } = false;
 
         public bool HasTickedReplayService { get; private set; } = false;
@@ -1204,12 +1226,18 @@ namespace BeaverBuddies
             float perBucket = ticker._secondsPerBucket;
             if (!(perBucket > 0)) return;
             float oneTick = perBucket * buckets.TotalNumberOfBuckets;
-            ticker._accumulatedDeltaTime = Math.Min(oneTick, ticker._accumulatedDeltaTime + unticked * perBucket);
+            float wanted = ticker._accumulatedDeltaTime + unticked * perBucket;
+            ticker._accumulatedDeltaTime = Math.Min(oneTick, wanted);
+            FramesCutShort++;
+            BucketsGivenBack += unticked;
+            if (wanted > oneTick) BucketsLost += (long)Math.Round((wanted - oneTick) / perBucket);
         }
 
         public bool TickBuckets(TickableBucketService __instance, int numberOfBucketsToTick)
         {
             bucketService = __instance;
+            long started = Colonies.ColonyProfiler.Start();
+            if (numberOfBucketsToTick > 0) FramesTicking++;
 
             // TODO: I think if number of buckets starts at 0, we should unmark
             // complete full tick and return because it means we're paused...
@@ -1243,6 +1271,9 @@ namespace BeaverBuddies
             // Stopped by an interruption: the buckets this frame had left go back to the game's ticker (the loop above
             // counted one past the last it was given).
             if (ShouldInterruptTicking && !ReplayService.HasReplayFailure) GiveBackBuckets(__instance, numberOfBucketsToTick + 1);
+
+            // Before a save that waited for the tick's end runs, below.
+            Colonies.ColonyProfiler.Stop(Ticking, started);
 
             // Tell the TickRequester we've finished this partial (or possibly complete) tick
             OnTickingCompleted();
