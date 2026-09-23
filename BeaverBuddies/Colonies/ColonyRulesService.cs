@@ -95,6 +95,16 @@ namespace BeaverBuddies.Colonies
                 return false;
             }
 
+            // A hosted save made separate colonies at Start: a guest's change waits until the host's first action has made
+            // it so (its guest may have loaded first). Played before it, in the still-shared game, it would become the host's
+            // colony's (1.4.0-rc5 review, B3).
+            if (replayEvent.player != ColonySession.HostPlayer && replayEvent.ChangesGame() && SaveConversion.HostAwaitsConversion)
+            {
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: the game is still becoming separate colonies");
+                refusal = ColonyRefusal.NotStartedYet;
+                return false;
+            }
+
             int hostTicks = SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1;
             // Founding, handing over and switching colonies wait for the first tick, unless the game began from a waiting
             // room with joining already closed (ColonyRules.WaitsForStart).
@@ -107,8 +117,9 @@ namespace BeaverBuddies.Colonies
                 return false;
             }
 
-            // While the host waits at the start for players to join, a guest's change would close joining unseen (the
-            // host's own is held for the host's word: HostStartGate). Refused with the same notice as a founding.
+            // While the host waits at the start for players to join, a guest's change would close joining unseen. Refused
+            // with the same notice as a founding. Since 1.4.0-rc4 every game starts from a waiting room, closed at Start, so
+            // this and the wait above never hold; they stay as the guard should a host ever start with joining open.
             if (replayEvent.player != ColonySession.HostPlayer && hostTicks == 0 && replayEvent.ChangesGame()
                 && (EventIO.Get() as ServerEventIO)?.IsAcceptingClients == true)
             {

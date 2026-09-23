@@ -60,7 +60,7 @@ internal static class DesyncDialogChecks
             if (!IlScan.Names(IlScan.Members(Method("TryToConnect", "String")), "BeaverBuddies.Connect.JoinRoute", "ViaAddress"))
                 throw new Exception("Joining by address is not remembered");
             // Since 1.4.0-rc4 Reconnect, from a game, goes to the main menu (a rehost's Co-op Game page is there) and
-            // WatchRejoin tries there; in the main menu it reconnects at once (ReconnectNow). Both follow the plan.
+            // WatchRejoin tries there, following the plan (rc5: the old in-menu ReconnectNow, never reached, is gone).
             var fromGame = IlScan.Members(type.GetMethod("Reconnect", all, Type.EmptyTypes)
                 ?? throw new Exception("ClientConnectionService has no Reconnect"));
             if (!IlScan.Names(fromGame, "Timberborn.MainMenuSceneLoading.MainMenuSceneLoader", "OpenMainMenu"))
@@ -68,18 +68,13 @@ internal static class DesyncDialogChecks
             var watch = IlScan.Members(type.GetMethod("WatchRejoin", all, Type.EmptyTypes) ?? throw new Exception("ClientConnectionService has no WatchRejoin"));
             if (!IlScan.Names(watch, plan, "Reconnect")) throw new Exception("the rejoin does not ask DesyncDialogPlan.Reconnect");
             if (!IlScan.Names(watch, "Steamworks.SteamMatchmaking", "JoinLobby")) throw new Exception("the rejoin never joins the host's Steam lobby");
-            var reconnect = IlScan.Members(type.GetMethod("ReconnectNow", all, Type.EmptyTypes)
-                ?? throw new Exception("ClientConnectionService has no ReconnectNow"));
-            if (!IlScan.Names(reconnect, plan, "Reconnect")) throw new Exception("Reconnect does not ask DesyncDialogPlan.Reconnect");
-            if (!IlScan.Names(reconnect, "Steamworks.SteamMatchmaking", "JoinLobby")) throw new Exception("Reconnect never joins the host's Steam lobby");
+            if (type.GetMethod("ReconnectNow", all, Type.EmptyTypes) != null) throw new Exception("the unreachable ReconnectNow is back");
             // A direct guest dials the address the plan chose (the one it typed), never the one in the settings.
-            var steps = IlScan.Instructions(type.GetMethod("ReconnectNow", all, Type.EmptyTypes)!);
+            var steps = IlScan.Instructions(type.GetMethod("WatchRejoin", all, Type.EmptyTypes)!);
             if (steps.Any(i => i.Calls && i.Is(service, "ConnectOrShowFailureMessage") && ((MethodBase)i.Member!).GetParameters().Length == 0))
-                throw new Exception("Reconnect dials the saved address instead of the one the guest joined with");
-            int dial = steps.FindIndex(i => i.Calls && i.Is(service, "ConnectOrShowFailureMessage") &&
-                ((MethodBase)i.Member!).GetParameters().Length == 1);
-            if (dial < 1 || !(steps[dial - 1].Loads && steps[dial - 1].Is("BeaverBuddies.Connect.ReconnectPlan", "Address")))
-                throw new Exception("Reconnect does not dial ReconnectPlan.Address");
+                throw new Exception("the rejoin dials the saved address instead of the one the guest joined with");
+            if (!steps.Any(i => i.Loads && i.Is("BeaverBuddies.Connect.ReconnectPlan", "Address")))
+                throw new Exception("the rejoin does not dial ReconnectPlan.Address");
         });
     }
 }

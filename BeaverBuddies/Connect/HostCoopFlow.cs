@@ -25,14 +25,12 @@ namespace BeaverBuddies.Connect
     {
         /// <summary>A save to open the Co-op Game page for as the main menu comes up (null: none).</summary>
         public static SaveReference PendingSave { get; private set; }
-        /// <summary>The pending save is a rehost: its players come back to it (Reconnect, Rejoin).</summary>
-        public static bool PendingRehost { get; private set; }
 
         /// <summary>From a game: open the Co-op Game page for this save in the main menu, going there now.</summary>
+        /// <param name="rehost">A rehost (its players come back to it: Reconnect, Rejoin), for the log.</param>
         public static void HostInMainMenu(MainMenuSceneLoader mainMenuSceneLoader, SaveReference save, bool rehost)
         {
             PendingSave = save;
-            PendingRehost = rehost;
             Plugin.Log($"[Lobby] Hosting \"{save.SaveName}\" from the main menu ({(rehost ? "a rehost" : "a game played alone")})");
             mainMenuSceneLoader.OpenMainMenu();
         }
@@ -42,7 +40,6 @@ namespace BeaverBuddies.Connect
         {
             SaveReference save = PendingSave;
             PendingSave = null;
-            PendingRehost = false;
             return save;
         }
     }
@@ -103,7 +100,10 @@ namespace BeaverBuddies.Connect
             _loadGameBox.Open();
         }
 
-        /// <summary>The box closed (its close button, Esc): it is the Load Game box again.</summary>
+        /// <summary>
+        /// The box closed (its close button, Esc), or a game scene is made (hosting from the box starts the game with the box
+        /// still under the Co-op Game page): it is the Load Game box again.
+        /// </summary>
         public static void BoxClosed() => HostMode = false;
 
         /// <summary>
@@ -137,7 +137,9 @@ namespace BeaverBuddies.Connect
                 VisualElement saves = root.Q("SavesWrapper");
                 if (saves != null) saves.Add(status);
             }
-            status.text = "";
+            // Shown again (the Co-op Game page closed over it): the selected save's line, already read, comes back with it.
+            status.text = HostMode && shownKey != null && read.TryGetValue(shownKey, out SaveColonyInfo shown) && shown != null
+                ? StatusText(shown) : "";
             status.ToggleDisplayStyle(HostMode);
         }
 
@@ -161,9 +163,18 @@ namespace BeaverBuddies.Connect
             if (reading != null && readingKey == key) return;
             try
             {
-                byte[] bytes = ServerHostingUtils.GetMapBtyes(_gameSaveRepository, save);
+                // Opened here (the repository's paths are the game's), read off the menu's thread: a late save is large.
+                System.IO.Stream stream = _gameSaveRepository.OpenSaveWithoutLogging(save);
                 readingKey = key;
-                reading = Task.Run(() => SaveColonyReader.Read(bytes));
+                reading = Task.Run(() =>
+                {
+                    using (stream)
+                    using (var bytes = new System.IO.MemoryStream())
+                    {
+                        stream.CopyTo(bytes);
+                        return SaveColonyReader.Read(bytes.ToArray());
+                    }
+                });
             }
             catch (Exception error)
             {

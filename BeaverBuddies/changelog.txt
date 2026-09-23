@@ -1,3 +1,16 @@
+v1.4.0-rc6 (BeaverBuddies MultiColony)
+* Accept a friend's invite while playing alone: Save and join saves your game and takes you to their Co-op Game page. In a co-op game the invite waits until you leave it.
+* Joining by IP address no longer freezes the menu while it connects.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
+v1.4.0-rc5 (BeaverBuddies MultiColony)
+* Playing alone, the game menu's Host co-op game is there now (it was missing in rc4).
+* Rejoining a rehost is steadier: over Steam you join the host's new Co-op Game page, not the old game; by IP the menu no longer stalls while you wait; the waiting box always goes away and its Cancel always works.
+* After hosting a save from the Host co-op game box, Load game in that game works again.
+* A colony founded in a shared game, or in a shared save made separate when hosted, starts on the game's difficulty.
+* The main menu fits its co-op buttons, the co-op buttons click like the game's, and in a custom difficulty the colony checkboxes sit in the settings list.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc4 (BeaverBuddies MultiColony)
 * Host co-op game on the main menu: pick a save in the game's own save box (it says whether each save is separate colonies or one shared colony), then invite your friends on its Co-op Game page; Start Game loads it for everyone once they're ready. Load game only loads.
 * Playing alone, the game menu's Host co-op game saves your game and opens its Co-op Game page, so friends can join the game you're in.

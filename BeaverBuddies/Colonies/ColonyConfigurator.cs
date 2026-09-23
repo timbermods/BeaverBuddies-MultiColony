@@ -88,7 +88,6 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyStewards>().AsSingleton();
             containerDefinition.Bind<ColonyWishlist>().AsSingleton();
             containerDefinition.Bind<ColonySupplies>().AsSingleton();
-            containerDefinition.Bind<HostStartGate>().AsSingleton();
             containerDefinition.Bind<ColonyNavigation>().AsSingleton();
             containerDefinition.Bind<TradeItems>().AsSingleton();
             containerDefinition.Bind<TradingPostFragment>().AsSingleton();

@@ -159,18 +159,6 @@ static class FeatureChecks
             Check(!ColonyStewardRules.MayActAs(2, sarah, 4, sarah));
         });
 
-        // ---- the host's start gate ----
-
-        yield return ("Start gate: only the host, at tick 0, with joining open, for a change, before saying yes", () =>
-        {
-            Check(HostStartRules.ShouldHold(isHost: true, acceptingClients: true, ticksSinceLoad: 0, changesGame: true, confirmed: false));
-            Check(!HostStartRules.ShouldHold(false, true, 0, true, false), "a guest is never held here (the host refuses it instead)");
-            Check(!HostStartRules.ShouldHold(true, false, 0, true, false), "joining already closed");
-            Check(!HostStartRules.ShouldHold(true, true, 1, true, false), "the game has started");
-            Check(!HostStartRules.ShouldHold(true, true, 0, false, false), "the speed or a greeting changes nothing");
-            Check(!HostStartRules.ShouldHold(true, true, 0, true, true), "the host already said to start");
-        });
-
         // ---- the hand-over warning ----
 
         yield return ("Absence: the day the count reaches the limit is the day to warn; the next check hands over; 0 is never", () =>

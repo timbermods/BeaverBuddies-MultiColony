@@ -14,10 +14,10 @@ namespace BeaverBuddies.Activity
     [HarmonyPatch(typeof(GameOptionsBox), "GetPanel")]
     public class PlayerCursorMenuPatcher
     {
-        public static void Postfix(ref VisualElement __result)
+        public static void Postfix(GameOptionsBox __instance, ref VisualElement __result)
         {
             // Only registered in co-op sessions, so single-player menus are untouched.
-            SingletonManager.GetSingleton<PlayerCursorSettingsUI>()?.AddButton(__result);
+            SingletonManager.GetSingleton<PlayerCursorSettingsUI>()?.AddButton(__result, __instance._visualElementLoader?._visualElementInitializer);
         }
     }
 
@@ -36,7 +36,7 @@ namespace BeaverBuddies.Activity
             this.loc = loc;
         }
 
-        public void AddButton(VisualElement optionsRoot)
+        public void AddButton(VisualElement optionsRoot, VisualElementInitializer initializer)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace BeaverBuddies.Activity
                 {
                     button.text = loc.T("BeaverBuddies.Cursors.Button");
                     button.clicked += Show;
-                });
+                }, initializer);
             }
             catch (Exception error)
             {

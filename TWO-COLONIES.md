@@ -86,23 +86,33 @@ or nobody came. At Start:
   (`<date> Co-op`) and opens its page in the main menu. A co-op host's same button is **Save and Rehost** (`<date>
   Rehost`, also on the desync dialog): everyone leaves the game, and the others' **Rejoin** (on the lost-connection
   message) or **Reconnect (wait for Rehost)** takes them to their main menu, where they join the page as soon as it
-  opens, trying every few seconds (Cancel stops waiting). **Load game** only loads.
+  opens (Cancel stops waiting). A direct-IP guest asks the host's address every few seconds, off the menu's thread,
+  and joins once something listens there; a Steam guest enters the host's lobby only once its data says it is an open
+  Co-op Game page of this build (until the host rehosts, Steam shows the lobby of the game that ended), or accepts the
+  host's invite. The wait says nothing while nobody is there or the old game refuses newcomers, and stops with the
+  reason for another build of the mod or a full room (1.4.0-rc5). **Load game** only loads.
+- **The game menu's button** is decided by how the game was loaded (`HostButtonRules`), not by whether its session
+  still runs: **Host co-op game** in a game played alone, **Save and Rehost** for the host (also after a desync or a
+  lost guest), and nothing for a guest, also once its connection is lost (its copy may be out of step) or after a
+  failed action. A game's menu has no **Join co-op game**: a page is joined from the main menu (1.4.0-rc5).
 
 At **Start Game** the save's bytes go to everyone and the host loads the same bytes; joining closes at Start, so
 founding, switching colonies and asking a steward work at once, as after a new game's waiting room. A save seats each
 player by who it remembers (the slot table in the save); the page reads that from the save and shows each row's
-colony and its faction, and the save's faction ring (a brand-new player's row shows the colony they would most likely
-get).
+colony and its faction (a brand-new player's row shows the colony they would most likely get).
 
 **A shared save made separate at Start** (1.4.0-rc4). For a save that is not separate colonies (a single-player game,
 a shared co-op save, a Stability Fork save), the host's page shows the New Game page's **Separate colonies** checkbox,
-unticked, and under it **Separate science and unlocks** (starting as the host's last choice on the New Game page).
-Ticked, the guests' pages say so (*Separate colonies from Start: everything built so far is the host's colony…*), and at
-Start the game becomes a separate-colonies game, for good: once the host's game has loaded, its first action says so,
-and every computer plays it at the same point, as a split (every building and mark already there becomes the host's
-colony's). The host is told; each guest is offered to found their colony. With separate science, each colony earns
-its own from then on and what was earned so far stays with the host's colony; unticked, the colonies share one pool.
-Only the host can send it, and it does nothing in a game already separate.
+unticked, and under it **Separate science and unlocks**, also unticked (since 1.4.0-rc5: the players of a shared save
+earned its science together, and a guest's split keeps one pool too). Ticked, the guests' pages say so (*Separate
+colonies from Start: everything built so far becomes the host's colony…*), and at Start the game becomes a
+separate-colonies game, for good: once the host's game has loaded, its first action says so, and every computer plays
+it at the same point, as a split (every building and mark already there becomes the host's colony's). Until the host
+has played it, a guest's change (a guest whose game loaded first) is refused with *Not yet: the game is still
+starting*, so nothing a guest builds becomes the host's (1.4.0-rc5). The host is told; each guest is offered to found
+their colony. With separate science, each colony earns its own from then on, what was earned so far stays with the
+host's colony and the guests' colonies start with none; unticked, the colonies share one pool. Only the host can send
+it, and it does nothing in a game already separate.
 
 **Any other separate-colonies game** (a new game on a standard map, or a separate-colonies save): the district
 centers already there are the host's colony's. Every other player **founds** their colony once:
@@ -112,8 +122,10 @@ centers already there are the host's colony's. Every other player **founds** the
    host's **Hand to …** buttons wait for the first tick (a guest still loading looks away).
 2. Place it anywhere its roads won't join another colony's (other colonies' roads show in their colors). It is
    free, needs no science, and appears **already built**, yours, with starting
-   beavers, food and water (the new game's, or for a save that did not record them the host's Normal difficulty:
-   the host writes them into the founding, so a mod changing the difficulty on one computer changes nothing).
+   beavers, food and water: the new game's difficulty, which every new game keeps, a shared one too (since 1.4.0-rc5,
+   so a split or a converted save founds on it), or, for a save that recorded none (a Stability Fork save), the host's
+   default difficulty. The host writes them into the founding, so a mod changing the difficulty on one computer
+   changes nothing.
 3. A shared save (one colony: made with *Separate colonies* unticked, or in the Stability Fork) stays shared. A
    player other than the host may split it once (1.4.0-rc3): in the game menu (Esc), **Found your own colony**, below
    Settings, shown only to them and only in a shared game. It asks first, since it can't be undone; then they place
@@ -358,10 +370,11 @@ unlocks too.
   and the host hands their old colony to it.
 
 The host tells every computer its limit with the day's presence, so the Ctrl+T window shows *missed 6 of 7 days*
-everywhere (in a mixed game with no colony of its faction in the game: *not handed over: no colony of its faction is in
-the game*). A hand-over for absence is always announced the day before, to every player in the game: the day the
-count reaches the limit, or, for a colony a steward looked after past it, the first day nobody keeps it (and, after a
-load, the first day counted). It happens the next day unless its player or its steward is back (until 1.4.0-rc1 a
+everywhere (in a mixed game with no colony of its faction being played: *not handed over: no colony of its faction is
+being played*). A guest's window follows that presence, as the warnings do: a guest's own list keeps a player who left
+(1.4.0-rc5). A hand-over for absence is always announced the day before, to every player in the game: the day the
+count reaches the limit (in a mixed game, the first such day a colony of its faction is being played), or, for a colony
+a steward looked after past it, the first day nobody keeps it (and, after a load, the first day counted). It happens the next day unless its player or its steward is back (until 1.4.0-rc1 a
 steward's colony could go unwarned on the first day nobody kept it). The player who lost their colony gets a notice and may **found a new one** (Ctrl+K). A trading
 post between the two colonies then stands within one colony: its exchange ends (what waits on each half goes back
 home), and it trades again only if another colony's roads reach its other half.
@@ -511,12 +524,13 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   a player can still switch an untouched colony.
 - Every game is hosted through the waiting room, from the main menu (a new game; a save, from Host co-op game); a game
   hosts itself by going there (the game menu's Host co-op game, Save and Rehost). It holds at most seven guests (the Steam lobby's eight), and
-  is joined from the main menu only: a guest who accepts its invite while in a game is told to go back to the menu
-  (before beta19 a hosted save could be joined from a game). It has no chat, map preview or mod-list
+  is joined from the main menu only. An invite accepted in a game never connects from it (1.4.0-rc6,
+  `InviteRules`): playing alone, the player is asked, and **Save and join** makes the game's own exit save and goes to
+  the main menu, which joins the host's page by itself (the player stays in the host's Steam lobby meanwhile, so the
+  host lets them in); in a co-op game, or while hosting a page, the invite is set aside with a message and the lobby
+  left, so the running session is never taken over. It has no chat, map preview or mod-list
   comparison (mismatch warnings still show in the game). Its settlement-name box has no *Change start location*.
   Anyone who can reach the direct-IP port can come into the room; the host can remove them.
-- Accepting a waiting room's invite while in **someone else's co-op game** ends your part in that game before the box
-  says to go back to the main menu (the connection is replaced as the join starts). Leave the game first.
 - Over Steam, a guest who leaves a waiting room stays in the host's Steam lobby (eight places). After many leaves and
   rejoins a friend may find it full while the room still shows free places; the host re-opening the room clears it.
 - If the host's game stops while it makes a waiting room's world, the guests wait on *Creating the world…* until they
@@ -646,7 +660,9 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   through a waiting room since 1.4.0-rc4 (a game hosts itself by saving and opening its room in the main menu,
   `HostCoopFlow`). The host's first message says so (`InitializeClientEvent.joiningClosedAtStart`), and
   `ColonyRules.WaitsForStart` then holds nothing back. (A host that waited in its game, paused, while players joined,
-  held its first change for *Start the game?*; that way of hosting, BeaverBuddies' original, is gone.)
+  held its first change for *Start the game?*; that way of hosting, BeaverBuddies' original, is gone, and since
+  1.4.0-rc5 so is its prompt, `HostStartGate`. The refusals for a game still open to joiners stay, as the guard should
+  a host ever start with joining open.)
 - **The waiting room** is a phase of the host's server before any save exists (`TimberNet`: `LobbyRoom`,
   `LobbyFrames`, `LobbyInbox`): after the build check a guest waits there, and only its hello and ready are read; the
   host's roster and progress go to it every second from a lane of its own (never the game thread), marked by a -1

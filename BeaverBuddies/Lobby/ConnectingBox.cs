@@ -47,7 +47,13 @@ namespace BeaverBuddies.Lobby
 
         public void OnUICancelled()
         {
-            if (closed) return;
+            if (closed)
+            {
+                // Closed while something covered it, and its owner no longer polls it: Cancel and Esc still take it away
+                // (1.4.0-rc5 review, A2).
+                Poll();
+                return;
+            }
             Close();
             _onCancel?.Invoke();
         }

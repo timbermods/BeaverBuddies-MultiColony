@@ -58,7 +58,7 @@ namespace BeaverBuddies.Colonies
                 {
                     created.text = RegisteredLocalizationService.T("BeaverBuddies.Colony.Split.Button");
                     created.clicked += () => Ask(box);
-                });
+                }, box._visualElementLoader?._visualElementInitializer);
                 button.ToggleDisplayStyle(Offered);
             }
             catch (Exception error)
@@ -71,7 +71,15 @@ namespace BeaverBuddies.Colonies
         private void Ask(GameOptionsBox box)
         {
             var founding = SingletonManager.GetSingleton<ColonyFoundingService>();
-            if (founding == null || !Offered) return;
+            if (founding == null) return;
+            if (!Offered)
+            {
+                // Another player's split was played while this menu was open: the button is gone the next time it opens,
+                // and now it says where founding is (1.4.0-rc5 review, B6).
+                if (ColonyModeService.IsSeparateColonies)
+                    _dialogBoxShower.Create().SetMessage(RegisteredLocalizationService.T("BeaverBuddies.Colony.Split.AlreadySeparate")).Show();
+                return;
+            }
             // Before the host has unpaused the game, other players can still join: the split waits for that.
             if (!founding.SplitCanBeginNow(out string whyNot))
             {

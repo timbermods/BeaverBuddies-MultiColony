@@ -58,6 +58,8 @@ namespace BeaverBuddies.Colonies
         private readonly HashSet<int> requested = new HashSet<int>();
         // Session: the players in the game as the host last said, by stable id, and the host's hand-over limit.
         private readonly HashSet<string> presentPlayerIds = new HashSet<string>();
+        // Session: the colonies the host last said are played (null until its first presence this session).
+        private List<int> lastPresentSlots;
         // Session: the colonies whose hand-over for absence the last day's presence announced (every computer works it out
         // alike as the presence is played; the host hands over only these, the next day). Not saved: after a load the
         // first presence announces again, so the players in this session are warned first.
@@ -68,6 +70,13 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>Whether a player (by stable id) was in the game when the host last said who is.</summary>
         public bool IsPlayerPresent(string playerId) => playerId != null && presentPlayerIds.Contains(playerId);
+
+        /// <summary>
+        /// Display: the colonies being played, as Ctrl+T shows them. The host knows who is connected now; a guest knows
+        /// only what the host last said (a guest's session list keeps a player who left), which is also what the warnings
+        /// and hand-overs follow (1.4.0-rc5 review, B2). Before the host's first word this session, the session list.
+        /// </summary>
+        public List<int> PresentForDisplay(bool isHost) => isHost || lastPresentSlots == null ? PresentSlots() : new List<int>(lastPresentSlots);
 
         public static ColonyLifecycle Instance => SingletonManager.GetSingleton<ColonyLifecycle>();
 
@@ -314,6 +323,7 @@ namespace BeaverBuddies.Colonies
         public void Seen(IEnumerable<int> slots, int day, IEnumerable<string> playerIds = null, int limit = -1)
         {
             var present = new HashSet<int>(slots);
+            lastPresentSlots = present.OrderBy(slot => slot).ToList();
             presentPlayerIds.Clear();
             if (playerIds != null) foreach (string id in playerIds) presentPlayerIds.Add(id);
             HandoverLimit = limit;

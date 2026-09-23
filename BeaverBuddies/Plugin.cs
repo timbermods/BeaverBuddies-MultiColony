@@ -47,6 +47,11 @@ namespace BeaverBuddies
             BeaverBuddies.Colonies.ColonyConfigurator.Configure(containerDefinition);
             // A new game's waiting room makes its world in a single-player scene, then loads it as the hosted game.
             containerDefinition.Bind<BeaverBuddies.Lobby.LobbyWorldMaker>().AsSingleton();
+            // Host co-op game in a game played alone, and Save and Rehost in co-op: both save this game and open its Co-op
+            // Game page in the main menu. Bound in every game, before the co-op-only services below (1.4.0-rc5 review, A1).
+            containerDefinition.Bind<RehostingService>().AsSingleton();
+            // The Host co-op game box is the main menu's: a game's Load Game box only loads (A7).
+            HostCoopMenu.BoxClosed();
 
             // EventIO gets set before load, so if it's null, this is a regular
             // game, so don't initialize these services.
@@ -60,7 +65,6 @@ namespace BeaverBuddies
             containerDefinition.Bind<DeterminismService>().AsSingleton();
             containerDefinition.Bind<TickReplacerService>().AsSingleton();
             containerDefinition.Bind<WonderTickService>().AsSingleton();
-            containerDefinition.Bind<RehostingService>().AsSingleton();
             containerDefinition.Bind<MultiplayerInputRecovery>().AsSingleton();
             containerDefinition.Bind<ReportingService>().AsSingleton();
             containerDefinition.Bind<LateTickableBuffer>().AsSingleton();

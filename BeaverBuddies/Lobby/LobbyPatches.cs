@@ -23,7 +23,7 @@ namespace BeaverBuddies.Lobby
             {
                 button.text = RegisteredLocalizationService.T("BeaverBuddies.Saving.HostCoopGame");
                 button.clicked += () => SingletonManager.GetSingleton<LobbyHostPanel>()?.OpenFrom(__instance);
-            });
+            }, __instance._visualElementLoader?._visualElementInitializer);
             host?.SetEnabled(__instance._nextButton?.enabledSelf ?? true);
             // Separate colonies and the choices under it, beside the page's own Tutorial checkbox (1.4.0-rc3).
             NewGameColonyOptions.Instance?.Attach(__result);
@@ -43,5 +43,21 @@ namespace BeaverBuddies.Lobby
         {
             __instance._root?.Q<Button>(NewGameModePanelHostButtonPatcher.ButtonName)?.SetEnabled(__instance._nextButton.enabledSelf);
         }
+    }
+
+    /// <summary>
+    /// A custom difficulty shows the settings list, with its own Tutorial row, and a predefined one hides it: the colony
+    /// checkboxes follow the Tutorial row the page shows (NewGameColonyOptions.ModeChanged, 1.4.0-rc5 review, C9).
+    /// </summary>
+    [HarmonyPatch(typeof(NewGameModePanel), "OnCustomizeButtonClicked")]
+    public class NewGameModePanelCustomizePatcher
+    {
+        public static void Postfix() => NewGameColonyOptions.Instance?.ModeChanged();
+    }
+
+    [HarmonyPatch(typeof(NewGameModePanel), "OnPredefinedModeButtonClicked")]
+    public class NewGameModePanelPredefinedPatcher
+    {
+        public static void Postfix() => NewGameColonyOptions.Instance?.ModeChanged();
     }
 }

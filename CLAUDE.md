@@ -10,7 +10,7 @@ Mod checks, as CI runs them (`.github/workflows/tests.yml`, .NET 8; CI restores 
 
 ```
 dotnet restore StabilityTests/StabilityTests.csproj --source https://api.nuget.org/v3/index.json
-dotnet run --project StabilityTests --no-restore        # ends "N/N passed" (453/453 at rc4)
+dotnet run --project StabilityTests --no-restore        # ends "N/N passed" (476/476 at rc6)
 python -m unittest discover -s RuntimeChecks -p test_water_snapshots.py
 ```
 
@@ -20,7 +20,8 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
 ## Standing rules
 
 - Never launch or drive Timberborn, and never touch installed mods or saves. The maintainer (Kyler) playtests himself.
-- Commit on a branch and open a PR. Merge only when Kyler says so in the chat.
+- Commit on a branch and open a PR, then merge it yourself (`gh pr merge <n> --merge`) once it is ready: its checks
+  pass and nothing is left to do. Kyler, 2026-09-23: "Merge things that need to be merged automatically."
 - Every release is a GitHub **pre-release** (`v1.4.0-rc4` …). Link to `/releases`, never `/releases/latest`.
 - Fresh games only: no save-compatibility notes, no old-settings notes. 1.4.0 counts as unreleased, so player-facing
   text never says which version added or changed something.
@@ -149,7 +150,7 @@ When asked to "update the website for the latest release, consistent with the de
    missing provenance: they are game icons, not generated.
 7. If the look changed (a new component or layout), update DESIGN.md and `.impeccable/design.json`.
 8. Update the README if it repeats the facts.
-9. Ship: branch → commit → push → `gh pr create`. After Kyler says merge: `gh pr merge <n> --merge` (that publishes),
+9. Ship: branch → commit → push → `gh pr create`. Once its checks pass: `gh pr merge <n> --merge` (that publishes),
    then verify:
    - `gh api repos/timbermods/BeaverBuddies-MultiColony/pages/builds/latest -q .status` is `built`;
    - `curl -s https://timbermods.github.io/BeaverBuddies-MultiColony/ | grep -c "<a changed string>"` finds it.

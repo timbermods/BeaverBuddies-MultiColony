@@ -220,8 +220,9 @@ namespace BeaverBuddies.Lobby
             _tooltipRegistrar.Register(separateRow, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Convert.SeparateTooltip"));
             _tooltipRegistrar.Register(convertScienceRow, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Convert.ScienceTooltip"));
             setup.ConvertSeparate = false;
-            // The science choice starts as the host's last on the New Game page.
-            setup.ConvertScience = NewGameColonyChoice.SeparateScience;
+            // The science starts shared, as a guest's split keeps it: the players of a shared save earned it together, and
+            // separate science would leave each friend's new colony with none of it (1.4.0-rc5 review, B5).
+            setup.ConvertScience = false;
             convertSeparate.SetValueWithoutNotify(false);
             convertScience.SetValueWithoutNotify(setup.ConvertScience);
             convertScienceRow.ToggleDisplayStyle(false);

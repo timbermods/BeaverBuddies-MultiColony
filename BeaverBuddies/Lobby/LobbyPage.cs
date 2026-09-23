@@ -125,6 +125,8 @@ namespace BeaverBuddies.Lobby
             optionsSlot = new VisualElement();
             optionsSlot.style.alignItems = Align.Center;
             optionsSlot.style.marginBottom = 6;
+            // Shown only with checkboxes in it, so a room without them keeps its note right over the list (C12).
+            optionsSlot.style.display = DisplayStyle.None;
             main.Add(optionsSlot);
             factionSlot = new VisualElement();
             factionSlot.style.alignItems = Align.Center;
@@ -191,6 +193,7 @@ namespace BeaverBuddies.Lobby
         {
             optionsSlot.Clear();
             if (options != null) optionsSlot.Add(options);
+            optionsSlot.style.display = options != null ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         /// <summary>Puts the faction switcher on the page (null takes it away).</summary>

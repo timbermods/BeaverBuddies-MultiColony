@@ -421,7 +421,7 @@ namespace BeaverBuddies.Colonies
             List<int> slots = Enumerable.Range(0, ColonySlotTable.MaxSlots)
                 .Where(slot => (lifecycle?.OwnsDistrict(slot) ?? false) || (table?.Entries.Any(e => e.Slot == slot) ?? false)).ToList();
             bool host = EventIO.Get() is ServerEventIO;
-            List<int> present = ColonyLifecycle.PresentSlots();
+            List<int> present = lifecycle?.PresentForDisplay(host) ?? ColonyLifecycle.PresentSlots();
             // The host's handover buttons depend on who may be handed over to whom.
             var handovers = host && lifecycle != null
                 ? slots.SelectMany(from => slots.Where(to => lifecycle.HostMayHandOver(from, to)).Select(to => (from, to))).ToList()
