@@ -131,6 +131,7 @@ RcLateGameRuntimeChecks.Run(assembly, Test);
 RcFactionRuntimeChecks.Run(assembly, Test);
 RcTradingRuntimeChecks.Run(assembly, Test);
 RcPerformanceRuntimeChecks.Run(assembly, Test);
+RcColonyRuntimeChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 
