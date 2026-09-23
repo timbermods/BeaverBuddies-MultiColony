@@ -46,6 +46,46 @@ static class RcMainChecks
             Check(partition < otherwise && single > otherwise, "Reset all (resetAll) must reset the partition, and Reset (else) the one transmitter");
         });
 
+        yield return ("H1: every replayed action skips, never throws, when the entity it names is gone (a blast, a deletion, a handover)", () =>
+        {
+            // An action reaches the tick after its click: by then a blast, a deletion or another action can have removed
+            // what it names, and a throw in a replay stops the session for everyone. Every entity a Replay looks up by id
+            // must be checked for null in that Replay, or handed to a method that checks it (listed here).
+            var checkedElsewhere = new HashSet<string>
+            {
+                "ExchangeProposedEvent.half",   // ColonyExchangeService.Propose → WhyNotPropose: "no such crossing"
+            };
+            var lookup = new System.Text.RegularExpressions.Regex(@"(\w+)\s*=\s*(?:GetComponent<[^>]+>|GetEntityComponent)\(");
+            int replays = 0;
+            var unguarded = new List<string>();
+            foreach (string file in Directory.GetFiles(Path.Combine(Root(), "BeaverBuddies"), "*.cs", SearchOption.AllDirectories))
+            {
+                if (file.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)) continue;
+                string text = File.ReadAllText(file);
+                int at = 0;
+                const string signature = "public override void Replay(IReplayContext context)";
+                while ((at = text.IndexOf(signature, at, StringComparison.Ordinal)) >= 0)
+                {
+                    string rest = text.Substring(at + signature.Length).TrimStart();
+                    // An expression-bodied Replay (=> …;) is its one statement.
+                    string body = rest.StartsWith("=>") ? rest.Substring(0, rest.IndexOf(';') + 1) : Body(text.Substring(at), signature);
+                    var classes = System.Text.RegularExpressions.Regex.Matches(text.Substring(0, at), @"class (\w+)");
+                    string owner = classes.Count > 0 ? classes[classes.Count - 1].Groups[1].Value : "?";
+                    foreach (System.Text.RegularExpressions.Match m in lookup.Matches(body))
+                    {
+                        string v = m.Groups[1].Value;
+                        bool isChecked = System.Text.RegularExpressions.Regex.IsMatch(body,
+                            $@"\b{v}\s*[=!]=\s*null|\(bool\)\s*{v}\b|\b{v}\?\.|!\s*{v}\b|\b{v}\s+is\s+(not\s+)?null");
+                        if (!isChecked && !checkedElsewhere.Contains(owner + "." + v)) unguarded.Add(owner + "." + v);
+                    }
+                    replays++;
+                    at += 10;
+                }
+            }
+            Check(replays >= 50, $"found only {replays} Replay methods: the scan no longer sees them");
+            Check(unguarded.Count == 0, "Replay looks up an entity without checking it is still there: " + string.Join(", ", unguarded));
+        });
+
         yield return ("B24-a: a friend's lobby text is one short line, and the list shows it without rich text", () =>
         {
             Check(FriendGameRules.OneLine(null, 10) == "" && FriendGameRules.OneLine("   ", 10) == "", "empty text");
