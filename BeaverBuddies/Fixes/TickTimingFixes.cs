@@ -4,6 +4,7 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Timberborn.Automation;
 using Timberborn.AutomationBuildings;
 using Timberborn.BaseComponentSystem;
 using Timberborn.Buildings;
@@ -62,6 +63,42 @@ namespace BeaverBuddies.Fixes
             if (EventIO.IsNull) return true;
             if (__instance.IsSpringReturn) ReplayEvent.RunAsSimulation(() => __instance.SwitchState(false));
             __instance._registeredForSpringReturn = false;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// A Detonator arms when its input comes on, and disarms again only if the input goes off at the same Time.time it
+    /// armed: within one frame, a flicker. In a co-op game Time.time is the tick's (TimeTimePatcher), every action is
+    /// played at the start of a tick, and the automation runs at the tick's start and end only (its frame path is off,
+    /// AutomationFramePatcher). So a pulse that starts at a tick's start and ends inside that tick, which is what a
+    /// spring-return lever gives (the click is played at the start, the spring return comes at the tick's commit), and an
+    /// HTTP lever set to spring return, armed and disarmed "at the same time": the dynamite never went off. In single
+    /// player the click is evaluated in its own frame, so the same lever sets it off. In co-op a Detonator therefore
+    /// never takes back an arming (there is no flicker within one evaluation to filter out there): an input that comes
+    /// on sets the dynamite off, as it does in single player (1.4.0-rc1, A1). The same on every computer. Single player
+    /// is unchanged.
+    /// </summary>
+    [ManualMethodOverwrite]
+    /*
+     * 2026-09-23 (Timberborn 1.1.2.4, Detonator.Evaluate)
+        if (!_isArmed && _automatable.State == ConnectionState.On)
+        {
+            Arm();
+        }
+        else if (_isArmed && _automatable.State != ConnectionState.On && _timeWhenArmed.Equals(Time.time))
+        {
+            Disarm();
+        }
+     */
+    [HarmonyPatch(typeof(Detonator), nameof(Detonator.Evaluate))]
+    static class DetonatorPulseCoopPatcher
+    {
+        [HarmonyPriority(Priority.Last)]
+        static bool Prefix(Detonator __instance)
+        {
+            if (EventIO.IsNull) return true;
+            if (!__instance._isArmed && __instance._automatable.State == ConnectionState.On) __instance.Arm();
             return false;
         }
     }

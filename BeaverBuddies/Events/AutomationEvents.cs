@@ -1,4 +1,5 @@
 ﻿using BeaverBuddies.Colonies;
+using BeaverBuddies.IO;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,8 @@ using Timberborn.AutomationBuildingsUI;
 using Timberborn.AutomationUI;
 using Timberborn.BaseComponentSystem;
 using Timberborn.FireworkSystem;
+using Timberborn.HttpApiSystem;
+using Timberborn.PowerGeneration;
 using Timberborn.PowerManagement;
 using Timberborn.WaterBuildings;
 using Timberborn.WaterSourceSystem;
@@ -170,9 +173,10 @@ namespace BeaverBuddies.Events
                 (typeof(Timer), nameof(Timer.SetResetInput)),
                 (typeof(WeatherStation), nameof(WeatherStation.SetEarlyActivationHours)),
                 (typeof(WeatherStation), nameof(WeatherStation.SetMode)),
-                // Note: this intentionally omits the HTTPApi system because, well, that
-                // doesn't really make sense in multiplayer... at the very least it'd be
-                // a larger project.
+                // The HTTP API (HTTP Lever, HTTP Adapter) needs nothing here: each player's computer runs its own
+                // listener, and a request to switch an HTTP lever reaches Lever.SwitchState above in a frame
+                // (HttpApiIntermediary.UpdateSingleton), so it is that player's action, shared and judged by colony like
+                // a click. A request to colour one is not shared: see HttpLeverSetColorCoopPatcher below.
 
                 // Some building also have special automation UIs that exist when automated
                 (typeof(Floodgate), nameof(Floodgate.SetAutomationHeightAndSynchronize)),
@@ -183,10 +187,11 @@ namespace BeaverBuddies.Events
                 // so I need to refactor this class to separate these two ideas
                 (typeof(FillValve), nameof(FillValve.SetTargetHeightAndSynchronize)),
                 (typeof(FillValve), nameof(FillValve.SetTargetHeightEnabledAndSynchronize)),
-                (typeof(FillValve), nameof(FillValve.SetAutomationTargetHeightAndSynchronize)),
-                (typeof(FillValve), nameof(FillValve.SetAutomationTargetHeightEnabledAndSynchronize)),
                 (typeof(FillValve), nameof(FillValve.ToggleSynchronization)),
                 (typeof(ThrottlingValve), nameof(ThrottlingValve.SetOutflowLimitAndSynchronize)),
+                // The outflow slider sets this first (off at its top end, on below it), then the limit: until 1.4.0-rc1
+                // only the limit was shared, so the valve limited the flow on the dragging player's computer alone (A2).
+                (typeof(ThrottlingValve), nameof(ThrottlingValve.SetOutflowLimitEnabledAndSynchronize)),
                 (typeof(ThrottlingValve), nameof(ThrottlingValve.SetReactionSpeedAndSynchronize)),
                 (typeof(ThrottlingValve), nameof(ThrottlingValve.SetAutomationOutflowLimitAndSynchronize)),
                 (typeof(ThrottlingValve), nameof(ThrottlingValve.SetAutomationOutflowLimitEnabledAndSynchronize)),
@@ -197,18 +202,44 @@ namespace BeaverBuddies.Events
                 (typeof(WaterInputPipeCoordinates), nameof(WaterInputPipeCoordinates.SetDepthLimit)),
                 (typeof(WaterInputPipeCoordinates), nameof(WaterInputPipeCoordinates.DisableDepthLimit)),
                 (typeof(Clutch), nameof(Clutch.SetMode)),
+                // A water mover's flow rate: the slider on every pump (Timberborn 1.1, WaterMoverFragment). The pump
+                // moves that much water every tick; until 1.4.0-rc1 it did so on the dragging player's computer alone (A2).
+                (typeof(WaterMover), nameof(WaterMover.SetFlowRate)),
+                // The dev power generator is placed with dev mode, but once it stands anyone can drag its strength or
+                // flip it, dev mode off (so without dev mode's co-op warning). Both change the power network (A2).
+                (typeof(AdjustableStrengthPowerGenerator), "set_" + nameof(AdjustableStrengthPowerGenerator.GeneratorStrength)),
+                (typeof(AdjustableStrengthPowerGenerator), nameof(AdjustableStrengthPowerGenerator.FlipRotation)),
 
             ];
-            var methodsToPatch = methodsToPatchInfo.Select(
-                info => info.Item1.GetMethod(
-                    info.Item2,
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance
-            ));
-            foreach (var method in methodsToPatch)
+            // A game update that renames or removes one of these no longer throws out of the mod's start (which skipped
+            // the patches installed after this one). The action is then not shared, so co-op is refused while any is
+            // missing (CoopFixGuard, R8).
+            foreach (var (type, name) in methodsToPatchInfo)
             {
-                OverrideMethod(harmony, method);
+                MethodInfo method = null;
+                try
+                {
+                    method = type.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (method != null) OverrideMethod(harmony, method);
+                }
+                catch (Exception error)
+                {
+                    Plugin.LogError($"Could not patch {type.Name}.{name}: {error}");
+                    method = null;
+                }
+                if (method == null)
+                {
+                    Plugin.LogError($"This game version has no {type.Name}.{name} to share: co-op is refused until MultiColony is updated");
+                    MissingRecorders.Add($"{type.Name}.{name}");
+                }
             }
         }
+
+        /// <summary>
+        /// Game methods of the list above this game version does not have (a game update renamed or removed them): the
+        /// actions they stand for would change one computer only. Empty normally.
+        /// </summary>
+        internal static readonly List<string> MissingRecorders = new List<string>();
 
         private static void OverrideMethod(Harmony harmony, MethodInfo info)
         {
@@ -438,7 +469,8 @@ namespace BeaverBuddies.Events
         static bool Prefix(TimerIntervalElement __instance, float time, IntervalType intervalType)
         {
             Timer timer = CurrentEditingTimer;
-            if (timer == null) return true;
+            // Also a timer deleted while its panel was open (its entity id can no longer be read).
+            if (!timer) return true;
             TimerIntervalInput input = timer.TimerIntervalA == __instance._timerInterval ? TimerIntervalInput.A : TimerIntervalInput.B;
             return ReplayEvent.DoEntityPrefix(timer, entityID =>
             {
@@ -606,12 +638,48 @@ namespace BeaverBuddies.Events
             if (__instance._visibleMultipleInputs != __instance._relay.Inputs.Count)
             {
                 __instance._visibleMultipleInputs = __instance._relay.Inputs.Count;
-                for (int i = 0; i < __instance._visibleMultipleInputs; i++)
+                // Quick clicks on "add input" before the first is played can give a relay more inputs than the panel's
+                // eight rows (the button counts the relay's inputs, which only grow when the click is played): the rows
+                // past the eighth are not drawn, instead of throwing every frame (1.4.0-rc1, H1).
+                int rows = Math.Min(__instance._visibleMultipleInputs, __instance._inputSelectors.Count);
+                for (int i = 0; i < rows; i++)
                 {
                     __instance._inputSelectors[i].UpdateSelectedValue();
                 }
                 __instance.UpdateMultipleInputs();
             }
+        }
+    }
+
+    /// <summary>
+    /// The HTTP API's colour request (/api/color/{lever}/{rrggbb}) sets an HTTP lever's light, which is saved with the
+    /// lever. Each player's computer runs its own listener, so the request would colour the lever on that computer
+    /// alone, and the next rehost would keep only the host's colour. Nothing the simulation reads depends on it (only
+    /// the light and the indicators that copy its colour), so in a co-op game it is dropped rather than shared
+    /// (1.4.0-rc1, A3, the review's default). Switching an HTTP lever on or off is shared (Lever.SwitchState).
+    /// Single player is unchanged.
+    /// </summary>
+    [ManualMethodOverwrite]
+    /*
+     * 2026-09-23 (Timberborn 1.1.2.4, HttpLever.SetColor)
+        _customizableIlluminator.SetCustomColor(color);
+        _customizableIlluminator.SetIsCustomized(value: true);
+     */
+    [HarmonyPatch(typeof(HttpLever), nameof(HttpLever.SetColor))]
+    static class HttpLeverSetColorCoopPatcher
+    {
+        private static bool told;
+
+        [HarmonyPriority(Priority.Last)]
+        static bool Prefix()
+        {
+            if (EventIO.IsNull) return true;
+            if (!told)
+            {
+                told = true;
+                Plugin.LogWarning("An HTTP API request to colour an HTTP lever was ignored: colours set through the HTTP API are not shared in co-op");
+            }
+            return false;
         }
     }
 }

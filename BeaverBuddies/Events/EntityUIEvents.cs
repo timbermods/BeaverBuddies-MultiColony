@@ -112,14 +112,31 @@ namespace BeaverBuddies.Events
             RecipeSpec recipe = null;
             if (itemID != null)
             {
-                recipe = context.GetSingleton<RecipeSpecService>()?.GetRecipe(itemID);
-                if (recipe == null)
+                RecipeSpecService recipes = context.GetSingleton<RecipeSpecService>();
+                if (recipes == null)
                 {
                     Plugin.LogWarning($"Could not find recipe for id: {itemID}");
                     return;
                 }
+                // The game's lookup throws for a recipe it does not know (a dictionary), and a throw here ended the
+                // session for everyone. The host refuses a guest's recipe it does not have (ColonyRulesService.AllowOnHost),
+                // so only a guest meets one: the host used a recipe from a mod this guest does not run. Nothing of the
+                // action has been played, so this guest can leave without harm to anyone (1.4.0-rc1, H1).
+                if (!TryGetRecipe(recipes, itemID, out recipe))
+                    throw new MissingContentException($"The host chose the recipe {itemID}, which this game does not have " +
+                        "(it comes from a mod that is not installed here).");
             }
             prioritizer.SetRecipe(recipe);
+        }
+
+        /// <summary>The game's recipe of that id, without the game's throw for one it does not have.</summary>
+        internal static bool TryGetRecipe(RecipeSpecService recipes, string id, out RecipeSpec recipe)
+        {
+            recipe = null;
+            if (recipes == null || id == null) return false;
+            try { recipe = recipes.GetRecipe(id); }
+            catch (KeyNotFoundException) { }
+            return recipe != null;
         }
 
         public override string ToActionString()

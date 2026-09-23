@@ -28,13 +28,21 @@ namespace BeaverBuddies.Fixes
 
         public void TickComponents()
         {
+            // A throw out of a source's tick still stops the session, but no longer leaves every later source ticking
+            // straight away, and the next tick's list starting with this one's (1.4.0-rc1, H1).
             TickingLate = true;
-            foreach (var change in buffer)
+            try
             {
-                change.Tick();
+                foreach (var change in buffer)
+                {
+                    change.Tick();
+                }
             }
-            TickingLate = false;
-            buffer.Clear();
+            finally
+            {
+                TickingLate = false;
+                buffer.Clear();
+            }
         }
 
     }
