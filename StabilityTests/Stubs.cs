@@ -40,24 +40,38 @@ namespace BeaverBuddies.IO { public static class EventIO { public static bool Is
 namespace Timberborn.EntitySystem { public class EntityComponent { } }
 namespace Timberborn.CharacterMovementSystem
 {
-    // Deliberately forward-only, like the game's follower. A segment already
-    // passed at t=2 must not be extrapolated when the mod next requests t=.5.
-    public class TestFollower
+    public readonly struct AnimatedPathCorner
+    {
+        public float Time { get; }
+        public AnimatedPathCorner(float time) { Time = time; }
+    }
+    // Deliberately forward-only, like the game's follower (MoveNextCornerIndex): corners at times 0, 1 and 2. A
+    // segment already passed at t=2 must not be extrapolated when the mod next requests t=.5.
+    public class AnimatedPathFollower
     {
         public int _nextCornerIndex;
+        public readonly List<AnimatedPathCorner> _pathCorners = new() { new(0), new(1), new(2) };
         public UnityEngine.Vector3 CurrentPosition;
         public bool Stopped;
         public bool InvalidPosition;
+        // Corners the search looked at, for the cost check (D-S9).
+        public int Scanned;
         public void Update(float time)
         {
-            while (_nextCornerIndex < 3 && time >= _nextCornerIndex) _nextCornerIndex++;
+            int i = _nextCornerIndex;
+            for (; i < _pathCorners.Count; i++)
+            {
+                Scanned++;
+                if (time < _pathCorners[i].Time) break;
+            }
+            _nextCornerIndex = i < _pathCorners.Count ? i : _pathCorners.Count + 1;
             float x = _nextCornerIndex <= 1 ? time : 1 + (time - 1) * 100;
             CurrentPosition = new(InvalidPosition ? float.NaN : x, 0, 0);
         }
     }
     public class MovementAnimator
     {
-        public TestFollower _animatedPathFollower = new();
+        public AnimatedPathFollower _animatedPathFollower = new();
         public UnityEngine.Transform Transform = new();
         public UnityEngine.Vector3 ModelPosition;
         public bool Notified;

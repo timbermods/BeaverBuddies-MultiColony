@@ -72,7 +72,7 @@ private void Update(float deltaTime)
             // The game's follower only searches forward from its cached corner.
             // Our interpolated clock can move backwards at a tick boundary, so
             // reselect the segment instead of extrapolating from a later corner.
-            __instance._animatedPathFollower._nextCornerIndex = 0;
+            ResumeSearch(__instance._animatedPathFollower, time);
             __instance._animatedPathFollower.Update(time);
 
             Vector3 position = __instance._animatedPathFollower.CurrentPosition;
@@ -105,6 +105,24 @@ private void Update(float deltaTime)
 
             // We've replaced the original method, so skip it
             return false;
+        }
+
+        /// <summary>
+        /// Before the follower's Update(<paramref name="time"/>): its search for the next corner starts again from the
+        /// first corner only when the clock went back past a corner it had passed. Otherwise it goes on from its cached
+        /// corner, as in the game: a path's corner times never decrease (PathFollower.MoveAlongPath), so every corner
+        /// before the cached one is still behind the clock and the search finds what a search from the first would.
+        /// Until 1.4.0-rc1 every animated character searched from the first corner every frame (review D-S9); a tick's
+        /// path holds a corner every 0.1 of a tile walked. Drawing only: the simulation's position is the tick's.
+        /// </summary>
+        internal static void ResumeSearch(AnimatedPathFollower follower, float time)
+        {
+            int next = follower._nextCornerIndex;
+            if (next <= 0) return;
+            var corners = follower._pathCorners;
+            // Past the last corner the follower holds Count + 1.
+            int passed = System.Math.Min(next, corners.Count) - 1;
+            if (passed < 0 || corners[passed].Time > time) follower._nextCornerIndex = 0;
         }
     }
 #endif

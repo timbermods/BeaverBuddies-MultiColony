@@ -101,5 +101,106 @@ internal static class RcPerformanceRuntimeChecks
             left.AddRange(dateTime);
             if (left.Count > 0) throw new Exception("still there: " + string.Join(", ", left));
         });
+
+        // ---- D-S9: the walking animation's corner search ----
+
+        Type followerType = Game("Timberborn.CharacterMovementSystem", "Timberborn.CharacterMovementSystem.AnimatedPathFollower");
+        Type cornerType = Game("Timberborn.CharacterMovementSystem", "Timberborn.CharacterMovementSystem.AnimatedPathCorner");
+        Type vectorType = Game("UnityEngine.CoreModule", "UnityEngine.Vector3");
+        FieldInfo nextCorner = followerType.GetField("_nextCornerIndex", All)!;
+        MethodInfo setPath = followerType.GetMethod("SetNewPath")!, update = followerType.GetMethod("Update")!;
+        PropertyInfo group = followerType.GetProperty("CurrentGroupId")!, speed = followerType.GetProperty("CurrentSpeed")!;
+        // A tick's path, as PathFollower.MoveAlongPath makes it: corner times that never decrease. Every corner at one
+        // place (no direction to turn to, which needs Unity's native rotation), each with its own group and speed, which
+        // say which segment the follower chose.
+        object Path(Random random, int corners, float start)
+        {
+            var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(cornerType))!;
+            object place = Activator.CreateInstance(vectorType)!;
+            float time = start;
+            for (int i = 0; i < corners; i++)
+            {
+                list.Add(Activator.CreateInstance(cornerType, place, time, 1f + i, 0f, i)!);
+                time += random.NextDouble() < .1 ? 0 : (float)random.NextDouble() * .06f;
+            }
+            return list;
+        }
+        object Follower(object path)
+        {
+            object follower = Activator.CreateInstance(followerType)!;
+            setPath.Invoke(follower, new[] { path });
+            return follower;
+        }
+        MethodInfo resume = Only(Mod("BeaverBuddies.Fixes.AnimatedPathFollowerUpdatePathcer"), "ResumeSearch");
+
+        test("D-S9: on the game's own AnimatedPathFollower, going on from the cached corner draws what a search from the first draws", () =>
+        {
+            var random = new Random(24);
+            int frames = 0;
+            for (int walk = 0; walk < 400; walk++)
+            {
+                int corners = random.Next(1, 40);
+                float start = (float)random.NextDouble() * 100;
+                object path = Path(random, corners, start);
+                object before = Follower(path), after = Follower(path);
+                float clock = start - .1f;
+                for (int frame = 0; frame < 80; frame++, frames++)
+                {
+                    // Mostly forward by a frame's share of a tick; now and then back, as at a tick boundary.
+                    clock += random.NextDouble() < .15 ? -(float)random.NextDouble() * .3f : (float)random.NextDouble() * .05f;
+                    nextCorner.SetValue(before, 0);
+                    update.Invoke(before, new object[] { clock });
+                    resume.Invoke(null, new[] { after, clock });
+                    update.Invoke(after, new object[] { clock });
+                    if (!Equals(nextCorner.GetValue(before), nextCorner.GetValue(after)) || !Equals(group.GetValue(before), group.GetValue(after))
+                        || !Equals(speed.GetValue(before), speed.GetValue(after)))
+                        throw new Exception($"walk {walk} frame {frame} at {clock}: corner {nextCorner.GetValue(after)} instead of {nextCorner.GetValue(before)}");
+                }
+            }
+            Console.WriteLine($"  {frames} frames of 400 random walks: the same corner, segment and speed as a search from the first corner");
+        });
+
+        test("D-S9: micro-benchmark, 600 walkers at 60 fps and speed 7 (about 5 frames a tick), a tick's path of 25 corners", () =>
+        {
+            var random = new Random(3);
+            const int walkers = 600, ticks = 40, framesPerTick = 5, corners = 25;
+            var paths = Enumerable.Range(0, walkers).Select(_ => Path(random, corners, 0)).ToList();
+            var fromFirst = paths.Select(Follower).ToList();
+            var resumed = paths.Select(Follower).ToList();
+            // Compiled calls, so reflection does not swamp what is measured: beta24's reset, and the mod's resume.
+            var f = System.Linq.Expressions.Expression.Parameter(typeof(object));
+            var t = System.Linq.Expressions.Expression.Parameter(typeof(float));
+            var typed = System.Linq.Expressions.Expression.Convert(f, followerType);
+            var reset = System.Linq.Expressions.Expression.Lambda<Action<object, float>>(System.Linq.Expressions.Expression.Assign(
+                System.Linq.Expressions.Expression.Field(typed, nextCorner), System.Linq.Expressions.Expression.Constant(0)), f, t).Compile();
+            var goOn = System.Linq.Expressions.Expression.Lambda<Action<object, float>>(
+                System.Linq.Expressions.Expression.Call(resume, typed, t), f, t).Compile();
+            var move = System.Linq.Expressions.Expression.Lambda<Action<object, float>>(
+                System.Linq.Expressions.Expression.Call(typed, update, t), f, t).Compile();
+            double Run(List<object> followers, Action<object, float> before)
+            {
+                var watch = new System.Diagnostics.Stopwatch();
+                for (int tick = 0; tick < ticks; tick++)
+                {
+                    // A new tick: the game gives each walker a new path (SetNewPath), whose search starts at the first corner.
+                    foreach (object follower in followers) nextCorner.SetValue(follower, 0);
+                    watch.Start();
+                    for (int frame = 0; frame < framesPerTick; frame++)
+                    {
+                        float clock = (frame + 1) * (corners * .03f) / framesPerTick;
+                        for (int w = 0; w < followers.Count; w++)
+                        {
+                            before(followers[w], clock);
+                            move(followers[w], clock);
+                        }
+                    }
+                    watch.Stop();
+                }
+                return watch.Elapsed.TotalMilliseconds * 1000 / (ticks * framesPerTick);
+            }
+            Run(fromFirst, reset); Run(resumed, goOn);
+            double first = Run(fromFirst, reset), cached = Run(resumed, goOn);
+            Console.WriteLine($"  per frame, 600 walkers: from the first corner (beta24) {first:0} µs, from the cached corner {cached:0} µs");
+        });
     }
 }
