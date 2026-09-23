@@ -78,8 +78,10 @@ static class Preview5Checks
         var client = new TimberClient(clientStream) { CompatibilityIdentity = clientIdentity };
         client.OnMapReceived += bytes => { Check(bytes.SequenceEqual(new byte[] {7,8,9})); maps++; };
         client.OnError += _ => errors++;
-        host.OnSessionFault += _ => { faults++; host.AbortSession("test"); };
-        client.OnSessionFault += _ => faults++;
+        // A fault is reported on the thread that calls Update (this one), never on a network thread.
+        int updateThread = Environment.CurrentManagedThreadId, otherThread = 0;
+        host.OnSessionFault += _ => { faults++; if (Environment.CurrentManagedThreadId != updateThread) otherThread++; host.AbortSession("test"); };
+        client.OnSessionFault += _ => { faults++; if (Environment.CurrentManagedThreadId != updateThread) otherThread++; };
         try
         {
             host.Start(); client.Start();
@@ -91,14 +93,19 @@ static class Preview5Checks
                 client.AbortSession("test");
                 Check(SpinWait.SpinUntil(() => !hostStream.Connected, 1000));
                 Check(faults == 0);
-                host.Update(); Check(faults == 1 && host.IsStopped);
+                // Reported on the update thread only; the reader stops the stream a moment before it queues the fault, so
+                // one Update right after the disconnect could come too early on a slow machine (CI, 1.4.0-beta23).
+                Check(SpinWait.SpinUntil(() => { host.Update(); return faults > 0; }, 1500));
+                Check(faults == 1 && host.IsStopped && otherThread == 0);
             }
             if (hostFault)
             {
                 host.AbortSession("test");
                 Check(SpinWait.SpinUntil(() => client.IsStopped, 1000));
                 Check(faults == 0);
-                client.Update(); Check(faults == 1 && host.IsStopped);
+                // As above: the client is stopped a moment before the host's fault is queued for its update thread.
+                Check(SpinWait.SpinUntil(() => { client.Update(); return faults > 0; }, 1500));
+                Check(faults == 1 && host.IsStopped && otherThread == 0);
             }
         }
         finally { host.Close(); client.Close(); }
