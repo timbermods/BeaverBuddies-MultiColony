@@ -125,6 +125,12 @@ BinditoChecks.Run(assembly, Path.GetFullPath(args[1]), args.Skip(2).Select(Path.
 HarmonyResolutionChecks.Run(assembly, Test);
 PatchGateChecks.Run(assembly, Test);
 ReviewBeta21RuntimeChecks.Run(assembly, Test);
+// The 1.4.0-rc1 review (design/REVIEW-PLAN-1.4.0-beta24.md): one file per reviewer, so their checks merge apart.
+RcMainRuntimeChecks.Run(assembly, Test);
+RcLateGameRuntimeChecks.Run(assembly, Test);
+RcFactionRuntimeChecks.Run(assembly, Test);
+RcTradingRuntimeChecks.Run(assembly, Test);
+RcPerformanceRuntimeChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

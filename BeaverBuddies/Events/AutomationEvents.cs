@@ -460,19 +460,22 @@ namespace BeaverBuddies.Events
         public string entityID;
         public bool resetAll;
 
+        // As the game's panel does (Timberborn 1.1.2.4, SequentialTransmitterResetFragment): Reset resets this
+        // transmitter (OnReset → ISequentialTransmitter.Reset), Reset all its whole partition (OnResetAll →
+        // AutomationResetter.ResetPartition). Until 1.4.0-rc1 the replay had the two the other way round.
         public override void Replay(IReplayContext context)
         {
             if (resetAll)
             {
-                ISequentialTransmitter transmitter = GetComponent<ISequentialTransmitter>(context, entityID);
-                if (transmitter == null) return;
-                transmitter.Reset();
-            }
-            else
-            {
                 Automator automator = GetComponent<Automator>(context, entityID);
                 if (automator == null) return;
                 context.GetSingleton<AutomationResetter>().ResetPartition(automator);
+            }
+            else
+            {
+                ISequentialTransmitter transmitter = GetComponent<ISequentialTransmitter>(context, entityID);
+                if (transmitter == null) return;
+                transmitter.Reset();
             }
         }
 
