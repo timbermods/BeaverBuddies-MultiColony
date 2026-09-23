@@ -278,6 +278,47 @@ internal static class RcColonyRuntimeChecks
                 throw new Exception("a shared game's unlock replay does not skip a building already unlocked (all but UnlockableOnceSpec)");
         });
 
+        // ---- E-7: a shared game split by a founding left its marks nobody's ----
+
+        test("E-7: splitting a shared game makes its standing marks the first colony's, and a new game's changes none", () => Quietly(() => WithSingletons(_ =>
+        {
+            Type plantingServiceType = Game("Timberborn.Planting", "Timberborn.Planting.PlantingService");
+            Type plantingMapType = Game("Timberborn.Planting", "Timberborn.Planting.PlantingMap");
+            Type cuttingAreaType = Game("Timberborn.Forestry", "Timberborn.Forestry.TreeCuttingArea");
+            Type marksType = mod.GetType("BeaverBuddies.Colonies.ColonyMarks", true)!;
+            Type modeType = mod.GetType("BeaverBuddies.Colonies.ColonyModeService", true)!;
+            FieldInfo separateNow = modeType.GetField("separateNow", All)!;
+            object wasSeparate = separateNow.GetValue(null)!;
+            object V(int x, int y, int z) => Activator.CreateInstance(vector3Int, x, y, z)!;
+            try
+            {
+                foreach (bool newGame in new[] { false, true })
+                {
+                    // A shared colony's two fields and two trees marked for cutting; one field already a colony's.
+                    object map = Activator.CreateInstance(plantingMapType, V(8, 8, 4))!;
+                    foreach (object tile in new[] { V(1, 1, 1), V(2, 2, 1) })
+                        plantingMapType.GetMethod("SetResource", new[] { vector3Int, typeof(string) })!.Invoke(map, new[] { tile, "Carrot" });
+                    object planting = Blank(plantingServiceType);
+                    Set(planting, "_plantingMap", map);
+                    object cutting = Blank(cuttingAreaType);
+                    var area = (IEnumerable)Activator.CreateInstance(typeof(HashSet<>).MakeGenericType(vector3Int))!;
+                    foreach (object tile in new[] { V(3, 3, 1), V(4, 4, 1) }) area.GetType().GetMethod("Add")!.Invoke(area, new[] { tile });
+                    Set(cutting, "_cuttingArea", area);
+                    object marks = Activator.CreateInstance(marksType, null, planting, cutting)!;
+                    marksType.GetMethod("SetPlanting", All)!.Invoke(marks, new[] { V(2, 2, 1), (object)1 });
+                    object mode = Activator.CreateInstance(modeType, new object?[] { null })!;
+                    modeType.GetMethod("Enable")!.Invoke(mode, new object?[] { null, "a check", false, newGame });
+                    int? Owner(string of, object tile) => (int?)marksType.GetMethod(of)!.Invoke(marks, new[] { tile });
+                    int? expected = newGame ? null : 0;
+                    if (Owner("PlantingOwner", V(1, 1, 1)) != expected || Owner("CuttingOwner", V(3, 3, 1)) != expected || Owner("CuttingOwner", V(4, 4, 1)) != expected)
+                        throw new Exception(newGame ? "a new game's start gave marks an owner"
+                            : "a split shared game's marks are still nobody's: the new colonies work the first colony's fields and forests");
+                    if (Owner("PlantingOwner", V(2, 2, 1)) != 1) throw new Exception("a mark that had a colony was taken from it");
+                }
+            }
+            finally { separateNow.SetValue(null, wasSeparate); }
+        })));
+
         // ---- H1 (sweep 7): the id-naming events of this area, played after what they name is gone ----
 
         Type registryType = Game("Timberborn.EntitySystem", "Timberborn.EntitySystem.EntityRegistry");

@@ -153,6 +153,8 @@ namespace BeaverBuddies.Colonies
             // Buildings are stamped with their colony from now on. A shared game being split: its buildings are all the
             // first colony's.
             if (!wasEnabled) ColonyStamps.Instance?.Begin(splittingSharedGame: !newGame);
+            // Its marks too: the fields and forests the shared colony marked stay the first colony's (E-7).
+            if (!wasEnabled && !newGame) ColonyMarks.Instance?.AdoptUnowned(0);
             if (!wasEnabled && separateScience) ColonyScienceService.Instance?.Enable(newGame);
             // Display: from now on the toolbar's locks follow the local player's colony (RefreshToolLocks did nothing before).
             if (!wasEnabled) ColonyScienceService.Instance?.RefreshToolLocks();
