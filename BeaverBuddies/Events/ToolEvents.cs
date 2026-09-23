@@ -160,39 +160,16 @@ namespace BeaverBuddies.Events
                 var blockObject = gameObject.GetComponentSlow<BlockObject>();
                 blockObject.MarkAsPreviewAndInitialize();
                 blockObject.Reposition(placement);
-                return IsValidWithoutHostPreviews(blockObject);
+                // The game's own check. Its DistrictPreviewsValidator, which reads the host's own tool previews, passes while a
+                // replay runs (DistrictPreviewsValidatorReplayPatcher), so what the host hovers never refuses a played
+                // placement (checked again in the 1.4.0-rc1 review, E-6).
+                return blockObject.IsValid();
             }
             finally
             {
                 UnityEngine.Random.state = randomState;
                 if (gameObject != null) UnityEngine.Object.Destroy(gameObject);
             }
-        }
-
-        /*
-         * 9/23/2026 (Timberborn 1.1.2.4), BlockObject.IsValid, which this repeats but for one validator:
-            if (_blockValidator.BlocksValid(PositionedBlocks))
-                return _blockObjectValidationService.IsValid(this);
-            return false;
-         */
-        /// <summary>
-        /// The game's own check of a placement, less the one validator that reads the host's own tool previews:
-        /// DistrictPreviewsValidator asks whether the previews shown now join two districts' roads, from the preview road
-        /// graph (this copy is not in it: previews join it only through the tools' preview service). So while the host
-        /// hovered a preview that joined two districts, such as a path beside another colony's road, every placement
-        /// played then was refused, and skipped on every computer (E-6). It never saw the building itself: whether that
-        /// joins two districts' roads is checked by the placing player's own tool (whose previews are in their graph)
-        /// and, between colonies, by the colony rules (ColonyRoadRule), judged before this.
-        /// </summary>
-        internal static bool IsValidWithoutHostPreviews(BlockObject blockObject)
-        {
-            if (!blockObject._blockValidator.BlocksValid(blockObject.PositionedBlocks)) return false;
-            foreach (IBlockObjectValidator validator in blockObject._blockObjectValidationService._blockObjectValidators)
-            {
-                if (validator is Timberborn.GameDistrictsUI.DistrictPreviewsValidator) continue;
-                if (!validator.IsValid(blockObject, out _)) return false;
-            }
-            return true;
         }
 
         public override string ToActionString()

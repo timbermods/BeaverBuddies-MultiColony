@@ -27,13 +27,9 @@ internal static class PlacementRandomChecks
             int? saved = save + 1 < code.Count ? StoredLocal(code[save + 1]) : null;
             if (saved == null) throw new Exception("the saved random state is not kept in a local");
             // Everything the copy runs, not only its making: a mod's preview parts (MarkAsPreviewAndInitialize,
-            // Reposition) or its validator (IsValid) could draw too. The validators are asked through the mod's own
-            // IsValidWithoutHostPreviews since the 1.4.0-rc1 review (E-6), which repeats BlockObject.IsValid less one.
-            bool Validates(MethodBase? method) => method?.Name == "IsValidWithoutHostPreviews"
-                || (method?.DeclaringType?.Name == "BlockObject" && method.Name == "IsValid");
+            // Reposition) or its validator (IsValid) could draw too.
             var steps = new[] { "MarkAsPreviewAndInitialize", "Reposition", "IsValid" }
-                .Select(name => (Name: name, At: code.FindIndex(i => name == "IsValid" ? Validates(i.Method)
-                    : i.Method?.DeclaringType?.Name == "BlockObject" && i.Method.Name == name)))
+                .Select(name => (Name: name, At: code.FindIndex(i => i.Method?.DeclaringType?.Name == "BlockObject" && i.Method.Name == name)))
                 .ToList();
             foreach (var step in steps)
                 if (step.At < 0) throw new Exception($"the check no longer calls BlockObject.{step.Name}");

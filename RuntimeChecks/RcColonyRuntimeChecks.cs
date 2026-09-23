@@ -194,71 +194,22 @@ internal static class RcColonyRuntimeChecks
             if (!calls.Any(m => m.Name == "SettingFor")) throw new Exception("the replay does not look the good up with SettingFor");
         });
 
-        // ---- E-6: the host's placement check read its own tool previews ----
+        // ---- E-6 (refuted): the host's placement check and its own tool previews ----
 
-        Type blockObjectType = Game("Timberborn.BlockSystem", "Timberborn.BlockSystem.BlockObject");
-        Type blockValidatorType = Game("Timberborn.BlockSystem", "Timberborn.BlockSystem.BlockValidator");
-        Type validationServiceType = Game("Timberborn.BlockSystem", "Timberborn.BlockSystem.BlockObjectValidationService");
-        Type validatorType = Game("Timberborn.BlockSystem", "Timberborn.BlockSystem.IBlockObjectValidator");
-        Type positionedBlocksType = Game("Timberborn.BlockSystem", "Timberborn.BlockSystem.PositionedBlocks");
-        Type previewsValidatorType = Game("Timberborn.GameDistrictsUI", "Timberborn.GameDistrictsUI.DistrictPreviewsValidator");
-
-        test("E-6: the game's district validator asks the preview road graph, which holds the host's own previews", () =>
+        test("E-6: the host's check of a played placement runs only inside a replay, where the district preview validator passes", () =>
         {
-            // BlockObject.IsValid, whose body the mod repeats less one validator (ToolEvents, IsValidWithoutHostPreviews).
-            var isValid = IlScan.Members(blockObjectType.GetMethod("IsValid", Type.EmptyTypes)!);
-            if (!IlScan.Names(isValid, blockValidatorType.FullName!, "BlocksValid") || !IlScan.Names(isValid, validationServiceType.FullName!, "IsValid"))
-                throw new Exception("BlockObject.IsValid is no longer the blocks check then every validator: review IsValidWithoutHostPreviews");
-            var conflict = IlScan.Members(Only(previewsValidatorType, "IsPreviewDistrictInConflict"));
-            if (!conflict.Any(m => m.Name == "IsPreviewDistrictInConflict" && m.DeclaringType?.Name == "IDistrictService"))
-                throw new Exception("DistrictPreviewsValidator no longer asks IDistrictService.IsPreviewDistrictInConflict: E-6 may be unneeded");
-        });
-
-        test("E-6: the host's check of a played placement asks every validator but the one that reads its own previews", () =>
-        {
+            // DistrictPreviewsValidator asks whether the previews shown now join two districts' roads (the host's own tool).
+            // The mod's prefix answers yes (valid) while a replay runs, and the host checks a played placement only in its
+            // replay, so what the host hovers never refuses anyone's placement.
+            Type patcher = mod.GetType("BeaverBuddies.Colonies.DistrictPreviewsValidatorReplayPatcher", true)!;
+            MethodInfo prefix = patcher.GetMethod("Prefix", All) ?? throw new Exception("DistrictPreviewsValidatorReplayPatcher.Prefix is gone");
+            if (!IlScan.Members(prefix).Any(m => m.Name == "get_IsReplayingEvents"))
+                throw new Exception("the district preview validator's prefix no longer passes while a replay runs");
             Type placed = mod.GetType("BeaverBuddies.Events.BuildingPlacedEvent", true)!;
-            MethodInfo check = placed.GetMethod("IsValidWithoutHostPreviews", All)
-                ?? throw new Exception("BuildingPlacedEvent.IsValidWithoutHostPreviews is missing: the host's check reads its own tool previews");
-            object BlockObject(params object[] validators)
-            {
-                object blockObject = Blank(blockObjectType);
-                Set(blockObject, "_blockValidator", Blank(blockValidatorType));
-                // No blocks: the blocks check passes without looking at the map.
-                object positioned = Blank(positionedBlocksType);
-                FieldInfo all = FieldOf(positionedBlocksType, "_all");
-                all.SetValue(positioned, all.FieldType.GetField("Empty", BindingFlags.Public | BindingFlags.Static)!.GetValue(null));
-                blockObjectType.GetProperty("PositionedBlocks")!.GetSetMethod(true)!.Invoke(blockObject, new[] { positioned });
-                object service = Blank(validationServiceType);
-                FieldInfo list = FieldOf(validationServiceType, "_blockObjectValidators");
-                var items = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(validatorType))!;
-                foreach (object validator in validators) items.Add(validator);
-                MethodInfo createRange = list.FieldType.Assembly.GetType("System.Collections.Immutable.ImmutableArray", true)!
-                    .GetMethods().Single(m => m.Name == "CreateRange" && m.GetParameters().Length == 1
-                        && m.GetParameters()[0].ParameterType.IsGenericType
-                        && m.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(IEnumerable<>)).MakeGenericMethod(validatorType);
-                list.SetValue(service, createRange.Invoke(null, new object[] { items }));
-                Set(blockObject, "_blockObjectValidationService", service);
-                return blockObject;
-            }
-            FixedValidatorProxy Validator(bool answer)
-            {
-                var validator = (FixedValidatorProxy)DispatchProxy.Create(validatorType, typeof(FixedValidatorProxy));
-                validator.Answer = answer;
-                return validator;
-            }
-            // A district validator made without its services: asked, it throws (as it would say "in conflict" while the
-            // host hovers a preview that joins two districts' roads).
-            var yes = Validator(true);
-            if (!(bool)check.Invoke(null, new[] { BlockObject(Blank(previewsValidatorType), yes) })!)
-                throw new Exception("refused with the district validator left out");
-            if (yes.Asked != 1) throw new Exception("the other validators were not asked");
-            var no = Validator(false);
-            if ((bool)check.Invoke(null, new[] { BlockObject(Validator(true), no, Blank(previewsValidatorType)) })!)
-                throw new Exception("a validator's refusal was ignored");
-            // The replay's check uses it, not the game's BlockObject.IsValid.
-            var calls = IlScan.Members(Only(placed, "IsPlacementValidTimed"));
-            if (IlScan.Names(calls, blockObjectType.FullName!, "IsValid")) throw new Exception("the host's check still calls BlockObject.IsValid");
-            if (!calls.Any(m => m.Name == "IsValidWithoutHostPreviews")) throw new Exception("the host's check does not use IsValidWithoutHostPreviews");
+            if (!IlScan.Members(Only(placed, "Replay")).Any(m => m.Name == "MayPlace"))
+                throw new Exception("the placement's check is no longer made in its replay");
+            foreach (MethodInfo method in placed.GetMethods(All).Where(m => m.Name != "Replay" && m.Name != "MayPlace"))
+                if (IlScan.Members(method).Any(m => m.Name == "MayPlace")) throw new Exception("MayPlace is also reached from " + method.Name);
         });
 
         // ---- E-5: a shared game's unlock paid twice ----
