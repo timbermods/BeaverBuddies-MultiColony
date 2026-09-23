@@ -4,46 +4,60 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Troubleshooting: BeaverBuddies MultiColony</title>
-  <meta name="description" content="Fixes for BeaverBuddies MultiColony problems: the mod not loading, refused joins, Steam invites, direct IP, desyncs, lag, and how to collect logs.">
-  <meta name="theme-color" content="#b9530f">
+  <meta name="description" content="Fixes for BeaverBuddies MultiColony problems: the mod not loading, refused joins, Steam invites, direct IP, colonies and Trading Posts, desyncs, lag, and what to send when you report a problem.">
+  <meta name="theme-color" content="#1d3440">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/barlow-semi-condensed-latin-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
+<a class="skip plate" href="#main">Skip to content</a>
 
 <header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="index.html">
-      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#b9530f"/><path d="M14 46V18h15c6 0 9.5 3 9.5 7.6 0 3-1.7 5.3-4.4 6.4 3.6 1 5.7 3.6 5.7 7.2 0 5-3.9 7.8-10 7.8H14z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><circle cx="49.5" cy="41" r="4.5" fill="#fff"/></svg>
-      <span>BeaverBuddies<small>MultiColony</small></span>
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html" aria-label="BeaverBuddies MultiColony, home">
+      <img class="brand-mark" src="assets/favicon.svg" alt="" width="40" height="40">
+      <span class="brand-name"><span>BeaverBuddies</span> MultiColony</span>
     </a>
     <nav class="nav" aria-label="Main">
-      <a href="index.html">Overview</a>
-      <a href="index.html#features">Features</a>
+      <a href="index.html#how">How it works</a>
+      <a href="index.html#start">Choose your start</a>
       <a href="install.html">Install</a>
-      <a href="troubleshooting.html" aria-current="page">Troubleshooting</a>
+      <a href="troubleshooting.html" aria-current="page">Help</a>
       <a href="faq.html">FAQ</a>
-      <a class="nav-cta" href="https://github.com/timbermods/BeaverBuddies-MultiColony">GitHub</a>
+      <a class="btn" href="https://github.com/timbermods/BeaverBuddies-MultiColony">GitHub</a>
     </nav>
+    <details class="menu">
+      <summary><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Menu</summary>
+      <nav class="menu-panel plate" aria-label="Main menu">
+        <a href="index.html">Home</a>
+        <a href="index.html#start">Choose your start</a>
+        <a href="install.html">Install</a>
+        <a href="troubleshooting.html" aria-current="page">Troubleshooting</a>
+        <a href="faq.html">FAQ</a>
+        <a href="https://github.com/timbermods/BeaverBuddies-MultiColony">GitHub</a>
+      </nav>
+    </details>
   </div>
 </header>
 
 <main id="main">
-<div class="page-hero">
-  <div class="container">
+<div class="page-head">
+  <div class="wrap">
+    <div class="marker" aria-hidden="true"><i></i><b></b><i></i></div>
     <h1>Troubleshooting</h1>
-    <p>Find your symptom, try the fixes in order, and if it is still broken, collect the logs and ask for help.</p>
+    <p>Find your symptom and try the fixes in order. Still broken? Send every player's logs and we'll look.</p>
   </div>
 </div>
 
-<div class="container doc">
+<div class="wrap doc">
   <nav class="toc" aria-label="On this page">
     <h2>On this page</h2>
     <ul>
       <li><a href="#first">Check these first</a></li>
       <li><a href="#setup">Installing and loading</a></li>
       <li><a href="#joining">Joining a game</a></li>
+      <li><a href="#colonies">Colonies and trading</a></li>
       <li><a href="#playing">While playing</a></li>
       <li><a href="#features">Panel, cursors and settings</a></li>
       <li><a href="#logs">Collecting logs</a></li>
@@ -55,11 +69,12 @@
 
     <section id="first">
       <h2>Check these first</h2>
-      <p>Most multiplayer problems come from a mismatch between the players. Before anything else, check that everyone has:</p>
+      <p>Most multiplayer problems come from a difference between the players. Before anything else, check that everyone has:</p>
       <ul>
         <li>the <b>exact same download</b> of the mod (the mod list shows the version, and it must be the same zip, not just the same number),</li>
         <li>the <b>same version of Timberborn</b>,</li>
         <li>the <b>same other mods</b> enabled, at the same versions,</li>
+        <li>only <b>one BeaverBuddies</b> installed,</li>
         <li>and has <b>fully restarted the game</b> since installing or updating.</li>
       </ul>
     </section>
@@ -68,26 +83,33 @@
       <h2>Installing and loading</h2>
 
       <details class="q" id="not-loading">
-        <summary>The mod does not load, or does not show in the mod list</summary>
+        <summary>The mod doesn't load, or doesn't show in the mod list</summary>
         <div class="answer">
           <p class="sub">Try this</p>
           <ol>
             <li>Check the folder. You should have <code>Documents\Timberborn\Mods\BeaverBuddies-MultiColony\version-1.1\manifest.json</code>. A common mistake is an extra nested folder after extracting the zip.</li>
             <li>Make sure <b>Harmony</b> and <b>Mod Settings</b> are installed and enabled. The mod needs both.</li>
             <li>Enable <b>BeaverBuddies MultiColony (beta)</b> in the mod manager and restart the game.</li>
-            <li>The mod is built for Timberborn 1.1 (tested on 1.1.2.4). Older game versions will not run it.</li>
-            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-beta21</span> is loaded!</code>. If it is there, the mod loaded and the problem is elsewhere.</li>
+            <li>The mod is built for Timberborn 1.1 (tested on 1.1.2.4). Older game versions won't run it.</li>
+            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-rc2</span> is loaded!</code>. If it's there, the mod loaded and the problem is elsewhere.</li>
           </ol>
         </div>
       </details>
 
       <details class="q" id="duplicates">
-        <summary>There are two BeaverBuddies in the mod list, or things behave strangely</summary>
+        <summary>There are two BeaverBuddies in the mod list, or the main menu names another one</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>Only one BeaverBuddies can run at a time: MultiColony, the Workshop BeaverBuddies and the Stability Fork all change the same parts of the game. If another one is enabled, the main menu names it and MultiColony does not start. A second copy of MultiColony in your <code>Mods</code> folder, or a <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder (the Stability Fork, or an early two-colony build), conflicts the same way.</p>
+          <p>Only one BeaverBuddies can run at a time: MultiColony, the Workshop BeaverBuddies and the Stability Fork all change the same parts of the game. If another one is enabled, the main menu names it and MultiColony doesn't start. A second copy of MultiColony in your <code>Mods</code> folder, or a <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder, conflicts the same way.</p>
           <p class="sub">Try this</p>
-          <p>Keep exactly one BeaverBuddies. Unsubscribe from the Workshop version, delete any extra copy (and the old <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder) from <code>Documents\Timberborn\Mods</code>, then restart the game.</p>
+          <p>Keep exactly one BeaverBuddies. Unsubscribe from the Workshop version, delete any extra copy and any <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder from <code>Documents\Timberborn\Mods</code>, then restart the game. Your saves aren't kept in the <code>Mods</code> folder.</p>
+        </div>
+      </details>
+
+      <details class="q" id="game-update">
+        <summary>After a Timberborn update, co-op stops at load with a message</summary>
+        <div class="answer">
+          <p>The update changed a part of the game MultiColony corrects for co-op. Rather than let the game go out of step, co-op stops at load and the message names the part; single player carries on. Update MultiColony when a new build is out, all of you together.</p>
         </div>
       </details>
     </section>
@@ -96,24 +118,24 @@
       <h2>Joining a game</h2>
 
       <details class="q" id="mismatch">
-        <summary>Joining is refused with a version or build message</summary>
+        <summary>Joining is refused: "Multiplayer build mismatch"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>When someone joins, the mod compares the game version, the mod version and the mod's own files, before the save is sent. It refuses any difference, because two different builds cannot stay in sync. A copy someone compiled themselves can be refused even when the version number matches, and an old version still running in memory is detected too.</p>
+          <p>When someone joins, the mod compares the game version, the mod version and the mod's own files (<code>Buildings</code> and <code>TemplateCollections</code> among them), before the save is sent. It refuses any difference, because two different builds can't stay in sync, and the message names what differs. A copy someone built themselves can be refused even when the version number matches, and an old version still running in memory is detected too.</p>
           <p class="sub">Try this</p>
           <ol>
-            <li>Have everyone download the <b>same zip</b> from the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a>.</li>
+            <li>Have everyone install the <b>same zip</b>: the host's, or the one from the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a>.</li>
             <li>Replace the <code>BeaverBuddies-MultiColony</code> folder, then <b>fully restart</b> Timberborn on every computer.</li>
-            <li>Check that the game versions match.</li>
+            <li><a href="install.html#compare">Compare the three readings</a> with your host: mod version, game version, same zip.</li>
           </ol>
         </div>
       </details>
 
       <details class="q" id="mods-differ">
-        <summary>A warning says my mods and the other player's mods are not the same</summary>
+        <summary>A warning says my mods and the other player's mods aren't the same</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>When someone joins, both players' games compare their lists of enabled mods and warn you if any mod is on only one computer or is at a different version. The host sees the warning in the lobby, before starting; a guest sees it as soon as the game has loaded. It is only a warning, because the mod cannot tell which mods matter. A mod that changes the simulation (a housing or pathfinding mod, for example) will make the two games drift apart, which is a desync. A mod that sends its own multiplayer actions (MixedStorage, for example) must be on every computer: a guest without it leaves the game at the first such action from the host, with a message naming the mod (the host and the other players play on), and an action a guest sends that the host cannot read is refused (the guest's other actions of that moment still happen).</p>
+          <p>When someone joins, both players' games compare their lists of enabled mods and warn you if any mod is on only one computer or at a different version. The host sees the warning before starting; a guest sees it as soon as the game has loaded. It's only a warning, because the mod can't tell which mods matter. A mod that changes the simulation (a housing or pathfinding mod, for example) will make the two games drift apart, which is a desync. A mod that sends its own multiplayer actions or adds content the host uses (MixedStorage, for example) must be on every computer: a guest without it leaves the game with a message naming the mod, and the host and the other players play on.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>Read which mods are listed: "Only on your computer", "Only on &hellip;'s computer" and "Different versions".</li>
@@ -132,19 +154,34 @@
             <li>Right after hosting starts, the Steam lobby is still being created. Wait a moment and click <b>Invite Friends</b> again. The Steam overlay should open.</li>
             <li>On the host, make sure <b>Enable Steam Networking</b> is on in Mod Settings (it is by default).</li>
             <li>Both players need to be online in Steam. The friend must be on your Steam friends list and own Timberborn on Steam.</li>
+            <li>Your friend can also use <b>Join co-op game</b> on the main menu, which lists their Steam friends' co-op games.</li>
             <li>Both of you need the <a href="#mismatch">same build</a> of the mod and the same game version.</li>
-            <li>If Steam still will not connect, host with a <a href="install.html#host">direct IP or Hamachi</a> instead. Steam problems never stop direct IP hosting.</li>
+            <li>If Steam still won't connect, host with a <a href="install.html#host">direct IP or Hamachi</a> instead. Steam problems never stop direct IP hosting.</li>
           </ol>
         </div>
       </details>
 
       <details class="q" id="already-started">
-        <summary>The invite says the host has already started</summary>
+        <summary>The invite says the host has already started, or already changed the game</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>Nobody can join once the host unpauses (the game's first tick), or once the host has placed or marked anything while waiting paused (the message then says the host already changed the game), or once a new game's waiting room has started. An old invite explains that instead of hanging.</p>
+          <p>Nobody can join once a waiting room's <b>Start Game</b> is pressed, or, hosting from inside a game, once the host unpauses or places or marks anything while waiting. An old invite explains that instead of hanging. A game that has started may also simply drop off the <b>Join co-op game</b> list.</p>
           <p class="sub">Try this</p>
-          <p>The host saves and hosts again, then sends a fresh invite. Have your friend join before the host unpauses, and the host builds nothing until everyone is in.</p>
+          <p>The host uses <b>Save and Rehost</b> and sends a fresh invite. Have your friend join before the host starts, and the host builds nothing until everyone is in.</p>
+        </div>
+      </details>
+
+      <details class="q" id="waiting-room">
+        <summary>"&hellip; is waiting for you in a co-op waiting room"</summary>
+        <div class="answer">
+          <p>You accepted an invite, or used Join, while you were in a game, and the host is in a waiting room. Go back to the main menu, then accept the invite again or join from there.</p>
+        </div>
+      </details>
+
+      <details class="q" id="load-failed">
+        <summary>My game failed to load after the waiting room's Start</summary>
+        <div class="answer">
+          <p>Nobody can join a game that has started, so there's no way back into that one. The host uses <b>Save and Rehost</b>, and you join that. If it happens again, <a href="#logs">send every player's logs</a>.</p>
         </div>
       </details>
 
@@ -156,23 +193,62 @@
           <p class="sub">Try this</p>
           <ol>
             <li>Read the message. It says what Steam reported.</li>
-            <li>Make sure you are both on the <a href="#mismatch">exact same build</a>. If joining sits on a loading message and never finishes, that is the first thing to rule out.</li>
+            <li>Make sure you're both on the <a href="#mismatch">exact same build</a>. If joining sits on "Receiving map&hellip;" and never finishes, that's the first thing to rule out.</li>
             <li>Try again. If it repeats, use <a href="install.html#host">direct IP or Hamachi</a>.</li>
-            <li>If it keeps failing, <a href="#logs">collect both players' logs</a> and ask for help.</li>
+            <li>If it keeps failing, <a href="#logs">collect every player's logs</a> and ask for help.</li>
           </ol>
         </div>
       </details>
 
       <details class="q" id="direct-ip">
-        <summary>Direct IP will not connect</summary>
+        <summary>Direct IP won't connect</summary>
         <div class="answer">
           <p class="sub">Try this</p>
           <ol>
-            <li>The host must already be hosting, and must not have unpaused or changed anything yet.</li>
+            <li>The host must already be hosting, and mustn't have started or changed anything yet.</li>
             <li>Use the right address: your public IP for the internet, or the virtual-network address (for example from Hamachi) if you use one.</li>
             <li>The default port is <b>25565</b>. Your router must forward it to the host's computer, and your firewall must allow Timberborn.</li>
             <li>Port forwarding is the hard part. A virtual LAN such as Hamachi avoids it and has been tested. So does a <a href="install.html#host">Steam invite</a>.</li>
           </ol>
+        </div>
+      </details>
+    </section>
+
+    <section id="colonies">
+      <h2>Colonies and trading</h2>
+
+      <details class="q" id="roads">
+        <summary>"That would join another colony's roads"</summary>
+        <div class="answer">
+          <p>A path of yours would touch their road (finished or still being built), or a building's door would open onto or beside it. Keep your roads a cell apart from theirs, and away from their district center. To link the two colonies, put a Trading Post between them. <kbd>Ctrl</kbd>+<kbd>L</kbd> shows whose roads are whose.</p>
+        </div>
+      </details>
+
+      <details class="q" id="not-trading">
+        <summary>A Trading Post says "Not trading yet"</summary>
+        <div class="answer">
+          <p>Each half needs a different colony's road at its door: yours at one end, theirs at the other. It starts trading as soon as both roads reach it. If a round waits, the panel says why: paused or flooded, no workers, no room, or nothing left to bring.</p>
+        </div>
+      </details>
+
+      <details class="q" id="shared">
+        <summary><kbd>Ctrl</kbd>+<kbd>K</kbd> says this is one shared colony</summary>
+        <div class="answer">
+          <p>The save is a shared game. To split it into colonies, the host ticks <b>Allow founding colonies in a shared game (beta)</b> and hosts again; the first founding makes it separate for good. The colony you built together stays whole as the first colony. <a href="index.html#start">Choose your start</a> explains both settings.</p>
+        </div>
+      </details>
+
+      <details class="q" id="not-started">
+        <summary><kbd>Ctrl</kbd>+<kbd>K</kbd> says the game hasn't started yet</summary>
+        <div class="answer">
+          <p>The host is hosting from inside a game and hasn't unpaused yet. Wait until they do once. (After a waiting room you can found straight away.)</p>
+        </div>
+      </details>
+
+      <details class="q" id="refused">
+        <summary>Everything I do is refused right after joining</summary>
+        <div class="answer">
+          <p>The host hasn't seated you in a colony yet; wait a moment. If it persists, <a href="#logs">send the logs</a>. Later on, "That belongs to another colony" means just that: you can only change your own colony's buildings, beavers, districts, marks and settings.</p>
         </div>
       </details>
     </section>
@@ -183,19 +259,19 @@
       <details class="q" id="panel-status">
         <summary>The connection panel shows something other than "In sync"</summary>
         <div class="answer">
-          <div class="table-wrap" style="margin-top:.4rem">
+          <div class="table-wrap flat">
             <table>
               <thead><tr><th>Status</th><th>What it means and what to do</th></tr></thead>
               <tbody>
-                <tr><td><b>Catching up</b></td><td>Guests only. Your game is three or more ticks behind the host. Brief spells are normal. If it keeps growing, your connection or computer cannot keep up, so check your ping and try a lower game speed.</td></tr>
+                <tr><td><b>Catching up</b></td><td>Guests only. Your game is three or more ticks behind the host. Brief spells are normal. If it keeps growing, your connection or computer can't keep up, so check your ping and try a lower game speed.</td></tr>
                 <tr><td><b>Waiting for host</b></td><td>Guests only. Your game has used everything the host sent and is waiting for more. A flash is normal. If it stays, check the connection.</td></tr>
-                <tr><td><b>Connection unstable</b></td><td>Someone has stopped responding for five seconds. Check their connection. If it does not recover, the session may end.</td></tr>
+                <tr><td><b>Connection unstable</b></td><td>Someone has stopped responding for five seconds. Check their connection. If it doesn't recover, the session may end.</td></tr>
                 <tr><td><b>Out of sync</b></td><td>A desync was detected. See <a href="#desync">the next item</a>.</td></tr>
                 <tr><td><b>Disconnected</b></td><td>The session has ended. Rejoin, or have the host rehost.</td></tr>
               </tbody>
             </table>
           </div>
-          <p>Ping colors: normal text is 80 ms or less, yellow up to 160 ms, red anything higher or no response. The dot beside the status is green when you are in sync, yellow while catching up or waiting for the host, and red when the connection is unstable, out of sync or disconnected.</p>
+          <p>Ping colors: normal text is 80 ms or less, yellow up to 160 ms, red anything higher or no response. The dot beside the status is green when you're in sync, yellow while catching up or waiting for the host, and red when the connection is unstable, out of sync or disconnected.</p>
         </div>
       </details>
 
@@ -203,7 +279,7 @@
         <summary>A desync: "A connected player desynced and cannot continue playing"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>The players' games have drifted apart. Every copy of the game must make exactly the same decisions, and something made one of them differ. Known causes are removed, but none of that is a promise. In MultiColony the log says which check caught it: <code>Random state mismatch</code> (the game's random state at an action, all of it since 1.4.0-beta10) or <code>Colony state differs</code> (the colony check, every tick or daily, in a separate-colonies game; a difference there may be a bug in the check itself, so send both players' logs). An earlier <code>Entity mismatch</code> or <code>Walker mismatch</code> line, which does not stop the game by itself, says when the two games first differed.</p>
+          <p>The players' games have drifted apart. Every copy of the game must make exactly the same decisions, and something made one of them differ. Known causes are removed, but none of that is a promise. The log says which check caught it: <code>Random state mismatch</code> (the game's random state at an action) or <code>Colony state differs</code> (the colony check, in a separate-colonies game; a difference there may be a bug in the check itself, so send every player's logs). An earlier <code>Entity mismatch</code> or <code>Walker mismatch</code> line, which doesn't stop the game by itself, says when the two games first differed.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>The host chooses <b>Save and Rehost</b>.</li>
@@ -212,10 +288,11 @@
           </ol>
           <p class="sub">Things that cause it</p>
           <ul>
-            <li><b>Different mods, or different mod versions.</b> The game warns you about this when someone joins (see <a href="#mods-differ">the mod warning</a>), so take that warning seriously. This is a classic cause.</li>
+            <li><b>Different mods, or different mod versions.</b> The game warns you about this when someone joins (see <a href="#mods-differ">the mod warning</a>), so take that warning seriously.</li>
             <li><b>Different settings that affect the simulation</b>, for example <b>Reduce the number of forced pauses</b>. Keep them identical.</li>
+            <li><b>Dev mode's tools.</b> Only its instant unlock, <i>Finish now</i> and <i>Add 1000 Science</i> are shared; its other tools and keys desync the game.</li>
           </ul>
-          <p>Keep backups of your saves. If it keeps happening, <a href="#logs">collect both players' logs</a>.</p>
+          <p>Keep backups of your saves. In a separate-colonies game every computer writes a report when a desync happens: <a href="#logs">send them all</a>.</p>
         </div>
       </details>
 
@@ -223,12 +300,12 @@
         <summary>"Multiplayer has stopped because this action may have changed only part of the game state"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>A multiplayer action could not be completed on one player's game. Carrying on could leave two games different without anyone noticing, so the mod stops the session.</p>
-          <p>A guest can also see "An action from the host could not be read", ending "Nothing of that action was played here". The host sent an action, usually from a mod the guest does not have, which the message names. Nothing went wrong: that guest has left the game, and the host and the other players play on. Install the same mods on every computer (see <a href="#mods-differ">the mod warning</a>); the host then chooses <b>Save and Rehost</b> and the guest joins again. The steps below are for the other message.</p>
+          <p>A multiplayer action couldn't be completed on one player's game. Carrying on could leave two games different without anyone noticing, so the mod stops the session.</p>
+          <p>A guest can also see "An action from the host could not be read", ending "Nothing of that action was played here". The host sent an action, usually from a mod the guest doesn't have, which the message names. Nothing went wrong: that guest has left the game, and the host and the other players play on. Install the same mods on every computer (see <a href="#mods-differ">the mod warning</a>); the host then chooses <b>Save and Rehost</b> and the guest joins again. The steps below are for the other message.</p>
           <p class="sub">Try this</p>
           <ol>
             <li>Press <b>Escape</b> to open the menu, return to the main menu and <b>reload a known-good save</b> before hosting again.</li>
-            <li><b>Do not overwrite your good save</b> with the session that stopped.</li>
+            <li><b>Don't overwrite your good save</b> with the session that stopped.</li>
             <li>If it repeats with the same action, <a href="#logs">collect the logs</a> and say what you were doing.</li>
           </ol>
         </div>
@@ -252,10 +329,10 @@
         <div class="answer">
           <p class="sub">Try this</p>
           <ol>
-            <li>Turn off <b>Always Use Detailed Logging</b> in Mod Settings, on <b>both</b> computers. It records a lot of extra detail for diagnosing desyncs and noticeably slows the game. It is off by default.</li>
+            <li>Turn off <b>Always Use Detailed Logging</b> in Mod Settings, on <b>every</b> computer. It records a lot of extra detail for diagnosing desyncs and noticeably slows the game. It's off by default.</li>
             <li>Look at the connection panel. A red ping or a high <b>Behind host</b> value means the connection is the problem, not the game.</li>
             <li>Try a lower game speed if a slower computer keeps falling behind, or, as the host, click <b>Ease off below</b> in the connection panel and pick a frame rate: the game then slows a little while a guest stays under it.</li>
-            <li>Make sure everyone runs the newest release, which does less work every tick and every frame.</li>
+            <li>More colonies mean more to simulate: prefer a smaller map. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> writes a diagnostics report that shows where the time goes.</li>
           </ol>
         </div>
       </details>
@@ -279,13 +356,13 @@
       </details>
 
       <details class="q" id="activity">
-        <summary>I cannot see other players' cursors, labels or pings</summary>
+        <summary>I can't see other players' cursors, labels or pings</summary>
         <div class="answer">
           <p class="sub">Try this</p>
           <ul>
             <li><b>Player activity indicators</b> must be on in Mod Settings. A player who turns sharing off disappears from your view until they turn it back on.</li>
-            <li>A cursor is hidden while it is over the game's interface, outside the game window, or off the map. Yours is hidden while the game window is not focused.</li>
-            <li>Open <b>Options, Player cursors</b> and check that you have not made that player's cursor tiny (size 50% is the minimum) or nearly invisible (transparency goes up to 90%). <b>Reset</b> restores the defaults.</li>
+            <li>A cursor is hidden while it's over the game's interface, outside the game window, or off the map. Yours is hidden while the game window isn't focused.</li>
+            <li>Open <b>Options, Player cursors</b> and check that you haven't made that player's cursor tiny (size 50% is the minimum) or nearly invisible (transparency goes up to 90%). <b>Reset</b> restores the defaults.</li>
             <li>For pings, bind a key for <b>Ping Location</b> in the game's keybinding settings.</li>
           </ul>
         </div>
@@ -294,29 +371,30 @@
 
     <section id="logs">
       <h2>Collecting logs</h2>
-      <p>If you ask for help, logs from <b>both</b> players are what make a problem diagnosable. Steam failures and desyncs record their details there.</p>
+      <p>Logs from <b>every player</b>, not just the one who saw the problem, are what make a problem diagnosable. Steam failures and desyncs record their details there.</p>
       <ol>
         <li>Close the game so the log is complete.</li>
         <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn</code> in Explorer (paste it into the address bar).</li>
         <li>Copy <code>Player.log</code>. If the problem happened in an earlier session, also copy <code>Player-prev.log</code>, the log of the session before.</li>
-        <li>In a separate-colonies game, also copy your newest report from the <code>BeaverBuddies-Reports</code> folder next to the logs. <b>Ctrl+Shift+J</b> writes one, and every computer writes one by itself when a player desyncs.</li>
-        <li>If a desync happened with detailed logging on, the water diagnostics are saved in the <code>BeaverBuddiesDiagnostics</code> folder next to the logs. They are written only on your computer and are never uploaded.</li>
+        <li>Copy your newest report from the <code>BeaverBuddies-Reports</code> folder next to the logs. In a separate-colonies game every computer writes one by itself when a player desyncs; <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> writes one any time (it's also copied to your clipboard).</li>
+        <li>If a desync happened with detailed logging on, the water diagnostics are saved in the <code>BeaverBuddiesDiagnostics</code> folder next to the logs. They're written only on your computer and never uploaded.</li>
       </ol>
-      <div class="callout">
-        <strong class="label">Before you share</strong>
+      <div class="note plate enamel">
+        <span class="sign-label">Before you share</span>
         <p>Logs contain file paths, which include your Windows user name. Look through the file before you post it if that matters to you.</p>
       </div>
-      <p>The <b>Post Bug Report</b> button in the desync dialog does not upload anything in this fork's builds, because they contain no upload token. Send the files by hand instead.</p>
-      <p>Leave <b>Always Use Detailed Logging</b> off unless you are asked to turn it on. It costs performance.</p>
+      <p>The <b>Post Bug Report</b> button in the desync dialog doesn't upload anything in MultiColony's builds, because they contain no upload token. Send the files by hand instead.</p>
+      <p>Leave <b>Always Use Detailed Logging</b> off unless you're asked to turn it on. It costs performance.</p>
     </section>
 
     <section id="help">
       <h2>Getting help</h2>
-      <p>Open an issue on the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/issues">project's GitHub page</a> and include:</p>
+      <p>Open an issue on the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/issues">project's GitHub page</a> (not the original BeaverBuddies project) and include:</p>
       <ul>
         <li>what you were doing and what you expected,</li>
         <li>the mod version, the game version, and whether you connected over Steam or direct IP,</li>
-        <li>both players' <code>Player.log</code> files.</li>
+        <li><b>every player's</b> <code>Player.log</code> and newest <code>BeaverBuddies-Reports</code> report,</li>
+        <li>screenshots of anything on screen.</li>
       </ul>
       <p>Also check the <a href="faq.html">FAQ</a>, which answers the common questions.</p>
     </section>
@@ -326,11 +404,11 @@
 </main>
 
 <footer class="site-footer">
-  <div class="container">
+  <div class="wrap">
     <div class="footer-grid">
       <div>
-        <h2>BeaverBuddies MultiColony</h2>
-        <p>Multiplayer co-op for Timberborn with a colony each, trading posts, Steam friend invites, a connection panel and stability fixes. Free and open source under the GPL-3.0.</p>
+        <span class="brand-name"><span>BeaverBuddies</span> MultiColony</span>
+        <p>Co-op Timberborn with a colony each, and Trading Posts between them. Free and open source under the GPL-3.0.</p>
       </div>
       <div>
         <h2>Guides</h2>
@@ -338,6 +416,7 @@
           <li><a href="install.html">Install guide</a></li>
           <li><a href="troubleshooting.html">Troubleshooting</a></li>
           <li><a href="faq.html">FAQ</a></li>
+          <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/TWO-COLONIES.md">The rules (TWO-COLONIES.md)</a></li>
         </ul>
       </div>
       <div>
@@ -345,28 +424,17 @@
         <ul>
           <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony">Source code</a></li>
           <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases">All releases</a></li>
+          <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/issues">Report a problem</a></li>
           <li><a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/STABILITY-CHANGELOG.md">Changelog</a></li>
           <li><a href="https://github.com/thomaswp/BeaverBuddies">The original BeaverBuddies</a></li>
           <li><a href="https://timbermods.github.io/">More mods from Timbermods</a></li>
         </ul>
       </div>
     </div>
-    <p class="fineprint">Built on the BeaverBuddies Stability Fork and on BeaverBuddies by thomaswp and contributors, who created its multiplayer design. Maintained by <a href="https://github.com/timbermods">Timbermods</a>. An unofficial community mod for Timberborn. Not affiliated with or endorsed by Mechanistry.</p>
+    <p class="fineprint">Built on the <a href="https://github.com/timbermods/BeaverBuddies-Stability-Fork">BeaverBuddies Stability Fork</a>, which is built on <a href="https://github.com/thomaswp/BeaverBuddies">BeaverBuddies</a> by thomaswp and contributors, who created its multiplayer design. Licensed under the GPL-3.0. Maintained by <a href="https://github.com/timbermods">Timbermods</a>. An unofficial community mod for Timberborn, not affiliated with or endorsed by Mechanistry.</p>
   </div>
 </footer>
-<script>
-  // Open the question a link points at, so #anchors from other pages land on an expanded answer.
-  function openFromHash(scroll) {
-    var target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
-    if (target && target.tagName === 'DETAILS') {
-      target.open = true;
-      if (scroll) target.scrollIntoView({ behavior: 'instant', block: 'start' });
-    }
-  }
-  addEventListener('hashchange', function () { openFromHash(true); });
-  addEventListener('load', function () { openFromHash(true); });
-  openFromHash(false);
-</script>
+<script src="assets/site.js" defer></script>
 <script src="assets/release.js" defer data-repo="timbermods/BeaverBuddies-MultiColony" data-asset="^BeaverBuddies-MultiColony-.+\.zip$"></script>
 </body>
 </html>

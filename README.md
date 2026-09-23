@@ -10,29 +10,23 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 [Install](#install) · [Start](#start-a-game) · [Playing](#playing-your-colony) · [Trading](#trading-posts) · [Handover](#when-a-colony-is-handed-over) · [Controls](#controls) · [One shared colony](#one-shared-colony) · [Troubleshooting](#troubleshooting-and-reporting-problems) · [Full rules](TWO-COLONIES.md) · [Changelog](STABILITY-CHANGELOG.md)
 
 > [!WARNING]
-> **Beta.** Hosting, joining over Steam and founding a second colony have been played, and beta12, beta14 and beta15
-> each had a short separate-colonies session: a founding and building, in step at every tick (beta12's one desync, dev
-> mode's science, was fixed in beta14), and in beta15 trading posts with exchanges of goods and beavers. The rest of
-> this version's model (colony handover, most of the road rule), the **waiting room** (beta18 for new games, beta19
-> for saves) and most of the desync review's fixes (alpha11 onward) have **not been played yet**; they are covered by automated checks. Since
-> alpha13, in a separate-colonies game, a guest whose colony state differs from the host's stops the tick it happens,
-> so a bug in that check would also stop a healthy game; the log line says which it was. The waiting room first opened
-> in 1.4.0-beta23: until then **Next** crashed the game (the first playtest), and until beta21 no guest could have got
-> from it into the game. **1.4.0-rc1** is the release candidate for 1.4.0: a review read the late game (automation
-> and the HTTP API, water automation, power, dynamite and tunnels, both Wonders, bots), Folktails and Iron Teeth
-> together and Trading Posts at scale against the game's own code, fixed what it found (desyncs, a crash, and rules
-> between colonies) and added checks; none of that has been played yet, and a two-player late-game playtest is next
-> ([ALPHA-TEST-SCRIPTS](ALPHA-TEST-SCRIPTS.md), Scripts L, M and T). **1.4.0-rc2** makes hand-overs a last resort: a
-> colony whose player steps away is kept for them by default (ask a friend to look after it), and in a mixed game never
-> goes to the other faction for absence. **1.4.0-rc3** moves the choice of separate colonies or one shared colony to the
-> New Game page (a checkbox beside Tutorial), and lets a player split a shared game once, from the game menu. Play on a
-> copy of your save,
-> keep backups, and please report what you find
-> ([how](#troubleshooting-and-reporting-problems)).
+> **Beta: the release candidate for 1.4.0.** A large automated test suite covers everything below, but real games
+> have been short so far.
+> - **Played:** hosting, joining over Steam and founding a second colony; two colonies founding and building, in step
+>   every tick; Trading Posts with exchanges of goods and beavers; opening the waiting room and joining it; and the
+>   Stability Fork's Steam invites, connection panel, cursors and desync fixes, over hours of two-player play.
+> - **Not played yet:** the New Game page's **Separate colonies** checkbox and splitting a shared game from the game
+>   menu; starting a game from the waiting room; Folktails and Iron Teeth together; looking after an
+>   away player's colony, and hand-overs; most of the road rule; Trading Posts at scale; and the late game
+>   (automation and the HTTP API, water automation, power, dynamite and tunnels, both Wonders, bots). A two-player
+>   late-game playtest is next ([ALPHA-TEST-SCRIPTS](ALPHA-TEST-SCRIPTS.md), Scripts L, M and T).
+>
+> In a separate-colonies game a guest whose colony state differs from the host's stops the tick it happens, so a bug
+> in that check would also stop a healthy game; the log line says which it was. Play on a copy of your save, keep
+> backups, and please report what you find ([how](#troubleshooting-and-reporting-problems)).
 
-MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)
-1.1.14, which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). (The fork's last two
-releases came from here: 1.1.13's speed boost and chat color, and 1.1.14's fixes from beta12.) Everything those do
+MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork),
+which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything those do
 still works: Steam invites, the connection panel and chat, pings, player cursors, and ordinary
 shared-colony co-op, which plays as in the Stability Fork (see [One shared colony](#one-shared-colony)).
 
@@ -43,24 +37,23 @@ shared-colony co-op, which plays as in the Stability Fork (see [One shared colon
 runs the same game version.
 
 1. On the [Releases page](https://github.com/timbermods/BeaverBuddies-MultiColony/releases), open the newest release
-   (every release so far is a beta pre-release) and download `BeaverBuddies-MultiColony-….zip` under **Assets**
+   (the releases are pre-releases) and download `BeaverBuddies-MultiColony-….zip` under **Assets**
    (not "Source code"). Or use the zip you were sent.
 2. **Close Timberborn.**
 3. In `Documents\Timberborn\Mods`, **delete every other BeaverBuddies folder** (the Stability Fork, the Workshop
-   version, older MultiColony builds), and unsubscribe from the Workshop BeaverBuddies if you have it. They change
+   version, any other copy of MultiColony), and unsubscribe from the Workshop BeaverBuddies if you have it. They change
    the same parts of the game and cannot run together; if one is still enabled, the main menu tells you which.
 4. Extract the zip and copy the `BeaverBuddies-MultiColony` folder into `Documents\Timberborn\Mods`.
 5. Start Timberborn and enable **BeaverBuddies MultiColony (beta)** in the mod list.
 
-This version has its own mod id, so its Mod Settings start from the defaults once.
 
 To update, replace the folder with the new download. Every player must update together: a player with a different
 build cannot join.
 
 ## Start a game
 
-**1. Host: separate colonies or one shared colony.** Since 1.4.0-rc3 a new game's colonies are chosen on the **New
-Game** difficulty page, under the game's own **Tutorial** checkbox:
+**1. Host: separate colonies or one shared colony.** A new game's colonies are chosen on the **New Game** difficulty
+page, under the game's own **Tutorial** checkbox:
 
 - **Separate colonies**, ticked: each player builds their own colony. Unticked: everyone plays one shared colony, as
   in the Stability Fork. The page remembers your last choice. A game keeps what it was made with, for good; a shared
@@ -68,17 +61,16 @@ Game** difficulty page, under the game's own **Tutorial** checkbox:
 - Under it, only while it is ticked:
   - **Separate science and unlocks**, ticked: each colony earns its own science and unlocks its own buildings.
     Unticked, the colonies share one pool.
-  - **Mixed factions** (1.4.0-beta20; not played yet): each player picks **Folktails or Iron Teeth** for their own
-    colony, in the waiting room (see [Folktails and Iron Teeth together](#folktails-and-iron-teeth-together)). It needs
-    every faction unlocked on your computer, and the game's two factions only: otherwise the box is greyed, and its
-    tooltip says why.
+  - **Mixed factions** (not played yet): each player picks **Folktails or Iron Teeth** for their own colony, in the
+    waiting room (see [Folktails and Iron Teeth together](#folktails-and-iron-teeth-together)). It needs every faction
+    unlocked on your computer, and the game's two factions only: otherwise the box is greyed, and its tooltip says why.
 
 In **Mod Settings → BeaverBuddies**, the host's one colony setting is **Hand over a colony after its player is away
-(days)**: 0 (never) by default since 1.4.0-rc2. A player stepping away asks a friend to look after their colony
-instead (Ctrl+T). Set a number of days for a group where someone may not come back (see
+(days)**: 0 (never) by default. A player stepping away asks a friend to look after their colony instead (Ctrl+T). Set
+a number of days for a group where someone may not come back (see
 [when a colony is handed over](#when-a-colony-is-handed-over)).
 
-**2. Host: a new game with a waiting room** (the easy way, 1.4.0-beta18; not played yet).
+**2. Host: a new game with a waiting room** (the easy way; starting a game from it hasn't been played yet).
 
 - **New Game** → faction → map → difficulty, as usual, with **Separate colonies** ticked or not (step 1). Then choose
   **Host co-op game** beside **Start**, and name your settlement (the game's own box).
@@ -89,7 +81,7 @@ instead (Ctrl+T). Set a number of days for a group where someone may not come ba
   computer makes the world behind the loading screen, and everyone loads it together, paused at the start. Nobody new
   can join after Start (a **Save and Rehost** lets someone in later).
 - **Guests**, **from the main menu**: **Join co-op game** lists your Steam friends' co-op games; pick the host's
-  and press **Join** (1.4.0-beta24). Or accept the Steam invite, or type the host's IP under the list. A short
+  and press **Join**. Or accept the Steam invite, or type the host's IP under the list. A short
   *Connecting* box, then the same page with **Ready** and **Leave**.
   A game that has started may drop off the list instead of showing *Already started* (Steam may stop reporting a
   lobby nobody can join). A friend with the same version number but another build (one they built themselves) lists
@@ -110,16 +102,16 @@ instead (Ctrl+T). Set a number of days for a group where someone may not come ba
 - **A shared save** (made with **Separate colonies** unticked, or in the Stability Fork) stays one shared colony. A
   player other than the host may split it once, from the game menu (see [one shared colony](#one-shared-colony)).
 
-**3. Host a save: the same waiting room (1.4.0-beta19; not played yet).** From the main menu open **Load Game**,
+**3. Host a save: the same waiting room.** From the main menu open **Load Game**,
 select the save and choose **Host co-op game** (instead of Load). The **Co-op Game** page opens for that save (its
 settlement, name and in-game date): invite with **Invite Friends** (Steam) or your IP address (port **25565**),
 friends ready up, and **Start Game** loads the save for everyone at once. Each player gets the colony the save
-remembers for them (a new player the next free one); since 1.4.0-beta20 the page reads that from the save and shows
+remembers for them (a new player the next free one); the page reads that from the save and shows
 each player's colony and its faction, and the save's faction ring. Guests join from the main menu, as for a new
 game.
 
-**4. Hosting from inside a game** (Options → **Load Game** → **Host co-op game**, or **Save and Rehost**) keeps the
-old way: guests join by the Steam invite (or **Join co-op game** → the host's IP) and load at once, and **the host
+**4. Hosting from inside a game** (Options → **Load Game** → **Host co-op game**, or **Save and Rehost**) works
+without a waiting room: guests join by the Steam invite (or **Join co-op game** → the host's IP) and load at once, and **the host
 waits, paused, until everyone is in**: nobody can join once the game has started, or once anything was changed while
 it waited (a later joiner would be sent the save without it). The connection panel says **Joining: open** until
 then. If you place or mark something while waiting, the game asks first: **Start the game** (what you did is played,
@@ -140,8 +132,8 @@ verified](#how-it-works)).
 
 ### Folktails and Iron Teeth together
 
-*1.4.0-beta20, not played yet.* With **Mixed factions** ticked under **Separate colonies** on the New Game page, every
-colony plays its own faction:
+*Not played yet.* With **Mixed factions** ticked under **Separate colonies** on the New Game page, every colony plays
+its own faction:
 
 - **Pick in the waiting room**, with the game's own faction switcher. Otherwise pick when founding: one card per
   faction.
@@ -304,14 +296,14 @@ connection panel** and **Chat: start typing** are unbound until you set them the
 - **Gates and automation** react at the tick rather than the frame in co-op: at most a tick later than in single
   player, the same on every computer. So do the **Wonders**' animations and the Earth Repopulator's plane launch
   (a launch takes a few ticks longer), and a **spring-return lever** switches off the tick after it is pressed even
-  while you hold it. That one-tick pulse sets off a **Detonator** (1.4.0-rc1; before, it disarmed again at once).
+  while you hold it. That one-tick pulse sets off a **Detonator**.
 - **The HTTP API** works in co-op: each player's computer runs its own (start it from the HTTP Lever's panel), and a
   request to switch an HTTP lever is that player's action, shared with everyone and refused for another colony's
   lever. Requests to colour a lever are ignored in co-op; an HTTP Adapter's webhooks are called by each player's
   computer with the settings made there.
 - **Mods that add content:** every player needs the same ones. The host refuses a building, crop, good or recipe its
   own game does not have; a player whose game lacks one the host used leaves the game with a message (the others play
-  on). Before 1.4.0-rc1 a crop, a good's distribution setting or a recipe from such a mod stopped everyone's game.
+  on).
 - **Other mods that change the simulation** (LateGamePerformance, for one): every player needs the same version, with
   the same settings. MultiColony only warns when the players' mod lists differ.
 - **After a Timberborn update:** if the update changes a part of the game MultiColony corrects for co-op, co-op stops
@@ -323,7 +315,7 @@ connection panel** and **Chat: start typing** are unbound until you set them the
   computer finish that tick in the next frame, so the game can run slower than chosen at high speed with many of
   them; the diagnostics report (Ctrl+Shift+J) and a daily `[Perf]` line in the log count them. **Always Use Detailed
   Logging** records every beaver's decisions and makes the host send them every tick: it is for small colonies, and
-  the desync dialog no longer offers it from 200 beavers and bots.
+  the desync dialog doesn't offer it from 200 beavers and bots.
 - **New text is English only.**
 
 ## One shared colony
@@ -332,7 +324,7 @@ With **Separate colonies** unticked on the New Game page, a new game is ordinary
 Fork: one colony that every player builds together. A shared save (made that way, or in the Stability Fork) loads the
 same way and stays shared.
 
-**Splitting off (1.4.0-rc3).** A player other than the host who wants a colony of their own opens the game menu
+**Splitting off.** A player other than the host who wants a colony of their own opens the game menu
 (Esc) and chooses **Found your own colony**, below Settings. It is there only for them, and only in a shared game.
 It asks first, because this can't be undone: the game becomes a separate-colonies game for every player, for good,
 and the shared colony, with everything built so far, stays the host's. Then they place their district center, which
@@ -373,7 +365,7 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   guest sends that the host cannot read is refused, and the guest's other actions of that moment still happen. This mod's own files are checked, not warned
   about: a different zip, or a missing or edited `Buildings` or `TemplateCollections` folder, is refused at the join.
 - **Desyncs** can still happen. Every tick each guest compares all of the host's random-number state with its own
-  (it used to be one word of four), and which entities tick and where every walking character stands: a random
+  and which entities tick and where every walking character stands: a random
   state that differs stops the game, an entity or walker difference is written to the log once (`Entity mismatch`,
   `Walker mismatch`) so a later desync says when the games first differed. In a separate-colonies game, colony state
   (owners, marks, science, exchanges) is compared with the host's every tick too, and in full once a day, so
@@ -382,8 +374,7 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   the host's new Steam lobby when Steam shows it (the host has **Allow Friends to Join Directly via Steam** on);
   otherwise a Steam guest accepts a fresh invite.
 - **Direct connections send at once:** Nagle's algorithm is off on every direct (IP) socket, and only the save sent to
-  a joining player is paced (the host's game thread used to pause about 31 ms for every 32 KB of a large tick's
-  events beyond the first).
+  a joining player is paced.
 
 ## Troubleshooting and reporting problems
 
@@ -392,21 +383,17 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   `TemplateCollections` files).
 - **"The Host has already changed the game … can no longer be joined":** the host placed or marked something while
   waiting paused. The host saves and rehosts; everyone joins before the host touches anything.
-- **A save from an earlier MultiColony build won't load:** 1.4.0-beta7 gave District Crossings back the game's room
-  for 30 of a good, and a crossing that holds more than that (the earlier builds allowed 100) is expected to stop
-  the save loading (traced in the game's code, not tried).
-  Start a new game, or empty the crossings in the earlier build first. Stability Fork saves load as before.
 - **Ctrl+K says the game has not started yet:** wait until the host unpauses once. (It never says this after a
   waiting room.)
 - **A guest's game failed to load after the waiting room's Start:** nobody can join a started game; the host uses
   **Save and Rehost**, and the guest joins that.
 - **"… is waiting for you in a co-op waiting room":** you accepted an invite (or used Join) while in a game, and the
-  host is in a waiting room (a new game, or since beta19 any save hosted from the main menu). Go back to the main
+  host is in a waiting room (a new game, or a save hosted from the main menu). Go back to the main
   menu, then accept the invite again or join from there.
 - **Ctrl+K says this is one shared colony:** the save is a shared game. A player other than the host splits it from
   the game menu (Esc → **Found your own colony**); that makes it separate for good.
-- **A desync dialog with `Colony state differs` in the log:** the every-tick colony check (alpha13) disagreed. It
-  may be a bug in the check itself; send both players' `Player.log`: the line has both numbers and how many changes
+- **A desync dialog with `Colony state differs` in the log:** the every-tick colony check disagreed. It
+  may be a bug in the check itself; send every player's `Player.log`: the line has both numbers and how many changes
   each side counted.
 - **"That would join another colony's roads":** a path of yours would touch their road, or a building's door would
   open onto or beside it. Keep your roads a cell apart from theirs; to link the two, put a Trading Post between them.
@@ -465,7 +452,7 @@ not to the original BeaverBuddies project.
 
 Design notes and the plans: [design/PRE-GAME-LOBBY-PLAN.md](design/PRE-GAME-LOBBY-PLAN.md) (the waiting room),
 [design/TRADING-EXCHANGE-PLAN.md](design/TRADING-EXCHANGE-PLAN.md),
-[design/TWO-COLONY-ALPHA-PLAN.md](design/TWO-COLONY-ALPHA-PLAN.md); the beta11 desync and network review:
+[design/TWO-COLONY-ALPHA-PLAN.md](design/TWO-COLONY-ALPHA-PLAN.md); the desync and network review:
 [design/REVIEW-FINDINGS-1.4.0-beta11.md](design/REVIEW-FINDINGS-1.4.0-beta11.md); Wonders on the tick:
 [BeaverBuddies/Doc/WonderTiming.md](BeaverBuddies/Doc/WonderTiming.md).
 

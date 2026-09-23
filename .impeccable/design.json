@@ -1,0 +1,861 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-23T18:13:23+00:00",
+  "title": "Design System: BeaverBuddies MultiColony",
+  "extensions": {
+    "colorMeta": {
+      "stone": {
+        "role": "neutral",
+        "displayName": "River Stone",
+        "canonical": "#e2e6e1",
+        "oklch": "oklch(92.0% 0.008 139.4)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242524",
+          "#414241",
+          "#606260",
+          "#818380",
+          "#a3a6a2",
+          "#c7cac6",
+          "#ecf0eb"
+        ]
+      },
+      "stone-deep": {
+        "role": "neutral",
+        "displayName": "Deep Stone",
+        "canonical": "#d3dad4",
+        "oklch": "oklch(88.1% 0.011 149.8)",
+        "tonalRamp": [
+          "#0a0b0a",
+          "#242524",
+          "#404341",
+          "#5f625f",
+          "#7f8480",
+          "#a1a7a2",
+          "#c5cbc5",
+          "#eaf0eb"
+        ]
+      },
+      "enamel": {
+        "role": "neutral",
+        "displayName": "Enamel White",
+        "canonical": "#f7f8f5",
+        "oklch": "oklch(97.8% 0.004 121.6)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424241",
+          "#616160",
+          "#828281",
+          "#a5a5a3",
+          "#c9c9c7",
+          "#eeefec"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Station Ink",
+        "canonical": "#14232a",
+        "oklch": "oklch(24.6% 0.024 229.0)",
+        "tonalRamp": [
+          "#030d12",
+          "#19272e",
+          "#37444b",
+          "#586369",
+          "#7a8489",
+          "#9fa6aa",
+          "#c5cacd",
+          "#eaeff2"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Weathered Ink",
+        "canonical": "#42525a",
+        "oklch": "oklch(42.8% 0.024 229.6)",
+        "tonalRamp": [
+          "#050c11",
+          "#1b272d",
+          "#36444c",
+          "#55646c",
+          "#77858c",
+          "#9ca7ad",
+          "#c1cbd0",
+          "#e9f0f3"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule Grey",
+        "canonical": "#b9c4bf",
+        "oklch": "oklch(81.0% 0.014 167.1)",
+        "tonalRamp": [
+          "#0a0c0b",
+          "#232624",
+          "#3f4341",
+          "#5d6360",
+          "#7d8481",
+          "#9ea8a3",
+          "#c1ccc7",
+          "#e8f1ed"
+        ]
+      },
+      "c1": {
+        "role": "secondary",
+        "displayName": "Colony Amber",
+        "canonical": "#a24814",
+        "oklch": "oklch(51.1% 0.134 45.7)",
+        "tonalRamp": [
+          "#220000",
+          "#470f00",
+          "#702900",
+          "#9b4410",
+          "#bb6941",
+          "#d9916f",
+          "#f7b99d",
+          "#ffe2cc"
+        ]
+      },
+      "c1-rim": {
+        "role": "secondary",
+        "displayName": "Colony Amber Rim",
+        "canonical": "#74310b",
+        "oklch": "oklch(40.0% 0.105 45.3)",
+        "tonalRamp": [
+          "#210000",
+          "#451100",
+          "#6c2c06",
+          "#8c4e31",
+          "#aa735a",
+          "#c89983",
+          "#e6c0ae",
+          "#ffe8db"
+        ]
+      },
+      "c1-wash": {
+        "role": "secondary",
+        "displayName": "Colony Amber Wash",
+        "canonical": "#f1ddcf",
+        "oklch": "oklch(91.0% 0.029 57.4)",
+        "tonalRamp": [
+          "#0e0a08",
+          "#282422",
+          "#47413d",
+          "#685f59",
+          "#8b8078",
+          "#b0a298",
+          "#d7c5b9",
+          "#feeadd"
+        ]
+      },
+      "c2": {
+        "role": "secondary",
+        "displayName": "River Teal",
+        "canonical": "#1a6a77",
+        "oklch": "oklch(48.4% 0.076 211.0)",
+        "tonalRamp": [
+          "#000f16",
+          "#002c34",
+          "#004b56",
+          "#1f6c79",
+          "#518d98",
+          "#7dafb8",
+          "#a9d1d9",
+          "#d6f5fb"
+        ]
+      },
+      "c2-rim": {
+        "role": "secondary",
+        "displayName": "River Teal Rim",
+        "canonical": "#0f4750",
+        "oklch": "oklch(36.7% 0.057 210.8)",
+        "tonalRamp": [
+          "#000f15",
+          "#002b33",
+          "#144a53",
+          "#3f6971",
+          "#668990",
+          "#8eabb1",
+          "#b7ced2",
+          "#e2f2f5"
+        ]
+      },
+      "c2-wash": {
+        "role": "secondary",
+        "displayName": "River Teal Wash",
+        "canonical": "#d3e8ea",
+        "oklch": "oklch(91.6% 0.022 203.7)",
+        "tonalRamp": [
+          "#090c0c",
+          "#222626",
+          "#3d4344",
+          "#5a6364",
+          "#798586",
+          "#99a8aa",
+          "#bbcdcf",
+          "#dff3f5"
+        ]
+      },
+      "navy": {
+        "role": "primary",
+        "displayName": "Station Navy",
+        "canonical": "#1d3440",
+        "oklch": "oklch(31.2% 0.036 232.3)",
+        "tonalRamp": [
+          "#010d15",
+          "#132833",
+          "#304551",
+          "#52646f",
+          "#75858e",
+          "#9aa7af",
+          "#c1cbd0",
+          "#e9f0f4"
+        ]
+      },
+      "navy-rim": {
+        "role": "primary",
+        "displayName": "Station Navy Rim",
+        "canonical": "#0f1f27",
+        "oklch": "oklch(22.9% 0.027 231.3)",
+        "tonalRamp": [
+          "#020d13",
+          "#18272f",
+          "#36444c",
+          "#57636a",
+          "#7a848a",
+          "#9fa6ab",
+          "#c5cacd",
+          "#eaeff2"
+        ]
+      },
+      "link": {
+        "role": "primary",
+        "displayName": "Channel Blue",
+        "canonical": "#1d4f66",
+        "oklch": "oklch(40.5% 0.065 231.5)",
+        "tonalRamp": [
+          "#000e1b",
+          "#00293b",
+          "#17485e",
+          "#3d677d",
+          "#64889b",
+          "#8caaba",
+          "#b6cdda",
+          "#e0f2fb"
+        ]
+      },
+      "timber": {
+        "role": "neutral",
+        "displayName": "Timber",
+        "canonical": "#5a3d26",
+        "oklch": "oklch(38.7% 0.054 58.7)",
+        "tonalRamp": [
+          "#170700",
+          "#361f0c",
+          "#573b24",
+          "#765b46",
+          "#957d6b",
+          "#b5a191",
+          "#d6c6ba",
+          "#f8ece3"
+        ]
+      },
+      "timber-deep": {
+        "role": "neutral",
+        "displayName": "Deep Timber",
+        "canonical": "#3f2a19",
+        "oklch": "oklch(30.6% 0.042 59.3)",
+        "tonalRamp": [
+          "#150700",
+          "#332010",
+          "#513d2d",
+          "#705d4f",
+          "#8f7f73",
+          "#afa298",
+          "#d1c7c0",
+          "#f4ede8"
+        ]
+      },
+      "bark": {
+        "role": "neutral",
+        "displayName": "Bark",
+        "canonical": "#f1e8da",
+        "oklch": "oklch(93.4% 0.021 79.1)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262522",
+          "#44423e",
+          "#64615b",
+          "#86827a",
+          "#aaa49a",
+          "#d0c8bc",
+          "#f6eddf"
+        ]
+      },
+      "bark-soft": {
+        "role": "neutral",
+        "displayName": "Soft Bark",
+        "canonical": "#d9c6ab",
+        "oklch": "oklch(83.5% 0.042 76.7)",
+        "tonalRamp": [
+          "#0e0b07",
+          "#29241e",
+          "#484137",
+          "#696052",
+          "#8d806e",
+          "#b2a38c",
+          "#d9c6ab",
+          "#fdecd4"
+        ]
+      },
+      "caution": {
+        "role": "tertiary",
+        "displayName": "Caution Yellow",
+        "canonical": "#e5b53b",
+        "oklch": "oklch(79.6% 0.144 86.3)",
+        "tonalRamp": [
+          "#120a00",
+          "#302302",
+          "#533f0a",
+          "#785d16",
+          "#a07d24",
+          "#c99e32",
+          "#f0c254",
+          "#ffe990"
+        ]
+      },
+      "caution-rim": {
+        "role": "tertiary",
+        "displayName": "Caution Rim",
+        "canonical": "#a47b16",
+        "oklch": "oklch(60.7% 0.119 83.7)",
+        "tonalRamp": [
+          "#150800",
+          "#352100",
+          "#573d00",
+          "#7d5b00",
+          "#a47b16",
+          "#c49f55",
+          "#e4c588",
+          "#ffebba"
+        ]
+      },
+      "map-ground": {
+        "role": "neutral",
+        "displayName": "Map Ground",
+        "canonical": "#cfd8c9",
+        "oklch": "oklch(87.1% 0.023 132.6)",
+        "tonalRamp": [
+          "#0a0c09",
+          "#242623",
+          "#40433e",
+          "#5f635c",
+          "#7f847b",
+          "#a1a89c",
+          "#c4ccbe",
+          "#e9f2e4"
+        ]
+      },
+      "map-water": {
+        "role": "neutral",
+        "displayName": "Map Water",
+        "canonical": "#8fc3cf",
+        "oklch": "oklch(78.5% 0.057 213.5)",
+        "tonalRamp": [
+          "#050d0f",
+          "#19282b",
+          "#30464b",
+          "#49676e",
+          "#638a93",
+          "#7faeb9",
+          "#a2d3de",
+          "#cdf7ff"
+        ]
+      },
+      "map-water-edge": {
+        "role": "neutral",
+        "displayName": "Map Water Edge",
+        "canonical": "#4e97a8",
+        "oklch": "oklch(63.6% 0.077 214.8)",
+        "tonalRamp": [
+          "#000e13",
+          "#052a32",
+          "#1a4954",
+          "#306a78",
+          "#488e9e",
+          "#71b1c0",
+          "#9ed4e1",
+          "#cbf7ff"
+        ]
+      },
+      "map-tree": {
+        "role": "neutral",
+        "displayName": "Map Tree",
+        "canonical": "#6f8f5c",
+        "oklch": "oklch(61.2% 0.082 134.4)",
+        "tonalRamp": [
+          "#050e01",
+          "#1b2a11",
+          "#344928",
+          "#506a41",
+          "#6e8d5b",
+          "#92af82",
+          "#b9d2ab",
+          "#e1f6d5"
+        ]
+      },
+      "night-stone": {
+        "role": "neutral",
+        "displayName": "River Stone (night)",
+        "canonical": "#0f191b",
+        "oklch": "oklch(20.5% 0.015 211.3)",
+        "tonalRamp": [
+          "#050d0f",
+          "#1d2729",
+          "#3b4446",
+          "#5b6364",
+          "#7d8485",
+          "#a1a6a7",
+          "#c6caca",
+          "#eceff0"
+        ]
+      },
+      "night-stone-deep": {
+        "role": "neutral",
+        "displayName": "Deep Stone (night)",
+        "canonical": "#0a1214",
+        "oklch": "oklch(17.5% 0.013 214.9)",
+        "tonalRamp": [
+          "#060d0e",
+          "#1f2729",
+          "#3c4345",
+          "#5c6264",
+          "#7e8385",
+          "#a2a6a7",
+          "#c7caca",
+          "#eceff0"
+        ]
+      },
+      "night-enamel": {
+        "role": "neutral",
+        "displayName": "Enamel White (night)",
+        "canonical": "#182427",
+        "oklch": "oklch(25.0% 0.018 214.8)",
+        "tonalRamp": [
+          "#040d0f",
+          "#1b272a",
+          "#394447",
+          "#5a6366",
+          "#7c8486",
+          "#a0a6a8",
+          "#c5cacb",
+          "#ebeff0"
+        ]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Station Ink (night)",
+        "canonical": "#e6ebe7",
+        "oklch": "oklch(93.5% 0.008 151.9)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242525",
+          "#414241",
+          "#606260",
+          "#808381",
+          "#a2a6a3",
+          "#c6cac7",
+          "#ebf0ec"
+        ]
+      },
+      "night-ink-soft": {
+        "role": "neutral",
+        "displayName": "Weathered Ink (night)",
+        "canonical": "#a5b3b1",
+        "oklch": "oklch(75.5% 0.016 186.6)",
+        "tonalRamp": [
+          "#090c0b",
+          "#222625",
+          "#3d4443",
+          "#5b6362",
+          "#7a8583",
+          "#9ba8a6",
+          "#bfccca",
+          "#e6f1f0"
+        ]
+      },
+      "night-rule": {
+        "role": "neutral",
+        "displayName": "Rule Grey (night)",
+        "canonical": "#2c3c3f",
+        "oklch": "oklch(34.3% 0.021 210.3)",
+        "tonalRamp": [
+          "#040d0f",
+          "#1a282a",
+          "#364548",
+          "#566467",
+          "#798587",
+          "#9da7a9",
+          "#c3cbcc",
+          "#eaf0f1"
+        ]
+      },
+      "night-c1-text": {
+        "role": "secondary",
+        "displayName": "Colony Amber Lettering (night)",
+        "canonical": "#eb8a45",
+        "oklch": "oklch(72.5% 0.144 53.5)",
+        "tonalRamp": [
+          "#190500",
+          "#3c1a01",
+          "#64330e",
+          "#8e4e20",
+          "#bb6b32",
+          "#ea8944",
+          "#ffb279",
+          "#ffdcab"
+        ]
+      },
+      "night-c2-text": {
+        "role": "secondary",
+        "displayName": "River Teal Lettering (night)",
+        "canonical": "#5fc0cf",
+        "oklch": "oklch(75.5% 0.093 208.7)",
+        "tonalRamp": [
+          "#000e11",
+          "#092a2f",
+          "#1b4950",
+          "#2e6b75",
+          "#438f9b",
+          "#59b5c3",
+          "#84d9e6",
+          "#b6fdff"
+        ]
+      },
+      "night-navy": {
+        "role": "primary",
+        "displayName": "Station Navy (night)",
+        "canonical": "#27475a",
+        "oklch": "oklch(38.2% 0.050 236.2)",
+        "tonalRamp": [
+          "#000d18",
+          "#0d2837",
+          "#264659",
+          "#496577",
+          "#6e8696",
+          "#94a8b5",
+          "#bcccd6",
+          "#e5f0f8"
+        ]
+      },
+      "night-link": {
+        "role": "primary",
+        "displayName": "Channel Blue (night)",
+        "canonical": "#8cc9e0",
+        "oklch": "oklch(80.2% 0.070 223.5)",
+        "tonalRamp": [
+          "#040d11",
+          "#17282e",
+          "#2d4650",
+          "#456774",
+          "#5e8a9a",
+          "#79aec2",
+          "#99d3ea",
+          "#c5f8ff"
+        ]
+      },
+      "night-timber": {
+        "role": "neutral",
+        "displayName": "Timber (night)",
+        "canonical": "#3a2819",
+        "oklch": "oklch(29.4% 0.037 60.5)",
+        "tonalRamp": [
+          "#140801",
+          "#322113",
+          "#4f3e30",
+          "#6e5e51",
+          "#8d7f75",
+          "#aea39a",
+          "#d0c7c1",
+          "#f3ede8"
+        ]
+      },
+      "night-caution": {
+        "role": "tertiary",
+        "displayName": "Caution Yellow (night)",
+        "canonical": "#d9a93a",
+        "oklch": "oklch(76.0% 0.136 84.4)",
+        "tonalRamp": [
+          "#120900",
+          "#312200",
+          "#543e07",
+          "#7a5c15",
+          "#a17c25",
+          "#cb9d35",
+          "#efc264",
+          "#ffe99c"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The hero name plate's title only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Home page section headings."
+      },
+      "page-title": {
+        "displayName": "Page Title",
+        "purpose": "Guide page titles above the timber-ruled page head edge."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Plate, step, rail and question titles (1.2-1.6rem by context)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Reading text at a 68-72ch measure; 16.5px under 640px; bold at 650."
+      },
+      "label": {
+        "displayName": "Signage Label",
+        "purpose": "Uppercase tracked lettering for short glance-read labels: nav, table heads, reading names, status, settings groups. Never above a heading."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Every plate button, uppercase."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Paths, setting names in code, keys; on enamel with a rule outline and 4px corners."
+      }
+    },
+    "shadows": [
+      {
+        "name": "mount",
+        "value": "0 1px 0 rgba(20,35,42,.28), 0 10px 18px -12px rgba(20,35,42,.55)",
+        "purpose": "Under every plate, button and map label (light)."
+      },
+      {
+        "name": "mount-night",
+        "value": "0 1px 0 rgba(0,0,0,.5), 0 12px 20px -12px rgba(0,0,0,.8)",
+        "purpose": "The mount under prefers-color-scheme: dark."
+      },
+      {
+        "name": "plate-build-up",
+        "value": "inset 0 0 0 1px var(--plate-rim), inset 0 0 0 5px var(--plate), inset 0 0 0 7px var(--keyline), var(--mount)",
+        "purpose": "Rim and keyline of a plate; buttons use 1/4/6px."
+      },
+      {
+        "name": "struck-forward",
+        "value": "inset 0 0 0 1px var(--plate-rim), inset 0 0 0 5px var(--plate), inset 0 0 0 8px var(--navy), 0 1px 0 rgba(20,35,42,.28), 0 22px 30px -18px rgba(20,35,42,.6)",
+        "purpose": "The chosen signpost path card only, with translateY(-6px)."
+      },
+      {
+        "name": "header-beam",
+        "value": "0 4px 0 var(--timber)",
+        "purpose": "The sticky header's timber edge."
+      },
+      {
+        "name": "focus-ring",
+        "value": "outline: 3px solid var(--caution); outline-offset: 3px",
+        "purpose": "Every focusable element."
+      }
+    ],
+    "motion": [
+      {
+        "name": "plate-lift",
+        "value": "transform .18s cubic-bezier(.2,.7,.2,1)",
+        "purpose": "Button hover lifts 2px."
+      },
+      {
+        "name": "struck-forward",
+        "value": "transform .3s cubic-bezier(.2,.7,.2,1), box-shadow .3s",
+        "purpose": "The chosen signpost card moves forward 6px; off under 760px."
+      },
+      {
+        "name": "barter-loop",
+        "value": "9s cubic-bezier(.45,0,.2,1) infinite",
+        "purpose": "Goods cross at the Trading Post on the hero map while the post glows. The only loop; goods shown still under prefers-reduced-motion."
+      },
+      {
+        "name": "arm-press",
+        "value": "background .2s, color .2s",
+        "purpose": "Signpost arms turning navy when pressed."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "nav-tight",
+        "value": "1060px"
+      },
+      {
+        "name": "fold",
+        "value": "940px"
+      },
+      {
+        "name": "toc-sidebar",
+        "value": "1000px"
+      },
+      {
+        "name": "stack",
+        "value": "760px"
+      },
+      {
+        "name": "phone",
+        "value": "640px"
+      },
+      {
+        "name": "narrow",
+        "value": "520px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button (navy plate)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Every action and direction, including the primary Download: a navy enamel plate with a white keyline.",
+      "html": "<a class=\"ds-btn\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 4v12m0 0l-5-5m5 5l5-5M5 20h14\"/></svg>Download</a>",
+      "css": ".ds-btn{--plate:#1d3440;--plate-rim:#0f1f27;--keyline:rgba(255,255,255,.9);display:inline-flex;align-items:center;gap:.6rem;min-height:3rem;padding:.7rem 1.35rem .72rem;font:700 1.08rem/1.1 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:#fff;background:var(--plate);border:0;border-radius:6px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--plate-rim),inset 0 0 0 4px var(--plate),inset 0 0 0 6px var(--keyline),0 1px 0 rgba(20,35,42,.28),0 10px 18px -12px rgba(20,35,42,.55);transition:transform .18s cubic-bezier(.2,.7,.2,1)}.ds-btn:hover{transform:translateY(-2px)}.ds-btn:active{transform:translateY(0)}.ds-btn:focus-visible{outline:3px solid #e5b53b;outline-offset:3px}.ds-btn svg{width:1.15em;height:1.15em}"
+    },
+    {
+      "name": "Ghost Button (enamel plate)",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action: an enamel plate with a navy keyline and ink lettering.",
+      "html": "<a class=\"ds-btn ds-ghost\" href=\"#\">Install guide</a>",
+      "css": ".ds-btn{--plate:#1d3440;--plate-rim:#0f1f27;--keyline:rgba(255,255,255,.9);display:inline-flex;align-items:center;gap:.6rem;min-height:3rem;padding:.7rem 1.35rem .72rem;font:700 1.08rem/1.1 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:#fff;background:var(--plate);border:0;border-radius:6px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--plate-rim),inset 0 0 0 4px var(--plate),inset 0 0 0 6px var(--keyline),0 1px 0 rgba(20,35,42,.28),0 10px 18px -12px rgba(20,35,42,.55);transition:transform .18s cubic-bezier(.2,.7,.2,1)}.ds-btn:hover{transform:translateY(-2px)}.ds-btn:active{transform:translateY(0)}.ds-btn:focus-visible{outline:3px solid #e5b53b;outline-offset:3px}.ds-btn svg{width:1.15em;height:1.15em}.ds-ghost{--plate:#f7f8f5;--plate-rim:#b9c4bf;--keyline:#1d3440;color:#14232a}"
+    },
+    {
+      "name": "Copy Button and Path Box",
+      "kind": "input",
+      "refersTo": "button-copy",
+      "description": "A folder path in mono on enamel, outlined in ink, with a small navy Copy button.",
+      "html": "<div class=\"ds-path\"><code>Documents\\Timberborn\\Mods</code><button class=\"ds-copy\">Copy</button></div>",
+      "css": ".ds-path{display:flex;gap:.5rem;flex-wrap:wrap}.ds-path code{flex:1 1 16rem;display:flex;align-items:center;padding:.6rem .8rem;font:.95rem ui-monospace,Consolas,monospace;background:#f7f8f5;color:#14232a;border:1.5px solid #14232a;border-radius:4px}.ds-copy{min-height:44px;padding:0 1rem;font:700 .85rem/1 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:#1d3440;border:0;border-radius:4px;cursor:pointer}.ds-copy:hover{background:#0f1f27}.ds-copy:focus-visible{outline:3px solid #e5b53b;outline-offset:3px}"
+    },
+    {
+      "name": "Enamel Plate (navy, grommets)",
+      "kind": "card",
+      "refersTo": "plate-navy",
+      "description": "The system's container: solid field, dark rim, white keyline, 7px corners, mount shadow; grommets for hanging signs.",
+      "html": "<div class=\"ds-plate ds-grommets\"><h3>Report a problem</h3><p>Send every player&#39;s Player.log as a GitHub issue.</p></div>",
+      "css": ".ds-plate{position:relative;background:var(--plate,#1d3440);color:var(--plate-ink,#fff);border-radius:7px;padding:1.4rem 1.6rem;font:17px/1.65 system-ui,sans-serif;box-shadow:inset 0 0 0 1px var(--plate-rim,#0f1f27),inset 0 0 0 5px var(--plate,#1d3440),inset 0 0 0 7px var(--keyline,rgba(255,255,255,.92)),0 1px 0 rgba(20,35,42,.28),0 10px 18px -12px rgba(20,35,42,.55)}.ds-plate h3{margin:0 0 .4rem;font:700 1.45rem/1.15 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif}.ds-plate p{margin:0}.ds-grommets::before,.ds-grommets::after{content:'';position:absolute;top:13px;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.55),rgba(0,0,0,.35) 70%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}.ds-grommets::before{left:13px}.ds-grommets::after{right:13px}"
+    },
+    {
+      "name": "Enamel Plate (light)",
+      "kind": "card",
+      "refersTo": "plate-enamel",
+      "description": "The light plate: enamel white with a navy keyline, used for path cards, notes, the cross-check and the map frame.",
+      "html": "<div class=\"ds-plate ds-light\"><h3>Split a shared save</h3><p>The existing colony stays whole as the first colony.</p></div>",
+      "css": ".ds-plate{position:relative;background:var(--plate,#1d3440);color:var(--plate-ink,#fff);border-radius:7px;padding:1.4rem 1.6rem;font:17px/1.65 system-ui,sans-serif;box-shadow:inset 0 0 0 1px var(--plate-rim,#0f1f27),inset 0 0 0 5px var(--plate,#1d3440),inset 0 0 0 7px var(--keyline,rgba(255,255,255,.92)),0 1px 0 rgba(20,35,42,.28),0 10px 18px -12px rgba(20,35,42,.55)}.ds-plate h3{margin:0 0 .4rem;font:700 1.45rem/1.15 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif}.ds-plate p{margin:0}.ds-grommets::before,.ds-grommets::after{content:'';position:absolute;top:13px;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.55),rgba(0,0,0,.35) 70%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}.ds-grommets::before{left:13px}.ds-grommets::after{right:13px}.ds-light{--plate:#f7f8f5;--plate-rim:#b9c4bf;--plate-ink:#14232a;--keyline:#1d3440}"
+    },
+    {
+      "name": "Colony Plates (Trading Post sign)",
+      "kind": "custom",
+      "refersTo": "plate-c1",
+      "description": "Amber (colony 1) and teal (colony 2) plates hung from one timber post: the only place both colony colors meet on one sign.",
+      "html": "<div class=\"ds-meet\"><div class=\"ds-plate ds-grommets ds-c1\">Colony 1</div><div class=\"ds-post\"><span>Trading Post</span></div><div class=\"ds-plate ds-grommets ds-c2\">Colony 2</div></div>",
+      "css": ".ds-plate{position:relative;background:var(--plate,#1d3440);color:var(--plate-ink,#fff);border-radius:7px;padding:1.4rem 1.6rem;font:17px/1.65 system-ui,sans-serif;box-shadow:inset 0 0 0 1px var(--plate-rim,#0f1f27),inset 0 0 0 5px var(--plate,#1d3440),inset 0 0 0 7px var(--keyline,rgba(255,255,255,.92)),0 1px 0 rgba(20,35,42,.28),0 10px 18px -12px rgba(20,35,42,.55)}.ds-plate h3{margin:0 0 .4rem;font:700 1.45rem/1.15 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif}.ds-plate p{margin:0}.ds-grommets::before,.ds-grommets::after{content:'';position:absolute;top:13px;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.55),rgba(0,0,0,.35) 70%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}.ds-grommets::before{left:13px}.ds-grommets::after{right:13px}.ds-meet{display:flex;align-items:flex-start}.ds-meet .ds-plate{margin-top:2.2rem;padding:1rem 2rem 1rem 2.5rem;font:700 1.8rem/1 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif;white-space:nowrap}.ds-meet .ds-grommets::before,.ds-meet .ds-grommets::after{top:50%;margin-top:-4px}.ds-c1{--plate:#a24814;--plate-rim:#74310b}.ds-c2{--plate:#1a6a77;--plate-rim:#0f4750}.ds-post{position:relative;z-index:1;flex:none;display:grid;place-items:center;width:40px;height:11rem;margin:0 -3px;border-radius:3px 3px 0 0;background:#5a3d26;box-shadow:inset -6px 0 0 rgba(0,0,0,.14)}.ds-post span{writing-mode:vertical-rl;transform:rotate(180deg);font:700 .82rem/1 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#f1e8da}"
+    },
+    {
+      "name": "Status Tag and Not-Played Tag",
+      "kind": "chip",
+      "refersTo": "plate-caution",
+      "description": "Caution yellow carries status: a riveted caution plate in the hero, and a small inline not-played tag.",
+      "html": "<p class=\"ds-status\"><span>1.4.0-rc2</span><span>Timberborn 1.1.2.4</span><span>Beta: back up your saves</span></p> <span class=\"ds-np\">Not played</span>",
+      "css": ".ds-status{position:relative;display:inline-flex;flex-wrap:wrap;gap:.15rem .7rem;padding:.55rem 1rem .55rem 1.9rem;margin:0;font:700 .92rem/1.25 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif;letter-spacing:.04em;background:#e5b53b;color:#14232a;border-radius:7px;box-shadow:inset 0 0 0 1px #a47b16,inset 0 0 0 5px #e5b53b,inset 0 0 0 7px #14232a,0 1px 0 rgba(20,35,42,.28),0 10px 18px -12px rgba(20,35,42,.55)}.ds-status::before{content:'';position:absolute;left:.75rem;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#14232a;box-shadow:0 0 0 2px rgba(255,255,255,.5)}.ds-status>span:not(:last-child)::after{content:'\\00b7';margin-left:.7rem;opacity:.7}.ds-np{display:inline-block;font:700 .72rem/1 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .45rem;border-radius:3px;background:#e5b53b;color:#14232a}"
+    },
+    {
+      "name": "Header Navigation",
+      "kind": "nav",
+      "refersTo": "",
+      "description": "Sticky stone header on a timber beam; uppercase display links at 44px, current page underlined in ink.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" aria-current=\"page\">Home</a><a href=\"#\">Install</a><a href=\"#\">FAQ</a><a href=\"#\">Troubleshooting</a></nav>",
+      "css": ".ds-nav{display:flex;gap:.15rem;background:#e2e6e1;box-shadow:0 4px 0 #5a3d26;padding:.6rem}.ds-nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 .75rem;font:700 .92rem/1 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#42525a;text-decoration:none;border-radius:4px}.ds-nav a:hover{background:#d3dad4;color:#14232a}.ds-nav a[aria-current=page]{color:#14232a;box-shadow:inset 0 -3px 0 #14232a;border-radius:0}.ds-nav a:focus-visible{outline:3px solid #e5b53b;outline-offset:3px}"
+    },
+    {
+      "name": "Signpost Arms",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Choose your start: pointed boards either side of a timber pole; deep stone at rest, navy when pressed.",
+      "html": "<div class=\"ds-sign\"><button class=\"ds-arm ds-left\" aria-pressed=\"true\">A colony each</button><i class=\"ds-pole\"></i><button class=\"ds-arm ds-right\" aria-pressed=\"false\">Split a shared save</button></div>",
+      "css": ".ds-sign{display:grid;grid-template-columns:1fr 16px 1fr;gap:1.5rem;align-items:center}.ds-pole{align-self:stretch;min-height:5rem;background:#5a3d26;border-radius:2px}.ds-arm{min-height:4.2rem;padding:.9rem 1.4rem;border:0;cursor:pointer;font:700 1.4rem/1.1 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif;text-align:left;background:#d3dad4;color:#14232a;transition:background .2s,color .2s}.ds-arm:hover{background:color-mix(in srgb,#1d3440 18%,#d3dad4)}.ds-arm[aria-pressed=true]{background:#1d3440;color:#fff}.ds-arm:focus-visible{outline:3px solid #e5b53b;outline-offset:3px}.ds-left{clip-path:polygon(0 50%,26px 0,100% 0,100% 100%,26px 100%);padding-left:2.4rem}.ds-right{clip-path:polygon(0 0,calc(100% - 26px) 0,100% 50%,calc(100% - 26px) 100%,0 100%);padding-right:2.4rem}"
+    },
+    {
+      "name": "Question",
+      "kind": "custom",
+      "refersTo": "question",
+      "description": "FAQ and troubleshooting answers: an enamel disclosure with a navy plus/minus square.",
+      "html": "<details class=\"ds-q\"><summary>Why can&#39;t my friend join?</summary><div class=\"ds-a\"><p>Both players need the exact same download.</p></div></details>",
+      "css": ".ds-q{background:#f7f8f5;color:#14232a;border-radius:6px;box-shadow:inset 0 0 0 1.5px #b9c4bf;font:17px/1.65 system-ui,sans-serif}.ds-q[open]{box-shadow:inset 0 0 0 1.5px #14232a}.ds-q>summary{list-style:none;cursor:pointer;position:relative;min-height:44px;padding:1rem 3.2rem 1rem 1.15rem;font:700 1.2rem/1.3 'Barlow Semi Condensed','Bahnschrift SemiCondensed','Arial Narrow',sans-serif}.ds-q>summary::-webkit-details-marker{display:none}.ds-q>summary::after{content:'';position:absolute;right:1.1rem;top:50%;width:22px;height:22px;margin-top:-11px;border-radius:3px;background:#1d3440 url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M6 11h10M11 6v10' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E\") center/100% no-repeat}.ds-q[open]>summary::after{background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M6 11h10' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E\")}.ds-q>summary:hover{color:#1d4f66}.ds-q>summary:focus-visible{outline:3px solid #e5b53b;outline-offset:3px}.ds-a{padding:0 1.15rem 1.1rem}.ds-a p{margin:0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "River Station Signage",
+    "overview": "The site is the signage of a small river station: fired-enamel plates bolted to timber posts, telling two neighbours where to go and where to meet. Every surface is either river-stone ground, a flat enamel plate with a white keyline and a darker rim, or timber (posts, rails, rules, the header beam and the footer). The world is literal about its one idea: two colonies on one map, joined only at a Trading Post. Amber enamel is colony 1, river-teal enamel is colony 2, and the only place they touch is on one post.\n\nDensity is that of a well-lettered notice board. Bands of stone and a few painted fields, heavy condensed lettering for anything a passer-by reads at a glance, and plain system-ui prose for anything read standing still. Depth is physical and shallow. Plates sit a few pixels proud of the wall on a short mount shadow, and nothing glows or floats.\n\nThe site comes in two lights. At night (`prefers-color-scheme: dark`) the ground goes dark but the enamel keeps its colors. Colony lettering on the ground brightens to stay legible, and plates stay the same paint.\n\nThe world rejects the mod-page default: the screenshot hero, the icon-tile feature grid and the floating white card with a thin border and a wide shadow.",
+    "keyCharacteristics": [
+      "Enamel plates: a solid field, a 1px darker rim, a white keyline inset about 5px, 7px corners, optional grommets, and a short mount shadow.",
+      "Timber is the structure: posts, rails, section rules, the header beam, the footer. It never carries content color.",
+      "Two colony colors, used only for their own colony. Navy is for actions and directions, caution yellow for status.",
+      "Condensed signage lettering for headings, labels and buttons. system-ui for reading.",
+      "One moving part: goods crossing at the Trading Post on the hero map."
+    ],
+    "rules": [
+      {
+        "name": "The Colony Paint Rule",
+        "body": "Amber is colony 1 and teal is colony 2, everywhere. No button, link, highlight or decoration wears either color unless it stands for that colony. The primary Download is navy, not amber.",
+        "section": "colors"
+      },
+      {
+        "name": "The Meeting Rule",
+        "body": "The two colony colors appear together only where the colonies meet: the Trading Post sign, the section marker, the map and the trading demo's colony toggles.",
+        "section": "colors"
+      },
+      {
+        "name": "The Same Paint at Night Rule",
+        "body": "In dark mode the ground, text and timber change. Plate fields stay the same paint, and only the colony lettering sitting on the ground is lifted for contrast.",
+        "section": "colors"
+      },
+      {
+        "name": "The Painted-Word Rule",
+        "body": "Uppercase tracked signage lettering is for labels a passer-by reads in one glance: navigation, buttons, table heads, names of readings, status. It is never used for paragraphs, and never as a line placed above a heading to announce it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "The condensed face is for headings, labels and buttons. system-ui is for reading. Don't set running text in the display face or headings in the body face.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mounted, Not Floating Rule",
+        "body": "A shadow means \"bolted to the wall\". There are no wide soft shadows, no glows, and no hover elevation on cards.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do build every container as an enamel plate: a solid field, a 1px rim, a keyline inset about 5–7px, 7px corners and the mount shadow.",
+      "Do paint colony 1 amber and colony 2 teal wherever a colony is meant, and only then.",
+      "Do use navy for every action and direction, including the primary Download.",
+      "Do keep caution yellow for status and attention (status tag, not-played tag, caution notes, focus ring, selection, the rail arrows), always lettered in dark ink.",
+      "Do use timber for structure (posts, rails, rules, the header beam and the footer) and bark for lettering on it.",
+      "Do set headings, labels and buttons in Barlow Semi Condensed, and prose in system-ui at a 68–72ch measure.",
+      "Do keep every touch target at 44px or more, and use the 3px caution focus ring offset 3px.",
+      "Do keep motion to the one barter loop and the button and signpost lifts, and keep everything still under `prefers-reduced-motion`.",
+      "Do draw icons as inline SVG strokes or masks."
+    ],
+    "donts": [
+      "Don't use a colony color for a button, link, highlight or decoration that is not that colony.",
+      "Don't build icon tiles or icon-over-title feature grids.",
+      "Don't use left-stripe callouts. A note is a whole plate (enamel or caution) with a signage label.",
+      "Don't use thin-border, wide-shadow floating cards, glows, or hover elevation on cards.",
+      "Don't put a kicker or eyebrow line above a heading. The colony marker is the only mark above a section heading.",
+      "Don't use emoji or text glyphs as icons.",
+      "Don't let the Trading Post replica's game palette or Noto Sans leave the replica.",
+      "Don't add external font or asset requests. The display face is self-hosted."
+    ]
+  }
+}
