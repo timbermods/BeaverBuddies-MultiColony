@@ -533,6 +533,11 @@ internal static class RcPerformanceRuntimeChecks
             heartbeat.GetField("changes")!.SetValue(beat, (int?)1234);
             Type replayEvent = Mod("BeaverBuddies.Events.ReplayEvent");
             Time("the heartbeat as JSON", 50000, Call(Mod("BeaverBuddies.IO.JsonSettings").GetMethod("Serialize")!.MakeGenericMethod(replayEvent), null, beat));
+            // A late save's bytes hashed, as a rehost and a join do it (R-late's .timber is 1.15 MB): TimberNet's hash, per call.
+            byte[] save = new byte[1_153_849];
+            new Random(1).NextBytes(save);
+            MethodInfo hash = Assembly.Load("TimberNet").GetType("TimberNet.TimberNetBase", true)!.GetMethod("GetHashCode", new[] { typeof(byte[]) })!;
+            Time("a 1.15 MB save's hash (in ns)", 20, Call(hash, null, save));
             Console.WriteLine($"  {(optimised ? "optimised" : "NOT optimised (the Release Steam zip)")}: " + string.Join(", ", lines));
         });
 
