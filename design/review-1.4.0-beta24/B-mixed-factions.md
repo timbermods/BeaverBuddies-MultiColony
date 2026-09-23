@@ -70,12 +70,15 @@ builds with 0 warnings. Every fix's check fails on beta24's DLL or source (run o
 - **Fix** (`FactionCatalog.cs:81-150, 189-209`): `EnsureBuilt` says whether the catalog could be read, and every
   accessor falls back to the game's own answer (no faction filter): no template faction, every good and need allowed,
   no goods filter (null; the four callers that filter now skip), the game's own need list. The game then plays on as an
-  unfiltered two-faction game would (bots get both factions' needs), instead of stopping.
+  unfiltered two-faction game would (bots get both factions' needs), instead of stopping. The catalog tries again on
+  each call only until the game has loaded (`PostLoad`); after that an unreadable catalog answers at once, instead of
+  building, throwing and catching again on every call the game makes for each character, yield and building.
 - **Left:** a mixed game's *load* still needs the catalog for the two game methods that take one template of a kind
   (`BotFactory.Load`, `ShaftFrameFactory.Load`: the game's `GetSingle` throws with both factions' templates). With an
   unreadable catalog the game would fail to load, before anyone plays: a clean failure, not a session stop.
 - **Check:** `B2 (H1): a faction catalog that could not be read answers as the game would, and never throws`
-  (RuntimeChecks). Fails on beta24 (`FactionOfTemplate threw NullReferenceException`).
+  (RuntimeChecks: every accessor on a catalog whose spec service throws, and no further try after `PostLoad`). Fails
+  on beta24 (`FactionOfTemplate threw NullReferenceException`).
 
 ### B3: the hot faction lookups (Confirmed; performance; mixed)
 
@@ -319,6 +322,10 @@ scene):
 - **F7 memory and load time:** only a recording can show them (Script P, P4).
 - **The Wonder completion panel pauses the host's game until it is closed** (the generic co-op overlay rule, *Pause
   reduction* off): not specific to Wonders.
+- **A colony that has lost every building of its own faction is untouched again** (`UntouchedFacts` counts buildings,
+  exchanges and centers only) and its own player may switch it; the switch remakes beavers only up to the starting
+  numbers and leaves any bots of the old faction. Only by that player's confirmed choice; a late colony reaches it only
+  by demolishing or blasting everything it built. Worth a line in the switch's tooltip if it ever matters.
 
 ---
 

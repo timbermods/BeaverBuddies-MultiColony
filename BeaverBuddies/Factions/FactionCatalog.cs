@@ -25,7 +25,7 @@ namespace BeaverBuddies.Factions
     /// game and mod files, which the join handshake checks), so simulation rules may read it. Built once, when first
     /// asked; empty outside a mixed game.
     /// </summary>
-    public class FactionCatalog : RegisteredSingleton, ILoadableSingleton
+    public class FactionCatalog : RegisteredSingleton, ILoadableSingleton, IPostLoadableSingleton
     {
         public const string CommonCollectionId = "Common";
 
@@ -36,6 +36,8 @@ namespace BeaverBuddies.Factions
 
         private bool built;
         private bool failed;
+        // Set once the game has loaded and the catalog still can't be read: no call tries again.
+        private bool gaveUp;
         private FactionSets templates;
         private FactionSets goods;
         private FactionSets needs;
@@ -76,6 +78,15 @@ namespace BeaverBuddies.Factions
                     Plugin.LogWarning("[Factions] Could not read this computer's faction unlocks (every faction allowed): " + error.Message);
                 }
             }
+        }
+
+        public void PostLoad()
+        {
+            if (!MixedFactions.IsOn) return;
+            // Everything the catalog reads has loaded by now. One that still can't be read never will be: from here on
+            // every answer falls back at once, instead of trying (and throwing and catching) again on each call, which the
+            // game makes for every character, yield and building.
+            if (!EnsureBuilt()) gaveUp = true;
         }
 
         /// <summary>The faction whose collections alone list this template (null: common, or not a mixed game).</summary>
@@ -188,13 +199,14 @@ namespace BeaverBuddies.Factions
 
         /// <summary>
         /// Whether the catalog could be read. Kept unbuilt on a failure, so a later call tries again (the first callers are
-        /// other services' Load); the error is logged once. Every answer above then falls back to the game's own (no
-        /// faction filter) instead of throwing: a character is made, a stockpile filled, a yield taken and a building
-        /// placed as the game would, inside a tick or a replay.
+        /// other services' Load), until the game has loaded (PostLoad); the error is logged once. Every answer above then
+        /// falls back to the game's own (no faction filter) instead of throwing: a character is made, a stockpile filled,
+        /// a yield taken and a building placed as the game would, inside a tick or a replay.
         /// </summary>
         private bool EnsureBuilt()
         {
             if (built) return true;
+            if (gaveUp) return false;
             try
             {
                 Build();

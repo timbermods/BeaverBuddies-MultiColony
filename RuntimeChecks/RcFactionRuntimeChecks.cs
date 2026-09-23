@@ -158,8 +158,11 @@ internal static class RcFactionRuntimeChecks
                 needSpec.GetProperty("CharacterType")!.SetValue(spec, type);
                 list.Add(spec);
             }
-            // No spec service: Build throws, as a broken collection would.
-            object catalog = catalogType.GetConstructors().Single().Invoke(new object?[] { null, null, needs, null });
+            // A spec service that throws, as a broken collection would; it counts how often the catalog tries.
+            Type specServiceType = Game("Timberborn.BlueprintSystem", "Timberborn.BlueprintSystem.ISpecService");
+            object specService = typeof(DispatchProxy).GetMethod("Create", 2, Type.EmptyTypes)!
+                .MakeGenericMethod(specServiceType, typeof(ThrowingSpecServiceProxy)).Invoke(null, null)!;
+            object catalog = catalogType.GetConstructors().Single().Invoke(new object?[] { specService, null, needs, null });
             var logger = mod.GetType("BeaverBuddies.Plugin", true)!.GetField("logger", All)!;
             object? previousLogger = logger.GetValue(null);
             logger.SetValue(null, DispatchProxy.Create(mod.GetType("BeaverBuddies.Util.Logging.ILogger", true)!, typeof(QuietLoggerProxy)));
@@ -179,6 +182,14 @@ internal static class RcFactionRuntimeChecks
                     throw new Exception("an unread catalog called a good common");
                 var bot = ((IEnumerable)Call("NeedsFor", "Folktails", true)!).Cast<object>().Select(s => (string)needSpec.GetProperty("Id")!.GetValue(s)!).ToList();
                 if (!bot.SequenceEqual(new[] { "Biofuel", "Energy" })) throw new Exception("an unread catalog's bot needs are " + string.Join(", ", bot) + ", not the game's");
+                // Once the game has loaded, a catalog that still can't be read stops trying: each call the game makes
+                // (every character, yield and building) would otherwise build, throw and catch again.
+                var proxy = (ThrowingSpecServiceProxy)specService;
+                if (proxy.Calls == 0) throw new Exception("the test's catalog never tried to read the specs");
+                (catalogType.GetMethod("PostLoad") ?? throw new Exception("the catalog does not give up after the load")).Invoke(catalog, null);
+                int tries = proxy.Calls;
+                for (int i = 0; i < 100; i++) Call("FactionOfTemplate", "Smelter.IronTeeth");
+                if (proxy.Calls != tries) throw new Exception($"after the load, 100 calls tried to read the catalog {proxy.Calls - tries} more times");
             }
             finally
             {
@@ -443,5 +454,17 @@ internal static class RcFactionRuntimeChecks
     static IEnumerable<object?> Operands(object code)
     {
         foreach (object instruction in (IEnumerable)code) yield return instruction.GetType().GetField("operand")!.GetValue(instruction);
+    }
+}
+
+/// <summary>A game spec service whose every call throws (a collection the faction catalog can't read), counting the calls.</summary>
+public class ThrowingSpecServiceProxy : DispatchProxy
+{
+    public int Calls;
+
+    protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
+    {
+        Calls++;
+        throw new InvalidOperationException("a broken collection (test)");
     }
 }
