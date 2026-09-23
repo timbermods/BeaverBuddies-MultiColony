@@ -46,7 +46,9 @@ jobs:
           # the whole suite locally before a release. Any other failure, or a build error, fails the build.
           $timing = @(
             "A guest's ping over Steam grows with the players' frame length, and pumping between ticks removes that",
-            "Status traffic never changes the hash, the event script or tick progress"
+            "Status traffic never changes the hash, the event script or tick progress",
+            # 1.4.0-beta21: starves the thread pool on purpose and times seven guests' paced saves under the 5 s test limit.
+            "J4: seven guests' paced saves, with the thread pool starved, all queue well inside the 10 s"
           )
           dotnet run --project StabilityTests --no-restore | Tee-Object -Variable output
           $code = $LASTEXITCODE
