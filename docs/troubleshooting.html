@@ -91,7 +91,7 @@
             <li>Make sure <b>Harmony</b> and <b>Mod Settings</b> are installed and enabled. The mod needs both.</li>
             <li>Enable <b>BeaverBuddies MultiColony (beta)</b> in the mod manager and restart the game.</li>
             <li>The mod is built for Timberborn 1.1 (tested on 1.1.2.4). Older game versions won't run it.</li>
-            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-rc2</span> is loaded!</code>. If it's there, the mod loaded and the problem is elsewhere.</li>
+            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-rc4</span> is loaded!</code>. If it's there, the mod loaded and the problem is elsewhere.</li>
           </ol>
         </div>
       </details>
@@ -162,24 +162,31 @@
       </details>
 
       <details class="q" id="already-started">
-        <summary>The invite says the host has already started, or already changed the game</summary>
+        <summary>The invite says the host has already started</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>Nobody can join once a waiting room's <b>Start Game</b> is pressed, or, hosting from inside a game, once the host unpauses or places or marks anything while waiting. An old invite explains that instead of hanging. A game that has started may also simply drop off the <b>Join co-op game</b> list.</p>
+          <p>Nobody can join once the host presses <b>Start Game</b> on the Co-op Game page. An old invite explains that instead of hanging. A game that has started may also simply drop off the <b>Join co-op game</b> list.</p>
           <p class="sub">Try this</p>
-          <p>The host uses <b>Save and Rehost</b> and sends a fresh invite. Have your friend join before the host starts, and the host builds nothing until everyone is in.</p>
+          <p>The host chooses <b>Save and Rehost</b> in the game menu, and you choose <b>Rejoin</b> or wait in <b>Join co-op game</b>. Everyone meets on the Co-op Game page, and <b>Start Game</b> carries on.</p>
+        </div>
+      </details>
+
+      <details class="q" id="rejoin">
+        <summary>A friend lost the connection</summary>
+        <div class="answer">
+          <p>They choose <b>Rejoin</b> on the lost-connection message (or wait in <b>Join co-op game</b>), and the host chooses <b>Save and Rehost</b> in the game menu, in either order. The friend goes to the main menu and lands on the host's Co-op Game page as soon as it opens; when everyone is ready, <b>Start Game</b> carries on.</p>
         </div>
       </details>
 
       <details class="q" id="waiting-room">
         <summary>"&hellip; is waiting for you in a co-op waiting room"</summary>
         <div class="answer">
-          <p>You accepted an invite, or used Join, while you were in a game, and the host is in a waiting room. Go back to the main menu, then accept the invite again or join from there.</p>
+          <p>You accepted an invite, or used Join, while you were in a game, and the host is on a Co-op Game page. Go back to the main menu, then accept the invite again or join from there.</p>
         </div>
       </details>
 
       <details class="q" id="load-failed">
-        <summary>My game failed to load after the waiting room's Start</summary>
+        <summary>My game failed to load after Start Game</summary>
         <div class="answer">
           <p>Nobody can join a game that has started, so there's no way back into that one. The host uses <b>Save and Rehost</b>, and you join that. If it happens again, <a href="#logs">send every player's logs</a>.</p>
         </div>
@@ -234,16 +241,10 @@
       <details class="q" id="shared">
         <summary><kbd>Ctrl</kbd>+<kbd>K</kbd> says this is one shared colony</summary>
         <div class="answer">
-          <p>The save is a shared game. To split it into colonies, the host ticks <b>Allow founding colonies in a shared game (beta)</b> and hosts again; the first founding makes it separate for good. The colony you built together stays whole as the first colony. <a href="index.html#start">Choose your start</a> explains both settings.</p>
+          <p>The save is a shared game. To split it, a player other than the host opens the game menu (Esc) and chooses <b>Found your own colony</b>, or the host ticks <b>Separate colonies</b> on the save's Co-op Game page and hosts it again. Either makes it separate for good, and the colony you built together stays whole as the host's. <a href="index.html#start">Choose your start</a> explains both.</p>
         </div>
       </details>
 
-      <details class="q" id="not-started">
-        <summary><kbd>Ctrl</kbd>+<kbd>K</kbd> says the game hasn't started yet</summary>
-        <div class="answer">
-          <p>The host is hosting from inside a game and hasn't unpaused yet. Wait until they do once. (After a waiting room you can found straight away.)</p>
-        </div>
-      </details>
 
       <details class="q" id="refused">
         <summary>Everything I do is refused right after joining</summary>
@@ -283,7 +284,8 @@
           <p class="sub">Try this</p>
           <ol>
             <li>The host chooses <b>Save and Rehost</b>.</li>
-            <li>Guests choose <b>Reconnect (wait for Rehost)</b>: a direct IP guest redials the address it used, and a Steam guest joins the host's new lobby when Steam shows it (otherwise it accepts a fresh invite).</li>
+            <li>Guests choose <b>Reconnect (wait for Rehost)</b>, in any order: each goes to the main menu and lands on the host's Co-op Game page as soon as it opens. A direct IP guest redials the address it used, and a Steam guest joins the host's new lobby when Steam shows it (otherwise it accepts a fresh invite).</li>
+            <li>Everyone presses <b>Ready</b>, and the host presses <b>Start Game</b>.</li>
             <li>You may need to restart the game if problems persist.</li>
           </ol>
           <p class="sub">Things that cause it</p>

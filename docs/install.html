@@ -87,7 +87,7 @@
       <ol class="steps">
         <li><div>
           <h3>Download the zip</h3>
-          <p>Open the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a> and download <code><span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-rc2.zip</span></code> under <b>Assets</b>, not "Source code". <b>Got a zip from your host?</b> Use that exact file instead. The release also lists the zip's SHA-256 if you want to check the download (see below).</p>
+          <p>Open the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a> and download <code><span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-rc4.zip</span></code> under <b>Assets</b>, not "Source code". <b>Got a zip from your host?</b> Use that exact file instead. The release also lists the zip's SHA-256 if you want to check the download (see below).</p>
         </div></li>
         <li><div>
           <h3>Close Timberborn</h3>
@@ -109,7 +109,7 @@
         </div></li>
       </ol>
       <p>To check the download, open PowerShell in the folder you saved it to and compare the result with the SHA-256 on the release page:</p>
-      <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-rc2.zip</span> -Algorithm SHA256</code></pre>
+      <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-rc4.zip</span> -Algorithm SHA256</code></pre>
     </section>
 
     <section id="compare">
@@ -119,7 +119,7 @@
         <table class="stacked compare">
           <thead><tr><th>What</th><th>Should read</th><th>Where to look</th></tr></thead>
           <tbody>
-            <tr><td><b>The mod</b></td><td><span data-release="version">1.4.0-rc2</span></td><td>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with its version.</td></tr>
+            <tr><td><b>The mod</b></td><td><span data-release="version">1.4.0-rc4</span></td><td>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with its version.</td></tr>
             <tr><td><b>The game</b></td><td>1.1.2.4</td><td>The same Timberborn version for everyone.</td></tr>
             <tr><td><b>The download</b></td><td>The same zip</td><td>The same file, not only the same number: compare the SHA-256 if in doubt. A copy someone built themselves won't join.</td></tr>
           </tbody>
@@ -131,41 +131,37 @@
     <section id="verify">
       <h2>Check it loaded</h2>
       <ul>
-        <li>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with version <b><span data-release="version">1.4.0-rc2</span></b>.</li>
+        <li>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with version <b><span data-release="version">1.4.0-rc4</span></b>.</li>
         <li>The main menu has a <b>Join co-op game</b> button.</li>
-        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-rc2</span> is loaded!</code></li>
+        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-rc4</span> is loaded!</code></li>
       </ul>
       <p>If it isn't there, see <a href="troubleshooting.html#not-loading">The mod doesn't load</a>.</p>
     </section>
 
     <section id="host">
       <h2>Host a game</h2>
-      <p>First choose your start in <b>Mod Settings &rarr; BeaverBuddies</b>. You only change one setting, never both:</p>
+      <p>Every game is hosted through a <b>Co-op Game</b> page: friends join it and press <b>Ready</b>, and <b>Start Game</b> loads the game for everyone at once. You choose separate colonies or one shared colony where the game is made, with the <b>Separate colonies</b> checkbox:</p>
       <ul>
-        <li><b>A new game, a colony each:</b> leave <b>Separate colonies for new games (beta)</b> on. It's on by default.</li>
-        <li><b>Splitting a save you already share:</b> turn on <b>Allow founding colonies in a shared game (beta)</b>. Your shared colony stays whole; the friend who founds starts fresh.</li>
+        <li><b>A new game, a colony each:</b> leave <b>Separate colonies</b> ticked on the New Game difficulty page. It's ticked by default, and the page remembers your choice.</li>
+        <li><b>Splitting a save you already share:</b> tick <b>Separate colonies</b> on the save's Co-op Game page. Everything built so far stays your colony; each friend founds their own.</li>
       </ul>
       <p><a href="index.html#start">Choose your start</a> shows the two side by side.</p>
 
-      <h3>A new game: the waiting room</h3>
+      <h3>A new game</h3>
       <ol>
-        <li><b>New Game</b> &rarr; faction &rarr; map &rarr; difficulty, as usual, then choose <b>Host co-op game</b> beside <b>Start</b> and name your settlement.</li>
+        <li><b>New Game</b> &rarr; faction &rarr; map &rarr; difficulty, as usual. Tick or untick <b>Separate colonies</b> (and the two boxes under it), then choose <b>Host co-op game</b> beside <b>Start</b> and name your settlement.
         <li>On the <b>Co-op Game</b> page, bring your friends in with one of the three ways below. They appear in the list and press <b>Ready</b>; you can remove anyone.</li>
         <li>Press <b>Start Game</b> (you're asked first if someone isn't ready). Everyone loads the new world together, paused; unpause when the connection panel shows nobody <i>(loading)</i>. Nobody new can join after Start.</li>
       </ol>
-      <p class="muted">Starting a game from the waiting room hasn't been played yet: please report how it goes.</p>
+      <p class="muted">Starting a game from the Co-op Game page hasn't been played yet: please report how it goes.</p>
 
       <h3>A save</h3>
-      <p>From the main menu: <b>Load Game</b>, select the save and choose <b>Host co-op game</b>. The same waiting room opens for that save; invite, let everyone ready up, and press <b>Start Game</b>. Each player gets the colony the save remembers for them.</p>
+      <p>From the main menu choose <b>Host co-op game</b> (under Load game). It opens the game's own save box: pick a settlement and a save. A gold line under its picture says what it is: <i>Separate colonies</i> (with how many players it remembers) or <i>One shared colony</i>. Choose <b>Host co-op game</b>; its Co-op Game page opens. Invite, let everyone ready up, and press <b>Start Game</b>. Each player gets the colony the save remembers for them. <b>Load game</b> only loads.</p>
+      <p>For a shared save the page also shows <b>Separate colonies</b>, unticked, with <b>Separate science and unlocks</b> under it. Tick it and the game becomes separate colonies at Start, for good: everything built so far is your colony, and each friend founds their own. Keep a copy of the save first.</p>
 
       <h3>From inside a game</h3>
-      <p>Options &rarr; <b>Load Game</b> &rarr; <b>Host co-op game</b>, or <b>Save and Rehost</b>, works without a waiting room:</p>
-      <ol>
-        <li>Load the save you want to play and choose <b>Host co-op game</b>.</li>
-        <li>Bring your friends in with one of the three ways below.</li>
-        <li>When your friends appear in the connected-player list, choose <b>Start Game</b>, then <b>wait, paused, until everyone is in, and build nothing meanwhile</b>.</li>
-      </ol>
-      <p><b>Nobody can join after you unpause, or after you place or mark anything while paused.</b> The game asks before your first change; friends who arrive late need you to save and host again.</p>
+      <p>Playing alone, open the game menu (Esc) and choose <b>Host co-op game</b>: your game is saved as a new save and its Co-op Game page opens. Hosting a co-op game, the same button reads <b>Save and Rehost</b>: everyone leaves the game, it's saved, and its page opens. Your friends choose <b>Rejoin</b> (or <b>Reconnect</b> after a desync) and land on the page as soon as it opens; when everyone is ready, <b>Start Game</b> carries on. Nobody can join after <b>Start Game</b>.</p>
+      <p class="muted">Hosting a save or a game you're playing, and rejoining a rehost, haven't been played yet.</p>
       <p>If a warning says your mods and a friend's mods differ, fix that before you start: see <a href="troubleshooting.html#mods-differ">Troubleshooting</a>.</p>
 
       <h3>Option 1: Steam invite (easiest)</h3>
@@ -183,10 +179,10 @@
       <h3>From the main menu</h3>
       <p>Choose <b>Join co-op game</b>: it lists your Steam friends' co-op games. Pick your host's and press <b>Join</b>. You see the host's <b>Co-op Game</b> page; press <b>Ready</b>. A game that has already started may drop off the list. Under the list you can also type the host's IP address or domain name.</p>
       <h3>With a Steam invite</h3>
-      <p>Accept the invite from the Steam notification or overlay, <b>from the main menu</b> for a waiting room. If Timberborn is closed, Steam launches it and joins for you. If the host has <b>Allow Friends to Join Directly via Steam</b> on (it is by default), you can also use <b>Join Game</b> from the host's entry in your Steam friends list.</p>
+      <p>Accept the invite from the Steam notification or overlay, <b>from the main menu</b>: every game is hosted through a Co-op Game page. If Timberborn is closed, Steam launches it and joins for you. If the host has <b>Allow Friends to Join Directly via Steam</b> on (it is by default), you can also use <b>Join Game</b> from the host's entry in your Steam friends list.</p>
       <p>Guests receive a copy of the host's save. It's kept under <b>Online Games</b>.</p>
       <h3>Found your colony</h3>
-      <p>After a waiting room, as soon as you're in; hosted from inside a game, once the host unpauses: a message offers you a district center to place (or press <kbd>Ctrl</kbd>+<kbd>K</kbd> later). Put it anywhere its roads won't join another colony's (their roads show in their colors): it appears already built, free, with starting beavers, food and water. On a BeaverBuddies multi-start map you get the next start instead. The save remembers your colony by your Steam ID (without Steam, by an id kept on your computer), whoever hosts.</p>
+      <p>As soon as you're in, even while the game is still paused, a message offers you a district center to place (or press <kbd>Ctrl</kbd>+<kbd>K</kbd> later). Put it anywhere its roads won't join another colony's (their roads show in their colors): it appears already built, free, with starting beavers, food and water. On a BeaverBuddies multi-start map you get the next start instead. The save remembers your colony by your Steam ID (without Steam, by an id kept on your computer), whoever hosts.</p>
     </section>
 
     <section id="playing">
@@ -206,24 +202,33 @@
       <p>A desync means the players' games have drifted apart. The game tells you, and the host should:</p>
       <ol>
         <li>Choose <b>Save and Rehost</b>.</li>
-        <li>Guests choose <b>Reconnect (wait for Rehost)</b>. A direct IP guest redials the address it used; a Steam guest joins the host's new lobby when Steam shows it (the host needs <b>Allow Friends to Join Directly via Steam</b> on), or else accepts a fresh invite.</li>
+        <li>Guests choose <b>Reconnect (wait for Rehost)</b>, in any order. Each goes to the main menu and lands on the host's Co-op Game page as soon as it opens: a direct IP guest redials the address it used; a Steam guest joins the host's new lobby when Steam shows it (the host needs <b>Allow Friends to Join Directly via Steam</b> on), or else accepts a fresh invite.</li>
+        <li>Everyone presses <b>Ready</b>, and the host presses <b>Start Game</b>.</li>
       </ol>
       <p>If the game says multiplayer has stopped because an action couldn't be completed, return to the main menu and reload a known-good save. Don't overwrite your good save with that session. Then send every player's <code>Player.log</code> and newest report: <a href="troubleshooting.html#logs">how</a>.</p>
     </section>
 
     <section id="settings">
       <h2>Settings and keys</h2>
-      <p>Open <b>Mod Settings</b> from the game's mod menu and choose BeaverBuddies.</p>
-      <h3 class="settings-group">Colony setup (the host's settings)</h3>
+      <h3 class="settings-group">On the New Game page (the host's choice)</h3>
+      <p>A new game's colonies are chosen on the <b>New Game</b> difficulty page, under the game's own <b>Tutorial</b> checkbox. The page remembers your last choice, and a game keeps what it was made with, for good. A shared save's <b>Co-op Game</b> page shows the first two as well.</p>
+      <div class="table-wrap">
+        <table class="stacked settings">
+          <thead><tr><th>Checkbox</th><th>Default</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><b>Separate colonies</b></td><td>Ticked</td><td>Ticked: each player builds their own colony. Unticked: everyone plays one shared colony, as in ordinary BeaverBuddies; a player other than the host can split off later, once, with <b>Found your own colony</b> in the game menu. Not played yet.</td></tr>
+            <tr><td><b>Separate science and unlocks</b> (under it)</td><td>Ticked</td><td>Each colony earns and spends its own science and unlocks its own buildings. Unticked: the colonies share one pool.</td></tr>
+            <tr><td><b>Mixed factions</b> (under it)</td><td>Unticked</td><td>Each player picks Folktails or Iron Teeth for their colony on the Co-op Game page. Greyed, with the reason in its tooltip, unless every faction is unlocked on the host's computer. Not played yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3 class="settings-group">In Mod Settings (the host's)</h3>
+      <p>Open <b>Mod Settings</b> from the game's mod menu and choose BeaverBuddies. The connecting settings and your own preferences, below, are there as well.</p>
       <div class="table-wrap">
         <table class="stacked settings">
           <thead><tr><th>Setting</th><th>Default</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><b>Separate colonies for new games (beta)</b></td><td>On</td><td><b>For new games.</b> Only read when a new game starts. On: each player gets their own colony. Off: all players share one colony, as in ordinary BeaverBuddies. A save keeps the mode it started with. For a new game with a colony each, this is all you need.</td></tr>
-            <tr><td><b>Allow founding colonies in a shared game (beta)</b></td><td>Off</td><td><b>For splitting a shared save.</b> Only for a shared save you already have (one colony for all players). On: a player without a colony can found their own, which splits the save into separate colonies for good. The existing colony stays whole as the first colony; the new one starts from scratch.</td></tr>
-            <tr><td><b>Separate science and unlocks per colony (beta)</b></td><td>On</td><td>Each colony earns its own science and unlocks its own buildings. Chosen when a separate-colonies game begins, then fixed for the save.</td></tr>
-            <tr><td><b>Mixed factions for new games (beta)</b></td><td>Off</td><td>For new games with separate colonies. Each player picks Folktails or Iron Teeth for their colony in the waiting room. Needs every faction unlocked on the host's computer. Not played yet.</td></tr>
-            <tr><td><b>Hand over a colony after its player is away (days)</b></td><td>0 (never)</td><td>How many in-game days of hosted play a player may miss before their colony goes to another player. At 0 an away player's colony is kept for them; ask a friend to look after it instead. In a mixed game it only ever goes to a colony of its own faction.</td></tr>
+            <tr><td><b>Hand over a colony after its player is away (days)</b></td><td>0 (never)</td><td>How many in-game days of hosted play a player may miss before their colony goes to another player. At 0 an away player's colony is kept for them; ask a friend to look after it instead. In a mixed game it only ever goes to a colony of its own faction. It can be changed during a game.</td></tr>
           </tbody>
         </table>
       </div>
@@ -256,7 +261,7 @@
         <table>
           <thead><tr><th>Key</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Found your colony (a player without one; in a shared game only if the host allows it).</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Found your colony (a player without one, in a separate-colonies game). In a shared game, split off with <b>Found your own colony</b> in the game menu instead.</td></tr>
             <tr><td><kbd>Ctrl</kbd>+<kbd>L</kbd></td><td>Show every colony's roads as bright squares in its color.</td></tr>
             <tr><td><kbd>Ctrl</kbd>+<kbd>T</kbd></td><td>Trading Posts and colonies: your posts, every colony, what each is looking for, and who looks after it.</td></tr>
             <tr><td><kbd>Home</kbd></td><td>Back to your colony. Clicking a name in the connection panel takes your camera to that player instead.</td></tr>
