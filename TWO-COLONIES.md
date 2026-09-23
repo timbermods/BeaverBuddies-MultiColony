@@ -565,6 +565,21 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   these a difference showed only once it changed a beaver's random draw, or never.
 - Two colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest from the
   connection panel.
+- **Deletions cost frames in co-op.** Whenever something is deleted during a tick (a harvest picked up, a death, a
+  blast, a demolition), every computer finishes that tick in the next frame, so that the game removes it at the same
+  moment everywhere. At normal speeds this costs nothing; with many deletions a tick at a high speed or a low frame
+  rate the game runs slower than chosen (at most *frame rate ÷ (1 + deletions a tick)* ticks a second). The
+  diagnostics report (Ctrl+Shift+J) counts them, and so does a daily `[Perf]` line in the log.
+- **Detailed logging is for small colonies.** *Always Use Detailed Logging* records every beaver's decisions and makes
+  the host send them all every tick: a colony of 200 or more beavers and bots can't keep up, so the desync dialog no
+  longer offers it there (1.4.0-rc1).
+- A speed boost the computers can't carry leaves a guest a few seconds behind the host (the host eases off until the
+  guest keeps up), so the guest's own actions take that long to show.
+- Other mods that change the simulation (LateGamePerformance, for one) need the same version, with the same settings,
+  on every player's computer; MultiColony only warns when the players' mod lists differ.
+- The daily colony check (`[Colony] Check` in the log) is taken as the host's day reaches each computer, one tick
+  after the turn of the day, the same on every computer.
+- A half of a paused Trading Post (no colony's road reaches it) belongs to no colony, so any colony may remove it.
 - The days of food and water in the Ctrl+T window are an estimate from yesterday's use (today's, scaled, before a
   full day has been sampled): a colony that just doubled its beavers eats faster than the number says. Display only.
 - A reserve counts a colony's stock in the district of its Trading Post half, as the game counts it (the goods on

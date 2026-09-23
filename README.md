@@ -18,7 +18,11 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > alpha13, in a separate-colonies game, a guest whose colony state differs from the host's stops the tick it happens,
 > so a bug in that check would also stop a healthy game; the log line says which it was. The waiting room first opened
 > in 1.4.0-beta23: until then **Next** crashed the game (the first playtest), and until beta21 no guest could have got
-> from it into the game. Play on a copy of your save,
+> from it into the game. **1.4.0-rc1** is the release candidate for 1.4.0: a review read the late game (automation
+> and the HTTP API, water automation, power, dynamite and tunnels, both Wonders, bots), Folktails and Iron Teeth
+> together and Trading Posts at scale against the game's own code, fixed what it found (desyncs, a crash, and rules
+> between colonies) and added checks; none of that has been played yet, and a two-player late-game playtest is next
+> ([ALPHA-TEST-SCRIPTS](ALPHA-TEST-SCRIPTS.md), Scripts L, M and T). Play on a copy of your save,
 > keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
 
@@ -283,19 +287,32 @@ connection panel** and **Chat: start typing** are unbound until you set them the
   both players are warned (*Two districts' roads have been joined…*), and the first district keeps the shared roads
   until the joining path or building is removed.
 - **Dev mode** (Alt+Shift+Z): only its instant unlock, *Finish now* and the dev panel's *Add 1000 Science* are shared
-  (while the host has dev mode on); its other tools desync the game, and its two Ctrl keys (place finished, don't
-  recover goods) are off in co-op.
+  (while the host has dev mode on); its other tools and keys desync the game (the debug buttons, the dev panel, Delete
+  on a selected beaver), and its three Ctrl keys (place finished, don't recover goods, spawn planted crops) are off in
+  co-op.
 - **Gates and automation** react at the tick rather than the frame in co-op: at most a tick later than in single
   player, the same on every computer. So do the **Wonders**' animations and the Earth Repopulator's plane launch
   (a launch takes a few ticks longer), and a **spring-return lever** switches off the tick after it is pressed even
-  while you hold it.
-- **Mods that add buildings:** every player needs the same ones. The host refuses a building its own game does not
-  have; a player whose game lacks a building the host places leaves the game with a message (the others play on).
+  while you hold it. That one-tick pulse sets off a **Detonator** (1.4.0-rc1; before, it disarmed again at once).
+- **The HTTP API** works in co-op: each player's computer runs its own (start it from the HTTP Lever's panel), and a
+  request to switch an HTTP lever is that player's action, shared with everyone and refused for another colony's
+  lever. Requests to colour a lever are ignored in co-op; an HTTP Adapter's webhooks are called by each player's
+  computer with the settings made there.
+- **Mods that add content:** every player needs the same ones. The host refuses a building, crop, good or recipe its
+  own game does not have; a player whose game lacks one the host used leaves the game with a message (the others play
+  on). Before 1.4.0-rc1 a crop, a good's distribution setting or a recipe from such a mod stopped everyone's game.
+- **Other mods that change the simulation** (LateGamePerformance, for one): every player needs the same version, with
+  the same settings. MultiColony only warns when the players' mod lists differ.
+- **After a Timberborn update:** if the update changes a part of the game MultiColony corrects for co-op, co-op stops
+  at load with a message naming it, instead of going out of step; single player carries on. Update MultiColony.
 - **Single player:** without a co-op session nothing is refused and no colony can be founded. Host the game (even
   alone) to play the mode.
 - **Performance:** more colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest
-  from the connection panel. With **Always Use Detailed Logging** on, the log has one line a day per colony
-  (population, exchanges), which helps with reports from long games.
+  from the connection panel. In co-op, every deletion in a tick (a harvest picked up, a death, a blast) makes every
+  computer finish that tick in the next frame, so the game can run slower than chosen at high speed with many of
+  them; the diagnostics report (Ctrl+Shift+J) and a daily `[Perf]` line in the log count them. **Always Use Detailed
+  Logging** records every beaver's decisions and makes the host send them every tick: it is for small colonies, and
+  the desync dialog no longer offers it from 200 beavers and bots.
 - **New text is English only.**
 
 ## One shared colony
