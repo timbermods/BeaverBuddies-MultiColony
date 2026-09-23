@@ -160,11 +160,17 @@ namespace BeaverBuddies.Lobby
 
         public void SetHeader(string text) => header.text = text;
 
-        /// <summary>A save's gold line: its name, and its in-game date as the Load Game box words it (when known).</summary>
+        /// <summary>
+        /// A save's gold line: its name as the Load Game box shows it (an autosave is the game's own "Autosave", in each
+        /// player's language), and its in-game date worded the same way (when known).
+        /// </summary>
         public static string SaveLine(Timberborn.UIFormatters.TimestampFormatter formatter, string saveName, int cycle, int day)
         {
-            if (cycle <= 0 || formatter == null) return saveName ?? "";
-            return RegisteredLocalizationService.T("BeaverBuddies.Lobby.SaveLine", saveName ?? "", formatter.FormatLongLocalized(cycle, day));
+            string name = saveName ?? "";
+            if (name.Contains(Timberborn.GameSaveRepositorySystem.GameSaveRepository.AutosaveNameSuffix))
+                name = RegisteredLocalizationService.T("Saving.Autosave");
+            if (cycle <= 0 || formatter == null) return name;
+            return RegisteredLocalizationService.T("BeaverBuddies.Lobby.SaveLine", name, formatter.FormatLongLocalized(cycle, day));
         }
 
         /// <summary>

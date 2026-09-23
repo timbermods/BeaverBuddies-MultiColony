@@ -175,6 +175,8 @@ namespace BeaverBuddies.Lobby
             if (State != LobbySessionState.CreatingWorld) return;
             save = saveReference;
             saveBytes = bytes;
+            // Kept here and by the server from now on: the setup's copy of a save's bytes is not needed again.
+            Setup.SaveBytes = null;
             Plugin.Log($"[Lobby] Sending \"{saveReference.SaveName}\" ({bytes.Length} bytes) to the guests");
             Server.SetLobbyStage(LobbyStage.SendingWorld);
             Server.ReleaseLobby(bytes);

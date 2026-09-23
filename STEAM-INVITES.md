@@ -12,7 +12,10 @@ you host, so Hamachi / port forwarding / direct IP keep working exactly as befor
    friend. The friend appears in the room; press **Start Game** when everyone is ready. Nobody new can join after
    that: the Steam lobby closes at Start.
 
-**Host of a save**
+**Host of a save from the main menu** (1.4.0-beta19): **Load Game** → select the save → **Host co-op game** opens the
+same waiting room; invite and start as above.
+
+**Host of a save from inside a game** (Options → Load Game, or Save and Rehost)
 1. Make sure **Enable Steam Networking** is on in Mod Settings (it is by default).
 2. Load your save and choose **Host co-op game**.
 3. Choose **Invite Friends** and pick your friend in the Steam overlay.
@@ -133,7 +136,8 @@ fix and the pumping between ticks are covered by checks on their decisions, not 
    An invite sent after **Start Game** while the host still waits paused, with nothing changed, still works.
 6b. **Waiting room:** New Game → **Host co-op game**; invite the friend; the friend sees *Connecting…*, then the
     host's **Co-op Game** page; ready up and start. An invite accepted after Start gets the "already started"
-    message. See `ALPHA-TEST-SCRIPTS.md`, Script D.
+    message. See `ALPHA-TEST-SCRIPTS.md`, Script D. Since beta19 the same for a save hosted from the main menu
+    (Script D, line 15).
 6a. Rejoin the same save later with the friend hosting it: in MultiColony each of you gets the same colony as
     before (`[Colony] Player … plays slot …` in the log).
 7. Host with Steam Networking **off** and confirm direct IP works as before.

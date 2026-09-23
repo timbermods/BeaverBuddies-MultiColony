@@ -1,3 +1,7 @@
+v1.4.0-beta19 (BeaverBuddies MultiColony)
+* The waiting room for saves too: in the main menu, Load Game -> Host co-op game opens the same Co-op Game page for the save. Friends join and ready up, and Start Game loads the save for everyone at once. Each player keeps the colony the save remembers. Hosting from inside a game (Options -> Load, Save and Rehost) works as before. Not played yet.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta18 (BeaverBuddies MultiColony)
 * A waiting room for new co-op games: on the New Game difficulty page choose Host co-op game (beside Start) and name your settlement. Friends join by Steam invite or IP from the main menu and press I'm ready; you press Start Game, and everyone loads the new world together. Each friend can place their district center at once, even while paused. Not played yet.
 * Joining now shows a "Connecting to ..." box with Cancel, and the host's connection panel marks a guest still loading.

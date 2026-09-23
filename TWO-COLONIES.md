@@ -9,8 +9,8 @@ Steam, founding a second colony and building in it; and in three short sessions 
 beta14 and beta15): a founding and both players building, in step at every tick (beta12's one desync, dev mode's
 science, was fixed in beta14), and in beta15 trading posts with exchanges of goods and beavers. **The rest of this
 version's model has not been seen in a game yet**: colony handover, the road rule that replaced land in beta15, the
-new game's waiting room (beta18), and most of the desync review's fixes (alpha11 onward) are covered by automated
-checks only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
+waiting room (beta18 for new games, beta19 for saves), and most of the desync review's fixes (alpha11 onward) are
+covered by automated checks only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
 in that check would stop a healthy game too; the log line says which. Play on a copy of your save and keep backups.
 
 ## The rules in one minute
@@ -68,7 +68,14 @@ or nobody came. At Start:
   switching colonies and asking a steward work at once, while paused (a hosted save waits for the first tick, below);
   the host's **Hand to …** buttons still wait for the first tick (a guest still loading looks away).
 
-**Joining closes** (a hosted save) at the host's first tick, or at the first action that changes the game while it is still
+**A save in the waiting room** (1.4.0-beta19). **Load Game → Host co-op game** from the main menu opens the same page
+for the save (its settlement, name and in-game date), after the game's own checks of the save. At **Start Game** the
+save's bytes go to everyone and the host loads the same bytes; joining closes at Start, so founding, switching
+colonies and asking a steward work at once, as after a new game's waiting room. The rows show no colony: a save seats
+each player by who it remembers (the slot table in the save), which the menu does not read. Hosting from inside a
+game (Options → Load, Save and Rehost) keeps the old way below.
+
+**Joining closes** (a save hosted from inside a game) at the host's first tick, or at the first action that changes the game while it is still
 paused (placing or marking something): a player joining after that would be sent the save the host started from,
 without it. The host should wait for everyone, then unpause. So that this never happens by accident, the host's
 first change while joining is open is held and the host is asked (**Start the game**, which plays it and closes
@@ -372,8 +379,10 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 ## Known limits
 
 - Up to four colonies; more players join as helpers of the host's colony.
-- The waiting room is for new games only (a save is hosted with Load Game → Host co-op game), holds at most seven
-  guests (the Steam lobby's eight), and is joined from the main menu only. It has no chat, map preview or mod-list
+- The waiting room is used from the main menu (a new game, or Load Game → Host co-op game); hosting from inside a game
+  (Options → Load, Save and Rehost) keeps the old dialog. It holds at most seven guests (the Steam lobby's eight), and
+  is joined from the main menu only: a guest who accepts its invite while in a game is told to go back to the menu
+  (before beta19 a hosted save could be joined from a game). It has no chat, map preview or mod-list
   comparison (mismatch warnings still show in the game). Its settlement-name box has no *Change start location*.
   Anyone who can reach the direct-IP port can come into the room; the host can remove them.
 - The game ends only when every beaver on the map is gone, not per colony.

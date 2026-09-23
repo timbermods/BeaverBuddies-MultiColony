@@ -73,7 +73,7 @@
       <ol class="steps compact">
         <li>
           <h3>Download</h3>
-          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a> (every release so far is a beta pre-release) and download <code><span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta18.zip</span></code> under <b>Assets</b>, not "Source code". The release also has a <code><span data-release="version">1.4.0-beta18</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
+          <p>Go to the <a href="https://github.com/timbermods/BeaverBuddies-MultiColony/releases" data-release-href="notes">newest release</a> (every release so far is a beta pre-release) and download <code><span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta19.zip</span></code> under <b>Assets</b>, not "Source code". The release also has a <code><span data-release="version">1.4.0-beta19</span>-SHA256SUMS.txt</code> file if you want to check the download.</p>
         </li>
         <li>
           <h3>Close Timberborn</h3>
@@ -102,16 +102,16 @@
         <strong class="label">Updating from an earlier download?</strong>
         <p>Replace your <code>BeaverBuddies-MultiColony</code> folder with the new one. If you still have a <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder (the Stability Fork, or an early two-colony build), delete it: only one BeaverBuddies can run at a time.</p>
       </div>
-      <p>To check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.4.0-beta18</span>-SHA256SUMS.txt</code>:</p>
-      <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta18.zip</span> -Algorithm SHA256</code></pre>
+      <p>To check the download, open PowerShell in the folder you saved it to and compare the result with <code><span data-release="version">1.4.0-beta19</span>-SHA256SUMS.txt</code>:</p>
+      <pre><code>Get-FileHash .\<span data-release="asset-name">BeaverBuddies-MultiColony-1.4.0-beta19.zip</span> -Algorithm SHA256</code></pre>
     </section>
 
     <section id="verify">
       <h2>Check it loaded</h2>
       <ul>
-        <li>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with version <b><span data-release="version">1.4.0-beta18</span></b>.</li>
+        <li>The mod list shows <b>BeaverBuddies MultiColony (beta)</b> with version <b><span data-release="version">1.4.0-beta19</span></b>.</li>
         <li>The main menu has a <b>Join co-op game</b> button.</li>
-        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-beta18</span> is loaded!</code></li>
+        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>BeaverBuddies MultiColony v<span data-release="version">1.4.0-beta19</span> is loaded!</code></li>
       </ul>
       <p>If it is not there, see <a href="troubleshooting.html#not-loading">The mod does not load</a>.</p>
     </section>
@@ -125,7 +125,10 @@
         <li>Press <b>Start Game</b> (you are asked first if someone is not ready). Everyone loads the new world together, paused; unpause when the connection panel shows nobody <i>(loading)</i>. Nobody new can join after Start.</li>
       </ol>
       <p>Not played yet: please report how it goes (<a href="https://github.com/timbermods/BeaverBuddies-MultiColony/blob/main/ALPHA-TEST-SCRIPTS.md">Script D</a>).</p>
-      <h3>A save</h3>
+      <h3>A save (beta19)</h3>
+      <p>From the main menu: <b>Load Game</b>, select the save and choose <b>Host co-op game</b>. The same waiting room opens for that save; invite, let everyone ready up, and press <b>Start Game</b>. Each player gets the colony the save remembers for them.</p>
+      <h3>From inside a game</h3>
+      <p>Options &rarr; <b>Load Game</b> &rarr; <b>Host co-op game</b>, or <b>Save and Rehost</b>, keeps the old way:</p>
       <ol>
         <li>Load the save you want to play and choose <b>Host co-op game</b>.</li>
         <li>Bring your friends in with one of the three ways below.</li>

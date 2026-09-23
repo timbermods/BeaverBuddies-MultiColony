@@ -400,4 +400,14 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
     and accept it again; nothing else changes.
 13. **Waiting.** Leave the guest on the page three minutes before Start: nothing drops. Pull the host's network
     cable for two minutes while the guest waits: the guest is asked *Keep waiting* / *Leave*.
-14. Send both `Player.log` files. Lines from the waiting room start with `[Lobby]`.
+15. **A save (beta19).** Host, from the main menu: **Load Game** → a separate-colonies save you both played →
+    **Host co-op game**. The same page opens: the plate says the settlement, the gold line the save's name (an autosave
+    reads *Autosave*) and its date as the Load Game box writes it; no faction logo, and no colony numbers on the rows.
+    The guest joins from the main menu and readies up; **Start Game**: both load the save, paused, and each is in the
+    colony the save remembers (`[Colony] Player … plays slot …`). **Cancel** instead goes back to the Load Game box.
+15a. **From a game, the old way (beta19).** Host a save from Options → **Load Game** in a solo game, and use **Save
+    and Rehost** after a desync: the old dialog shows (connected players, Invite Friends, Start Game), not the waiting
+    room, and a guest can still join from a game.
+15b. **A player new to the save (beta19).** A third player who never played the save joins its waiting room: in the
+    game they take the next free colony (or found one), as before.
+16. Send both `Player.log` files. Lines from the waiting room start with `[Lobby]`.

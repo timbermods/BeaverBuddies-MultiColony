@@ -5,6 +5,36 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta19
+
+**The waiting room for saves.** Asked for right after beta18 (the maintainer's answer to the plan's question D1):
+**Load Game → Host co-op game** in the main menu now opens the same Co-op Game page as a new game, instead of the
+plain dialog. Hosting from inside a game (Options → Load Game, and Save and Rehost after a desync) keeps the dialog,
+as the maintainer chose: the waiting room is a main-menu page, and a rehost's guests reconnect as before. **Wire
+change** (a waiting room's summary can describe a save); no save change.
+
+- `ServerHostingUtils.LoadAndHost`, after the game's own checks of the save: where the main menu's
+  `LobbyHostPanel` is (a game does not bind it), it reads the save's bytes and opens the room for them
+  (`LobbyHostPanel.OpenForSave`); otherwise the old server and dialog.
+- `LobbySetup.Save` / `SaveBytes`: at Start there is no world to make; the save's bytes go to every guest at once, and
+  the host's page stays up (*Starting…*) until every guest's join is queued, then loads the same bytes as the hosted
+  game (EventIO set, random state from the bytes), as a new game's hand-off does. Joining closes at Start, so after a
+  save's waiting room founding, colony switching and stewardship work at once too.
+- `LobbySummary.ForSave` (the settlement, the save's name and in-game date): the plate shows the settlement, the gold
+  line the save's name and date as the Load Game box words them (`TimestampFormatter`; an autosave is the game's own
+  *Autosave*, in each player's language); no faction logo ring (a save's metadata names none) and no colony numbers
+  (a save seats each player by who it remembers, which the menu does not read).
+- A guest of a save hosted from the main menu joins from the main menu, as for a new game; accepting its invite in a
+  game now says to go back to the menu (a hosted save could be joined from a game before).
+- Found in the review before release and fixed: an autosave showed its raw file name; the setup's copy of the save's
+  bytes is dropped once they are handed over.
+- Docs: README (*Start a game*, steps 3 to 5), TWO-COLONIES (*Starting*, *Known limits*), STEAM-INVITES,
+  CONNECTION-PANEL, ALPHA-TEST-SCRIPTS (Script D, lines 15 to 15b), the site.
+- Checks: StabilityTests 373 (1 new: a save's room tells its guests the save's name and date and guesses no colony),
+  RuntimeChecks 339 (1 new: Host co-op game opens the room in the main menu and keeps the dialog in a game, and what
+  it reads of a save is still there). Both builds, 0 warnings.
+- Not seen in a game. Script D line 15 is this release's (and beta18's lines before it).
+
 ## 1.4.0-beta18
 
 **A waiting room for new co-op games: invite players and ready up before the world exists.** Asked for by the

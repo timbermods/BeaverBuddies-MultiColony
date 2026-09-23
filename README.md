@@ -13,8 +13,8 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > **Beta.** Hosting, joining over Steam and founding a second colony have been played, and beta12, beta14 and beta15
 > each had a short separate-colonies session: a founding and building, in step at every tick (beta12's one desync, dev
 > mode's science, was fixed in beta14), and in beta15 trading posts with exchanges of goods and beavers. The rest of
-> this version's model (colony handover, most of the road rule), the new game's **waiting room** (beta18) and most of
-> the desync review's fixes (alpha11 onward) have **not been played yet**; they are covered by automated checks. Since
+> this version's model (colony handover, most of the road rule), the **waiting room** (beta18 for new games, beta19
+> for saves) and most of the desync review's fixes (alpha11 onward) have **not been played yet**; they are covered by automated checks. Since
 > alpha13, in a separate-colonies game, a guest whose colony state differs from the host's stops the tick it happens,
 > so a bug in that check would also stop a healthy game; the log line says which it was. Play on a copy of your save,
 > keep backups, and please report what you find
@@ -88,21 +88,25 @@ build cannot join.
   colony, unless the host ticks **Allow founding colonies in a shared game**: then other players may found theirs,
   and the first founding splits the save into colonies for good.
 
-**3. Host a save: save, then host.** Save the game. Open **Load Game**, select that save and choose **Host co-op
-game** (instead of Load). Invite your friend with **Invite Friends** (Steam), or give them your IP address (port
-**25565**).
+**3. Host a save: the same waiting room (1.4.0-beta19; not played yet).** From the main menu open **Load Game**,
+select the save and choose **Host co-op game** (instead of Load). The **Co-op Game** page opens for that save (its
+settlement, name and in-game date): invite with **Invite Friends** (Steam) or your IP address (port **25565**),
+friends ready up, and **Start Game** loads the save for everyone at once. Each player gets the colony the save
+remembers for them (a new player the next free one), so the page shows no colony numbers. Guests join from the main
+menu, as for a new game.
 
-**4. Guest: join** by accepting the Steam invite (or **Join co-op game** → the host's IP). **Host of a save: wait,
-paused, until everyone is in**: nobody can join once the game has started, or once anything was changed while it
-waited (a later joiner would be sent the save without it). The connection panel says **Joining: open** until then.
-If you place or mark something while waiting, the game asks first: **Start the game** (what you did is played, and
-joining closes) or **Keep waiting** (nothing happens). A guest's change while you wait is refused with a notice.
+**4. Hosting from inside a game** (Options → **Load Game** → **Host co-op game**, or **Save and Rehost**) keeps the
+old way: guests join by the Steam invite (or **Join co-op game** → the host's IP) and load at once, and **the host
+waits, paused, until everyone is in**: nobody can join once the game has started, or once anything was changed while
+it waited (a later joiner would be sent the save without it). The connection panel says **Joining: open** until
+then. If you place or mark something while waiting, the game asks first: **Start the game** (what you did is played,
+and joining closes) or **Keep waiting** (nothing happens). A guest's change while you wait is refused with a notice.
 (After a waiting room none of this applies: everyone is already in. The connection panel marks a guest still
 loading.)
 
-**5. Guest without a colony: found yours.** After a waiting room, as soon as you are in; in a hosted save, once the
-host unpauses. A message offers to **place your district center** (or press **Ctrl+K** later, whenever you are
-ready; in a hosted save, before the first tick it says the game has not started yet). Place it **anywhere its roads won't join another colony's** (other colonies' roads show in their colors). It
+**5. Guest without a colony: found yours.** After a waiting room, as soon as you are in; when hosted from inside a
+game, once the host unpauses. A message offers to **place your district center** (or press **Ctrl+K** later,
+whenever you are ready; hosted from inside a game, before the first tick it says the game has not started yet). Place it **anywhere its roads won't join another colony's** (other colonies' roads show in their colors). It
 is free, needs no science, and appears **already built**, with starting beavers, food and water. You found once; you may found again only if your colony is handed
 over.
 
@@ -334,8 +338,9 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   waiting room.)
 - **A guest's game failed to load after the waiting room's Start:** nobody can join a started game; the host uses
   **Save and Rehost**, and the guest joins that.
-- **"… is waiting for you in a co-op waiting room":** you accepted an invite (or used Join) while in a game. Go back
-  to the main menu, then accept the invite again or join from there.
+- **"… is waiting for you in a co-op waiting room":** you accepted an invite (or used Join) while in a game, and the
+  host is in a waiting room (a new game, or since beta19 any save hosted from the main menu). Go back to the main
+  menu, then accept the invite again or join from there.
 - **Ctrl+K says this is one shared colony:** the save is a shared game. To split it into colonies, the host ticks
   **Allow founding colonies in a shared game (beta)** and rehosts; the first founding makes it separate for good.
 - **A desync dialog with `Colony state differs` in the log:** the every-tick colony check (alpha13) disagreed. It
