@@ -38,6 +38,16 @@ namespace BeaverBuddies.Lobby
         /// <summary>The Game Mode page's own summary ("Folktails - Diorama - Normal").</summary>
         public string SummaryText { get; set; }
         public string Settlement { get; set; }
+
+        /// <summary>
+        /// Each colony plays a faction of its own (Mixed factions for new games, with every faction unlocked on the host's
+        /// computer; for a save, the save's own mode). Players pick theirs in the room.
+        /// </summary>
+        public bool Mixed { get; set; }
+        /// <summary>The factions a mixed room offers, in the game's order.</summary>
+        public List<string> Factions { get; set; } = new List<string>();
+        /// <summary>A save's colonies as its own data says (read in the menu), for the rows' colonies and factions; null otherwise.</summary>
+        public BeaverBuddies.Factions.SaveColonyInfo SaveColonies { get; set; }
     }
 
     public enum LobbySessionState

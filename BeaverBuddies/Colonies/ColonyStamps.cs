@@ -51,6 +51,8 @@ namespace BeaverBuddies.Colonies
             // A building placed by a player's action: the host wrote the actor's colony into the action, and the
             // placement sets it here for the moment the entity is made (the same on every computer).
             if (slot < 0 && DistrictOwner.PendingSlot.HasValue) slot = DistrictOwner.PendingSlot.Value;
+            // A path looks like its colony's faction in a mixed game (one template serves both factions).
+            if (slot >= 0) BeaverBuddies.Factions.FactionModels.RepaintIfPath(this);
         }
 
         /// <param name="counted">Counted in the colony digest, one change per building. A shared game being split
@@ -59,6 +61,7 @@ namespace BeaverBuddies.Colonies
         {
             slot = newSlot;
             if (counted) ColonyDigest.Note("stamp", GetComponent<EntityComponent>()?.EntityId.GetHashCode() ?? 0, newSlot);
+            BeaverBuddies.Factions.FactionModels.RepaintIfPath(this);
         }
     }
 

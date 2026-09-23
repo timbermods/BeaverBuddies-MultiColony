@@ -1018,4 +1018,28 @@ report: what was built per phase, every deviation and fallback, the check counts
 
 ## 14. Phase 0 findings and amendments
 
-*(Filled in while building.)*
+Phase 0 findings (2026-09-22, 1.1.2.4, base `ed31737`):
+
+1. **Merging templates.** `SpecService.GetBlueprint(path)` returns a cached `Lazy<Blueprint>.Value`: one instance per
+   normalised path. The two factions' template lists therefore merge by reference, with no need to compare names.
+2. **Entity ids.** `EntitySetup.Builder.Build()` uses `Guid.NewGuid()` when no id is set, and the mod already makes it
+   deterministic (`DeterminismService`/`GuidPatcher`, "Guid.NewGuid now uses Unity's random generator"). Founding and
+   the switch can create entities as vanilla does.
+3. **Dev spawns.** `Timberborn.BeaversUI: BeaverGeneratorTool.PlaceBeavers(bool isChild, int count)` and
+   `Timberborn.BotsUI: BotGeneratorTool.PlaceBots(int count)`.
+4. **Needs.** `NeedManager.InitializeNeeds` is called only from `Awake`.
+5. **Power shafts.** `ModularShaftModelService(RootObjectProvider, ShaftModelFactory)`,
+   `ShaftModelFactory(OptimizedPrefabInstantiator, ShaftFrameFactory, TemplateService)` and
+   `ShaftFrameFactory(RootObjectProvider, TemplateService, OptimizedPrefabInstantiator)` are all internal singletons.
+   `ModularShaftModelService.Load` builds every variant into a cache. `ModularShaftModelUpdater` holds
+   `_modularShaftModelService` (a readonly field, set by reflection) and uses it only in `SpawnModelInstance`.
+6. **Solo new game.** `NewGameModePanel.StartNewGame` → `_gameSceneLoader.StartNewGame(new NewGameConfiguration(...))`.
+   The waiting room's `LobbySession.Start` loads the scene itself (§3.1).
+7. **In-game faction icon.** `bg-diamond-1` and the faction-icon classes live in `PopulationStyle.uss`, which only the
+   population templates attach. In-game faction icons therefore set the sprite
+   (`UI/Images/Backgrounds/bg-diamond-1`) and sizes inline rather than rely on a class. `selected-item` is defined only
+   together with `good-selection-box-item` (GameStyle), so the founding chooser shows its selection by the game's
+   wooden-button states instead. The menu classes (`faction-item__*`, `name__text`, `arrow--*`) are in
+   MainMenuMiscStyle and CommonStyle, which the main menu loads.
+8. **Top bar.** It is already per colony (`ColonyViewResourceCountPatcher`), and rows show only goods in stock.
+   Phase 6 step 7 needs nothing.

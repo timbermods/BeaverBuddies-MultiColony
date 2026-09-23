@@ -90,6 +90,22 @@ namespace BeaverBuddies.Lobby
         public static bool WatchdogDue(double lastFrameMs, double nowMs, LobbyStage stage) =>
             stage != LobbyStage.SendingWorld && nowMs - lastFrameMs >= WatchdogMs;
 
+        /// <summary>
+        /// The colony slot each guest gets when the new world is seated in the room's order (LobbyWorldMaker
+        /// .SeatInRoomOrder, D11): the host slot 0, then each guest with an id the next free slot, in the order they came
+        /// in; a guest without an id is seated when it says hello in the game (null here), and one beyond the four
+        /// colonies is a helper (null). The mixed-factions decision uses it to know which slot each guest's pick is for.
+        /// </summary>
+        public static List<int?> SeatingPlan(string hostId, IReadOnlyList<string> guestIds)
+        {
+            var table = new BeaverBuddies.Colonies.ColonySlotTable();
+            table.Resolve(hostId, "");
+            var slots = new List<int?>();
+            foreach (string id in guestIds ?? Array.Empty<string>())
+                slots.Add(string.IsNullOrEmpty(id) || id == hostId ? null : table.Resolve(id, ""));
+            return slots;
+        }
+
         /// <summary>The name of the new world's first save, in the settlement the host named (like a Rehost save's).</summary>
         public static string SaveName(string timestamp) => (timestamp ?? "").Replace(",", "") + " Co-op start";
 

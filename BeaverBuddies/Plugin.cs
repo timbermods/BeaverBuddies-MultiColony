@@ -104,6 +104,8 @@ namespace BeaverBuddies
             containerDefinition.Bind<MultiplayerMapMetadataService>().AsSingleton();
             containerDefinition.Bind<Settings>().AsSingleton();
             containerDefinition.Bind<ModListService>().AsSingleton();
+            // Whether a new game made here is a mixed-factions game (the host's setting and unlocks).
+            containerDefinition.Bind<BeaverBuddies.Factions.NewGameFactionCapture>().AsSingleton();
 
             //new ReportingService().PostDesync("test").ContinueWith(result => Plugin.Log($"Posted: {result.Result}"));
             containerDefinition.Bind<SteamOverlayConnectionService>().AsSingleton();

@@ -42,16 +42,36 @@ namespace TimberNet
         public int Cycle { get; }
         public int Day { get; }
         public bool IsSave => SaveName != null;
+        /// <summary>
+        /// Each colony plays a faction of its own (a mixed-factions game): each row shows its player's faction, and a
+        /// player who may pick one does so in the room. False for any other game, whose summary says nothing of it.
+        /// </summary>
+        public bool Mixed { get; }
+        /// <summary>The factions a player may pick, in the game's order (the host's unlocks). Empty unless mixed.</summary>
+        public IReadOnlyList<string> Factions { get; }
 
         public LobbySummary(string factionId, string mapName, string? modeLocKey, string settlement, string hostName, bool separateColonies)
-            : this(factionId, mapName, modeLocKey, settlement, hostName, separateColonies, null, 0, 0) { }
+            : this(factionId, mapName, modeLocKey, settlement, hostName, separateColonies, null, 0, 0, false, null) { }
+
+        /// <summary>A new game, mixed or not.</summary>
+        public LobbySummary(string factionId, string mapName, string? modeLocKey, string settlement, string hostName, bool separateColonies,
+            bool mixed, IEnumerable<string>? factions)
+            : this(factionId, mapName, modeLocKey, settlement, hostName, separateColonies, null, 0, 0, mixed, factions) { }
 
         /// <summary>A hosted save: its settlement, name and in-game date.</summary>
         public static LobbySummary ForSave(string settlement, string saveName, int cycle, int day, string hostName) =>
-            new LobbySummary("", "", null, settlement, hostName, false, saveName ?? "", cycle, day);
+            new LobbySummary("", "", null, settlement, hostName, false, saveName ?? "", cycle, day, false, null);
+
+        /// <summary>
+        /// A hosted save whose own data was read (the menu read its world's singletons): its base faction, whether it has
+        /// separate colonies (rows then show the colony each player will play), and whether it is mixed.
+        /// </summary>
+        public static LobbySummary ForSave(string settlement, string saveName, int cycle, int day, string hostName,
+            string factionId, bool separateColonies, bool mixed, IEnumerable<string>? factions) =>
+            new LobbySummary(factionId ?? "", "", null, settlement, hostName, separateColonies, saveName ?? "", cycle, day, mixed, factions);
 
         private LobbySummary(string factionId, string mapName, string? modeLocKey, string settlement, string hostName,
-            bool separateColonies, string? saveName, int cycle, int day)
+            bool separateColonies, string? saveName, int cycle, int day, bool mixed, IEnumerable<string>? factions)
         {
             FactionId = LobbyFrames.Clip(factionId, 64);
             MapName = LobbyFrames.Clip(mapName, 128);
@@ -62,18 +82,33 @@ namespace TimberNet
             SaveName = saveName == null ? null : LobbyFrames.Clip(saveName, 128);
             Cycle = Math.Max(0, cycle);
             Day = Math.Max(0, day);
+            Factions = mixed
+                ? (factions ?? Enumerable.Empty<string>()).Where(LobbyFrames.IsWellFormedFactionId).Distinct()
+                    .Take(LobbyFrames.MaxFactions).ToList()
+                : new List<string>();
+            Mixed = mixed && Factions.Count > 0;
         }
 
-        public JObject ToJson() => new JObject
+        public JObject ToJson()
         {
-            ["faction"] = FactionId,
-            ["map"] = MapName,
-            ["mode"] = ModeLocKey,
-            ["settlement"] = Settlement,
-            ["host"] = HostName,
-            ["separate"] = SeparateColonies,
-            ["save"] = SaveName == null ? null : new JObject { ["name"] = SaveName, ["cycle"] = Cycle, ["day"] = Day },
-        };
+            var json = new JObject
+            {
+                ["faction"] = FactionId,
+                ["map"] = MapName,
+                ["mode"] = ModeLocKey,
+                ["settlement"] = Settlement,
+                ["host"] = HostName,
+                ["separate"] = SeparateColonies,
+                ["save"] = SaveName == null ? null : new JObject { ["name"] = SaveName, ["cycle"] = Cycle, ["day"] = Day },
+            };
+            // Only a mixed game says anything of factions, so any other summary is what 1.4.0-beta19 sent.
+            if (Mixed)
+            {
+                json["mixed"] = true;
+                json["factions"] = new JArray(Factions);
+            }
+            return json;
+        }
 
         public static bool TryParse(JToken? token, out LobbySummary? summary)
         {
@@ -93,7 +128,20 @@ namespace TimberNet
                 cycle = save["cycle"] is JValue { Type: JTokenType.Integer } c ? (int)c : 0;
                 day = save["day"] is JValue { Type: JTokenType.Integer } d ? (int)d : 0;
             }
-            summary = new LobbySummary(faction, map, mode, settlement, host, (bool)separate, saveName, cycle, day);
+            bool mixed = false;
+            List<string>? factions = null;
+            if (json["mixed"] is JValue { Type: JTokenType.Boolean } mixedValue && (bool)mixedValue)
+            {
+                if (!(json["factions"] is JArray array) || array.Count == 0 || array.Count > LobbyFrames.MaxFactions) return false;
+                factions = new List<string>();
+                foreach (JToken token2 in array)
+                {
+                    if (!LobbyFrames.TryString(token2, out string id) || !LobbyFrames.IsWellFormedFactionId(id)) return false;
+                    factions.Add(id);
+                }
+                mixed = true;
+            }
+            summary = new LobbySummary(faction, map, mode, settlement, host, (bool)separate, saveName, cycle, day, mixed, factions);
             return true;
         }
     }
@@ -110,8 +158,13 @@ namespace TimberNet
         public bool Joining { get; }
         /// <summary>The colony it will play, from 1; 0 for a helper; null in a shared game.</summary>
         public int? Colony { get; }
+        /// <summary>The faction its colony plays (the room's rows show its logo); null when the room names none.</summary>
+        public string? Faction { get; }
+        /// <summary>It may pick its faction here (a mixed new game, or a mixed save's player who has no colony yet).</summary>
+        public bool MayPick { get; }
 
-        public LobbyPlayer(int number, string name, bool ready, bool isHost, bool joining, int? colony)
+        public LobbyPlayer(int number, string name, bool ready, bool isHost, bool joining, int? colony, string? faction = null,
+            bool mayPick = false)
         {
             Number = number;
             Name = PlayerActivity.CleanName(name);
@@ -119,17 +172,26 @@ namespace TimberNet
             IsHost = isHost;
             Joining = joining;
             Colony = colony;
+            Faction = LobbyFrames.IsWellFormedFactionId(faction) ? faction : null;
+            MayPick = mayPick;
         }
 
-        public JObject ToJson() => new JObject
+        public JObject ToJson()
         {
-            ["n"] = Number,
-            ["name"] = Name,
-            ["ready"] = Ready,
-            ["host"] = IsHost,
-            ["joining"] = Joining,
-            ["colony"] = Colony,
-        };
+            var json = new JObject
+            {
+                ["n"] = Number,
+                ["name"] = Name,
+                ["ready"] = Ready,
+                ["host"] = IsHost,
+                ["joining"] = Joining,
+                ["colony"] = Colony,
+            };
+            // Only rows that name a faction say so, so a room that names none sends what 1.4.0-beta19 sent.
+            if (Faction != null) json["faction"] = Faction;
+            if (MayPick) json["pick"] = true;
+            return json;
+        }
 
         public static bool TryParse(JToken? token, out LobbyPlayer? player)
         {
@@ -148,7 +210,14 @@ namespace TimberNet
             }
             int n = (int)number;
             if (n < 0) return false;
-            player = new LobbyPlayer(n, name, (bool)ready, (bool)host, (bool)joining, colony);
+            string? faction = null;
+            if (json["faction"] != null && json["faction"]!.Type != JTokenType.Null)
+            {
+                if (!LobbyFrames.TryString(json["faction"], out string id) || !LobbyFrames.IsWellFormedFactionId(id)) return false;
+                faction = id;
+            }
+            bool mayPick = json["pick"] is JValue { Type: JTokenType.Boolean } pick && (bool)pick;
+            player = new LobbyPlayer(n, name, (bool)ready, (bool)host, (bool)joining, colony, faction, mayPick);
             return true;
         }
     }
@@ -171,6 +240,8 @@ namespace TimberNet
         public const int MaxFrameBytes = 64 * 1024;
         public const int MaxIdLength = 64;
         public const int MaxRosterPlayers = 16;
+        /// <summary>The most factions a mixed room offers (the game has two; mods may add a few).</summary>
+        public const int MaxFactions = 8;
 
         public const string WelcomeType = "LobbyWelcome";
         public const string RosterType = "LobbyRoster";
@@ -178,12 +249,14 @@ namespace TimberNet
         public const string EndType = "LobbyEnd";
         public const string HelloType = "LobbyHello";
         public const string ReadyType = "LobbyReady";
+        public const string FactionType = "LobbyFaction";
 
         public static bool IsLobbyType(string? type) =>
-            type == WelcomeType || type == RosterType || type == StateType || type == EndType || type == HelloType || type == ReadyType;
+            type == WelcomeType || type == RosterType || type == StateType || type == EndType || type == HelloType || type == ReadyType
+            || type == FactionType;
 
-        /// <summary>The two frames a guest sends.</summary>
-        public static bool IsGuestType(string? type) => type == HelloType || type == ReadyType;
+        /// <summary>The frames a guest sends.</summary>
+        public static bool IsGuestType(string? type) => type == HelloType || type == ReadyType || type == FactionType;
 
         // ---- Host → guest ----
 
@@ -267,9 +340,24 @@ namespace TimberNet
             return true;
         }
 
+        /// <summary>A guest's pick of faction in a mixed room: the faction's id, as the game names it ("IronTeeth").</summary>
+        public static JObject Faction(string factionId) => new JObject { [TimberNetBase.TYPE_KEY] = FactionType, ["faction"] = factionId };
+
+        public static bool TryParseFaction(JObject frame, out string factionId)
+        {
+            factionId = "";
+            if (!TryString(frame["faction"], out string id) || !IsWellFormedFactionId(id)) return false;
+            factionId = id;
+            return true;
+        }
+
         /// <summary>The same rule as the colony slot table: short, one line, no field separator.</summary>
         public static bool IsWellFormedId(string? id) =>
             !string.IsNullOrEmpty(id) && id!.Length <= MaxIdLength && id.IndexOfAny(new[] { '|', '\n', '\r' }) < 0;
+
+        /// <summary>A faction id as the game's blueprints name one: letters, digits, dots and underscores, at most 64.</summary>
+        public static bool IsWellFormedFactionId(string? id) =>
+            !string.IsNullOrEmpty(id) && id!.Length <= 64 && id.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '_');
 
         public static string StageName(LobbyStage stage)
         {

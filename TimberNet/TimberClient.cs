@@ -73,6 +73,9 @@ namespace TimberNet
         /// <summary>Tells the host's waiting room this guest is ready, or no longer is.</summary>
         public bool SendLobbyReady(bool ready) => SendLobbyFrame(LobbyFrames.Ready(ready));
 
+        /// <summary>Tells the host's mixed-factions waiting room which faction this guest picked.</summary>
+        public bool SendLobbyFaction(string factionId) => SendLobbyFrame(LobbyFrames.Faction(factionId));
+
         private bool SendLobbyFrame(JObject frame)
         {
             if (IsStopped || saveArrived) return false;

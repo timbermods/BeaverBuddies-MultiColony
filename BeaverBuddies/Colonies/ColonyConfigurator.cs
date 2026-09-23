@@ -1,10 +1,16 @@
+using BeaverBuddies.Factions;
 using Bindito.Core;
+using Timberborn.Beavers;
 using Timberborn.BlockSystem;
 using Timberborn.Buildings;
 using Timberborn.DistributionSystem;
 using Timberborn.EntityPanelSystem;
 using Timberborn.GameDistricts;
+using Timberborn.GoodCollectionSystem;
+using Timberborn.NeedCollectionSystem;
+using Timberborn.TemplateCollectionSystem;
 using Timberborn.TemplateInstantiation;
+using Timberborn.TimbermeshMaterials;
 using Timberborn.ToolSystem;
 
 namespace BeaverBuddies.Colonies
@@ -21,6 +27,8 @@ namespace BeaverBuddies.Colonies
                 builder.AddDecorator<DistrictCenter, DistrictOwner>();
                 builder.AddDecorator<Building, ColonyStamp>();
                 builder.AddDecorator<DistrictCrossing, CrossingExchange>();
+                // A beaver's faction in a mixed game (both factions' beavers share one template).
+                builder.AddDecorator<BeaverSpec, CharacterFaction>();
                 return builder.Build();
             }
         }
@@ -81,6 +89,19 @@ namespace BeaverBuddies.Colonies
             containerDefinition.MultiBind<EntityPanelModule>().ToProvider<EntityPanelModuleProvider>().AsSingleton();
             containerDefinition.MultiBind<IBlockObjectValidator>().To<ColonyPlacementValidator>().AsSingleton();
             containerDefinition.MultiBind<IToolDisabler>().To<TradingPostToolDisabler>().AsSingleton();
+
+            // Mixed factions (a colony each of its own faction): nothing of it acts in any other game.
+            containerDefinition.Bind<CharacterFaction>().AsTransient();
+            containerDefinition.Bind<OtherFactionCollections>().AsSingleton();
+            containerDefinition.MultiBind<ITemplateCollectionIdProvider>().ToExisting<OtherFactionCollections>();
+            containerDefinition.MultiBind<IGoodCollectionIdsProvider>().ToExisting<OtherFactionCollections>();
+            containerDefinition.MultiBind<INeedCollectionIdsProvider>().ToExisting<OtherFactionCollections>();
+            containerDefinition.MultiBind<IMaterialCollectionIdsProvider>().ToExisting<OtherFactionCollections>();
+            containerDefinition.Bind<FactionCatalog>().AsSingleton();
+            containerDefinition.Bind<ColonyFactionService>().AsSingleton();
+            containerDefinition.Bind<FactionToolbar>().AsSingleton();
+            containerDefinition.Bind<FactionSelection>().AsSingleton();
+            containerDefinition.MultiBind<IToolDisabler>().To<FactionToolDisabler>().AsSingleton();
         }
     }
 }

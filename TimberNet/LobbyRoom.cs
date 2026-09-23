@@ -25,6 +25,8 @@ namespace TimberNet
         public string Name { get; internal set; }
         public bool Ready { get; internal set; }
         public bool SaidHello { get; internal set; }
+        /// <summary>The faction it picked in a mixed room, or null (the room's base faction).</summary>
+        public string? Faction { get; internal set; }
         /// <summary>The id its colony seat will be found by in the game: the proved one if any, else the one it said.</summary>
         public string? StableId => VerifiedId ?? ClaimedId;
         public bool Connected => Stream.Connected;
@@ -61,7 +63,7 @@ namespace TimberNet
 
     public sealed class LobbyMemberInfo
     {
-        public LobbyMemberInfo(int number, string name, string? stableId, bool saidHello, bool ready, bool inGame)
+        public LobbyMemberInfo(int number, string name, string? stableId, bool saidHello, bool ready, bool inGame, string? faction = null)
         {
             Number = number;
             Name = name;
@@ -69,6 +71,7 @@ namespace TimberNet
             SaidHello = saidHello;
             Ready = ready;
             InGame = inGame;
+            Faction = faction;
         }
 
         public int Number { get; }
@@ -77,6 +80,8 @@ namespace TimberNet
         public bool SaidHello { get; }
         public bool Ready { get; }
         public bool InGame { get; }
+        /// <summary>The faction it picked in a mixed room, or null for none (it plays the room's base faction).</summary>
+        public string? Faction { get; }
     }
 
     /// <summary>
@@ -100,9 +105,58 @@ namespace TimberNet
         public LobbyRoom(LobbySummary summary)
         {
             Summary = summary;
+            hostFaction = string.IsNullOrEmpty(summary.FactionId) ? null : summary.FactionId;
         }
 
         public LobbySummary Summary { get; }
+
+        private string? hostFaction;
+
+        /// <summary>
+        /// A hosted save's seating, set by the host before any guest comes in: given every row's stable id in the room's
+        /// order (the host's first; null for a guest that has not said who it is), the colony each will play (1 to 4, 0
+        /// for a helper, null when unknown). Null for a new game, whose rows take colonies in the order they came in
+        /// (<see cref="ColonyOf"/>). Display only.
+        /// </summary>
+        public Func<IReadOnlyList<string?>, IReadOnlyList<int?>>? Seating { get; set; }
+        /// <summary>The host's own stable id, for <see cref="Seating"/>.</summary>
+        public string? HostStableId { get; set; }
+        /// <summary>A hosted save's faction per colony (1 to 4), or null for a colony that has none yet.</summary>
+        public Func<int, string?>? FactionOfColony { get; set; }
+
+        /// <summary>The host's own pick in a mixed room (its colony's faction, the new game's base faction).</summary>
+        public string? HostFaction { get { lock (gate) return hostFaction; } }
+
+        /// <summary>The host picked its faction in a mixed new game's room, which is still open.</summary>
+        public void SetHostFaction(string factionId)
+        {
+            lock (gate)
+            {
+                if (!Summary.Mixed || Summary.IsSave || stage != LobbyStage.Open || !Summary.Factions.Contains(factionId)
+                    || hostFaction == factionId) return;
+                hostFaction = factionId;
+                version++;
+            }
+        }
+
+        /// <summary>
+        /// A guest's pick of faction: taken only in a mixed room that is still open, from a guest that has said who it is
+        /// and may pick, for a faction the room offers. Anything else is dropped: the room is display and setup only.
+        /// </summary>
+        internal bool SetFaction(LobbyMember member, string factionId)
+        {
+            lock (gate)
+            {
+                if (!Summary.Mixed || stage != LobbyStage.Open || !member.SaidHello || !Summary.Factions.Contains(factionId)
+                    || member.Faction == factionId) return false;
+                List<LobbyMember> shown = ShownLocked();
+                int index = shown.IndexOf(member);
+                if (index < 0 || !MayPickLocked(ColoniesLocked(shown)[index + 1])) return false;
+                member.Faction = factionId;
+                version++;
+                return true;
+            }
+        }
 
         /// <summary>
         /// The colony a row will play: the host (index 0) colony 1, guests 2, 3, 4 in the order they came in, then
@@ -191,19 +245,67 @@ namespace TimberNet
         {
             lock (gate)
             {
-                bool separate = Summary.SeparateColonies;
-                var players = new List<LobbyPlayer> { new LobbyPlayer(0, Summary.HostName, true, true, false, ColonyOf(0, separate)) };
-                var guests = new List<LobbyMemberInfo>();
-                int index = 1;
-                foreach (LobbyMember member in members)
+                List<LobbyMember> shown = ShownLocked();
+                IReadOnlyList<int?> colonies = ColoniesLocked(shown);
+                var players = new List<LobbyPlayer>
                 {
-                    if (!member.Connected && !member.inGame) continue;
-                    players.Add(new LobbyPlayer(member.Number, member.Name, member.Ready, false, !member.SaidHello, ColonyOf(index, separate)));
-                    guests.Add(new LobbyMemberInfo(member.Number, member.Name, member.StableId, member.SaidHello, member.Ready, member.inGame));
-                    index++;
+                    new LobbyPlayer(0, Summary.HostName, true, true, false, colonies[0], RowFactionLocked(colonies[0], hostFaction),
+                        MayPickLocked(colonies[0])),
+                };
+                var guests = new List<LobbyMemberInfo>();
+                for (int i = 0; i < shown.Count; i++)
+                {
+                    LobbyMember member = shown[i];
+                    int? colony = colonies[i + 1];
+                    players.Add(new LobbyPlayer(member.Number, member.Name, member.Ready, false, !member.SaidHello, colony,
+                        member.SaidHello ? RowFactionLocked(colony, member.Faction) : null, member.SaidHello && MayPickLocked(colony)));
+                    guests.Add(new LobbyMemberInfo(member.Number, member.Name, member.StableId, member.SaidHello, member.Ready, member.inGame,
+                        member.Faction));
                 }
                 return new LobbySnapshot(version, stage, closedMessage != null, players, guests);
             }
+        }
+
+        // The rows after the host's, in the order they came in.
+        private List<LobbyMember> ShownLocked() => members.Where(m => m.Connected || m.inGame).ToList();
+
+        // Every row's colony, the host's first: in the order they came in for a new game, or as a hosted save seats them.
+        private IReadOnlyList<int?> ColoniesLocked(List<LobbyMember> shown)
+        {
+            if (Seating != null)
+            {
+                var ids = new List<string?> { HostStableId };
+                ids.AddRange(shown.Select(m => m.SaidHello ? m.StableId : null));
+                try
+                {
+                    IReadOnlyList<int?> seated = Seating(ids);
+                    if (seated != null && seated.Count == ids.Count) return seated;
+                }
+                catch (Exception) { /* Display only: a failure shows no colonies. */ }
+                return ids.Select(_ => (int?)null).ToList();
+            }
+            var result = new List<int?>();
+            for (int index = 0; index <= shown.Count; index++) result.Add(ColonyOf(index, Summary.SeparateColonies));
+            return result;
+        }
+
+        // The faction a row shows. A room that is not mixed: a new game names none (as 1.4.0-beta19), a save its own. A
+        // mixed room: a save's colony keeps the faction it has; otherwise the player's pick, else the room's base faction.
+        private string? RowFactionLocked(int? colony, string? picked)
+        {
+            if (!Summary.Mixed) return Summary.IsSave && !string.IsNullOrEmpty(Summary.FactionId) ? Summary.FactionId : null;
+            string? colonyFaction = colony.HasValue && colony.Value > 0 ? FactionOfColony?.Invoke(colony.Value) : null;
+            if (colonyFaction != null) return colonyFaction;
+            if (picked != null) return picked;
+            return hostFaction ?? (string.IsNullOrEmpty(Summary.FactionId) ? null : Summary.FactionId);
+        }
+
+        // A mixed new game: everyone picks. A mixed save: only a player whose colony has no faction yet (it will found).
+        private bool MayPickLocked(int? colony)
+        {
+            if (!Summary.Mixed) return false;
+            if (!Summary.IsSave) return true;
+            return colony.HasValue && colony.Value > 0 && FactionOfColony?.Invoke(colony.Value) == null;
         }
     }
 }

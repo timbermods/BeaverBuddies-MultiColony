@@ -156,6 +156,14 @@ namespace TimberNet
             RequestLobbyPump();
         }
 
+        /// <summary>The host picked its faction in a mixed room: the guests see it at once rather than at the next keep-alive.</summary>
+        public void SetLobbyHostFaction(string factionId)
+        {
+            if (lobby == null) return;
+            lobby.SetHostFaction(factionId);
+            RequestLobbyPump();
+        }
+
         /// <summary>Tells the room's guests where the host is (making the world, sending it).</summary>
         public void SetLobbyStage(LobbyStage stage)
         {
@@ -306,6 +314,10 @@ namespace TimberNet
                 lobby.SetHello(member, id, name);
             else if (type == LobbyFrames.ReadyType && LobbyFrames.TryParseReady(frame, out bool ready))
                 lobby.SetReady(member, ready);
+            else if (type == LobbyFrames.FactionType && LobbyFrames.TryParseFaction(frame, out string faction))
+            {
+                if (!lobby.SetFaction(member, faction)) return;
+            }
             else return;
             RequestLobbyPump();
         }
