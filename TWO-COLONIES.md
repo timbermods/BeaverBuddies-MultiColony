@@ -36,16 +36,17 @@ Scripts L, M and T) is what comes next. Play on a copy of your save and keep bac
 
 ## Starting
 
-**Host settings** (Mod Settings → BeaverBuddies):
+**A new game's colonies** are chosen on the New Game difficulty page (since 1.4.0-rc3), under the game's own
+**Tutorial** checkbox. The page remembers the last choice; a game keeps what it was made with, for good.
 
-| Setting | Default | What it does |
+| Checkbox | Default | What it does |
 |---|---|---|
-| **Separate colonies for new games (beta)** | on | Only read when a new game is made. On: each player gets their own colony. Off: all players share one colony, as in the Stability Fork (see *A shared-colony game*). A save keeps the mode it started with. For a new game with a colony each, this is all you need. |
-| **Allow founding colonies in a shared game (beta)** | off | Only for a shared save (one colony for all players), read when hosting starts: a player without a colony may found their own, which makes the save a separate-colonies game for good (step 3 below). Off: a shared save stays shared. It changes nothing in a separate-colonies game, where founding is always on. |
-| **Separate science and unlocks per colony (beta)** | on | Each colony earns and spends its own science and unlocks its own buildings. Chosen when a separate-colonies game begins (or a shared one is split) and kept for the life of the save. |
-| **Mixed factions for new games (beta)** | off | Only read when a new game is made, with *Separate colonies* on and every faction unlocked on the host's computer: each colony plays Folktails or Iron Teeth, its player's pick (see *Mixed factions*). A save keeps the mode it started with. |
+| **Separate colonies** | ticked | Each player builds their own colony. Unticked: everyone plays one shared colony, as in the Stability Fork (see *A shared-colony game*), which a player other than the host may split once, from the game menu (step 3 below). |
+| **Separate science and unlocks** (under it) | ticked | Each colony earns and spends its own science and unlocks its own buildings. Unticked: the colonies share one pool. |
+| **Mixed factions** (under it) | unticked | Each colony plays Folktails or Iron Teeth, its player's pick (see *Mixed factions*). Greyed, with the reason in its tooltip, unless every faction is unlocked on the host's computer and the game has only its two factions. |
 
-The days before a hand-over (below) are read each day, so they can be changed during a game.
+The waiting room says which kind of game it is, under its plate. The host's one colony setting in Mod Settings is
+**Hand over a colony after its player is away (days)** (below); it is read each day, so it can be changed during a game.
 
 **Who plays which colony** is remembered by the save: each player is known by their Steam ID (or, without Steam, by
 an id kept on their computer). The host checks that id for a Steam join but not for a direct IP join (see *How it
@@ -102,16 +103,21 @@ centers already there are the host's colony's. Every other player **founds** the
    free, needs no science, and appears **already built**, yours, with starting
    beavers, food and water (the new game's, or for a save that did not record them the host's Normal difficulty:
    the host writes them into the founding, so a mod changing the difficulty on one computer changes nothing).
-3. A shared save (one colony: made with *Separate colonies for new games* off, or in the Stability Fork) stays
-   shared unless the host ticks **Allow founding colonies in a shared game** before hosting. Then the first founding
-   in it makes it a separate-colonies game for good: every building already there, and every planting and cutting
+3. A shared save (one colony: made with *Separate colonies* unticked, or in the Stability Fork) stays shared. A
+   player other than the host may split it once (1.4.0-rc3): in the game menu (Esc), **Found your own colony**, below
+   Settings, shown only to them and only in a shared game. It asks first, since it can't be undone; then they place
+   their district center as above, and only that founding makes the split (leaving the tool changes nothing). The
+   game is then a separate-colonies game for good: every building already there, and every planting and cutting
    mark, becomes the host's colony's, on every computer at that tick (the marks since 1.4.0-rc1: before, the new
-   colony's workers could take the first colony's fields). Other players who played the shared colony have no colony
-   then: they found their own (Ctrl+K), or the host asks them to look after the first colony (Ctrl+T).
+   colony's workers could take the first colony's fields). Science and unlocks stay one pool, shared by every colony,
+   as they were. Every player is told. Other players who played the shared colony have no colony then: they found
+   their own (Ctrl+K), or the host asks them to look after the first colony (Ctrl+T). The host can't split a shared
+   game: they play its colony.
 
 ## Mixed factions (beta)
 
-*1.4.0-beta20. Not played yet.* With **Mixed factions for new games** on, every colony plays a faction of its own:
+*1.4.0-beta20. Not played yet.* With **Mixed factions** ticked under **Separate colonies** on the New Game page, every
+colony plays a faction of its own:
 one player can run Folktails and another Iron Teeth on the same map, trading through Trading Posts. It is made for the
 game's two factions: with a mod that adds a faction installed, a new game stays one faction and the page says why
 (1.4.0-beta21; a third faction's content would load into every mixed game).
@@ -181,9 +187,10 @@ completes the map for everyone, and each player's profile records the map for th
 
 ## A shared-colony game
 
-With separate colonies off (a new game with *Separate colonies for new games* unticked, a shared save, or a save
-from the Stability Fork) the game is the Stability Fork's shared co-op: one colony that every player builds
-together. Nothing on the rest of this page applies. There are no owners and no Trading Post (not even in dev
+With separate colonies off (a new game with *Separate colonies* unticked, a shared save, or a save from the
+Stability Fork) the game is the Stability Fork's shared co-op: one colony that every player builds together, until a
+player other than the host splits it from the game menu (*Starting*, step 3). Nothing on the rest of this page
+applies until then. There are no owners and no Trading Post (not even in dev
 mode); District Crossings hold the game's 30 of a good; nothing of the colony model is kept, compared on the
 heartbeat or checked once a day; and the save holds nothing of this mod's. What does apply is what MultiColony adds
 to co-op in general (the README's *One shared colony*).
@@ -350,7 +357,8 @@ home), and it trades again only if another colony's roads reach its other half.
 
 ## Separate science and unlocks
 
-With the setting on, when a separate-colonies game begins:
+With **Separate science and unlocks** ticked when a separate-colonies game is made (a shared game split later keeps one
+pool):
 
 - **Each colony has its own science.** Inventors, the Numbercruncher and the observatory add to their own colony's
   science; a relic's reward goes to the colony of the beaver who demolished it (a relic destroyed fully demolished by

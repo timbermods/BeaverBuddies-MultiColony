@@ -1081,7 +1081,7 @@ static class ColonyChecks
             Equal(b, damaged[0].Key); Equal(3, damaged[0].Value);
         });
 
-        yield return ("Mod Settings: every tooltip fits the screen, and both colony choices are explained", () =>
+        yield return ("Mod Settings: every tooltip fits the screen, and the colony choices are explained where they are made", () =>
         {
             // Mod Settings does not wrap a tooltip: one or two lines of at most 112 characters, or it runs off the screen.
             string root = AppContext.BaseDirectory;
@@ -1090,21 +1090,30 @@ static class ColonyChecks
             string csv = File.ReadAllText(Path.Combine(root!, "BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv")).Replace("\r\n", "\n");
             var tooltips = System.Text.RegularExpressions.Regex.Matches(csv, "^(BeaverBuddies\\.Settings\\.[A-Za-z.]+\\.Tooltip),\"([^\"]*)\"",
                 System.Text.RegularExpressions.RegexOptions.Multiline).Cast<System.Text.RegularExpressions.Match>().ToList();
-            Check(tooltips.Count >= 17, "the settings' tooltips were not found: " + tooltips.Count);
+            Check(tooltips.Count >= 14, "the settings' tooltips were not found: " + tooltips.Count);
             foreach (var match in tooltips)
             {
                 string[] lines = match.Groups[2].Value.Split('\n');
                 Check(lines.Length <= 2, match.Groups[1].Value + " has " + lines.Length + " lines");
                 foreach (string line in lines) Check(line.Length <= 112, $"{match.Groups[1].Value}: {line.Length} characters: {line}");
             }
-            string Tooltip(string key) => tooltips.Single(m => m.Groups[1].Value == key).Groups[2].Value;
-            // The two are easily mixed up: one decides what a new game becomes, the other splits a shared save that exists.
-            string separate = Tooltip("BeaverBuddies.Settings.SeparateColonies.Tooltip");
-            Check(separate.Contains("only for new games") && separate.Contains("Off:") && separate.Contains("next setting"),
-                "Separate colonies does not say it is only for new games and point to the next setting: " + separate);
-            string founding = Tooltip("BeaverBuddies.Settings.FoundingInSharedGames.Tooltip");
-            Check(founding.Contains("shared save") && founding.Contains("for good") && founding.Contains("Off:"),
-                "founding in a shared save is not explained: " + founding);
+            // Since 1.4.0-rc3 a new game's colonies are chosen on the Game Mode page, and a shared game is split from the game
+            // menu: no Mod Setting decides either any more.
+            Check(!tooltips.Any(m => m.Groups[1].Value.Contains("SeparateColonies") || m.Groups[1].Value.Contains("FoundingInSharedGames")),
+                "a Mod Setting still decides separate colonies");
+            string Line(string key)
+            {
+                var row = System.Text.RegularExpressions.Regex.Match(csv, "^" + System.Text.RegularExpressions.Regex.Escape(key) + ",\"((?:[^\"]|\"\")*)\"",
+                    System.Text.RegularExpressions.RegexOptions.Multiline);
+                Check(row.Success, "no English line for " + key);
+                return row.Groups[1].Value;
+            }
+            string separate = Line("BeaverBuddies.NewGame.SeparateColonies.Tooltip");
+            Check(separate.Contains("Unticked") && separate.Contains("shared colony") && separate.Contains("game menu"),
+                "the Separate colonies checkbox does not say what unticked means and where a shared game is split: " + separate);
+            string confirm = Line("BeaverBuddies.Colony.Split.Confirm");
+            Check(confirm.Contains("can't be undone") && confirm.Contains("stays the host's"),
+                "the split's confirmation does not say it is for good and whose the shared colony stays: " + confirm);
         });
     }
 

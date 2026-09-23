@@ -104,9 +104,8 @@ namespace BeaverBuddies.Factions
                     LobbySession lobby = LobbySession.Current;
                     if (lobby != null && lobby.State == LobbySessionState.CreatingWorld && !lobby.Setup.IsSave)
                     {
-                        // Separate colonies read again: the world is made with the setting as it is now (D4), even
-                        // if it was turned off while the room was open.
-                        IsOn = lobby.Setup.Mixed && Settings.SeparateColoniesForNewGames;
+                        // The room's own choice, taken from the Game Mode page when it opened (1.4.0-rc3).
+                        IsOn = lobby.Setup.Mixed && lobby.Setup.Separate;
                         how = "a waiting room's new world";
                         if (IsOn)
                         {

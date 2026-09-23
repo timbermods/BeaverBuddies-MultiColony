@@ -47,6 +47,19 @@ namespace BeaverBuddies.Lobby
         public static int StartsToFill(int playersField, int guests) =>
             Math.Max(1, Math.Min(Math.Min(playersField, 1 + Math.Max(0, guests)), LobbyRoom.MaxColonies));
 
+        /// <summary>
+        /// The gold line under the room's plate: what kind of game it is (1.4.0-rc3), the same words on the host's page and
+        /// every guest's. Null when a hosted save's own data could not be read (it has no faction then): nothing is said
+        /// rather than a guess.
+        /// </summary>
+        public static string ColonyNoteKey(bool isSave, string factionId, bool separate, bool mixed)
+        {
+            if (isSave && string.IsNullOrEmpty(factionId)) return null;
+            if (!separate) return KeyPrefix + "Colonies.Shared";
+            if (mixed) return isSave ? KeyPrefix + "Faction.MixedSave" : KeyPrefix + "Colonies.SeparateMixed";
+            return isSave ? KeyPrefix + "Colonies.SeparateSave" : KeyPrefix + "Colonies.Separate";
+        }
+
         /// <summary>The guests who are not ready, a guest still joining included, in the room's order.</summary>
         public static List<LobbyPlayer> NotReady(IEnumerable<LobbyPlayer> players) =>
             players.Where(p => !p.IsHost && (p.Joining || !p.Ready)).ToList();

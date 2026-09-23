@@ -1,3 +1,9 @@
+v1.4.0-rc3 (BeaverBuddies MultiColony)
+* Choose separate colonies or one shared colony when you make the game: a Separate colonies checkbox on the New Game difficulty page, beside Tutorial, with Separate science and unlocks and Mixed factions under it. The page remembers your choice; the old Mod Settings for these are gone.
+* The waiting room says which kind of game it is, under its plate.
+* A shared game stays shared, but another player can split off once: in the game menu (Esc), Found your own colony. It asks first, since the game then has separate colonies for good; the shared colony stays the host's, and science stays shared.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc2 (BeaverBuddies MultiColony)
 * A colony whose player steps away is no longer handed to someone else by default: Hand over a colony after its player is away now starts at 0 (never). Ask a friend to look after your colony instead (Ctrl+T, Let ... look after it).
 * In a Folktails and Iron Teeth game, an away player's colony only ever goes to a colony of its own faction; with none in the game it waits, and nobody is warned.

@@ -5,6 +5,68 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc3
+
+**Separate or shared, chosen where the game is made.** A new game's colonies are now chosen on the New Game difficulty
+page, with a **Separate colonies** checkbox beside the game's own Tutorial checkbox, instead of in Mod Settings. A shared
+game stays shared, but a player other than the host can split off, once, from the game menu. Decided by Kyler after
+rc2. The join message lost two fields (see below); saves are unchanged.
+
+- **The Game Mode page** (`Lobby/NewGameColonyOptions.cs`, added from the page's `GetPanel` postfix):
+  - **Separate colonies**, and under it, indented and shown only while it is ticked, **Separate science and unlocks**
+    and **Mixed factions**.
+  - Each is a copy of the page's Tutorial row: a `new-game-mode-panel__setting-wrapper` holding a
+    `new-game-mode-panel__setting-toggle` and a `new-game-mode-panel__tutorial-label`.
+  - They share one left-aligned column with the game's own Tutorial row, which is moved into it, so every checkbox
+    lines up. In a custom difficulty they sit above the custom settings list.
+  - **Mixed factions** is greyed when it can't be had here, and its tooltip says why: a faction still locked on this
+    computer, or a faction mod installed (`NewGameFactionCapture.MixedPossible`). Each row has a tooltip.
+  - The choices are remembered on this computer, as the Tutorial checkbox is: the game's `ISettings`, keys
+    `BeaverBuddies.NewGame.*`. The defaults are as before: separate, with separate science, one faction.
+- **Every new world reads that choice** (`NewGameColonyChoice.ForNewWorld`, in both start paths of `MultiStartPatches`).
+  A waiting room reads its own copy, taken when **Host co-op game** was pressed (`LobbySetup.Separate`,
+  `SeparateScience`); its guests are told it in the room's summary, as before.
+- **The waiting room says what kind of game it is** in the gold line under its plate, on the host's page and every
+  guest's (`LobbyRules.ColonyNoteKey`):
+  - *Separate colonies: each player builds their own colony* (*…, as Folktails or Iron Teeth* when mixed);
+  - *One shared colony: everyone plays it together. A player can found their own later, from the game menu.*;
+  - a save's own wording, or nothing for a save whose data could not be read.
+
+  The room's old notes about a locked faction or a faction mod are gone; the page says that now.
+- **Removed from Mod Settings:** *Separate colonies for new games*, *Allow founding colonies in a shared game*,
+  *Separate science and unlocks per colony* and *Mixed factions for new games*, with their strings.
+  - The host's founding switch has left the session and the join message (`ColonySession.HostAllowsFounding`,
+    `HostSeparateScience`, and `InitializeClientEvent.foundingInSharedGame`, `separateScience`). This is a wire change;
+    everyone runs the same build (the handshake).
+  - *Hand over a colony after its player is away* stays in Mod Settings.
+- **Splitting a shared game** (`Colonies/SharedColonySplit.cs`):
+  - **The button.** **Found your own colony** is in the game menu (Esc), below Settings (and Player cursors), made
+    from the menu's own button. It is shown only to a seated guest without a colony in a shared game
+    (`ColonyRules.SplitOffered`): never to the host, who plays the shared colony, and to nobody once the game is
+    separate.
+  - **Asking first.** Before the host's first tick it says to wait, as Ctrl+K does. Otherwise the game's dialog asks,
+    saying the split can't be undone and the shared colony stays the host's. **Found my colony** closes the menu and
+    opens the founding tool.
+  - **Only the placement splits.** The district center's placement, played on every computer, makes the split, as
+    before (`ColonyModeService.Enable`, the buildings and marks to the host's colony). Leaving the tool changes
+    nothing.
+  - **Science stays shared.** The split keeps one pool of science and unlocks: the guest earned them too.
+  - **The host judges it.** `ColonyRules.MayFound`: in a shared game any seated player but the host.
+  - **Ctrl+K in a shared game** says where to split it (a guest), or that the shared colony is the host's.
+- **Notices at a split:**
+  - the founder: *This game now has separate colonies, for good*;
+  - the host: *…the shared colony is yours*;
+  - other players: how to go on (found with Ctrl+K, or ask to look after the host's colony).
+- **Checks:** StabilityTests 447 → **450**, RuntimeChecks 427 → **429** on both builds. Both builds have 0 warnings.
+  - StabilityTests: every new world and the room read the page's choice; the rows' build; the split's rules, notices
+    and order; the room's line.
+  - RuntimeChecks: the rows' classes are the page's Tutorial row's and in the main menu's style sheets; the game menu's
+    Settings button; the start paths, verdict, science and confirmation in the IL.
+  - Two older checks now point where the texts moved: the Mod Settings tooltip check and C-C1's faction-mod reason.
+- **Docs:** README (starting a game, one shared colony, troubleshooting) and TWO-COLONIES (the choices, founding step 3,
+  mixed factions, the shared-colony game). ALPHA-TEST-SCRIPTS: the steps that used the old settings, and a new
+  **Script S**. The website still lists the old settings (no website updates for now). Not played.
+
 ## 1.4.0-rc2
 
 **Hand-overs are a last resort; stewardship is how a friend's colony is kept.** Two changes after 1.4.0-rc1, decided by

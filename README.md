@@ -24,7 +24,9 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > between colonies) and added checks; none of that has been played yet, and a two-player late-game playtest is next
 > ([ALPHA-TEST-SCRIPTS](ALPHA-TEST-SCRIPTS.md), Scripts L, M and T). **1.4.0-rc2** makes hand-overs a last resort: a
 > colony whose player steps away is kept for them by default (ask a friend to look after it), and in a mixed game never
-> goes to the other faction for absence. Play on a copy of your save,
+> goes to the other faction for absence. **1.4.0-rc3** moves the choice of separate colonies or one shared colony to the
+> New Game page (a checkbox beside Tutorial), and lets a player split a shared game once, from the game menu. Play on a
+> copy of your save,
 > keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
 
@@ -57,28 +59,29 @@ build cannot join.
 
 ## Start a game
 
-**1. Host: settings.** Main menu → **Mod Settings → BeaverBuddies**:
+**1. Host: separate colonies or one shared colony.** Since 1.4.0-rc3 a new game's colonies are chosen on the **New
+Game** difficulty page, under the game's own **Tutorial** checkbox:
 
-- **Separate colonies for new games (beta)**, on: only read when you start a new game. On, each player gets their
-  own colony; off, all players share one colony, as in the Stability Fork. A save keeps the mode it started with.
-  **Want a new game with a colony each? Leave this on.** The setting below is not needed for that.
-- **Allow founding colonies in a shared game (beta)**, off: only for a shared save you already have (one colony
-  for all players, say a Stability Fork save). On, a player without a colony can found their own, which splits the
-  save into separate colonies for good. Off, shared saves stay shared.
-- **Separate science and unlocks per colony (beta)**, on: each colony earns its own science and unlocks its own
-  buildings. Chosen when a separate-colonies game begins, then fixed for the save.
-- **Hand over a colony after its player is away (days)**: 0 (never) by default since 1.4.0-rc2. A player stepping
-  away asks a friend to look after their colony instead (Ctrl+T). Set a number of days for a group where someone may
-  not come back (see [when a colony is handed over](#when-a-colony-is-handed-over)).
-- **Mixed factions for new games (beta)**, off (1.4.0-beta20; not played yet): on, with separate colonies and every
-  faction unlocked on your computer, each player picks **Folktails or Iron Teeth** for their own colony, in the
-  waiting room (see [Folktails and Iron Teeth together](#folktails-and-iron-teeth-together)). It is made for the
-  game's two factions: with a mod that adds a faction, new games stay one faction (1.4.0-beta21).
+- **Separate colonies**, ticked: each player builds their own colony. Unticked: everyone plays one shared colony, as
+  in the Stability Fork. The page remembers your last choice. A game keeps what it was made with, for good; a shared
+  game can still be split later by a player who wants their own colony (see [one shared colony](#one-shared-colony)).
+- Under it, only while it is ticked:
+  - **Separate science and unlocks**, ticked: each colony earns its own science and unlocks its own buildings.
+    Unticked, the colonies share one pool.
+  - **Mixed factions** (1.4.0-beta20; not played yet): each player picks **Folktails or Iron Teeth** for their own
+    colony, in the waiting room (see [Folktails and Iron Teeth together](#folktails-and-iron-teeth-together)). It needs
+    every faction unlocked on your computer, and the game's two factions only: otherwise the box is greyed, and its
+    tooltip says why.
+
+In **Mod Settings → BeaverBuddies**, the host's one colony setting is **Hand over a colony after its player is away
+(days)**: 0 (never) by default since 1.4.0-rc2. A player stepping away asks a friend to look after their colony
+instead (Ctrl+T). Set a number of days for a group where someone may not come back (see
+[when a colony is handed over](#when-a-colony-is-handed-over)).
 
 **2. Host: a new game with a waiting room** (the easy way, 1.4.0-beta18; not played yet).
 
-- **New Game** → faction → map → difficulty, as usual. Then choose **Host co-op game** beside **Start**, and name
-  your settlement (the game's own box).
+- **New Game** → faction → map → difficulty, as usual, with **Separate colonies** ticked or not (step 1). Then choose
+  **Host co-op game** beside **Start**, and name your settlement (the game's own box).
 - The **Co-op Game** page opens. Invite with **Invite Friends** (Steam), or give your IP address (port **25565**).
   Friends appear as they join: **Joining…**, then their name and colony, and **Ready** once they press **Ready**.
   You can remove someone from the room.
@@ -104,9 +107,8 @@ build cannot join.
 - **A new game on a BeaverBuddies multi-start map:** start 1 is the host's colony, start 2 the next player's, and so on.
 - **A new game on a standard map, or a separate-colonies save:** the district centers already there are the host's
   colony. Every other player founds theirs after joining (step 5).
-- **A shared save** (made with **Separate colonies for new games** off, or in the Stability Fork) stays one shared
-  colony, unless the host ticks **Allow founding colonies in a shared game**: then other players may found theirs,
-  and the first founding splits the save into colonies for good.
+- **A shared save** (made with **Separate colonies** unticked, or in the Stability Fork) stays one shared colony. A
+  player other than the host may split it once, from the game menu (see [one shared colony](#one-shared-colony)).
 
 **3. Host a save: the same waiting room (1.4.0-beta19; not played yet).** From the main menu open **Load Game**,
 select the save and choose **Host co-op game** (instead of Load). The **Co-op Game** page opens for that save (its
@@ -138,7 +140,8 @@ verified](#how-it-works)).
 
 ### Folktails and Iron Teeth together
 
-*1.4.0-beta20, not played yet.* With **Mixed factions for new games** on, every colony plays its own faction:
+*1.4.0-beta20, not played yet.* With **Mixed factions** ticked under **Separate colonies** on the New Game page, every
+colony plays its own faction:
 
 - **Pick in the waiting room**, with the game's own faction switcher. Otherwise pick when founding: one card per
   faction.
@@ -325,9 +328,17 @@ connection panel** and **Chat: start typing** are unbound until you set them the
 
 ## One shared colony
 
-With **Separate colonies for new games** off, a new game is ordinary shared co-op, as in the Stability Fork: one
-colony that every player builds together. A shared save (made that way, or in the Stability Fork) loads the same
-way and stays shared, unless the host ticks **Allow founding colonies in a shared game**.
+With **Separate colonies** unticked on the New Game page, a new game is ordinary shared co-op, as in the Stability
+Fork: one colony that every player builds together. A shared save (made that way, or in the Stability Fork) loads the
+same way and stays shared.
+
+**Splitting off (1.4.0-rc3).** A player other than the host who wants a colony of their own opens the game menu
+(Esc) and chooses **Found your own colony**, below Settings. It is there only for them, and only in a shared game.
+It asks first, because this can't be undone: the game becomes a separate-colonies game for every player, for good,
+and the shared colony, with everything built so far, stays the host's. Then they place their district center, which
+starts with the game's starting beavers and goods; only that placement makes the split, and leaving the tool changes
+nothing. Science and unlocks stay one pool, shared by every colony. Anyone else who played the shared colony then
+founds their own (Ctrl+K) or looks after the host's.
 
 Nothing of the colony model runs in a shared game: no owners or colony rules, no Trading Post (not even in dev
 mode), District Crossings holding the game's 30 of a good, no colony check on the heartbeat or once a day, and a
@@ -392,8 +403,8 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 - **"… is waiting for you in a co-op waiting room":** you accepted an invite (or used Join) while in a game, and the
   host is in a waiting room (a new game, or since beta19 any save hosted from the main menu). Go back to the main
   menu, then accept the invite again or join from there.
-- **Ctrl+K says this is one shared colony:** the save is a shared game. To split it into colonies, the host ticks
-  **Allow founding colonies in a shared game (beta)** and rehosts; the first founding makes it separate for good.
+- **Ctrl+K says this is one shared colony:** the save is a shared game. A player other than the host splits it from
+  the game menu (Esc → **Found your own colony**); that makes it separate for good.
 - **A desync dialog with `Colony state differs` in the log:** the every-tick colony check (alpha13) disagreed. It
   may be a bug in the check itself; send both players' `Player.log`: the line has both numbers and how many changes
   each side counted.

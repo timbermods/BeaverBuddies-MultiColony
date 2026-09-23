@@ -52,6 +52,9 @@ namespace BeaverBuddies.Lobby
         private LobbyFactionPicker picker;
         private string factionNote;
 
+        // The room's gold line under the plate (LobbyRules.ColonyNoteKey), or none.
+        private static string Note(string key) => key == null ? null : RegisteredLocalizationService.T(key);
+
         public LobbyHostPanel(VisualElementLoader loader, VisualElementInitializer initializer, PanelStack panelStack,
             DialogBoxShower dialogBoxShower, ITooltipRegistrar tooltipRegistrar, ISceneLoader sceneLoader,
             GameSaveRepository gameSaveRepository, InputService inputService, GameSaveDeserializer gameSaveDeserializer,
@@ -83,23 +86,22 @@ namespace BeaverBuddies.Lobby
                 Mode = mode,
                 ModeLocKey = modePanel._predefinedGameMode?.DisplayNameLocKey,
                 SummaryText = modePanel._summary.text,
+                // The page's colony checkboxes as they are now (1.4.0-rc3): the room's world is made with these.
+                Separate = NewGameColonyChoice.Separate,
+                SeparateScience = NewGameColonyChoice.SeparateScience,
             };
-            // Mixed factions for new games (D9): with every faction unlocked here, each player picks theirs in the room.
-            factionNote = null;
+            // Mixed factions for new games (D9): with every faction unlocked here, each player picks theirs in the room. The
+            // page greys the checkbox when it can't be (and says why), so the room has nothing to explain.
             NewGameFactionCapture capture = NewGameFactionCapture.Instance;
-            string locked = null;
-            bool notTwo = false;
-            if (capture != null && capture.MixedAvailable(out locked, out notTwo))
+            if (capture != null && capture.MixedAvailable(out _, out _))
             {
                 setup.Mixed = true;
                 setup.Factions = capture.OfferedFactions();
                 // The Game Mode page's summary without the faction: each player has their own.
                 setup.SummaryText = modePanel._map.DisplayName + " - "
                     + RegisteredLocalizationService.T(setup.ModeLocKey ?? "NewGameConfigurationPanel.Custom");
-                factionNote = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Faction.Mixed");
             }
-            else if (locked != null) factionNote = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Faction.NotUnlocked", locked);
-            else if (notTwo) factionNote = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Faction.NotTwo");
+            factionNote = Note(LobbyRules.ColonyNoteKey(false, setup.FactionId, setup.Separate, setup.Mixed));
             SettlementNamePanel.Show(_panelStack, _gameSaveRepository, _dialogBoxShower, _loader, _initializer, _inputService,
                 lastSettlementName, name =>
                 {
@@ -134,7 +136,7 @@ namespace BeaverBuddies.Lobby
             if (colonies == null) Plugin.LogWarning("[Lobby] Could not read the save's colonies; its rows show none");
             NewGameFactionCapture capture = NewGameFactionCapture.Instance;
             faction = colonies != null ? capture?.Spec(colonies.BaseFaction) : null;
-            factionNote = colonies != null && colonies.Mixed ? RegisteredLocalizationService.T("BeaverBuddies.Lobby.Faction.MixedSave") : null;
+            factionNote = Note(LobbyRules.ColonyNoteKey(true, colonies?.BaseFaction, colonies?.SeparateColonies ?? false, colonies?.Mixed ?? false));
             OpenRoom(new LobbySetup
             {
                 Save = save,

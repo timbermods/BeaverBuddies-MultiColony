@@ -1,7 +1,7 @@
 # Separate colonies: test scripts
 
-For the 1.4.0 betas and release candidates (separate colonies, trading posts and barter, colony handover, and since
-1.4.0-rc1 the late-game playtest at the end). The scripts began with
+For the 1.4.0 betas and release candidates (separate colonies, trading posts and barter, colony handover, since
+1.4.0-rc1 the late-game playtest, and since 1.4.0-rc3 Script S: separate or shared, chosen on the New Game page). The scripts began with
 the alphas; a label such as *(alpha13)* or *(beta2)* says which build a line was added for. Please report a
 result for **every line**: *works*, *fails* (what you saw), or *not tried*. A screenshot helps for anything drawn on
 screen (the trading-post panel, a notice, the connection panel, the toolbar). Send `Player.log` at the end
@@ -13,9 +13,9 @@ BeaverBuddies is still enabled, the main menu names it (please check that messag
 
 ## Script A: host alone (about 30 minutes)
 
-Setup: in **Mod Settings → BeaverBuddies** check **Separate colonies for new games (beta)** and **Separate science and unlocks per
-colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode). Start a **new game** on a
-**standard map**. Save, then **Load Game** → select the save → **Host co-op game**; start without anyone joining.
+Setup: in **Mod Settings → BeaverBuddies** tick **Always Use Detailed Logging** (debug mode). Start a **new game** on a
+**standard map**, with **Separate colonies** and **Separate science and unlocks** ticked on the difficulty page (under
+Tutorial; since 1.4.0-rc3, a Mod Setting before). Save, then **Load Game** → select the save → **Host co-op game**; start without anyone joining.
 
 1. **Seats.** The log has `[Colony] Separate colonies switched on: new game with one start` (while creating the game)
    and, after hosting, `[Colony] The host plays slot 0`.
@@ -114,7 +114,7 @@ colony (beta)** are ticked, and tick **Always Use Detailed Logging** (debug mode
     ledger and an exchange under way (with the goods waiting on each half, which nobody carries off after loading) or
     an offer waiting are unchanged. The day's `[Colony] Check day N tick T:` line in the log ends in `digest=…/0`
     right after a load (the count starts again from zero).
-22. **Mode off (beta7).** Untick **Separate colonies for new games** and start a new game: one shared colony, no
+22. **Mode off (beta7).** Untick **Separate colonies** on the difficulty page and start a new game: one shared colony, no
     refusals, no Trading Post in District Management (turn dev mode on with Alt+Shift+Z: still none), District
     Crossings trade by import settings as in the game and hold 30 of a good, science is one pool. Host it and play a
     few minutes: the log says `[Colony] Hosting; founding a colony in a shared game off` and has no
@@ -207,14 +207,16 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     your name in the chat changes on your screen within a moment, and not on the other player's. Drag a slider:
     the same. **Reset**: back to the default. Restart the game and host again: the color is remembered. The other
     player's card still has Size and Transparency; yours does not.
-8m. **A shared game stays shared (beta7).** The host leaves **Allow founding colonies in a shared game** unticked and
-    hosts a shared save (made with **Separate colonies for new games** off, or a Stability Fork save). The friend
-    joins; after the host unpauses no founding message appears, and **Ctrl+K** says *This is one shared colony*. Both
+8m. **A shared game stays shared (beta7, rc3).** The host hosts a shared save (made with **Separate colonies**
+    unticked, or a Stability Fork save). The friend joins; after the host unpauses no founding message appears, the
+    friend's **Ctrl+K** says *This game has one shared colony* and points to the game menu, and the host's says the
+    shared colony is theirs. Both
     build anywhere, next to each other's buildings, for a quarter of an hour at speed 1 to 3: no refusals, no
     desync. **Home** takes each player to the biggest district center.
-8n. **Founding splits a shared game (beta7).** The host ticks **Allow founding colonies in a shared game** and
-    hosts the same shared save again. After the host unpauses, the friend is offered to found a colony: with its door
-    on or beside the shared colony's road the preview is red; anywhere else, even close by, it is placed. Both logs have
+8n. **Founding splits a shared game (beta7, rc3).** The host hosts the same shared save again. After the host
+    unpauses, the friend opens the game menu (Esc) → **Found your own colony** → **Found my colony**, and places their
+    district center: with its door on or beside the shared colony's road the preview is red; anywhere else, even close
+    by, it is placed. Both logs have
     `[Colony] Separate colonies switched on: slot 1 founded a colony in a shared game` and `[Colony] The shared
     colony's N buildings are colony 0's` with the same N. Play ten more minutes without a desync (the colony digest
     is compared from now on); save, reload and host again: both colonies keep their buildings.
@@ -267,10 +269,10 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     the host does not. The friend places it: refused with a notice, and the friend plays on. The other way round (the
     host has it): the host places it, the friend's game stops with *The host used the building …* and leaves; the host
     plays on.
-8z. **The colony settings' tooltips (beta13).** In **Mod Settings → BeaverBuddies**, hover **Separate colonies for new
-    games** and **Allow founding colonies in a shared game**: each tooltip is two lines, all on screen. From the
-    tooltips alone, does the friend (who has not read this) know which one to use for a new game with a colony each,
-    and which one to split a shared save? Report anything they would still get wrong.
+8z. **The colony choices' tooltips (beta13, rc3).** On the New Game difficulty page, hover **Separate colonies** and
+    the two checkboxes under it: each tooltip is on screen. From the tooltips alone, does the friend (who has not
+    read this) know what unticking Separate colonies gives, and where a shared game is split later? Report anything
+    they would still get wrong.
 8aa. **A Trading Post between two roads (beta15, beta16).** In separate colonies, the friend places a Trading Post
     where the two colonies will meet, before either road is there: it is placed (beta16). Each player then builds a
     road to one half's door: the post says *Not trading yet* until both are there; then an exchange works (Script A
@@ -439,10 +441,11 @@ Mixed factions. **Not played yet**: every line is new. Both computers need the s
 Iron Teeth unlocked (reach 15 average wellbeing with Folktails once, or dev mode's unlock). Screenshots of the
 waiting room and of each colony help.
 
-1. **The setting.** Host: Mod Settings → BeaverBuddies → **Mixed factions for new games (beta)** on (Separate
-   colonies on). The tooltip fits on two lines.
+1. **The checkbox.** Host: New Game → Folktails → a map → the difficulty page: **Separate colonies** ticked, and
+   **Mixed factions** ticked under it (since 1.4.0-rc3; a Mod Setting before). Its tooltip is on screen.
 2. **The room.** New Game → Folktails → a BeaverBuddies multi-start map with 3 starts → Normal → **Host co-op game**.
-   The page shows the plate *map - Normal* (no faction), a gold line *Mixed factions: each player picks…*, then **Your
+   The page shows the plate *map - Normal* (no faction), a gold line *Separate colonies: each player builds their own
+   colony, as Folktails or Iron Teeth.*, then **Your
    faction** with the faction page's arrows, ring and name plate reading *Folktails*. Log: `[Factions]` nothing yet.
 3. **Picking.** Guest joins from the main menu: the same switcher, showing Folktails. Guest presses the right arrow:
    *Iron Teeth*, the Iron Teeth logo in the ring. Within a second the host's row for the guest shows the Iron Teeth
@@ -479,10 +482,10 @@ waiting room and of each colony help.
 12. **The save's room.** Main menu → Load Game → that save → **Host co-op game**: the ring shows Folktails, the rows
     *Host · Colony 1* with the Folktails logo and the guest's *Colony 2* with the Iron Teeth logo; nobody's switcher
     shows (both colonies have their faction).
-13. **Locked.** On a computer without Iron Teeth unlocked, Mixed factions on, a new room: the gold line says Iron
-    Teeth is not unlocked and everyone plays one faction; no switcher.
-13a. **A faction mod (beta21).** With a mod that adds a faction installed, Mixed factions on, a new room: the gold line
-    says mixed factions is made for Folktails and Iron Teeth and everyone plays one faction.
+13. **Locked (rc3).** On a computer without Iron Teeth unlocked, the difficulty page's **Mixed factions** is greyed and
+    its tooltip says Iron Teeth is still locked; a new room has one faction and no switcher.
+13a. **A faction mod (beta21, rc3).** With a mod that adds a faction installed, **Mixed factions** is greyed and its
+    tooltip says it is made for Folktails and Iron Teeth; a new room has one faction.
 14. Send both `Player.log` files. Lines start with `[Factions]` and `[Lobby]`.
 
 ## The late-game playtest (two players) *(1.4.0-rc1)*
@@ -505,7 +508,8 @@ happen and, in brackets, the review finding it checks (`design/REVIEW-FINDINGS-1
 ## Script L: the late game, two players (about 90 minutes) *(1.4.0-rc1)*
 
 **Setup (the host, single player, dev mode, about 30 minutes):**
-1. Take a copy of your largest late save (300 or more beavers).
+1. Take a copy of your largest late save (300 or more beavers), made as one shared colony (**Separate colonies**
+   unticked, or a Stability Fork save): step 1 splits it.
 2. Near where the guest will found their colony, build:
    - a chain of automation: a lever, a relay, a memory, a timer, and an Indicator set to *warn*;
    - a Population Counter set to count everywhere;
@@ -515,11 +519,11 @@ happen and, in brackets, the review finding it checks (`design/REVIEW-FINDINGS-1
    - three synchronised floodgates along the edge of your land;
    - a gravity battery on a power shaft that ends at that edge.
 3. Save.
-4. In Mod Settings, turn **Allow founding colonies in a shared game** on and **Separate science and unlocks per
-   colony** off (so the guest can build the late game at once).
-5. Main menu → Load Game → the save → **Host co-op game**. The guest joins; Start.
+4. Main menu → Load Game → the save → **Host co-op game**. The guest joins; Start. (A split keeps one pool of science
+   and unlocks, so the guest can build the late game at once.)
 
-1. **Founding beside your fields** (E-7). The guest founds (Ctrl+K) right beside the host's farms and forests, then
+1. **Founding beside your fields** (E-7). The guest splits the game (Esc → **Found your own colony** → **Found my
+   colony**) and places their district center right beside the host's farms and forests, then
    builds a farmhouse and a lumberjack flag that reach them. After a day none of the host's marked crops or trees is
    worked by the guest's beavers, and the guest's unmark tool leaves the host's marks.
 1a. **Unlocking together** (E-5). Both players click **Unlock** on the same locked building within a second: the
@@ -567,7 +571,7 @@ happen and, in brackets, the review finding it checks (`design/REVIEW-FINDINGS-1
 ## Script M: Folktails and Iron Teeth in the late game (two players, about 90 minutes) *(1.4.0-rc1)*
 
 1. **Setup** (hosted alone with dev mode; TWO-COLONIES, *Testing alone*):
-   - A new game with *Separate colonies* and *Mixed factions* on, Folktails. Three colonies: 1 Folktails (the
+   - A new game with **Separate colonies** and **Mixed factions** ticked on the difficulty page, Folktails. Three colonies: 1 Folktails (the
      host's), 2 Iron Teeth (the guest's), 3 Folktails (nobody's).
    - For colonies 1 and 2, with dev mode:
      - a bot assembler, a bot part factory and 6 or more bots;
@@ -664,8 +668,7 @@ goes on with no desync dialog (D-new-2; before rc1, switching it on mid-game rea
    then enabled (restart). Tick time within 1 % of each other; PerformanceLog no longer lists MultiColony on
    `TickableEntity.Tick`.
 2. **P2, hosting with nobody joined** (B2, B3, C3, S9). Host the late save from the main menu and record. Then, in the
-   same game, found a second colony with *Allow founding colonies in a shared game* on, let a day pass, and record
-   again. In each, also hold a path tool over roads for 30 s. MultiColony's share of tick time: at most 5 % shared and
+   same game, have a guest join and split it (Esc → **Found your own colony**), let a day pass, and record again. In each, also hold a path tool over roads for 30 s. MultiColony's share of tick time: at most 5 % shared and
    7 % split. No MultiColony method among the top allocators.
 3. **P3, with a guest** (B4, S2, S5). The late save split into two colonies, a guest joined. Three minutes each at
    speed 2, speed 3, and speed 3 with a boost of 15. Both players record.
@@ -694,3 +697,41 @@ both players' `Player.log`. What to look for:
 - *detailed-logging traces 0 ticks* (detailed logging off);
 - *buckets lost to the one-tick cap* near 0 at normal speed;
 - no `[Colony] Colony state differs` line and no `[Colony] Trade check:` line.
+
+## Script S: separate or shared, chosen on the New Game page (two players, about 30 minutes) *(1.4.0-rc3)*
+
+Since 1.4.0-rc3 a new game's colonies are chosen on the New Game difficulty page, not in Mod Settings, and a guest
+splits a shared game from the game menu. Screenshots help for every page and box here: the checkboxes must line up,
+and no text may overlap or run off.
+
+1. **The page.** New Game → Folktails → a map → the difficulty page. Under **Tutorial**: **Separate colonies**, and
+   under it, indented, **Separate science and unlocks** and **Mixed factions**. All the checkboxes line up with
+   Tutorial's; the labels are the page's white text. Hover each: a tooltip. Untick **Separate colonies**: the two under
+   it disappear; tick it: they come back. Screenshot both.
+2. **Custom difficulty.** Press **Customize**: the colony checkboxes stay above the custom settings list, which scrolls
+   as before; nothing overlaps. Pick Normal again: Tutorial is back above them.
+3. **Iron Teeth.** Back, pick Iron Teeth, the same map: whether or not the game shows its Tutorial checkbox for Iron
+   Teeth, the colony checkboxes are there, aligned.
+4. **Remembered.** Untick **Separate colonies**, quit the game, start it again: the page shows it unticked. Tick it again.
+5. **A shared room.** Untick **Separate colonies** → **Host co-op game**. Under the plate, the gold line reads *One shared
+   colony: everyone plays it together…*, on the host's page and on the guest's. Start.
+6. **The game menu.** After the host unpauses, the guest opens the game menu (Esc): **Found your own colony** is below
+   Settings (and Player cursors), the same size as the others, its text on one line. The host's menu has no such button.
+   The guest's **Ctrl+K** says the game has one shared colony and points to the menu; the host's says the shared colony
+   is theirs.
+7. **Asking first.** The guest presses **Found your own colony**: a box says it can't be undone and that the shared colony
+   stays the host's. **Cancel**: nothing changes. Again, **Found my colony**: the menu closes with the district center
+   in hand. Leave the tool (right-click or Esc): the game is still shared, and the button is still in the menu.
+7a. **Too early.** The host uses Options → **Save and Rehost**; the guest joins again, and before the host unpauses
+    presses **Found your own colony**: a box says a colony can be founded once the host has unpaused. The host unpauses.
+8. **The split.** Again, **Found my colony**, and place the district center; the host unpauses if needed. The guest
+   reads *Your colony is founded. This game now has separate colonies, for good.*; the host reads that a new colony has
+   been founded and the shared colony is theirs. Both logs: `[Colony] Separate colonies switched on: slot 1 founded a
+   colony in a shared game`. The top bar's science is the same number on both (one pool). Neither game menu has the
+   button any more.
+9. **For good.** Save and Rehost; the guest joins again: still two colonies, no button, and the guest's Ctrl+K says they
+   already have a colony.
+10. **A separate room.** New game, **Separate colonies** ticked and **Separate science and unlocks** unticked → Host co-op
+    game: the gold line reads *Separate colonies: each player builds their own colony.* In the game, the guest is offered
+    to place a district center as before, and the colonies share one pool of science.
+11. Send both `Player.log` files.

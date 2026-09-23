@@ -1,6 +1,8 @@
 #nullable enable
+using System.IO.Compression;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text.RegularExpressions;
 
 // The 1.4.0-rc1 review (design/REVIEW-PLAN-1.4.0-beta24.md, findings in design/REVIEW-FINDINGS-1.4.0-beta24.md), checks
 // against the compiled mod and the installed game's assemblies: the main session: the release-readiness leads (R), beta24's Join box (B24) and the findings made while planning (P).
@@ -8,7 +10,7 @@ internal static class RcMainRuntimeChecks
 {
     const BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
-    public static void Run(Assembly mod, Action<string, Action> test)
+    public static void Run(Assembly mod, string managedPath, Action<string, Action> test)
     {
         Type Game(string assembly, string type) => Assembly.Load(assembly).GetType(type, true)!;
         MethodInfo Only(Type type, string name) =>
@@ -88,6 +90,73 @@ internal static class RcMainRuntimeChecks
             int name = init.FindIndex(i => i.Op == OpCodes.Ldstr && i.Text == "BeaverBuddies.Settings.AbandonedColonyDays");
             if (name < 1) throw new Exception("the absence setting is no longer made in Settings' constructor");
             if (init[name - 1].Op != OpCodes.Ldc_I4_0) throw new Exception($"the absence setting's default is not 0 ({init[name - 1].Op} {init[name - 1].Number})");
+        });
+
+        // ---- 1.4.0-rc3: separate or shared, chosen on the Game Mode page; a shared game split from the game menu ----
+
+        test("rc3: the Game Mode page's colony checkboxes are the page's own rows, beside its Tutorial checkbox", () =>
+        {
+            using ZipArchive ui = ZipFile.OpenRead(Path.GetFullPath(Path.Combine(managedPath, "..", "StreamingAssets", "Modding", "UI.zip")));
+            string Read(string entry)
+            {
+                using var reader = new StreamReader((ui.GetEntry(entry) ?? throw new Exception("UI.zip has no " + entry)).Open());
+                return reader.ReadToEnd();
+            }
+            // The page's Tutorial row, which the checkboxes copy and join: in ModeDetails, before the custom settings.
+            string page = Read("Views/MainMenu/NewGameModePanel.uxml");
+            int details = page.IndexOf("name=\"ModeDetails\"", StringComparison.Ordinal);
+            int tutorial = page.IndexOf("name=\"TutorialToggleWrapper\"", StringComparison.Ordinal);
+            int custom = page.IndexOf("name=\"CustomModeSettings\"", StringComparison.Ordinal);
+            if (details < 0 || tutorial < details || custom < tutorial) throw new Exception("the Tutorial row is no longer in ModeDetails, before the custom settings");
+            string row = page.Substring(tutorial, custom - tutorial);
+            var used = (string[])mod.GetType("BeaverBuddies.Lobby.NewGameColonyOptions", true)!.GetField("ClassesUsed", All)!.GetValue(null)!;
+            var notOnTheRow = used.Where(c => !row.Contains(c)).ToList();
+            if (notOnTheRow.Count > 0) throw new Exception("classes the page's Tutorial row doesn't use: " + string.Join(", ", notOnTheRow));
+            // ...and every one is in a style sheet the main menu loads.
+            string title = Read("Views/MainMenu/TitleScreen.uxml");
+            var defined = new HashSet<string>();
+            foreach (Match sheet in Regex.Matches(title, "Style src=\"/Assets/Resources/UI/(Views/[^\"]+\\.uss)\""))
+                foreach (Match m in Regex.Matches(Read(sheet.Groups[1].Value), "\\.([A-Za-z_][A-Za-z0-9_-]*)")) defined.Add(m.Groups[1].Value);
+            var missing = used.Where(c => !defined.Contains(c)).ToList();
+            if (missing.Count > 0) throw new Exception("not in the main menu's style sheets: " + string.Join(", ", missing));
+            // The game menu keeps a Settings button to put Found your own colony under.
+            if (!Read("Views/Game/GameOptionsBox.uxml").Contains("name=\"SettingsButton\"")) throw new Exception("the game menu has no SettingsButton");
+            // No Mod Setting decides a new game's colonies any more.
+            Type settings = mod.GetType("BeaverBuddies.Settings", true)!;
+            var left = new[] { "SeparateColonies", "FoundingInSharedGames", "SeparateScience", "MixedFactions" }
+                .Where(n => settings.GetProperty(n, All) != null).ToList();
+            if (left.Count > 0) throw new Exception("still a Mod Setting: " + string.Join(", ", left));
+        });
+
+        test("rc3: every new world reads the Game Mode page's choice, and only a guest can split a shared game", () =>
+        {
+            // A new world: both start paths ask NewGameColonyChoice (a waiting room's own copy, else the page's).
+            Type start = mod.GetType("BeaverBuddies.MultiStart.StartingBuildingInitializerInitializePatcher", true)!;
+            if (IlScan.Instructions(Only(start, "Prefix")).Count(i => i.Calls && i.Member?.Name == "ForNewWorld") != 2)
+                throw new Exception("a start path of a new world does not read NewGameColonyChoice.ForNewWorld");
+            // The host's verdict on a founding: ColonyRules.MayFound, with the actor's seat against the host's.
+            Type founding = mod.GetType("BeaverBuddies.Colonies.ColonyFoundingService", true)!;
+            if (!IlScan.Instructions(Only(founding, "Judge")).Any(i => i.Calls && i.Member?.Name == "MayFound"))
+                throw new Exception("the founding verdict no longer asks ColonyRules.MayFound");
+            Type rules = mod.GetType("BeaverBuddies.Colonies.ColonyRules", true)!;
+            bool MayFound(bool separate, bool host) => (bool)rules.GetMethod("MayFound", All)!.Invoke(null, new object[] { separate, host })!;
+            if (MayFound(false, true)) throw new Exception("the host could split a shared game");
+            if (!MayFound(false, false) || !MayFound(true, false) || !MayFound(true, true)) throw new Exception("MayFound refuses a founding it should allow");
+            bool Offered(bool guest, bool separate, bool seated, bool owns) =>
+                (bool)rules.GetMethod("SplitOffered", All)!.Invoke(null, new object[] { guest, separate, seated, owns })!;
+            if (!Offered(true, false, true, false)) throw new Exception("a seated guest without a colony in a shared game is not offered the split");
+            if (Offered(false, false, true, false) || Offered(true, true, true, false) || Offered(true, false, true, true) || Offered(true, false, false, false))
+                throw new Exception("the split is offered where it should not be (the host, a separate game, a player with a colony, before seating)");
+            // The split keeps one pool of science: the Enable of a founding in a shared game passes separateScience false.
+            var found = IlScan.Instructions(Only(founding, "Found"));
+            int enable = found.FindIndex(i => i.Calls && i.Member?.Name == "Enable" && i.Member.DeclaringType?.Name == "ColonyModeService");
+            if (enable < 2 || found[enable - 2].Op != OpCodes.Ldc_I4_0) throw new Exception("a split no longer keeps science shared (separateScience false)");
+            // The game menu's button: through the started check and the confirmation, which comes before BeginSplit.
+            Type split = mod.GetType("BeaverBuddies.Colonies.SharedColonySplit", true)!;
+            var ask = IlScan.Instructions(Only(split, "Ask"));
+            if (!ask.Any(i => i.Calls && i.Member?.Name == "SplitCanBeginNow") || !ask.Any(i => i.Calls && i.Member?.Name == "SetConfirmButton"))
+                throw new Exception("the split no longer checks the game has started and asks for confirmation");
+            if (ask.Any(i => i.Calls && i.Member?.Name == "BeginSplit")) throw new Exception("the split begins before it is confirmed");
         });
     }
 }

@@ -112,6 +112,8 @@ namespace BeaverBuddies
             containerDefinition.Bind<ModListService>().AsSingleton();
             // Whether a new game made here is a mixed-factions game (the host's setting and unlocks).
             containerDefinition.Bind<BeaverBuddies.Factions.NewGameFactionCapture>().AsSingleton();
+            // The Game Mode page's colony checkboxes (Separate colonies, and under it science and factions).
+            containerDefinition.Bind<BeaverBuddies.Lobby.NewGameColonyOptions>().AsSingleton();
 
             //new ReportingService().PostDesync("test").ContinueWith(result => Plugin.Log($"Posted: {result.Result}"));
             containerDefinition.Bind<SteamOverlayConnectionService>().AsSingleton();

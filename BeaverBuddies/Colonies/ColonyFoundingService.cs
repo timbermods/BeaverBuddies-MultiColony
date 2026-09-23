@@ -91,6 +91,8 @@ namespace BeaverBuddies.Colonies
             _blockValidator = blockValidator;
             _specService = specService;
             _districtCenterRegistry = districtCenterRegistry;
+            // A new game scene (a load, a rehost): nobody has chosen to split this session's shared game yet.
+            SharedColonySplit.Confirmed = false;
         }
 
         /// <summary>True while this computer's player is using the founding tool (not the ordinary build menu).</summary>
@@ -128,7 +130,8 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// True when this computer's player may found a colony now: in a session, seated, with no district center of
-        /// their own, and founding allowed (a separate-colonies game, or a shared game whose host allows founding in it).
+        /// their own, and founding allowed (a separate-colonies game, or a shared game this guest chose to split from the
+        /// game menu).
         /// </summary>
         public static bool LocalPlayerMayFound
         {
@@ -150,7 +153,9 @@ namespace BeaverBuddies.Colonies
             ColonyRules.WaitsForStart(true, SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1,
                 ColonySession.JoiningClosedAtStart);
 
-        private static bool FoundingAllowed => ColonyModeService.IsSeparateColonies || ColonySession.HostAllowsFounding;
+        // This computer's player: a separate-colonies game, or a shared game this guest chose to split, and confirmed, from
+        // the game menu (SharedColonySplit, 1.4.0-rc3). The host judges it again (ColonyRules.MayFound).
+        private static bool FoundingAllowed => ColonyModeService.IsSeparateColonies || SharedColonySplit.Confirmed;
 
         /// <summary>Whether this slot owns a district center (finished or not). Saved state: the same on every computer.</summary>
         public bool SlotOwnsDistrict(int slot) =>
@@ -219,9 +224,32 @@ namespace BeaverBuddies.Colonies
             if (EventIO.IsNull) return "BeaverBuddies.Colony.Founding.HostFirst";
             int slot = ColonySession.LocalSlot;
             if (slot >= 0 && SlotOwnsDistrict(slot)) return "BeaverBuddies.Colony.Founding.NotNeeded";
-            if (!FoundingAllowed) return "BeaverBuddies.Colony.Founding.HostOff";
+            // A shared game: the host plays its colony; a guest splits it from the game menu, not with the key alone.
+            if (!FoundingAllowed) return EventIO.Get() is ServerEventIO ? "BeaverBuddies.Colony.Founding.SharedHost" : "BeaverBuddies.Colony.Founding.SharedUseMenu";
             if (slot >= 0 && WaitingForStart) return "BeaverBuddies.Colony.Founding.NotStartedYet";
             return "BeaverBuddies.Colony.Founding.NotYours";
+        }
+
+        /// <summary>
+        /// Whether the game menu's split can begin now; else the text key saying why (before the host's first tick other
+        /// players can still join, so a founding waits, as Ctrl+K does).
+        /// </summary>
+        public bool SplitCanBeginNow(out string whyNotKey)
+        {
+            whyNotKey = EventIO.IsNull ? "BeaverBuddies.Colony.Founding.HostFirst"
+                : WaitingForStart ? "BeaverBuddies.Colony.Founding.NotStartedYet" : null;
+            return whyNotKey == null;
+        }
+
+        /// <summary>
+        /// The game menu's Found your own colony, confirmed (SharedColonySplit): this guest may now place a district
+        /// center, and the founding splits the shared game when it is played. Leaving the tool changes nothing.
+        /// </summary>
+        public void BeginSplit()
+        {
+            SharedColonySplit.Confirmed = true;
+            if (LocalPlayerMayFound) ChooseAndPlace();
+            else Notice(WhyNot());
         }
 
         // Ctrl+K: in a mixed game the faction first (the waiting room's pick, or a card each), then the tool.
@@ -321,12 +349,13 @@ namespace BeaverBuddies.Colonies
         /// Also check that the ground is free and allows the building. Previews skip it: the game checks those itself.
         /// </param>
         /// <param name="atReplay">
-        /// The check every computer makes as the founding happens. It reads saved state only; whether the host allows
-        /// founding this session was decided when the host judged the request.
+        /// The check every computer makes as the founding happens. It reads saved state only; who may found (in a shared
+        /// game, a guest, never the host) was decided when the host judged the request.
         /// </param>
         public ColonyVerdict Judge(int actorSlot, Placement placement, bool checkBlocks = true, bool atReplay = false)
         {
-            bool foundingAllowed = atReplay || FoundingAllowed;
+            bool foundingAllowed = atReplay || ColonyRules.MayFound(ColonyModeService.IsSeparateColonies,
+                actorIsHost: actorSlot == ColonySession.SeatOfPlayer(ColonySession.HostPlayer));
             bool blocksValid = !checkBlocks || _blockValidator.BlocksValid(
                 _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>(), placement);
             return ColonyRules.JudgeFounding(
@@ -368,12 +397,14 @@ namespace BeaverBuddies.Colonies
             // older host carries none; then the save's, and failing that this computer's, as before.
             ColonyStartingSettings start = settings ?? HostStartingSettings();
 
-            if (!_colonyModeService.Enabled)
+            bool split = !_colonyModeService.Enabled;
+            if (split)
             {
-                // A shared game becomes a separate-colonies game. Every computer founds it, so the choice of separate
-                // science is the host's (told to every guest).
-                _colonyModeService.Enable(start, $"slot {slot} founded a colony in a shared game",
-                    ColonySession.HostSeparateScience, newGame: false);
+                // A guest splits a shared game (1.4.0-rc3): it becomes a separate-colonies game for good. Science and
+                // unlocks stay one pool for every colony, as they were while the colony was shared: the guest earned them
+                // too. Every computer plays it the same way.
+                _colonyModeService.Enable(start, $"slot {slot} founded a colony in a shared game", separateScience: false,
+                    newGame: false);
             }
 
             // A mixed game's colony plays the faction the host allowed (the event's), recorded before anything is made.
@@ -404,7 +435,7 @@ namespace BeaverBuddies.Colonies
                 try { _cameraTargeter.CenterCameraOn(building.GetComponent<SelectableObject>()); }
                 catch (Exception error) { Plugin.LogWarning("[Colony] Could not move the camera: " + error.Message); }
             }
-            TellFounding(slot, founded: true);
+            TellFounding(slot, founded: true, split);
         }
 
         // A finished district center of this faction, owned by the slot from the moment it is made.
@@ -630,17 +661,19 @@ namespace BeaverBuddies.Colonies
         /// else only that a colony was founded. Which notice, which text and whether it is a warning are decided in
         /// ColonyRules (FoundingNoticeFor, FoundingNoticeKey, FoundingNoticeWarns), where StabilityTests checks them.
         /// </summary>
-        private static void TellFounding(int slot, bool founded)
+        private static void TellFounding(int slot, bool founded, bool split = false)
         {
             try
             {
-                FoundingNotice notice = ColonyRules.FoundingNoticeFor(ColonySession.LocalSlot, slot, founded);
+                FoundingNotice notice = ColonyRules.FoundingNoticeFor(ColonySession.LocalSlot, slot, founded, split,
+                    localIsHost: EventIO.Get() is ServerEventIO);
                 string key = ColonyRules.FoundingNoticeKey(notice);
                 if (key == null) return;
                 ColonyRulesService rules = SingletonManager.GetSingleton<ColonyRulesService>();
                 if (rules == null) return;
                 string text = RegisteredLocalizationService.T(key);
-                if (notice == FoundingNotice.Founded) text = string.Format(text, ColonyExchangeService.ColonyName(slot));
+                if (notice == FoundingNotice.Founded || notice == FoundingNotice.SplitHost || notice == FoundingNotice.SplitOther)
+                    text = string.Format(text, ColonyExchangeService.ColonyName(slot));
                 rules.ShowNotice(text, warning: ColonyRules.FoundingNoticeWarns(notice));
             }
             catch (Exception error)

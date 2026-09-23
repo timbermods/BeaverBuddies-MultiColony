@@ -87,11 +87,16 @@ static class ReviewBeta21Checks
                 "a mixed waiting room no longer latches the host's factions at Start");
         });
 
-        yield return ("C-C1: a new game is mixed only with exactly the game's two factions (a faction mod keeps it one faction, and the room says why)", () =>
+        yield return ("C-C1: a new game is mixed only with exactly the game's two factions (a faction mod keeps it one faction, and the Game Mode page says why)", () =>
         {
-            string capture = Body(Source("BeaverBuddies", "Factions", "NewGameFactionCapture.cs"), "public bool MixedAvailable(out string lockedFaction, out bool notTwoFactions)");
-            Check(capture.Contains("Count() != 2") && capture.Contains("notTwoFactions = true"), "MixedAvailable no longer asks for exactly two factions");
-            Check(Source("BeaverBuddies", "Lobby", "LobbyHostPanel.cs").Contains("BeaverBuddies.Lobby.Faction.NotTwo"), "the room no longer says why it is one faction");
+            string capture = Source("BeaverBuddies", "Factions", "NewGameFactionCapture.cs");
+            string possible = Body(capture, "public bool MixedPossible(out string lockedFaction, out bool notTwoFactions)");
+            Check(possible.Contains("Count() != 2") && possible.Contains("notTwoFactions = true"), "MixedPossible no longer asks for exactly two factions");
+            Check(Body(capture, "public bool MixedAvailable(out string lockedFaction, out bool notTwoFactions)").Contains("MixedPossible("),
+                "MixedAvailable no longer asks MixedPossible");
+            // Since 1.4.0-rc3 the Game Mode page greys Mixed factions and its tooltip says why (the room said it before).
+            Check(Source("BeaverBuddies", "Lobby", "NewGameColonyOptions.cs").Contains("BeaverBuddies.NewGame.MixedFactions.NotTwo"),
+                "the Game Mode page no longer says why a game is one faction");
         });
 
         yield return ("Playtest (beta23): a guest's waiting room opens only once a page is on top, never over the Steam overlay's blocker", () =>

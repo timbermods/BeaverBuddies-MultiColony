@@ -316,17 +316,31 @@ namespace BeaverBuddies.Colonies
             foundingOrHandover && hostTicksSinceLoad < 1 && !joiningClosedAtStart;
 
         /// <summary>
+        /// Who may found a colony (1.4.0-rc3): anyone without one in a separate-colonies game. In a shared game, any player
+        /// but the host, who plays the shared colony: that founding splits the game into separate colonies, for good (the
+        /// guest chose it from the game menu, SharedColonySplit, and confirmed it cannot be undone).
+        /// </summary>
+        public static bool MayFound(bool separateColonies, bool actorIsHost) => separateColonies || !actorIsHost;
+
+        /// <summary>
+        /// The game menu's Found your own colony (1.4.0-rc3): offered only to a guest (never the host), in a shared game,
+        /// once seated, while they have no colony. Gone for everyone once the game is separate.
+        /// </summary>
+        public static bool SplitOffered(bool isGuest, bool separateColonies, bool seated, bool ownsDistrict) =>
+            isGuest && !separateColonies && seated && !ownsDistrict;
+
+        /// <summary>
         /// Whether a player may found a colony now. Once per player: only a player whose slot owns no district center
-        /// yet. The save must be a separate-colonies game, or the host must allow it this session (founding turns a
-        /// shared game into one). The spot must be free, and the new district center must not join another colony's
-        /// roads. Anywhere else will do: there is no land, and no distance to keep from other colonies.
+        /// yet. The save must be a separate-colonies game, or a guest must be splitting a shared one (<see cref="MayFound"/>).
+        /// The spot must be free, and the new district center must not join another colony's roads. Anywhere else will
+        /// do: there is no land, and no distance to keep from other colonies.
         /// </summary>
         public static ColonyVerdict JudgeFounding(bool actorHasSlot, bool actorOwnsDistrict, bool foundingAllowed,
             bool blocksValid, bool touchesOtherDistrict)
         {
             if (!actorHasSlot) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "a helper plays another player's colony");
             if (actorOwnsDistrict) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "this player already has a colony");
-            if (!foundingAllowed) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the host has not allowed founding in a shared game");
+            if (!foundingAllowed) return ColonyVerdict.Refuse(ColonyRefusal.CannotFound, "the host plays a shared game's colony; only another player can split it");
             if (!blocksValid) return ColonyVerdict.Refuse(ColonyRefusal.Blocked, "the spot is taken or unsuitable");
             if (touchesOtherDistrict) return ColonyVerdict.Refuse(ColonyRefusal.FoundingConflict, "it would join another district's roads");
             return ColonyVerdict.Allow;
@@ -337,10 +351,15 @@ namespace BeaverBuddies.Colonies
         /// founder asked for it: they hear that it worked, or that the spot changed and they can try again. Everyone
         /// else hears only that a new colony exists, and nothing of a failed try. Display only.
         /// </summary>
-        public static FoundingNotice FoundingNoticeFor(int localSlot, int founderSlot, bool founded)
+        /// <param name="split">The founding split a shared game (1.4.0-rc3): everyone is told the game is now separate, for
+        /// good; the host that the shared colony is theirs; other players without a colony how to go on.</param>
+        public static FoundingNotice FoundingNoticeFor(int localSlot, int founderSlot, bool founded, bool split = false,
+            bool localIsHost = false)
         {
-            if (localSlot == founderSlot) return founded ? FoundingNotice.Done : FoundingNotice.Failed;
-            return founded ? FoundingNotice.Founded : FoundingNotice.None;
+            if (localSlot == founderSlot) return founded ? split ? FoundingNotice.SplitDone : FoundingNotice.Done : FoundingNotice.Failed;
+            if (!founded) return FoundingNotice.None;
+            if (!split) return FoundingNotice.Founded;
+            return localIsHost ? FoundingNotice.SplitHost : FoundingNotice.SplitOther;
         }
 
         /// <summary>
@@ -352,6 +371,9 @@ namespace BeaverBuddies.Colonies
             FoundingNotice.Done => "BeaverBuddies.Colony.Founding.Done",
             FoundingNotice.Failed => "BeaverBuddies.Colony.Founding.Failed",
             FoundingNotice.Founded => "BeaverBuddies.Colony.Founding.Other",
+            FoundingNotice.SplitDone => "BeaverBuddies.Colony.Founding.SplitDone",
+            FoundingNotice.SplitHost => "BeaverBuddies.Colony.Founding.SplitHost",
+            FoundingNotice.SplitOther => "BeaverBuddies.Colony.Founding.SplitOther",
             _ => null,
         };
 
@@ -372,5 +394,11 @@ namespace BeaverBuddies.Colonies
         Failed,
         /// <summary>Another player: a colony was founded (a plain notice naming it).</summary>
         Founded,
+        /// <summary>The founder of a colony that split a shared game: founded, and the game is now separate for good.</summary>
+        SplitDone,
+        /// <summary>The host, as a shared game is split: the game is now separate, and the shared colony is theirs.</summary>
+        SplitHost,
+        /// <summary>Another player, as a shared game is split: separate for good; they may found their own or be a steward.</summary>
+        SplitOther,
     }
 }

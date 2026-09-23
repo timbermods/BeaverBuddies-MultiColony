@@ -25,6 +25,8 @@ namespace BeaverBuddies.Lobby
                 button.clicked += () => SingletonManager.GetSingleton<LobbyHostPanel>()?.OpenFrom(__instance);
             });
             host?.SetEnabled(__instance._nextButton?.enabledSelf ?? true);
+            // Separate colonies and the choices under it, beside the page's own Tutorial checkbox (1.4.0-rc3).
+            NewGameColonyOptions.Instance?.Attach(__result);
         }
     }
 

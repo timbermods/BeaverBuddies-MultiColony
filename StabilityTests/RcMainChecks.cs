@@ -189,5 +189,101 @@ static class RcMainChecks
             foreach (string key in new[] { "BeaverBuddies.Colony.Overview.AwayNoSameFaction", "BeaverBuddies.Colony.Overview.HandToOtherFactionTooltip" })
                 Check(csv.Contains("\n" + key + ",\""), "no English line for " + key);
         });
+
+        // ---- 1.4.0-rc3: separate or shared is chosen on the Game Mode page; a guest splits a shared game from the game menu ----
+
+        yield return ("rc3: a new game's colonies are chosen on the Game Mode page, and every new world reads that choice", () =>
+        {
+            string settings = Source("BeaverBuddies", "Settings.cs");
+            foreach (string gone in new[] { "SeparateColonies { get; }", "FoundingInSharedGames { get; }", "SeparateScience { get; }", "MixedFactions { get; }" })
+                Check(!settings.Contains(gone), "still a Mod Setting: " + gone);
+            string options = Source("BeaverBuddies", "Lobby", "NewGameColonyOptions.cs");
+            // The world being made: a waiting room's own copy while it makes its world, else the page's.
+            string forNewWorld = Body(options, "public static (bool separate, bool separateScience) ForNewWorld()");
+            Check(forNewWorld.Contains("LobbySessionState.CreatingWorld") && forNewWorld.Contains("!lobby.Setup.IsSave") && forNewWorld.Contains("lobby.Setup.Separate"),
+                "a waiting room's world must be made with the room's own choice");
+            Check(forNewWorld.Contains("Separate && SeparateScience"), "separate science only in a separate-colonies game");
+            // The page's rows: the Tutorial row joins their column; each row initialised alone (the Tutorial row already is).
+            string build = Body(options, "private void Build(VisualElement root)");
+            Check(build.Contains("root.Q(\"TutorialToggleWrapper\")") && build.Contains("block.Add(tutorial)"), "the checkboxes must line up with the page's Tutorial row");
+            Check(!build.Contains("InitializeVisualElement(block)") && Body(options, "private Toggle Row(").Contains("InitializeVisualElement(row)"),
+                "initialising the column would give the Tutorial checkbox a second click sound");
+            string refresh = Body(options, "private void Refresh()");
+            Check(refresh.Contains("scienceRow.ToggleDisplayStyle(separated)") && refresh.Contains("mixedRow.ToggleDisplayStyle(separated)"),
+                "the choices under Separate colonies must show only while it is ticked");
+            Check(refresh.Contains("mixed.SetEnabled(possible)") && Body(options, "private string MixedTooltip()").Contains("MixedFactions.Locked"),
+                "Mixed factions must be greyed, saying why, when it can't be had here");
+            // Every new world and the waiting room read the choice.
+            string start = Source("BeaverBuddies", "MultiStart", "MultiStartPatches.cs");
+            Check(start.Split("NewGameColonyChoice.ForNewWorld()").Length == 3, "both start paths must read NewGameColonyChoice.ForNewWorld()");
+            Check(Source("BeaverBuddies", "Factions", "NewGameFactionCapture.cs").Contains("NewGameColonyChoice.MixedRequested && BeaverBuddies.Lobby.NewGameColonyChoice.Separate"),
+                "mixed factions must be asked for on the page, and only with separate colonies");
+            Check(Source("BeaverBuddies", "Factions", "MixedFactions.cs").Contains("IsOn = lobby.Setup.Mixed && lobby.Setup.Separate;"), "a room's world must be mixed by its own choice");
+            string host = Source("BeaverBuddies", "Lobby", "LobbyHostPanel.cs");
+            Check(host.Contains("Separate = NewGameColonyChoice.Separate,") && host.Contains("SeparateScience = NewGameColonyChoice.SeparateScience,"),
+                "the room must take the page's choice when it opens");
+            Check(Source("BeaverBuddies", "Lobby", "LobbySession.cs").Contains("Settings.PingDisplayName, setup.Separate, setup.Mixed, setup.Factions"),
+                "guests must be told the room's own choice");
+        });
+
+        yield return ("rc3: only a guest can split a shared game, from the game menu, once confirmed; the host never; science stays shared", () =>
+        {
+            Check(ColonyRules.MayFound(separateColonies: true, actorIsHost: true) && ColonyRules.MayFound(true, false), "anyone founds in a separate game");
+            Check(ColonyRules.MayFound(false, actorIsHost: false) && !ColonyRules.MayFound(false, actorIsHost: true), "in a shared game a guest, never the host");
+            Check(ColonyRules.SplitOffered(isGuest: true, separateColonies: false, seated: true, ownsDistrict: false), "a seated guest of a shared game is offered it");
+            Check(!ColonyRules.SplitOffered(false, false, true, false), "never the host");
+            Check(!ColonyRules.SplitOffered(true, true, true, false), "never in a separate game (the ordinary founding is offered there)");
+            Check(!ColonyRules.SplitOffered(true, false, true, true) && !ColonyRules.SplitOffered(true, false, false, false), "not with a colony, nor before seating");
+            // The notices: the founder, the host and everyone else are each told the game is separate now, for good.
+            Check(ColonyRules.FoundingNoticeFor(1, 1, founded: true, split: true) == FoundingNotice.SplitDone, "the founder");
+            Check(ColonyRules.FoundingNoticeFor(0, 1, true, split: true, localIsHost: true) == FoundingNotice.SplitHost, "the host");
+            Check(ColonyRules.FoundingNoticeFor(2, 1, true, split: true, localIsHost: false) == FoundingNotice.SplitOther, "another player");
+            Check(ColonyRules.FoundingNoticeFor(0, 1, true) == FoundingNotice.Founded && ColonyRules.FoundingNoticeFor(1, 1, false, split: true) == FoundingNotice.Failed,
+                "an ordinary founding and a failed try are told as before");
+            string csv = Source("BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv").Replace("\r\n", "\n");
+            foreach (FoundingNotice notice in new[] { FoundingNotice.SplitDone, FoundingNotice.SplitHost, FoundingNotice.SplitOther })
+                Check(csv.Contains("\n" + ColonyRules.FoundingNoticeKey(notice) + ",\""), "no English line for " + notice);
+
+            string founding = Source("BeaverBuddies", "Colonies", "ColonyFoundingService.cs");
+            Check(Body(founding, "public ColonyVerdict Judge(").Contains("ColonyRules.MayFound(ColonyModeService.IsSeparateColonies,")
+                && Body(founding, "public ColonyVerdict Judge(").Contains("actorIsHost: actorSlot == ColonySession.SeatOfPlayer(ColonySession.HostPlayer)"),
+                "the host's verdict must refuse the host's own split");
+            Check(founding.Contains("private static bool FoundingAllowed => ColonyModeService.IsSeparateColonies || SharedColonySplit.Confirmed;"),
+                "in a shared game the founding tool opens only after the split is confirmed");
+            string found = Body(founding, "public void Found(Placement placement, int slot, ColonyStartingSettings settings, string faction = null)");
+            Check(found.Contains("separateScience: false") && found.Contains("newGame: false"), "a split keeps one pool of science and unlocks");
+            Check(Body(founding, "public void BeginSplit()").Contains("SharedColonySplit.Confirmed = true"), "BeginSplit must allow this guest's founding");
+            Check(Body(founding, "public ColonyFoundingService(").Contains("SharedColonySplit.Confirmed = false"), "a new scene must forget an earlier session's confirmation");
+
+            string split = Source("BeaverBuddies", "Colonies", "SharedColonySplit.cs");
+            Check(Body(split, "public static bool Offered").Contains("EventIO.Get() is ClientEventIO") && Body(split, "public static bool Offered").Contains("ColonyRules.SplitOffered("),
+                "the button must be a guest's, by the rule");
+            Check(Body(split, "public void AddButton(").Contains("button.ToggleDisplayStyle(Offered)"), "the button must be hidden wherever it is not offered");
+            string ask = Body(split, "private void Ask(GameOptionsBox box)");
+            Check(ask.IndexOf("SplitCanBeginNow", StringComparison.Ordinal) < ask.IndexOf("SetConfirmButton", StringComparison.Ordinal)
+                && ask.IndexOf("SetConfirmButton", StringComparison.Ordinal) < ask.IndexOf("founding.BeginSplit()", StringComparison.Ordinal),
+                "the split must wait for the game's start, then ask, and begin only once confirmed");
+            // The host's old switch is gone: from Mod Settings, the session and the join message.
+            string session = Source("BeaverBuddies", "Colonies", "ColonySession.cs");
+            Check(!session.Contains("HostAllowsFounding") && !session.Contains("HostSeparateScience"), "the host's founding switch is still in the session");
+            Check(!Source("BeaverBuddies", "Events", "ConnectionEvents.cs").Contains("foundingInSharedGame"), "the join message still carries the host's founding switch");
+        });
+
+        yield return ("rc3: the waiting room says what kind of game it is, the same on the host's page and every guest's", () =>
+        {
+            Check(BeaverBuddies.Lobby.LobbyRules.ColonyNoteKey(false, "Folktails", separate: true, mixed: false) == "BeaverBuddies.Lobby.Colonies.Separate", "separate");
+            Check(BeaverBuddies.Lobby.LobbyRules.ColonyNoteKey(false, "Folktails", true, mixed: true) == "BeaverBuddies.Lobby.Colonies.SeparateMixed", "separate, mixed");
+            Check(BeaverBuddies.Lobby.LobbyRules.ColonyNoteKey(false, "Folktails", separate: false, mixed: false) == "BeaverBuddies.Lobby.Colonies.Shared", "shared");
+            Check(BeaverBuddies.Lobby.LobbyRules.ColonyNoteKey(true, "IronTeeth", false, false) == "BeaverBuddies.Lobby.Colonies.Shared", "a shared save");
+            Check(BeaverBuddies.Lobby.LobbyRules.ColonyNoteKey(true, "IronTeeth", true, false) == "BeaverBuddies.Lobby.Colonies.SeparateSave", "a separate save");
+            Check(BeaverBuddies.Lobby.LobbyRules.ColonyNoteKey(true, "IronTeeth", true, true) == "BeaverBuddies.Lobby.Faction.MixedSave", "a mixed save");
+            Check(BeaverBuddies.Lobby.LobbyRules.ColonyNoteKey(true, "", true, true) == null, "a save that could not be read: no guess");
+            string csv = Source("BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv").Replace("\r\n", "\n");
+            foreach (string key in new[] { "Colonies.Separate", "Colonies.SeparateMixed", "Colonies.Shared", "Colonies.SeparateSave", "Faction.MixedSave" })
+                Check(csv.Contains("\nBeaverBuddies.Lobby." + key + ",\""), "no English line for " + key);
+            Check(Source("BeaverBuddies", "Lobby", "LobbyHostPanel.cs").Split("LobbyRules.ColonyNoteKey(").Length == 3, "the host's page (a new game and a save) must use the rule");
+            Check(Source("BeaverBuddies", "Lobby", "LobbyGuestPanel.cs").Contains("LobbyRules.ColonyNoteKey(summary.IsSave, summary.FactionId, summary.SeparateColonies, summary.Mixed)"),
+                "a guest's page must use the rule on the host's summary");
+        });
     }
 }

@@ -167,8 +167,9 @@ namespace BeaverBuddies.Lobby
                 ? LobbyPage.SaveLine(_timestampFormatter, summary.SaveName, summary.Cycle, summary.Day)
                 : summary?.Settlement);
             page.SetFactions(FactionOrNull);
-            if (summary != null && summary.Mixed)
-                page.SetFactionNote(RegisteredLocalizationService.T(summary.IsSave ? "BeaverBuddies.Lobby.Faction.MixedSave" : "BeaverBuddies.Lobby.Faction.Mixed"));
+            // What kind of game it is, in the host's page's words (LobbyRules.ColonyNoteKey).
+            string noteKey = summary == null ? null : LobbyRules.ColonyNoteKey(summary.IsSave, summary.FactionId, summary.SeparateColonies, summary.Mixed);
+            if (noteKey != null) page.SetFactionNote(RegisteredLocalizationService.T(noteKey));
             shown = true;
             popWhenOnTop = false;
             Plugin.Log($"[Lobby] In {hostName}'s waiting room as player {view.You}");

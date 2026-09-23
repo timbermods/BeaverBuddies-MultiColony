@@ -13,19 +13,6 @@ namespace BeaverBuddies.Colonies
     {
         public const int HostPlayer = 0;
 
-        /// <summary>
-        /// The host allows founding a colony in a shared game this session (Mod Settings), which makes it a
-        /// separate-colonies game for good. A separate-colonies game allows founding whatever this says. Latched by the
-        /// host when it starts hosting; told to guests.
-        /// </summary>
-        public static bool HostAllowsFounding { get; private set; }
-
-        /// <summary>
-        /// The host's choice of separate science and unlocks, used when a colony is founded in a shared game (every
-        /// computer founds it, so every computer must use the host's choice). Latched when hosting; told to guests.
-        /// </summary>
-        public static bool HostSeparateScience { get; private set; } = true;
-
         /// <summary>Debug only: how many slots the host's own actions are shifted by, to test other colonies alone.</summary>
         public static int HostSlotShift { get; private set; }
 
@@ -74,12 +61,10 @@ namespace BeaverBuddies.Colonies
         /// <summary>The host starts hosting: its settings are fixed for the whole session.</summary>
         public static void BeginHostSession()
         {
-            HostAllowsFounding = Settings.FoundingInSharedGamesAllowed;
-            HostSeparateScience = Settings.SeparateScienceForNewColonies;
             HostSlotShift = 0;
             joiningClosedAtStart = false;
             ForgetHostFactions();
-            Plugin.Log($"[Colony] Hosting; founding a colony in a shared game {(HostAllowsFounding ? "allowed" : "off")}");
+            Plugin.Log("[Colony] Hosting");
         }
 
         /// <summary>The host pressed Start in a new game's waiting room: this session never waits for late joiners.</summary>
@@ -90,10 +75,8 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>A guest learns the host's choice from the host's first message.</summary>
-        public static void AdoptHostChoice(bool hostAllowsFounding, bool hostSeparateScience, bool hostClosedJoiningAtStart)
+        public static void AdoptHostChoice(bool hostClosedJoiningAtStart)
         {
-            HostAllowsFounding = hostAllowsFounding;
-            HostSeparateScience = hostSeparateScience;
             HostSlotShift = 0;
             joiningClosedAtStart = hostClosedJoiningAtStart;
         }

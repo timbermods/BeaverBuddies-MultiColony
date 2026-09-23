@@ -10,8 +10,8 @@ using Timberborn.NewGameConfigurationSystem;
 namespace BeaverBuddies.Factions
 {
     /// <summary>
-    /// The main menu's side of Mixed factions for new games (D9): whether a new game made here would be mixed (the setting
-    /// and Separate colonies are on, and every faction is unlocked on this computer's profile, the host's, D1), for the
+    /// The main menu's side of Mixed factions for new games (D9): whether a new game made here would be mixed (the Game Mode
+    /// page's Mixed factions and Separate colonies are ticked, and every faction is unlocked on this computer's profile, the host's, D1), for the
     /// waiting room when it opens and for the solo New Game's Start. What it captures is plain static state: it has to
     /// outlive the menu scene and is taken once by the new game (MixedFactions.Decide).
     /// </summary>
@@ -36,8 +36,11 @@ namespace BeaverBuddies.Factions
             MixedFactions.Reset();
         }
 
-        /// <summary>Whether the host has asked for mixed factions in new games (whether or not it can have them).</summary>
-        public static bool Requested => Settings.MixedFactionsForNewGames && Settings.SeparateColoniesForNewGames;
+        /// <summary>
+        /// Whether the host has asked for mixed factions in new games (whether or not it can have them): the Game Mode page's
+        /// Mixed factions, under a ticked Separate colonies (1.4.0-rc3; a Mod Setting before).
+        /// </summary>
+        public static bool Requested => BeaverBuddies.Lobby.NewGameColonyChoice.MixedRequested && BeaverBuddies.Lobby.NewGameColonyChoice.Separate;
 
         /// <summary>
         /// A new game made now would be mixed. When it was asked for but a faction is still locked on this profile,
@@ -55,11 +58,25 @@ namespace BeaverBuddies.Factions
         {
             lockedFaction = null;
             notTwoFactions = false;
-            if (!Requested || MixedFactions.Unavailable != null) return false;
+            if (!Requested) return false;
+            bool possible = MixedPossible(out lockedFaction, out notTwoFactions);
+            if (notTwoFactions)
+                Plugin.LogWarning($"[Factions] Mixed factions is made for the game's two factions; this game has {Factions().Count()} ({string.Join(", ", Factions().Select(f => f.Id))}), so new games have one faction");
+            return possible;
+        }
+
+        /// <summary>
+        /// Whether a new game made here could be mixed, asked for or not (the Game Mode page greys its Mixed factions
+        /// otherwise): the patches are in, the game has exactly its two factions, and both are unlocked on this profile.
+        /// </summary>
+        public bool MixedPossible(out string lockedFaction, out bool notTwoFactions)
+        {
+            lockedFaction = null;
+            notTwoFactions = false;
+            if (MixedFactions.Unavailable != null) return false;
             if (Factions().Count() != 2)
             {
                 notTwoFactions = true;
-                Plugin.LogWarning($"[Factions] Mixed factions is made for the game's two factions; this game has {Factions().Count()} ({string.Join(", ", Factions().Select(f => f.Id))}), so new games have one faction");
                 return false;
             }
             FactionSpec locked = Factions().FirstOrDefault(f => _factionUnlockingService.IsLocked(f));

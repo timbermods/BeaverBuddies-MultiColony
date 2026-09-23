@@ -30,10 +30,6 @@ namespace BeaverBuddies.Events
         public bool isDebugMode;
         // The host's choice for the session. Absent from an older host, which reads as the game's default.
         public bool removeLargeColonySpeedLimit;
-        // Whether the host allows founding a colony in a shared game this session.
-        public bool foundingInSharedGame;
-        // Separate colonies: the host's choice of separate science for a colony founded in this session.
-        public bool separateScience;
         // The session's speed boost (SpeedBoost) as this player joins. Absent from an older host, which reads as 0.
         public float speedBoost;
         // The host started this session from a new game's waiting room: nobody joins late, so founding and the rest
@@ -47,7 +43,7 @@ namespace BeaverBuddies.Events
         {
             //context.GetSingleton<ReplayService>().SetServerMapName(mapName);
             LargeColonySpeedLimit.AdoptHostChoice(removeLargeColonySpeedLimit);
-            ColonySession.AdoptHostChoice(foundingInSharedGame, separateScience, joiningClosedAtStart);
+            ColonySession.AdoptHostChoice(joiningClosedAtStart);
             ColonySession.AdoptHostFactions(hostFactions);
             context.GetSingleton<ReplayService>().SetBoost(speedBoost);
             string warningMessage = null;
@@ -82,8 +78,6 @@ namespace BeaverBuddies.Events
                 serverGameVersion = GameVersions.CurrentVersion.ToString(),
                 isDebugMode = Settings.Debug,
                 removeLargeColonySpeedLimit = LargeColonySpeedLimit.BeginHostSession(host),
-                foundingInSharedGame = ColonySession.HostAllowsFounding,
-                separateScience = ColonySession.HostSeparateScience,
                 speedBoost = ReplayService.SessionBoost,
                 joiningClosedAtStart = ColonySession.JoiningClosedAtStart,
                 // A waiting room's guest is sent this before the host's game exists (MixedFactions.IsOn is the menu's, or

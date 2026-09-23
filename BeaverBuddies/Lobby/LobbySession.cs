@@ -40,6 +40,13 @@ namespace BeaverBuddies.Lobby
         public string Settlement { get; set; }
 
         /// <summary>
+        /// A new game's colonies, as the Game Mode page had them when Host co-op game was pressed (1.4.0-rc3): separate or
+        /// one shared colony, and with separate colonies, separate science and unlocks. The world is made with these.
+        /// </summary>
+        public bool Separate { get; set; } = true;
+        public bool SeparateScience { get; set; } = true;
+
+        /// <summary>
         /// Each colony plays a faction of its own (Mixed factions for new games, with every faction unlocked on the host's
         /// computer; for a save, the save's own mode). Players pick theirs in the room.
         /// </summary>
@@ -124,7 +131,7 @@ namespace BeaverBuddies.Lobby
                         colonies.BaseFaction, colonies.SeparateColonies, setup.Mixed, setup.Factions)
                     : LobbySummary.ForSave(setup.Settlement, setup.Save.SaveName, setup.Cycle, setup.Day, Settings.PingDisplayName)
                 : new LobbySummary(setup.FactionId, setup.MapName, setup.ModeLocKey, setup.Settlement,
-                    Settings.PingDisplayName, Settings.SeparateColoniesForNewGames, setup.Mixed, setup.Factions);
+                    Settings.PingDisplayName, setup.Separate, setup.Mixed, setup.Factions);
             var room = new LobbyRoom(summary);
             if (setup.IsSave && colonies != null && colonies.SeparateColonies)
             {

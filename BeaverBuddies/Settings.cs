@@ -97,22 +97,8 @@ namespace BeaverBuddies
                 .SetLocalizedTooltip("BeaverBuddies.Settings.RemoveSpeedLimit.Tooltip"));
 
         // ---- Separate colonies ----
-
-        public ModSetting<bool> SeparateColonies { get; } =
-            new(true, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.SeparateColonies")
-                .SetLocalizedTooltip("BeaverBuddies.Settings.SeparateColonies.Tooltip"));
-
-        public ModSetting<bool> FoundingInSharedGames { get; } =
-            new(false, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.FoundingInSharedGames")
-                .SetLocalizedTooltip("BeaverBuddies.Settings.FoundingInSharedGames.Tooltip"));
-
-        public ModSetting<bool> SeparateScience { get; } =
-            new(true, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.SeparateScience")
-                .SetLocalizedTooltip("BeaverBuddies.Settings.SeparateScience.Tooltip"));
-
-        public ModSetting<bool> MixedFactions { get; } =
-            new(false, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.MixedFactions")
-                .SetLocalizedTooltip("BeaverBuddies.Settings.MixedFactions.Tooltip"));
+        // Whether a new game has separate colonies, separate science and mixed factions is chosen on the Game Mode page
+        // since 1.4.0-rc3 (BeaverBuddies.Lobby.NewGameColonyOptions); a guest splits a shared game from the game menu.
 
         // 0 (never) by default since 1.4.0-rc2: a colony whose player steps away is kept for them (a steward runs it);
         // the host sets a number of days for groups where a player may not come back.
@@ -211,27 +197,6 @@ namespace BeaverBuddies
         public static bool ShouldShowFirstTimerMessage => instance?.ShowFirstTimerMessage.Value ?? true;
         public static bool PlayerActivityEnabled => instance?.PlayerActivity.Value ?? true;
         public static bool RemoveSpeedLimit => instance?.RemoveLargeColonySpeedLimit.Value ?? false;
-
-        /// <summary>
-        /// A new game is a separate-colonies game (one colony per start on a multi-start map; on a one-start map the other
-        /// players found theirs). Read when the game is created; a save keeps the mode it was made with.
-        /// </summary>
-        public static bool SeparateColoniesForNewGames => instance?.SeparateColonies.Value ?? true;
-
-        /// <summary>
-        /// Host: players without a colony may found one in a shared game, which turns it into a separate-colonies game for
-        /// good. Off, a shared game stays one shared colony. Fixed when hosting starts.
-        /// </summary>
-        public static bool FoundingInSharedGamesAllowed => instance?.FoundingInSharedGames.Value ?? false;
-
-        /// <summary>A new separate-colonies game gives each colony its own science and unlocks. Fixed for the save.</summary>
-        public static bool SeparateScienceForNewColonies => instance?.SeparateScience.Value ?? true;
-
-        /// <summary>
-        /// Host: a new separate-colonies game lets each colony play its own faction, picked in the waiting room or when
-        /// founding. Needs every faction unlocked on the host's computer. Read when the game is made; kept by the save.
-        /// </summary>
-        public static bool MixedFactionsForNewGames => instance?.MixedFactions.Value ?? false;
 
         /// <summary>Host: days a colony's player may be away before the colony is handed to another (0, the default: never).</summary>
         public static int AbandonedColonyDaysValue => instance?.AbandonedColonyDays.Value ?? 0;

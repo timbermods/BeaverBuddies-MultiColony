@@ -126,7 +126,7 @@ HarmonyResolutionChecks.Run(assembly, Test);
 PatchGateChecks.Run(assembly, Test);
 ReviewBeta21RuntimeChecks.Run(assembly, Test);
 // The 1.4.0-rc1 review (design/REVIEW-PLAN-1.4.0-beta24.md): one file per reviewer, so their checks merge apart.
-RcMainRuntimeChecks.Run(assembly, Test);
+RcMainRuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Test);
 RcLateGameRuntimeChecks.Run(assembly, Test);
 RcFactionRuntimeChecks.Run(assembly, Test);
 RcTradingRuntimeChecks.Run(assembly, Test);
