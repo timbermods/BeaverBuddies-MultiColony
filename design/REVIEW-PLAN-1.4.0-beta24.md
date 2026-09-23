@@ -2,14 +2,44 @@
 
 **Status:** proposed 2026-09-23, for Kyler's approval. Written against beta23, then rebased on beta24 (the Join co-op
 box, reviewed in §0.1). Written to be carried out by one session (Opus 5.5, xhigh) that runs reviewers as subagents,
-builds an in-game test rig, fixes what it finds and cuts a release candidate. Findings go to
-`design/REVIEW-FINDINGS-1.4.0-beta24.md`.
+fixes what it finds and cuts a release candidate, on Kyler's computer. It never runs the game (the rule below).
+Findings go to `design/REVIEW-FINDINGS-1.4.0-beta24.md`.
+
+> **Hard rule: never start, drive or test Timberborn, and never touch the installed mods.** Kyler, 2026-09-23: "I just
+> don't want you controlling timberborn."
+>
+> - **Never start the game.** That means no `Timberborn.exe`, no `steam -applaunch`, no command-line switches, and not
+>   even the game's own benchmark. No test rig, and no scripted or automated play. Kyler does all in-game testing
+>   himself.
+> - **Never change what the game loads.**
+>   - Never write to `Documents/Timberborn/Mods`, the mod manager's enabled list or the game's settings.
+>   - Every build goes to a scratch folder (`-p:BeaverBuddiesModsPath=<scratch>/`). Without it, the post-build step
+>     copies into the installed mod.
+>   - Never edit the game install.
+>   - Never write into `Documents/Timberborn/Saves`: copy a save to the scratchpad to read it.
+> - **Everything else is fine, because none of it runs the game:**
+>   - reading and decompiling the game's DLLs, `Blueprints.zip` and copies of saves;
+>   - building the mod and running both check suites (RuntimeChecks loads the game's DLLs into a plain .NET process and
+>     never starts Unity);
+>   - the review, the fixes and the release.
+> - **What only the running game can show goes to Kyler as short, exact test steps** (§6). The mod is taught to report
+>   what those tests need (§5.3), so one ordinary session of his answers the question.
 
 **Why this review.** 1.4.0 is meant to be the first official release. Everything that has been played is the early
 game. The systems people build towards in the late game (automation, the HTTP API, water automation, dynamite and
 tunnels, both Wonders, bots, power grids, badwater), Folktails and Iron Teeth together, and Trading Posts at scale
-have never run in a MultiColony game. This review has to find what breaks there before players do, and has to
-**run** as much of it as can be run from this computer, not only read it.
+have never run in a MultiColony game.
+
+**Kyler's goal** (2026-09-23): through the rigour of this review, to know with high confidence that every late-game
+feature works and doesn't crash. The game testing comes later, in a real two-player playtest in a late-game colony.
+So the review:
+- **covers every late-game feature, not a sample.** The coverage matrix (§1) is the proof, and it has no empty cells;
+- **treats a crash as the worst finding after a desync.** A throw inside a tick or a replay ends the session for both
+  players, so every such path is proven unable to throw, or guarded and checked (H1);
+- **checks without running the game:** the mod's own checks, the game's code run outside the game, and reporting in
+  the mod (§5.3);
+- **makes the later playtest count.** It writes that playtest (§6) so that each step closes named cells of the
+  matrix, and the mod reports what each step needs.
 
 ---
 
@@ -24,9 +54,9 @@ Game: Timberborn 1.1.2.4. Checks at beta24, per its changelog: StabilityTests 41
 with 0 warnings.
 
 **Line numbers** in this plan and its planning notes are beta23's. beta24 touched only the files listed in §0.1; of
-those, only `IO/ServerEventIO.cs` is cited here, and those citations use beta24's lines. The decompiled game (all 497 `Timberborn.*.dll`) was made while
-planning into this session's scratchpad; the executing session makes its own (`ilspycmd`, 10 at a time, about 15
-minutes).
+those, only `IO/ServerEventIO.cs` is cited here, and those citations use beta24's lines. The decompiled game (all 497
+`Timberborn.*.dll`) was made while planning into this session's scratchpad; the executing session makes its own
+(`ilspycmd`, 10 at a time, about 15 minutes).
 
 **What has been played** (so that nothing below is mistaken for tested):
 
@@ -104,8 +134,7 @@ it), so it gets its own short lead, B24.
   matches the DLL. A self-built or Release (not Release Steam) DLL of the same version lists as joinable, then is
   refused at the handshake with the build message. Acceptable; confirm the message is clear.
 
-The rig (§5.3) can't cover the list: it needs two Steam accounts. Kyler has seen it work (2026-09-23); B24-b stays a
-person's test. The rig's guest joins by IP, the box's fallback.
+Kyler has seen the list work (2026-09-23); B24-b stays a person's test.
 
 ### Found while planning
 
@@ -141,16 +170,34 @@ Read in the mod and the decompiled game, not run.
   get nothing. Nothing crashes: `NeedManager.ApplyEffect` skips a need the character lacks (`Timberborn.NeedSystem`,
   `TryGetNeed`). The completion countdown (`WonderCompletionCountdownStarter`, a tickable singleton) is one for the map:
   the first colony to finish completes the game's Wonder for everyone.
-- **P-5: every creation or deletion inside a tick ends that frame's ticking in co-op.** Deletions: `TickTimingFixes.cs:27-35`.
-  Creations: `EntityComponentInstantiatePatcher`, `DeterminismService.cs:852`. The unticked buckets are given back,
-  up to one tick (`ReplayService.cs:1201, 1245`). Early game that is rare. A late game has births, goods stacks,
-  construction, pilots, planes, fireworks and a 40-charge dynamite chain, and at speed 7 or boosted it may end most
-  frames early. That is only a cost, never a desync, but it is unmeasured and it lands exactly where the late game is
-  already slow.
+- **P-5: every creation or deletion inside a tick ends that frame's ticking in co-op.** Deletions:
+  `TickTimingFixes.cs:27-35`. Creations: `EntityComponentInstantiatePatcher`, `DeterminismService.cs:852`. The unticked
+  buckets are given back, up to one tick (`ReplayService.cs:1201, 1245`). Early game that is rare. A late game has
+  births, goods stacks, construction, pilots, planes, fireworks and a 40-charge dynamite chain, and at speed 7 or
+  boosted it may end most frames early. That is only a cost, never a desync, but it is unmeasured and it lands exactly
+  where the late game is already slow.
 
 ---
 
 ## 1. The release bar
+
+**The coverage matrix** is the review's main deliverable, in the findings.
+- **Rows:** every late-game feature: each row of §2, every late-game building and good of both factions (F1), and
+  every kind of trade (T2).
+- **Columns:** the ways a feature can fail:
+  - desync;
+  - crash (a throw in a tick or a replay);
+  - one colony changing another;
+  - mixed factions;
+  - cost at late-game size;
+  - save, load and rehost.
+- **Each cell says one of:**
+  - **Sound**, with the evidence;
+  - **Fixed**, with the check that fails without the fix;
+  - **Left**, documented, with the reason;
+  - **Playtest**, with the step of §6 that settles it.
+
+No cell is empty. No cell with a Plausible desync or crash is left without a fix or Kyler's decision.
 
 **Blocking for 1.4.0** (this review works towards them; the release candidate carries the fixes; 1.4.0 itself waits
 for the owed playtests):
@@ -163,21 +210,27 @@ for the owed playtests):
    effect applied. Nothing of one faction breaks, starves or crashes the other.
 5. Trading Posts: every tradable good, science and beavers cross in both directions; exchanges repeat for many cycles;
    nothing is created or lost; nothing stalls without saying why.
-6. Performance: budgets B1 to B6, measured on the reference saves (§5.4).
-7. Soak: the in-game rig (§5.3) runs a host and a guest for at least 20 in-game cycles on the late reference save, 10
-   on the mixed one and 10 on the trading one, with no mismatch, no exception from the mod, and bounded memory.
-8. Played by people before 1.4.0 final: Script D7, D7a and D8, B24-b (the Join co-op box), Script F, and the new
-   Scripts L, M and T this review writes (§6).
+6. Performance: budgets B1 to B6. The review estimates them from the code and removes what it can (§5.4). The numbers
+   come from Kyler's own recordings, Script P (§6), helped by the mod's new reporting (§5.3).
+7. A long session, played by Kyler with a guest:
+   - at least 20 in-game cycles of a late two-colony game, and 10 each of a mixed game and a trading game;
+   - no mismatch, no exception from the mod, and bounded memory, as the mod reports them (§5.3).
 
-**Budgets** (proposed; Kyler can change them). "The reference save" is `R-late` in §3.
+   These are owed tests, like the playtests; the release candidate doesn't wait for them.
+8. Played by people before 1.4.0 final: Script D7, D7a and D8, B24-b (the Join co-op box), Script F, and the
+   two-player late-game playtest this review writes (§6: Scripts L, M and T).
+9. The coverage matrix (above) is complete: no empty cell, and no Plausible desync or crash left without a fix or
+   Kyler's decision.
+
+**Budgets** (proposed; Kyler can change them). "The reference save" is `R-late` in §3. They are measured in Script P.
 
 | | What | Budget |
 |---|---|---|
 | B1 | MultiColony installed, single-player | Tick time within 1 % of the game alone: the mod costs nothing outside co-op |
 | B2 | Co-op host, no guests | The mod's own share of tick time at most 5 % in a shared colony, 7 % with the save split into two colonies |
 | B3 | Allocation | No mod patch or singleton among PerformanceLog's top allocators per tick (GC pauses are the late game's hitches) |
-| B4 | Host and guest on loopback, speed 7 and a boost of 15 | The guest stays within `BufferTicksFor(speed) + 2` ticks of the host for 95 % of ticks, with no catch-up spiral, and the achieved tick rate is within 10 % of single-player |
-| B5 | Rehost of the reference save | Save, send and the guest's load in under 30 s on loopback; the host's game never freezes for more than 1 s |
+| B4 | Host and guest, speed 7 and a boost of 15 | The guest stays within `BufferTicksFor(speed) + 2` ticks of the host for 95 % of ticks, with no catch-up spiral, and the achieved tick rate is within 10 % of single-player |
+| B5 | Rehost of the reference save | Save, send and the guest's load in under 30 s on a home network; the host's game never freezes for more than 1 s |
 | B6 | Mixed factions | Tick cost within 5 % of a single-faction game of the same size; load time and memory within 25 % |
 
 ---
@@ -214,29 +267,16 @@ All `file:line` references are beta23's (see §0 for beta24). "Recorded" means a
 
 ## 3. What we have to work with (found while planning)
 
-**Reference saves on this computer.** Nothing is modified; the rig works on copies.
+**Reference saves on this computer.** Read from copies in the scratchpad; the originals are never written.
 
 | Name | File | What is in it |
 |---|---|---|
 | `R-late` | `Saves/Romans missing leg/Romans missing leg (9) TESTING.timber` | 1.1.2.4, Folktails, 11,356 entities, 319 adults, 1,601 paths, 229 levees, 46 floodgates, 12 gravity batteries, 6 geothermal engines, depth and contamination sensors, 2 gates, a dynamite and an explosives factory, 24 zipline stations, an observatory. No levers, relays, timers, Wonder or HTTP buildings. Carries Kyler's OptimizedLocalHousing singleton |
-| `R-blast` | `Saves/roman is kinda uglyyyy/roman is kinda uglyyyy (37).timber` | Saved in 1.0.13, so check that it loads. 14,702 entities, 478 adults, 3,428 paths, 39 double dynamite and 2 dynamite, 22 tunnels, 57 fill valves, 62 floodgates, a badwater rig and dome, a dirt excavator |
+| `R-blast` | `Saves/roman is kinda uglyyyy/roman is kinda uglyyyy (37).timber` | Saved in 1.0.13; a reference for its contents only. 14,702 entities, 478 adults, 3,428 paths, 39 double dynamite and 2 dynamite, 22 tunnels, 57 fill valves, 62 floodgates, a badwater rig and dome, a dirt excavator |
 | `R-long` | `Saves/beta15/beta15 (1) late.timber` | MultiColony, two colonies, day 47-9: small |
 
-None has Iron Teeth, a mixed game, bots, a Wonder, HTTP buildings, levers, relays, memory or timers. The rig builds
-those (§5.3).
-
-**Game switches** (read from `Timberborn.MainMenuScene`, `Benchmarking`, `ModManagerSceneUI`, `ScreenSystem`,
-`Metrics`, and Kyler's `LateGamePerformance/tools/benchmark-timberborn.ps1`):
-- `-settlementName X -saveName Y` loads a save at start;
-- `-skipModManager` starts with the enabled mods, without waiting on the mod manager;
-- `-benchmarkLength / -benchmarkWarmUpLength / -benchmarkSpeed / -metrics` runs the game's own benchmark and quits. It
-  **skips mods**, so it measures the game alone;
-- `-benchmarkSaveCount` benchmarks saving, with mods loaded;
-- `-uncapped`, `-experimental`; Unity's `-logFile`, `-screen-width`, `-screen-height`, `-screen-fullscreen`.
-
-`Timberborn_Data/boot.config` has `single-instance=`, so a second copy of the game started from the same folder
-exits. `SteamStoreSystem` calls `SteamAPI.RestartAppIfNecessary`, which relaunches through Steam unless
-`steam_appid.txt` is next to the exe.
+None has Iron Teeth, a mixed game, bots, a Wonder, HTTP buildings, levers, relays, memory or timers. Scripts L, M and
+T (§6) give Kyler the steps to build those in single-player with dev mode before hosting.
 
 **Planning notes** (read-only sweeps made for this plan; start from them, and re-check a line before citing it):
 - [`planning/1-late-game-events-and-fixes.md`](review-1.4.0-beta24/planning/1-late-game-events-and-fixes.md): every
@@ -248,21 +288,22 @@ exits. `SteamStoreSystem` calls `SteamAPI.RestartAppIfNecessary`, which relaunch
 
 **Tools already written:**
 - Kyler's **PerformanceLog** 0.1.2 (`Documents/Timberborn/Mods/PerformanceLog`): per-frame and per-tick timing, per
-  singleton, entity kind and mod, allocations and GC; `tools/perflog.py report|compare`. It only observes.
+  singleton, entity kind and mod, allocations and GC; `tools/perflog.py report|compare`. It only observes. Kyler records
+  with it (Script P); the session reads and compares the recordings.
 - **LateGamePerformance** 0.4.27 (installed) / 0.4.28 (repo): the mod late-game players will run beside this one (C1).
 - In this repo: `RuntimeChecks/IlScan.cs` (IL reading), `compare_walker_traces.py`, `compare_water_snapshots.py`,
   `WalkerDiagnostics`/`WaterDiagnostics` (per-tick dumps), the Ctrl+Shift+J report (`ColonyDiagnostics.cs:32-130`),
   `ColonyProfiler`.
 - `Timberborn_Data/StreamingAssets/Modding/Blueprints.zip`: every template, need and good of both factions.
-- The computer: Ryzen 7 9800X3D (8 cores, 16 threads), 62 GB. Two copies of the game fit.
 
 ---
 
 ## 4. Leads
 
 Every lead says what to check and what counts as proof. Every finding is reported as **Confirmed** (traced end to end
-in the mod and the game, or reproduced by a check or the rig), **Plausible**, or **Refuted**. A lead the rig can run
-is not closed by reading alone.
+in the mod and the game, or reproduced by a check), **Plausible**, or **Refuted**. A lead that only the running game can
+settle is not closed by reading alone. It gets a line in Script L, M, T or P (§6) and stays Plausible until Kyler's test
+comes back.
 
 ### Tier 1a: the late game in co-op (every player)
 
@@ -278,8 +319,10 @@ commit, sample, then `EvaluateScheduled(false)` again (`Timberborn.Automation`, 
 - that a replayed setter at the tick boundary is evaluated in that same tick (the order of `AutomationRunner` against
   the mod's tickable singletons).
 
-**Proof:** a table of each automation building's behaviour, single-player against co-op. Rig script A (§5.3) runs
-each case with the host at 15 fps and the guest uncapped, then the other way round.
+**Proof:** a table of each automation building's behaviour, single-player against co-op, from the game's code.
+- Where the game's automation classes can be driven outside Unity (RuntimeChecks, as `WonderChecks` does for the
+  Wonder timing), reproduce the cases there.
+- What can't be reproduced becomes Script L lines, with one player's frame rate capped at 15.
 
 **A2. The recorded setters are a hand-kept list.** **Check, by script over the decompiled game** (§5.2, sweep 1):
 every UI callback in `*UI.dll` (panel buttons, sliders, toggles, dropdowns, input processors) that reaches a write to
@@ -338,7 +381,7 @@ still match 1.1.2.4 and cover:
 - `WaterSourceActivator` on map timers;
 - badwater rigs, domes, discharges and centrifuges.
 
-Rig script W: a drought and a badtide with automated floodgates and valves, on both colonies.
+Script L: a drought and a badtide with automated floodgates and valves, on both colonies.
 
 **P1. Power networks across colonies (P-3).** No rule stops a colony's shaft meeting another colony's. A joined network
 shares engines and batteries, and it means:
@@ -360,7 +403,7 @@ same everywhere; object hash codes are not).
 - the terrain removal's consequences: water, soil, navigation mesh, district map, `ColonyRoadNetworks.OnNavMeshUpdated`,
   `ColonyStamps`, a Trading Post or a road join made or broken by the blast.
 
-Rig script X on `R-blast`, both colonies' beavers in range.
+Script L: a chain on a copy of `R-blast` hosted with a second colony, both colonies' beavers in range.
 
 **X2. Blast reach across colonies.** Only the dynamite's owner may detonate it (`EntityUIEvents.cs:739`). Nothing
 limits what the blast destroys: the other colony's buildings, beavers, Trading Post half, stock. **Decide** (default in
@@ -391,7 +434,7 @@ list in the event, plus a colony rule) or document it in *Known limits*.
   said all sites are covered, so confirm these are in its list);
 - pilots die through `CharacterKilledEvent`.
 
-Script B 8t is still owed; rig script V runs it with one side at 15 fps.
+Script B 8t is still owed; Script M repeats it with both Wonders, one side at 15 fps.
 
 **V3. A Wonder's workers and blockers in a two-colony game.** `NotEnoughWorkersWonderBlocker`,
 `UnreachableBuildingWonderBlocker`, `WonderInventory`: only the owner's beavers and goods count.
@@ -405,14 +448,36 @@ flights frame-timed but visual only.
 - Gates (moved to the tick, alpha14) with many districts.
 
 **O3. Hazards and weather over many cycles.** Drought and badtide lengths, `HazardousWeatherHistory`, the weather
-station. These are shared and covered by the RNG compare; confirm in the soak.
+station. These are shared and covered by the RNG compare; Kyler's long session (release bar 7) confirms it.
 
 **O4. Notices and the journal.** An Indicator with a journal entry or warning belongs to one colony. **Check** who sees
 it (`ColonyJournal`): display only, but late-game players build many.
 
-**H1. Crash safety in late-game patches.** Every mod patch on a tick path in these systems (automation, water, Wonders,
-exchanges, stamps, reach, factions) either can't throw or is caught. A throw out of the tick is a session-stopper for
-everyone. **Sweep:** every patch, its target's call sites in tick paths, and its try/catch or finalizer.
+**H1. Crash-proofing, everywhere a late game can reach.** This is the first priority after desyncs. A throw out of a
+tick or a replay ends the session for everyone, and the late game reaches states the early game never does.
+
+**Sweep** (§5.2, sweep 7) every mod entry point that runs in a tick, a replay or a load:
+- every Harmony prefix, postfix, finalizer and transpiler whose target runs there;
+- every `ReplayEvent.Replay`;
+- every tickable singleton, entity listener and event-bus handler of the mod.
+
+For each, list the late-game states it can meet, and prove it copes with them, or guard it and add a check:
+- an entity deleted earlier in the same tick (blasts; beta12's D2);
+- a component missing because the building is the other faction's, unfinished, or a map object (a ruin, an unstable
+  core);
+- a district or colony that no longer exists (after a handover or a switch);
+- a character with no `CharacterFaction` (older saves, dev spawns);
+- a save from an older version;
+- a singleton missing outside the Game scene.
+
+**Also:**
+- The game's own code that the mod makes throw by breaking one of its assumptions, as two districts sharing roads did
+  (`DistrictMapConflictPatcher`).
+- The finalizers that swallow exceptions (`Fixes/DistrictBuildingsFix.cs`): a swallowed throw must not leave the two
+  computers in different states.
+
+Keep the result as a list in the findings. Where a scan can be written, add one: for example, a source scan that every
+`Replay` null-checks what it looks up by id.
 
 **H2. Dev tools in co-op.** Nine debug buttons change the simulation (Expire, Explode and its delayed form,
 which runs on `Time.deltaTime` in `UnstableCore.Update`, Inventory: Give all, Modify Inventory, Progress construction,
@@ -507,13 +572,17 @@ A round in progress at every one of these moments.
 - Goods a colony can't store (D3), goods with no storage built yet, goods from other mods.
 
 **Check, by script:** for every good, the offer form, the picker, the prefill, the wishlist, the host's judgement and
-the replay agree. Then rig script T: one exchange per good, both ways.
+the replay agree. Then Script T: one exchange per good, both ways.
 
 **T3. Conservation.** Across a round, what leaves one colony arrives in the other: stock on the halves, goods carried
 by haulers, science, beavers. Nothing is duplicated when a round crosses in the same tick as a save, a deletion, a
 flood or a handover.
 
-**Check:** a daily invariant in the rig (per good, each colony's stock and the goods in transit, against the ledgers).
+**Check:**
+- the rule in StabilityTests, over the exchange code's pure parts (`ExchangeTerms`, the ledger);
+- a daily conservation line in the detailed log (§5.3): per good, each colony's stock and the goods in transit,
+  against the ledgers. Script T shows it.
+
 Consider a cheap version of it in the daily fingerprint line.
 
 **T4. Scale.** Many posts, many exchanges, the largest amounts (`ExchangeTerms.MaxAmount`, 100 per round).
@@ -543,10 +612,17 @@ voided when a colony changes faction (:474-479, 709); the faction switch refused
 
 The planning sweep's inventory of every tickable, updatable and hot-path patch, with estimated costs, is
 [`review-1.4.0-beta24/planning/2-hot-paths.md`](review-1.4.0-beta24/planning/2-hot-paths.md). Its estimates are from
-reading; these leads turn them into measurements.
+reading. The review can't measure in the game, so it:
+- measures what runs outside the game (micro-benchmarks of the mod's own code, in StabilityTests or RuntimeChecks);
+- makes the mod report the rest (§5.3);
+- gives Kyler Script P to record it.
 
-**S1. The mod's per-tick cost at late-game size.** Measure every tickable singleton and every patch on a per-tick,
-per-entity path with `ColonyProfiler` spots and PerformanceLog on `R-late`, shared and split into two colonies (B2).
+**S1. The mod's per-tick cost at late-game size.** Every tickable singleton and every patch on a per-tick, per-entity
+path gets:
+- a `ColonyProfiler` spot, so the Ctrl+Shift+J report and Script P show it on a late save, shared and split into two
+  colonies (B2);
+- where its code runs outside the game, a micro-benchmark at late-game sizes.
+
 Anything O(entities) per tick gets a number. The largest candidates, from reading:
 - working hours: per beaver and per workplace every tick, about 1–1.5 ms per tick at 1,000 callers, and its profiler
   spot costs about as much as the work (`ColonyWorkingHours.cs:136-180`);
@@ -557,11 +633,11 @@ Anything O(entities) per tick gets a number. The largest candidates, from readin
 - the exchange check: 6 to 10 `OwnerOf` per open exchange, a closure per `FactionTrade.Allows`, a list copy every 8
   ticks (`TradingPostExchange.cs:450-524`).
 
-**S2. Frame-ending interrupts (P-5).** **Count** the interrupts per tick on `R-late` at speed 7, and what they cost in
-achieved speed. Read from the code: with about 10 interrupting buckets per tick at 60 fps, the ceiling is about 5.5
-ticks a second, where speed 7 wants 11.7. If they matter, look at firing the interrupt once per bucket, or raising the
-one-tick cap on what `GiveBackBuckets` hands back. That is a determinism argument; bring it to the findings before
-changing anything.
+**S2. Frame-ending interrupts (P-5).** Have the mod count the interrupts per tick and report them (§5.3), so Script P
+shows what they cost in achieved speed at speed 7. Read from the code: with about 10 interrupting buckets per tick at 60
+fps, the ceiling is about 5.5 ticks a second, where speed 7 wants 11.7. If they matter, look at firing the interrupt
+once per bucket, or raising the one-tick cap on what `GiveBackBuckets` hands back. That is a determinism argument; bring
+it to the findings before changing anything.
 
 **S3. Allocation.** Every per-tick or per-frame allocation in the mod (LINQ, `ToList`, string building, closures:
 `MixedFactions.Spec` allocates on every call, `DoEntityPrefix` two closures before any check). The late game's hitches
@@ -577,7 +653,8 @@ would mean a whole-network walk every frame while a path is dragged. Measure wit
 7, or a boost, neither can. **Check** what `CatchUpSpeed` (a lagging guest speeds up, which can't help when the CPU is
 the limit), `HostPacing`, `FrameRatePacing`, the game's own `GameSpeedThrottler` for large populations (both colonies
 count) and `LargeColonySpeedLimit` do together. Is there a spiral? Does the slower computer set the pace smoothly?
-Reuse beta12's frame-by-frame lockstep model with tick costs measured on `R-late`, then confirm on the rig (B4).
+Reuse beta12's frame-by-frame lockstep model with late-game tick costs (estimated, or from Kyler's PerformanceLog
+recordings). Script L's maximum-speed step confirms it (B4).
 
 **S6. Saves, rehosts, reconnects and joins at late-game size.** B5. The steps:
 - the save at a tick boundary (`FinishParallelTick` first, beta12 B3);
@@ -597,11 +674,13 @@ Reuse beta12's frame-by-frame lockstep model with tick costs measured on `R-late
 - `ColonyStamp` and `CharacterFaction` on every entity (save size);
 - tick counters and float time sums after hours at a boost of 30.
 
-**Soak:** heap after GC at cycle 1 against cycle 20, with the mod against without.
+**Long session:** the mod reports its own collections' sizes and the heap once a day in the detailed log (§5.3).
+Kyler's long session (release bar 7) shows whether anything grows.
 
 **S8. The shipping build is unoptimised.** The zip ships **Release Steam**, which the SDK doesn't optimise (left in
-beta21 §4, for line numbers). **Measure** it against an optimised build in the rig, and check that `PatchGateChecks`
-(which reads unoptimised IL) still passes. Decision D4.
+beta21 §4, for line numbers). Micro-benchmark the mod's hot paths from both builds outside the game, and check that
+`PatchGateChecks` (which reads unoptimised IL) passes on an optimised build. Script P can compare the two in a game.
+Decision D4.
 
 **S9. Everything that runs every frame.** With 600 characters and 20 districts:
 - **Walking animation rescans each walker's whole path every frame:** `AnimationFixes.cs:75-76` resets
@@ -625,22 +704,23 @@ beta21 §4, for line numbers). **Measure** it against an optimised build in the 
 - a process-wide `DateTime.ToString` prefix whose flag is never set (`GameSaveHelper.cs:32-41`);
 - `Manufactory.IncreaseProductionProgress` per workshop per tick (`ColonyScienceService.cs:424-470`).
 
-Measure M1 against M2. Gate or remove whatever shows. The dead code found on the way goes too: `TickWatcherService`,
-that `DateTime` prefix, `IsSavingDeterministically`, `DeterminismPatcher.PatchDeterminism`.
+Gate each one behind the co-op flag where that is safe, or show why it must run in every game. Script P's single-player
+recordings, with and without the mod, confirm it. The dead code found on the way goes too: `TickWatcherService`, that
+`DateTime` prefix, `IsSavingDeterministically`, `DeterminismPatcher.PatchDeterminism`.
 
 **S11. Detailed logging at late-game scale.** With `Settings.Debug` on, the mod builds strings per beaver per tick,
 takes a stack trace per trace, hashes and copies the whole water and moisture maps every tick (up to 64 MB), and sends
 every trace to the guests every tick (`DesyncDetecter/DesyncDetecterService.cs:143-288`, `ReplayService.cs:933-943`).
 The desync dialog can switch it on mid-session (`Events/ConnectionEvents.cs:173-177`). That is exactly what a late-game
 player hit by a desync would press.
-- **Measure** it on `R-late`.
+- **Estimate** its cost per tick at late-game size from the code, and time its pieces outside the game.
 - **Decide** what the dialog offers in a large game: a warning, a lighter level, or detailed logging for a limited
   number of ticks.
 
 **S12. The daily colony check.** It walks every entity (about 10 component lookups each) twice a day on every computer:
 `ColonyDiagnostics.Tick` (`:146-152`) and `ColonyPresenceEvent.Compare` (`ColonyHandover.cs:451`). That is about 50 to
 80 ms in one tick at 20,000 entities, estimated: a hitch every in-game day.
-- **Measure** it.
+- **Time** the walk outside the game where it can run there, and give it a `ColonyProfiler` spot so Script P shows it.
 - Compute it once a day and reuse it, or spread the walk over the day's ticks. The value must stay the same on every
   computer.
 
@@ -656,7 +736,8 @@ BeaverBuddies co-op, and it rewrites what MultiColony hooks:
   since MultiColony beta2);
 - hauling, home and terrain caches, against the colony layer's "each colony's beavers work for it alone".
 
-**Check:** read both mods on every shared target, then run the pair in the rig (soak and B4). Findings in
+**Check:** read both mods on every shared target (LateGamePerformance's source is at
+`C:/Users/Kyler/code/LateGamePerformance`), then give Kyler a Script P line that records the pair. Findings in
 LateGamePerformance go to Kyler as a list; they are not fixed from here.
 
 **C2. Kyler's other mods in a late game.** OptimizedLocalHousing (its singleton is in `R-late`), HungryPathing,
@@ -683,11 +764,10 @@ four host settings' defaults.
 README.
 
 **R4. Checks that check less than their names say.** RuntimeChecks checks names and signatures, not behaviour;
-nothing runs a game. The rig is the first thing that does. Record which leads only the rig covers, so the next review
-knows.
+nothing runs a game, and by Kyler's rule nothing will. Record which leads only a person's test can settle, so the next
+review knows.
 
-**R5. The zip.** The rig and any test-only code never ship. Add a check over the zip script's inputs, and one that the
-built DLL has no reference to the rig.
+**R5. The zip.** Test-only code never ships. Add a check over the zip script's inputs.
 
 **R6. CI.** The wall-clock tests tolerated on the runner (`tests.yml`'s `$timing` list): still right?
 
@@ -729,112 +809,72 @@ handshake don't cover this.
 4. **Faction content** (F1): `Blueprints.zip` → per faction: buildings, goods, needs, recipes, templates the mod's
    faction code names, and what it doesn't.
 5. **Tradable goods** (T2): every good × every place a good is chosen or judged.
-6. **The mod's hot paths** (S1, S3, S9 to S12): every tickable, updatable and per-entity patch, its gate, its allocations,
-   its complexity. Start from `review-1.4.0-beta24/planning/2-hot-paths.md`.
+6. **The mod's hot paths** (S1, S3, S9 to S12): every tickable, updatable and per-entity patch, its gate, its
+   allocations, its complexity. Start from `review-1.4.0-beta24/planning/2-hot-paths.md`.
+7. **Crash paths** (H1): every mod entry point in a tick, a replay or a load, with the late-game states it can meet.
+   Split by area among the reviewers; the main session merges them into the matrix's crash column.
 
-### 5.3 The in-game rig (test-only, never shipped)
+### 5.3 Without the game: what can be run, and what the mod will report
 
-Nothing so far runs the game, and one playtest found what three reviewers missed (beta23). The late game can't be
-reached by a person in the time before 1.4.0 without scenario saves either. So this review builds a rig. It's the
-largest single piece of work here, and it's what turns "read and plausible" into "run and seen".
+The review never runs Timberborn (the rule at the top). One playtest found what three reviewers missed (beta23), so
+running things still matters. Three things stand in for the game:
 
-**What it is.** A separate Timberborn mod, `Tools/CoopRig` (*BeaverBuddies Co-op Rig*, id
-`timbermods.BeaverBuddiesCoopRig`), that depends on MultiColony and does nothing unless the game was started with
-`-bbRig <scenario.json>`. It's committed as a tool, never zipped (R5).
+1. **The game's code outside the game.** RuntimeChecks loads the game's DLLs into a plain .NET process, without
+   Harmony. Where a game class needs no Unity object, run it there and call the mod's patches the way Harmony would.
+   beta12 did this for the Wonder timing (`RuntimeChecks/WonderChecks.cs`, whose header describes the method: the
+   game's IL decoded, the mod's transpilers run on it, prefixes and postfixes called in Harmony's order, Unity's native
+   calls stubbed). Candidates:
+   - automation partitions and their evaluation order (A1);
+   - `ExchangeTerms` and the ledger (T3);
+   - the faction tables against `Blueprints.zip` (F1);
+   - `FriendGameRules` (B24).
+2. **The mod's own rigs.** StabilityTests already runs TCP host and guest sessions (the `Session` rig in
+   `ActivityTransportChecks`) and the lockstep's pure parts. Extend them where a lead is about the wire or the lockstep
+   (S5, S6).
+3. **Reporting, so that Kyler's own sessions answer the rest.** Add to the Ctrl+Shift+J report and, with detailed
+   logging on, to the daily log line:
+   - per-tick frame interrupts (S2);
+   - `ColonyProfiler` spots for every hot path (S1, S12);
+   - each colony's goods and goods in transit against the ledgers (T3);
+   - characters per colony and faction (F6);
+   - the mod's own collections' sizes and the heap (S7).
 
-**Roles:**
-- **solo:** single-player, for B1 and for building scenario saves with dev tools;
-- **host:** loads a save from the command line and hosts it over direct IP on loopback, through the mod's own
-  in-game hosting path;
-- **guest:** connects from the main menu to `127.0.0.1` through `ClientConnectionService` (the Join co-op box's
-  address path; its friends' list needs a second Steam account, so it stays a person's test).
+   These are cheap counters. They are never on by default where they cost anything, and they change nothing the
+   simulation reads.
 
-**Two copies of the game on this computer.** A second game folder made of hard links (same drive, no copy), except
-for:
-- `boot.config`, with `single-instance=` removed;
-- a `steam_appid.txt` (1062090), so `RestartAppIfNecessary` doesn't hand it to Steam.
-
-The real install is never edited. Each copy gets `-logFile`, a small window, and its own port. Both run under one
-Steam account, so the guest's rig overrides `LocalPlayerIdentity.Id` (`Colonies/ColonySlotService.cs:18-45`) and
-uses direct IP.
-
-**Frame rates.** The host uncapped and the guest at 15 fps (`Application.targetFrameRate`), then swapped. Frame-time
-dependence then shows up as a mismatch, which is how beta12's Wonder bug would have shown.
-
-**Actions.** A scenario lists actions by tick and by player, performed through the entry point a click reaches: the
-recorded method or the panel method the mod patches, so they travel the real wire and the host judges them. HTTP
-actions are real HTTP requests to that computer's listener.
-
-**What it records**, on top of the mod's own checks (RNG every tick, digest every heartbeat, daily fingerprint):
-- per day: entities, characters per colony and faction, goods per colony, exchanges and ledgers, the T3 invariant;
-- tick rate and the guest's lag histogram;
-- interrupts per tick (S2);
-- the heap after a GC, in soak mode only.
-
-On a mismatch both sides write the Ctrl+Shift+J report and stop. Any exception whose stack passes through
-`BeaverBuddies` is recorded. A Python script compares the two sides' summaries.
-
-**Kyler's setup is put back after every run, even a failed one.** Back up `Documents/Timberborn/Mods/BeaverBuddies-MultiColony`
-(the installed release) and the enabled-mods list, install the build under test and the rig, run, restore. The rig's
-saves go to their own settlements (`MC Rig …`). Kyler's saves are only read. Only one set of game copies runs at a
-time, and nothing else heavy runs during measurements.
-
-**Stages and gates:**
-
-| Stage | Goal | Gate |
-|---|---|---|
-| R0 | One copy loads `R-late` from the command line with the test build and the rig, runs one day, writes a summary and quits | Time box: 2 h |
-| R1 | Host and guest on loopback, one day, no mismatch: the harness works | Time box: 3 h. If two copies can't be made to run, use **R1'** instead: the same save and action script run twice as a host with no guests, uncapped and at 15 fps, with per-tick hashes compared afterwards. That catches frame-time dependence and replay order, but not guest-only code |
-| R2 | Scenario scripts: **A** (automation, A1 table), **H** (HTTP), **W** (water), **X** (blasts on `R-blast`), **V** (both Wonders), **T** (trading), **M** (mixed), **P** (power across colonies) | Each runs green or yields a finding |
-| R3 | Scenario saves, built in solo mode with dev tools (fine single-player) | See below |
-| R4 | Soaks (release bar 7) and measurements (§5.4) | |
-
-**Scenario saves.** They're also given to Kyler, so that a person's late-game test starts in the late game:
-- **S-auto:** `R-late` plus an automation park. Every automation building (spring-return and HTTP levers included)
-  wired to floodgates, fill valves, throttling valves, pumps, regulators, gates, clutches and pausable buildings.
-- **S-two:** `R-late` split into two colonies, with Trading Posts between them.
-- **S-mixed:** a new mixed game started through the waiting room (the rig's guest picks Iron Teeth; that also runs
-  Script D7). Both colonies are grown with dev placement and spawning into a late game:
-  - both Wonders finished;
-  - both factions' bots, bot factories and charging;
-  - breeding pods and lodges;
-  - tubeways and ziplines;
-  - a badwater rig, metal industries, explosives factories and monuments;
-  - each faction's automation;
-  - Trading Posts carrying the 17 goods and science.
-- **S-trade:** 20 posts and 40 exchanges covering every good, set to repeat.
+**No test rig and no scenario saves.** Kyler builds late-game test games himself, following §6's setup steps.
 
 ### 5.4 Measurements
 
-- **Tools:**
-  - the game's own benchmark (`-benchmarkLength … -metrics`: mods skipped) as the baseline;
-  - PerformanceLog with mods, compared with `perflog.py compare`;
-  - `ColonyProfiler` and the Ctrl+Shift+J report for the lockstep waits.
-- **Runs:**
-  - M1: the game alone;
-  - M2: solo with MultiColony (B1);
-  - M3: host alone, shared, then split (B2, B3);
-  - M4: host and guest (B4), at speeds 3 and 7 and a boost of 15 and 30;
-  - M5: mixed against single-faction (B6);
-  - M6: M3 and M4 again with LateGamePerformance (C1);
-  - M7: the rehost (B5);
-  - M8: optimised against unoptimised (S8).
-- **Conditions:** the same save, speed and window size; at least 3 minutes after a warm-up; three runs each; the
-  computer otherwise idle.
+The review measures only outside the game: micro-benchmarks of the mod's own code at late-game sizes, in StabilityTests
+or RuntimeChecks. It turns the budgets (§1) into **Script P** (§6), which Kyler records with PerformanceLog when he
+chooses. The session reads the recordings with `perflog.py report` and `compare`.
+
+| Run | What Kyler records | Budgets and leads |
+|---|---|---|
+| P1 | Single-player, the late save, with and without MultiColony | B1, S10 |
+| P2 | Hosting it with nobody joined, shared, then split into two colonies | B2, B3 |
+| P3 | With a guest, at speeds 3 and 7 and a boost of 15 | B4 |
+| P4 | A mixed game against a single-faction one of the same size | B6 |
+| P5 | P2 again with LateGamePerformance | C1 |
+| P6 | A rehost | B5 |
+
+Every run uses the same save, speed and window size, and records at least 3 minutes after a warm-up.
 
 ### 5.5 Reviewers
 
-Five reviewers and the main session. Each tries to refute its own findings first, then hands over evidence (file:line
-in the mod and the game, a check, or a rig log).
+Four reviewers and the main session. Each tries to refute its own findings first, then hands over evidence (file:line
+in the mod and the game, or a check).
 
 | Reviewer | Leads | Notes |
 |---|---|---|
-| **A**, the late-game systems against the game | A1 to A6, W1 to W4, P1, P2, X1 to X4, O1 to O4, H1, H2; sweeps 1 to 3 | Writes rig scripts A, H, W, X, P with E |
-| **B**, mixed factions and both Wonders | F1 to F9, V1 to V3; sweep 4 | Writes rig scripts M and V with E |
-| **C**, Trading Posts at scale | T1 to T8; sweep 5 | Writes rig script T with E |
-| **D**, performance, long sessions, compatibility | S1 to S12, C1 to C3; sweep 6; §5.4 | Needs the rig for M3 onwards; starts with reading and M1/M2 |
-| **E**, the rig | §5.3 | Starts at once; the others' scripts plug into it |
-| **Main** | R1 to R8; B24-a to B24-d; P-1 to P-5 end to end; the §7 defaults; checking every finding again before it goes in the report; the fixes and the release | Owns the one-game-at-a-time schedule |
+| **A**, the late-game systems against the game | A1 to A6, W1 to W4, P1, P2, X1 to X4, O1 to O4, H1, H2; sweeps 1 to 3 | Writes Script L's lines for its leads |
+| **B**, mixed factions and both Wonders | F1 to F9, V1 to V3; sweep 4 | Writes Script M |
+| **C**, Trading Posts at scale | T1 to T8; sweep 5 | Writes Script T |
+| **D**, performance, long sessions, compatibility | S1 to S12, C1 to C3; sweep 6; §5.4 | Micro-benchmarks, the §5.3 reporting, Script P |
+| **Main** | R1 to R8; B24-a to B24-d; P-1 to P-5 end to end; the §7 defaults; checking every finding again before it goes in the report; the fixes and the release | Puts Scripts L, M, T and P together |
+
+Each reviewer also fills the coverage matrix's rows for its area, the crash column included (sweep 7).
 
 Give reviewers a frozen `git archive` copy of the base and a shared brief. Merge their diffs yourself (see the
 appendix).
@@ -848,28 +888,40 @@ appendix).
    - evidence, a fix, and its wire and save impact;
    - the check added, and a test-script line.
 
-   Add a **found sound** list and a **left, and why** list. Reviewer reports go in `design/review-1.4.0-beta24/`; rig
-   logs worth keeping in `design/review-1.4.0-beta24/rig/`.
-2. **Fixes,** each with a check that fails without it (StabilityTests, RuntimeChecks, or a rig script where nothing
-   else can see it). P-1 is fixed first; it's two lines.
+   Add a **found sound** list and a **left, and why** list. Reviewer reports go in `design/review-1.4.0-beta24/`.
+2. **Fixes,** each with a check that fails without it (StabilityTests or RuntimeChecks). Where only the running game can
+   show it, add a script line for Kyler, and the finding stays open until his test comes back. P-1 is fixed first; it's
+   two lines.
 3. **Release:** the release candidate (D1), with the usual loop:
    - version bump, changelog entry, `changelog.txt`, test-script lines;
    - TWO-COLONIES *Known limits* and *State of testing*, README;
-   - both builds, both suites, zip, notes, tag, `gh release`;
+   - both builds (into a scratch folder, never the installed mod), both suites, zip, notes, tag, `gh release`;
    - push trading-exchange, main and the branch, fetching first;
    - CI after the push.
 
    No website update until 1.4.0 final (Kyler's standing instruction since beta23).
-4. **Report back:** the release link, what was found and fixed, what was left, check counts, the rig's soak numbers
-   against the budgets, and the playtest that is owed.
+4. **Report back:** the release link, what was found and fixed, what was left, check counts, the micro-benchmarks
+   against the budgets, and the playtests and recordings that are owed.
 
 ---
 
-## 6. Playtests this review writes for people
+## 6. The two-player late-game playtest (written by this review, played later)
 
-Added to ALPHA-TEST-SCRIPTS, each starting from a scenario save (§5.3):
+The real test comes later: Kyler and a friend in a late-game colony. The review writes it into ALPHA-TEST-SCRIPTS as
+one playtest in three parts (Scripts L, M and T), ordered to cover the most per hour. Each step:
+- names the matrix cells it closes;
+- says what should happen;
+- says what to send: both players' `Player.log` and Ctrl+Shift+J reports.
 
-- **Script L, the late game, two players (about 90 minutes)** on S-auto and S-two:
+Each part starts with setup steps:
+1. build the scenario in single-player with dev mode on (placing finished buildings, adding beavers and science);
+2. save it;
+3. host it.
+
+Dev tools are fine in single-player; in co-op they desync.
+
+- **Script L, the late game, two players (about 90 minutes)**, on a late save with an automation park, split into two
+  colonies:
   - automation and HTTP levers on both sides;
   - water automation through a drought and a badtide;
   - a dynamite chain beside the other colony;
@@ -877,10 +929,13 @@ Added to ALPHA-TEST-SCRIPTS, each starting from a scenario save (§5.3):
   - maximum speed for 20 minutes;
   - a rehost;
   - both Ctrl+Shift+J reports compared.
-- **Script M, mixed factions in the late game** on S-mixed: both Wonders, bots of both factions, births, tubeways and
-  ziplines, trading all 17 goods, a handover across factions.
-- **Script T, Trading Posts at scale** on S-trade: every good both ways, repeating for 10 cycles, a stall, a post blown
-  up mid-round, save and rehost mid-round.
+- **Script M, mixed factions in the late game**, on a new mixed game grown with dev tools: both Wonders, bots of both
+  factions, births, tubeways and ziplines, trading all 17 goods, a handover across factions.
+- **Script T, Trading Posts at scale**, with 20 posts and 40 exchanges: every good both ways, repeating for 10 cycles, a
+  stall, a post blown up mid-round, save and rehost mid-round.
+- **Script P, performance recordings** (§5.4): PerformanceLog recordings P1 to P6, a few minutes each. Send the
+  session folders.
+- **The long session** (release bar 7), when convenient.
 - Still owed, in this order: D7, D7a and D8 (a game from the waiting room); B24-b (the Join co-op box); F;
   then beta12's B 8t to 8y.
 
@@ -895,13 +950,8 @@ recommendation, the way the Earth Repopulator question did in beta12.
 **D1. Scope and name.** Review, fixes and a release candidate in one run, named **1.4.0-rc1** (recommended). 1.4.0
 final follows once D7 to D8, B24-b, F, L, M and T have been played. Alternatives: beta25, or findings only.
 
-**D2. The rig's permissions** (recommended: yes to all):
-- (a) build the test-only rig mod;
-- (b) swap the installed MultiColony and the enabled-mods list during runs, restored after each;
-- (c) make a hard-linked second game folder with `single-instance` removed and a `steam_appid.txt`;
-- (d) run the game unattended for hours. The computer is busy meanwhile: don't play then.
-
-Without (c) the review uses R1' (one copy, two runs).
+**D2. No game control.** Settled by Kyler: the review never starts or drives Timberborn and never changes the
+installed mods (the rule at the top). Nothing to decide.
 
 **D3. Product defaults for what reaches across colonies:**
 
@@ -915,18 +965,19 @@ Without (c) the review uses R1' (one copy, two runs).
 | A Wonder's effect and the single completion (V1, P-4) | **Keep the game's behaviour and document it** | The completion is the map's, as in single-player |
 | G9, terrain left by a co-op deletion (X4) | **Document it for 1.4.0**, and fix it if the review finds it small | |
 
-**D4. The unoptimised shipping build.** Default: measure it (S8) and turn optimisation on for 1.4.0 final if the gain
-is real and `PatchGateChecks` still passes. The candidate keeps the current build.
+**D4. The unoptimised shipping build.** Default: micro-benchmark it (S8), and turn optimisation on for 1.4.0 final if
+the gain is real, Script P agrees and `PatchGateChecks` still passes. The candidate keeps the current build.
 
 **D5. Beta labels at 1.4.0 final.** Default: drop "(beta)" everywhere, except on *Mixed factions for new games* until
 Script M has been played.
 
-**D6. Reviewers:** five plus the main session (recommended), or three (A, B+C, D+E) to spend less.
+**D6. Reviewers:** four plus the main session (recommended), or two (A+D, B+C) to spend less.
 
 ---
 
 ## 8. Out of scope
 
+- Starting, driving or testing the game in any way, and any automated in-game testing (Kyler's rule).
 - The lockstep core and the earlier found-sound lists, except where named above.
 - The waiting room's join flow (beta21 reviewed it; D7 is a playtest).
 - Fixing other mods (C1 and C2 findings go to Kyler as lists).
@@ -942,7 +993,8 @@ From earlier reviews and releases (the project memory has the detail):
 - **Building:**
   - Copy `BeaverBuddies/env.props` from the main checkout.
   - Restore with `-s C:/Users/Kyler/.nuget/packages`, then always build with `--no-restore`.
-  - Build into a scratch mods folder with `-p:BeaverBuddiesModsPath=<scratch>/`.
+  - Build into a scratch mods folder with `-p:BeaverBuddiesModsPath=<scratch>/`, always. Without it the post-build
+    step overwrites the installed mod, which the rule at the top forbids.
   - The zip ships **Release Steam**.
 - **RuntimeChecks** takes the DLL and the game's `Managed`, Harmony and Mod Settings folders
   (`dotnet run --project RuntimeChecks -- <dll> <Managed> <workshop>/3284904751 <workshop>/3283831040/version-1.1/Scripts`).
