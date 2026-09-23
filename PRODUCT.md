@@ -111,7 +111,7 @@ the README disagree, flag the mismatch; don't guess.
 
 - `Media/`: the mod icon (`Icon-full.png`, `IconBG.png`), `logo.jpg`, `thumbnail-large.png`.
 - `docs/assets/goods/`: item icons (Logs, Science and the beaver taken from the game; Gears, Berries and Carrots from
-  the MixedStorage site). `docs/assets/connection-panel.png`: a screenshot of the connection panel.
+  the MixedStorage site).
 - An interactive Trading Post panel replica already on the site (`docs/assets/trade-demo.js`, `game-panel.css`).
 - **No gameplay screenshots or clips yet.** Future work leaves marked slots for the maintainer's own shots (two
   colonies side by side on one map, a Trading Post barter, the colony settings) and never fakes them.
