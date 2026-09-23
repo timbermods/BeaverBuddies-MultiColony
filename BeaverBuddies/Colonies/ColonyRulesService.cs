@@ -159,6 +159,15 @@ namespace BeaverBuddies.Colonies
                 return false;
             }
 
+            // A plant the host's game does not have (a crop from a guest's mod), in every game: refused like a building, for
+            // the same reason (the game's planting check throws on it). E-1 of the 1.4.0-rc1 review.
+            if (replayEvent is PlantingAreaMarkedEvent planting && planting.NamesUnknownPlant(SingletonManager.GetSingleton<ReplayService>()))
+            {
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: this game has no plant {planting.prefabName}");
+                refusal = ColonyRefusal.HostRefused;
+                return false;
+            }
+
             // Zipline links, in every game: the game's own check, made here once instead of in every computer's replay.
             if (replayEvent is ZiplineConnectionChangedEvent zipline && ColonyRoadNetworks.Instance != null
                 && !ColonyRoadNetworks.Instance.HostAllowsZipline(zipline, out string why))

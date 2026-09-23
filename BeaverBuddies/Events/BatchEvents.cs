@@ -284,7 +284,7 @@ namespace BeaverBuddies.Events
         {
             var distributionSetting = GetComponent<DistrictDistributionSetting>(context, districtEntityID);
             if (distributionSetting == null) return;
-            var goodSetting = distributionSetting.GetGoodDistributionSetting(goodID);
+            var goodSetting = SettingFor(distributionSetting, goodID);
             if (goodSetting == null)
             {
                 Plugin.LogWarning($"Could not find good {goodID} in district {districtEntityID}");
@@ -298,6 +298,22 @@ namespace BeaverBuddies.Events
             {
                 goodSetting.SetImportOption(importOption);
             }
+        }
+
+        /// <summary>
+        /// A district's setting for a good, or null when this game has no such good. The game's own lookup
+        /// (GetGoodDistributionSetting) throws for one it lacks: a good from a mod only the sender runs (a district holds
+        /// a setting for every good of this game, and the mod lists only warn when they differ), and that throw inside the
+        /// host's replay stopped the session for everyone. Where the good is missing nothing of it can exist, so every
+        /// computer without it skips the change (E-2).
+        /// </summary>
+        internal static GoodDistributionSetting SettingFor(DistrictDistributionSetting district, string goodId)
+        {
+            foreach (GoodDistributionSetting setting in district.GoodDistributionSettings)
+            {
+                if (setting.GoodId == goodId) return setting;
+            }
+            return null;
         }
 
         public override string ToActionString()

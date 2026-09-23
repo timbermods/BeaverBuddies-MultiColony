@@ -122,6 +122,33 @@ namespace BeaverBuddies.Colonies
             foreach (Vector3Int tile in cutting.Where(m => m.Value == from).Select(m => m.Key).ToList()) cutting[tile] = to;
             ColonyDigest.Note("marks-transfer", from, to);
         }
+
+        /// <summary>
+        /// A shared game being split (ColonyModeService.Enable): every standing mark with no colony becomes
+        /// <paramref name="slot"/>'s, as its buildings do (ColonyStamps.Begin). Left with none, they counted for every
+        /// colony, and the new colony's planters, harvesters and lumberjacks worked the first colony's fields and forests
+        /// (and its player could unmark them). Played on every computer at the founding's tick, from saved state alone;
+        /// the digest counts it as one change (E-7 of the 1.4.0-rc1 review).
+        /// </summary>
+        internal int AdoptUnowned(int slot)
+        {
+            int adopted = 0;
+            foreach (Vector3Int tile in _plantingService.PlantingCoordinates)
+            {
+                if (PlantingOwner(tile) != null) continue;
+                planting[tile] = slot;
+                adopted++;
+            }
+            foreach (Vector3Int tile in _treeCuttingArea.CuttingArea)
+            {
+                if (CuttingOwner(tile) != null) continue;
+                cutting[tile] = slot;
+                adopted++;
+            }
+            ColonyDigest.Note("shared marks", slot, adopted);
+            return adopted;
+        }
+
         internal void ClearPlanting(Vector3Int tile)
         {
             if (planting.Remove(tile)) ColonyDigest.Note("unplant", Hash(tile));
