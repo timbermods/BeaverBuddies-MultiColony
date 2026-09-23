@@ -359,6 +359,32 @@ internal static class RcPerformanceRuntimeChecks
             finally { debug.SetValue(null, false); Reset(); }
         }));
 
+        test("D-new-2: switching detailed logging on mid-session never reads the other player's earlier traces as a desync", () => Quietly(() =>
+        {
+            Type service = Mod("BeaverBuddies.DesyncDetecter.DesyncDetecterService");
+            PropertyInfo debug = Mod("BeaverBuddies.Settings").GetProperty("TemporarilyDebug", All)!;
+            object instance = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(service);
+            void Reset() => Only(service, "Reset").Invoke(instance, null);
+            debug.SetValue(null, true);
+            try
+            {
+                using var session = ScopeChecks.Multiplayer(mod);
+                // This computer turns logging on at tick 2,000 (its ticks were not counted while it was off)...
+                Reset();
+                Only(service, "StartTick").Invoke(null, new object[] { 2000 });
+                // ...and the other player, logging all along, sends its traces of tick 1,999. beta24 had made a tick of
+                // traces reading "Tick 2000 started" for every tick played, compared that with them, and stopped the session.
+                Type traceType = Mod("BeaverBuddies.DesyncDetecter.Trace");
+                var theirs = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(traceType))!;
+                object line = Activator.CreateInstance(traceType)!;
+                traceType.GetField("message")!.SetValue(line, "Tick 1999 started");
+                theirs.Add(line);
+                if (!(bool)Only(service, "VerifyTraces").Invoke(null, new object[] { 1999, theirs })!)
+                    throw new Exception("the other player's traces of a tick before logging was on here were called a desync");
+            }
+            finally { debug.SetValue(null, false); Reset(); }
+        }));
+
         test("D-S7: the Trading Post template cache and the Steam callbacks do not keep a left game or menu alive", () =>
         {
             FieldInfo cache = Mod("BeaverBuddies.Colonies.TradingPosts").GetField("isTradingPostTemplate", All)!;

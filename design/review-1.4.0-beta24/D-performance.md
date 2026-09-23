@@ -8,10 +8,10 @@ it that is used below was read again.
 - **Nothing here ran the game.** Every number is either read from the code or measured outside the game: in
   RuntimeChecks (the mod's compiled DLL with the game's own assemblies, on .NET 8) or StabilityTests. The game runs on Unity's
   Mono, which is slower; the ratios are what carry over. Script P (§5) measures the rest in Kyler's own sessions.
-- **Checks:** StabilityTests 418 → 422, RuntimeChecks 362 → 381 on both builds, 0 warnings on both builds. The new
+- **Checks:** StabilityTests 418 → 422, RuntimeChecks 362 → 382 on both builds, 0 warnings on both builds. The new
   checks are in `StabilityTests/RcPerformanceChecks.cs` (with the model in `StabilityTests/RcPerformanceLockstepModel.cs`)
-  and `RuntimeChecks/RcPerformanceRuntimeChecks.cs`. Every fix's check was run against beta24's Release Steam DLL: 15 of
-  the 19 new RuntimeChecks fail there (365/381; the other failure is P-1's, from the base), the four benchmarks pass and
+  and `RuntimeChecks/RcPerformanceRuntimeChecks.cs`. Every fix's check was run against beta24's Release Steam DLL: 16 of
+  the 20 new RuntimeChecks fail there (365/382; the other failure is P-1's, from the base), the four benchmarks pass and
   print beta24's numbers. The three StabilityTests fix checks cannot build without their fixes (§1.10).
 - **Wire and save:** no change to either anywhere below. Every player must still run the same build (the handshake), as
   always: the daily colony check's value is computed differently now (D-S12), the same on every computer of this build.
@@ -292,6 +292,20 @@ logging on.
   `TraceChecks` now run inside a session.
 - Check: `D-S7: detailed-logging traces stay bounded: ...` (beta24 keeps 1,001 ticks of 1,000; fails).
 
+**D-new-2: switching detailed logging on mid-session on one computer stopped the session with a false desync.**
+Confirmed (by the check, on beta24's DLL); desync (false); everyone with detailed logging on both computers.
+- Evidence: a computer that turns logging on mid-session starts `StartTick` from tick -1 and makes a list for every tick
+  played, each holding one trace, `"Tick {tick} started"` with the *current* tick (beta24
+  `DesyncDetecterService.cs:116-121`). The other computer, logging all along, sends its traces of the ticks before; the
+  first comparison (`VerifyTraces`) finds "Tick 2000 started" where the other has "Tick 1999 started", calls it a desync
+  and stops the session (`TraceLoggedForTickEvent.Replay`, `:43-50`). Either side switching on does it: a host sends its
+  made-up ticks, a guest compares against them.
+- Fix: D-S7a's jump: a computer switching on starts at the current tick, so the earlier ticks read as already checked.
+- Check: `D-new-2: switching detailed logging on mid-session never reads the other player's earlier traces as a desync`
+  (fails on beta24).
+- Test line (Script L or M, optional): both players turn *Always Use Detailed Logging* on in Mod Settings during a
+  small co-op game, one a minute after the other; the game should go on with no desync dialog.
+
 **D-S7b: the Trading Post template cache kept every loaded game's building specs.** Confirmed; memory; everyone.
 - Evidence: `TradingPosts.isTradingPostTemplate` was a static `Dictionary<BuildingSpec, bool>` never cleared (beta24
   `ColonyTrading.cs:33, 47-59`); the specs are made again for every game loaded (the template and blueprint systems are
@@ -353,9 +367,9 @@ read a tick in `ColonyDiagnostics.Tick`.
   `§5.3: every per-tick and per-frame hot path of the mod has a profiler spot, the busiest sampled`. Both fail on
   beta24.
 
-**Checks that fail on beta24's Release Steam DLL** (this branch's RuntimeChecks run on it: 365/381): the six D-S10
+**Checks that fail on beta24's Release Steam DLL** (this branch's RuntimeChecks run on it: 365/382): the six D-S10
 checks, both D-S9 (the benchmark times beta24's rule beside the new one, so it needs the new one), the D-S4 filter, the
-D-S12 walk, both D-S7, the D-S2 counters and both §5.3 checks: 15. The D-S4, D-S12, D-S8 and D-S11 benchmarks pass on
+D-S12 walk, both D-S7, D-new-2, the D-S2 counters and both §5.3 checks: 16. The D-S4, D-S12, D-S8 and D-S11 benchmarks pass on
 both and print both numbers. StabilityTests compiles the mod's sources, so its D-S9 check (3 corners looked at a frame
 instead of 2 with beta24's rule), D-S11 (no `largeGame`) and D-S1 (no sampled spot) cannot pass, or build, without the
 fixes. The D-S5 model check passes on beta24's sources too: it models, it fixes nothing.
@@ -385,7 +399,7 @@ performance; everyone. **Reported; the build config is unchanged** (decision D4)
   catch-up speed 19.7 / 17.8 ns, a profiler spot 40 / 37 ns, the heartbeat as JSON 5.6 / 5.6 µs. No consistent gain
   outside the game; the in-game answer is Script P's P1b.
 - `PatchGateChecks` (which reads IL and names the unoptimised build's patterns) passes on the optimised Release build:
-  RuntimeChecks runs on both builds, 381/381 each.
+  RuntimeChecks runs on both builds, 382/382 each.
 
 ### 1.13 Compatibility (C1, C2, C3)
 
@@ -511,7 +525,7 @@ benchmarks above; the game's own cost is Script P's.
 | Road overlay | Sound: display only | Sound: caught, switches itself off (`ColonyRoadOverlay.cs:123-129`) | Sound: n/a | Sound: n/a | Left: D-S9c, "Road overlay drawing" spot; Playtest: P2 with a path tool in hand | Sound: n/a |
 | Alerts and journal filter | Sound: display only; the tick-time blink patch is display-only (`ColonyView.cs:357-375`, `ColonyRuntimeChecks`) | Sound: the tick-time patches catch (`:369, 392`) | Sound: per seat by design | Sound: n/a | Fixed: D-S9b, per-frame seat; sampled spot | Sound: n/a |
 | Colony marks | Sound: sums and sorted saves (`ColonyMarks.cs:61-72, 95-116`) | Sound: null-safe lookups | Sound: A's rules | Sound: n/a | Left: D-S10i (unset postfix ungated, rare); "marked tiles" reported | Sound: a few ms per save at 10,000 marks (D-S6) |
-| Detailed logging | Sound: traces compared only when both have it on; a mismatch warns once (D-S7a) | Sound: bounded (D-S7a) | Sound: n/a | Sound: n/a | Fixed: D-S11, not offered at 200+ characters; measured 27 ms and 248 KB a tick | Sound: n/a |
+| Detailed logging | Fixed: D-new-2 (a false desync when one computer switched it on mid-session), `D-new-2` check; a computer without it warns once (D-S7a) | Sound: bounded (D-S7a) | Sound: n/a | Sound: n/a | Fixed: D-S11, not offered at 200+ characters; measured 27 ms and 248 KB a tick | Sound: n/a |
 | Co-op save | Sound: at a tick boundary with the parallel tick finished (beta12) | Sound: beta12 | Sound: n/a | Sound: n/a | Sound: the mod's part is ms (D-S6); Playtest: P6 | Sound: LateGamePerformance's background save keeps the boundary (C1-3) |
 | Rehost and join | Sound: beta12 and beta21 (not re-reviewed) | Sound: beta21 | Sound: n/a | Left: B's F9 (mixed saves) | Sound: 1 MB kept, 0.76 ms a hash (D-S6); Playtest: P6 (B5) | Playtest: P6 |
 | Speed pacing (catch-up, host pacing, throttle) | Sound: speed never enters the simulation (`CatchUpSpeed.cs:6-8`, `HostPacing.cs:28-29`) | Sound: pure arithmetic | Sound: both colonies count toward the game's throttle, the same everywhere | Sound: n/a | Sound: D-S5 model, no spiral; B4 holds at speed 7; Playtest: P3 | Sound: n/a |
@@ -619,7 +633,8 @@ TWO-COLONIES *Known limits* (and README's co-op notes):
   after the turn of the day.
 
 Changelog (for the main session): the S10 gates (MultiColony costs less in single player), D-S9, D-S12, D-S4, D-S7a-c,
-D-S11, the report's new lines and the `[Perf]` line, D-new-1.
+D-S11, the report's new lines and the `[Perf]` line, D-new-1, and D-new-2 (switching detailed logging on during a
+session no longer stops it with a false desync).
 
 ### 5.2 Script P: performance recordings (Kyler, with PerformanceLog)
 
