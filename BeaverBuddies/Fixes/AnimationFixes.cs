@@ -29,11 +29,16 @@ private void Update(float deltaTime)
     [HarmonyPatch(typeof(MovementAnimator), nameof(MovementAnimator.Update), typeof(float))]
     public class AnimatedPathFollowerUpdatePathcer
     {
+        // Every walking character, every frame: sampled (1.4.0-rc1 review, D-S1).
+        private static readonly BeaverBuddies.Colonies.ColonyProfiler.Spot Walking =
+            BeaverBuddies.Colonies.ColonyProfiler.DeclareSampled("Walking animation between ticks (co-op, per walker per frame)");
+
         static bool Prefix(MovementAnimator __instance, float deltaTime)
         {
             if (EventIO.IsNull) return true;
             var tickProgressService = SingletonManager.GetSingleton<TickProgressService>();
             if (tickProgressService == null) return true;
+            long started = BeaverBuddies.Colonies.ColonyProfiler.StartSampled(Walking);
 
             //Vector3 position = Vector3.zero;
 
@@ -103,6 +108,7 @@ private void Update(float deltaTime)
             //    Plugin.Log($"XDir: {Mathf.Sign(dir.x)}, ZDir: {Mathf.Sign(dir.z)}");
             //}
 
+            BeaverBuddies.Colonies.ColonyProfiler.StopSampled(Walking, started);
             // We've replaced the original method, so skip it
             return false;
         }

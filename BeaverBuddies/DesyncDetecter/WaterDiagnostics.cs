@@ -25,6 +25,9 @@ namespace BeaverBuddies.DesyncDetecter
         private static long bytes;
         private static bool written, failed;
 
+        /// <summary>What the kept snapshots hold, for the diagnostics report.</summary>
+        internal static long KeptBytes => bytes;
+
         internal static void Reset()
         {
             snapshots.Clear();

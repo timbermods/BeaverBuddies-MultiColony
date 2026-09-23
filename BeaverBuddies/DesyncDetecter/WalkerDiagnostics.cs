@@ -18,6 +18,9 @@ namespace BeaverBuddies.DesyncDetecter
         private static readonly WalkerTrace trace = new WalkerTrace();
         private static bool written, failed;
 
+        /// <summary>Ticks of walker records kept, for the diagnostics report.</summary>
+        internal static int KeptTicks => trace.TickCount;
+
         internal static void Reset()
         {
             trace.Clear();

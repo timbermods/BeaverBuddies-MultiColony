@@ -371,6 +371,123 @@ internal static class RcPerformanceRuntimeChecks
                 throw new Exception("the disposed Steam callbacks stay in the static list, each holding its scene");
         });
 
+        // ---- D-S2 and §5.3: what the report and the daily line count ----
+
+        test("D-S2: frames cut short by a creation or deletion, and the game time the one-tick cap throws away, are counted", () =>
+        {
+            Type tickingType = Mod("BeaverBuddies.TickingService");
+            Type tickerType = Game("Timberborn.TickSystem", "Timberborn.TickSystem.Ticker");
+            Type bucketsType = Game("Timberborn.TickSystem", "Timberborn.TickSystem.TickableBucketService");
+            object ticker = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(tickerType);
+            float perBucket = .6f / 129;
+            tickerType.GetField("_secondsPerBucket", All)!.SetValue(ticker, perBucket);
+            tickerType.GetField("_accumulatedDeltaTime", All)!.SetValue(ticker, 64 * perBucket);
+            // Made without its constructor, which would register it as the game's singleton for every later check.
+            object ticking = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(tickingType);
+            tickingType.GetField("ticker", All)!.SetValue(ticking, ticker);
+            object buckets = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(bucketsType);
+            long Count(string name) => (long)(tickingType.GetProperty(name)?.GetValue(ticking)
+                ?? throw new Exception($"TickingService.{name} is not counted"));
+            PropertyInfo interrupt = tickingType.GetProperty("ShouldInterruptTicking")!;
+            // Two deletions in one frame ask once; the frame's end clears it, and the next frame's asks again.
+            interrupt.SetValue(ticking, true); interrupt.SetValue(ticking, true); interrupt.SetValue(ticking, false); interrupt.SetValue(ticking, true);
+            if (Count("InterruptRequests") != 2) throw new Exception($"{Count("InterruptRequests")} interrupt requests counted, not 2");
+            // 100 buckets left unticked, with 64 already waiting: 129 fit, 35 are thrown away.
+            tickingType.GetMethod("GiveBackBuckets", All)!.Invoke(ticking, new[] { buckets, (object)100 });
+            if (Count("FramesCutShort") != 1 || Count("BucketsGivenBack") != 100 || Count("BucketsLost") != 35)
+                throw new Exception($"cut short {Count("FramesCutShort")}, given back {Count("BucketsGivenBack")}, lost {Count("BucketsLost")}");
+            float waiting = (float)tickerType.GetField("_accumulatedDeltaTime", All)!.GetValue(ticker)!;
+            if (Math.Abs(waiting - 129 * perBucket) > 1e-6) throw new Exception("the given-back time is no longer capped at one tick");
+        });
+
+        test("§5.3: the report and the daily line carry the interrupts, the heap and the mod's growing collections", () =>
+        {
+            Type diagnostics = Mod("BeaverBuddies.Colonies.ColonyDiagnostics");
+            string memory = (string)Only(diagnostics, "MemoryLine").Invoke(null, null)!;
+            foreach (string part in new[] { "heap", "gen2", "traces", "water snapshots", "walker records", "colony changes", "marked tiles" })
+                if (!memory.Contains(part)) throw new Exception($"the memory line has no {part}: {memory}");
+            var tick = IlScan.Instructions(Only(diagnostics, "Tick"));
+            int gate = tick.FindIndex(i => i.Calls && i.Is("BeaverBuddies.IO.EventIO", "get_IsNull"));
+            int daily = tick.FindIndex(i => i.Calls && i.Member?.Name == "DailyPerformanceLine");
+            if (daily < 0 || gate < 0 || gate > daily) throw new Exception("the daily performance line is not written, or not only in a co-op game");
+            var report = IlScan.Instructions(Only(diagnostics, "Performance"));
+            if (!report.Any(i => i.Calls && i.Member?.Name == "InterruptLine") || !report.Any(i => i.Calls && i.Member?.Name == "MemoryLine"))
+                throw new Exception("the report leaves out the interrupts or the memory");
+        });
+
+        test("§5.3: every per-tick and per-frame hot path of the mod has a profiler spot, the busiest sampled", () =>
+        {
+            Type profiler = Mod("BeaverBuddies.Colonies.ColonyProfiler");
+            var spots = (IList)profiler.GetField("spots", All)!.GetValue(null)!;
+            // Declared by static fields: make sure each declaring class has run its static constructor.
+            foreach (string type in new[] { "BeaverBuddies.TEBPatcher", "BeaverBuddies.TickingService", "BeaverBuddies.ReplayService",
+                "BeaverBuddies.Fixes.AnimatedPathFollowerUpdatePathcer", "BeaverBuddies.Colonies.ColonyViewService",
+                "BeaverBuddies.Colonies.ColonyHoursChecks", "BeaverBuddies.Colonies.ColonyDiagnostics", "BeaverBuddies.Colonies.ColonyRoadNetworks" })
+                System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(Mod(type).TypeHandle);
+            var names = spots.Cast<object>().ToDictionary(s => (string)s.GetType().GetField("Name")!.GetValue(s)!,
+                s => (bool)s.GetType().GetField("Sampled", All)!.GetValue(s)!);
+            var expected = new (string name, bool sampled)[]
+            {
+                ("Bucket hashes and walker positions before each bucket (co-op)", false),
+                ("Ticking, the game's and the mod's (co-op, per frame)", false),
+                ("Tick start: actions replayed and sent (co-op)", false),
+                ("Walking animation between ticks (co-op, per walker per frame)", true),
+                ("Alerts shown only for this colony (per alert per frame)", true),
+                ("Working hours checks", true),
+                ("Daily colony check (every entity)", false),
+                ("Road networks: district conflict walk", false),
+            };
+            var wrong = expected.Where(e => !names.TryGetValue(e.name, out bool sampled) || sampled != e.sampled).Select(e => e.name).ToList();
+            if (wrong.Count > 0) throw new Exception("missing or not sampled as it should be: " + string.Join("; ", wrong));
+        });
+
+        // ---- D-S8: the shipping build is not optimised ----
+
+        test("D-S8: micro-benchmark of the mod's own per-tick and per-frame code, in this build (compare the Release and Release Steam runs)", () =>
+        {
+            var debuggable = mod.GetCustomAttribute<System.Diagnostics.DebuggableAttribute>();
+            bool optimised = debuggable == null || !debuggable.IsJITOptimizerDisabled;
+            var lines = new List<string>();
+            // One call, compiled (no reflection in the loop), timed over many.
+            void Time(string what, int calls, Action once)
+            {
+                for (int i = 0; i < calls / 10; i++) once();
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                for (int i = 0; i < calls; i++) once();
+                lines.Add($"{what} {watch.Elapsed.TotalMilliseconds * 1e6 / calls:0.0} ns");
+            }
+            Action Call(MethodInfo method, object? target, params object?[] args)
+            {
+                var call = System.Linq.Expressions.Expression.Call(target == null ? null : System.Linq.Expressions.Expression.Constant(target), method,
+                    method.GetParameters().Select((p, i) => (System.Linq.Expressions.Expression)System.Linq.Expressions.Expression.Constant(args[i], p.ParameterType)));
+                return System.Linq.Expressions.Expression.Lambda<Action>(call).Compile();
+            }
+            // Each bucket's entity-order hash (co-op, 128 buckets a tick): a bucket of 156 entities, 20,000 in all.
+            Type hashesType = Mod("BeaverBuddies.DesyncDetecter.TickHashes");
+            object hashes = Activator.CreateInstance(hashesType)!;
+            IList<Guid> ids = Enumerable.Range(0, 156).Select(_ => Guid.NewGuid()).ToList();
+            Func<Guid, Guid> same = id => id;
+            Time("a bucket's hash (156 entities)", 200000, Call(hashesType.GetMethod("AddBucket")!.MakeGenericMethod(typeof(Guid)), hashes, ids, same));
+            // Every game random draw in co-op: which random state it draws from.
+            Time("a random draw's source", 5_000_000, Call(Only(Mod("BeaverBuddies.RandomSourceRules"), "Choose"), null, true, false, false, false, true, true, true, false));
+            // A guest's catch-up speed, every frame.
+            Time("the catch-up speed", 5_000_000, Call(Only(Mod("BeaverBuddies.CatchUpSpeed"), "For"), null, 7f, 5, 7f));
+            // A profiler spot around every hot path.
+            Type profiler = Mod("BeaverBuddies.Colonies.ColonyProfiler");
+            object spot = profiler.GetMethod("Declare", new[] { typeof(string) })!.Invoke(null, new object[] { "D-S8 benchmark spot" })!;
+            var start = System.Linq.Expressions.Expression.Call(Only(profiler, "Start"));
+            Time("a profiler spot", 5_000_000, System.Linq.Expressions.Expression.Lambda<Action>(System.Linq.Expressions.Expression.Call(Only(profiler, "Stop"),
+                System.Linq.Expressions.Expression.Constant(spot, spot.GetType()), start)).Compile());
+            // The heartbeat the host sends every tick, as JSON.
+            Type heartbeat = Mod("BeaverBuddies.HeartbeatEvent");
+            object beat = Activator.CreateInstance(heartbeat, true)!;
+            heartbeat.GetField("digest")!.SetValue(beat, (ulong?)0x1234567890abcdef);
+            heartbeat.GetField("changes")!.SetValue(beat, (int?)1234);
+            Type replayEvent = Mod("BeaverBuddies.Events.ReplayEvent");
+            Time("the heartbeat as JSON", 50000, Call(Mod("BeaverBuddies.IO.JsonSettings").GetMethod("Serialize")!.MakeGenericMethod(replayEvent), null, beat));
+            Console.WriteLine($"  {(optimised ? "optimised" : "NOT optimised (the Release Steam zip)")}: " + string.Join(", ", lines));
+        });
+
         // ---- D-S12: the daily colony check ----
 
         test("D-S12: each computer walks every entity once a day for the colony check, as the host's day plays", () =>

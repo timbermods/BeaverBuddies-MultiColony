@@ -1075,9 +1075,13 @@ namespace BeaverBuddies
         private static readonly ConditionalWeakTable<TickableEntityBucket, EntitySlotCache<TickableEntity, MovementAnimator>>.CreateValueCallback newAnimatorCache =
             _ => new EntitySlotCache<TickableEntity, MovementAnimator>();
 
+        private static readonly Colonies.ColonyProfiler.Spot BucketSync =
+            Colonies.ColonyProfiler.Declare("Bucket hashes and walker positions before each bucket (co-op)");
+
         static void Prefix(TickableEntityBucket __instance)
         {
             if (EventIO.IsNull) return;
+            long started = Colonies.ColonyProfiler.Start();
 
             var slots = animators.GetValue(__instance, newAnimatorCache);
             var entities = __instance._tickableEntities.Values;
@@ -1179,6 +1183,7 @@ namespace BeaverBuddies
             }
             // Let go of positions past the end if entities were removed from this bucket.
             slots.Trim(__instance._tickableEntities.Count);
+            Colonies.ColonyProfiler.Stop(BucketSync, started);
         }
 
         private static string FVS(Vector3 vector)

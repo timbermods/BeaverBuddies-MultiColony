@@ -135,7 +135,8 @@ namespace BeaverBuddies.Colonies
     // timestamps (they used to look the service up three times and take the profiler's lock before deciding anything).
     static class ColonyHoursChecks
     {
-        internal static readonly ColonyProfiler.Spot Spot = ColonyProfiler.Declare("Working hours checks");
+        // Sampled: its two timestamps cost about as much as the check (1.4.0-rc1 review, D-S1).
+        internal static readonly ColonyProfiler.Spot Spot = ColonyProfiler.DeclareSampled("Working hours checks");
 
         /// <summary>The colony's answer, or null to let the game's own stand.</summary>
         internal static bool? Answer(Timberborn.BaseComponentSystem.BaseComponent keeper)
@@ -143,10 +144,10 @@ namespace BeaverBuddies.Colonies
             if (!ColonyModeService.IsSeparateColonies) return null;
             ColonyWorkingHours hours = ColonyWorkingHours.Instance;
             if (hours == null) return null;
-            long started = ColonyProfiler.Start();
+            long started = ColonyProfiler.StartSampled(Spot);
             int? slot = ColonySeparation.SimOwnerOf(keeper);
             bool? answer = slot == null ? (bool?)null : hours.AreWorkingHours(slot.Value);
-            ColonyProfiler.Stop(Spot, started);
+            ColonyProfiler.StopSampled(Spot, started);
             return answer;
         }
     }

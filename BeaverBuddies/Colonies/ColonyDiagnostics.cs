@@ -136,6 +136,15 @@ namespace BeaverBuddies.Colonies
         {
             ticks++;
             ticksThisSecond++;
+            if (EventIO.IsNull) return;
+            try
+            {
+                DailyPerformanceLine();
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Perf] Could not write the daily performance line: " + error.Message);
+            }
         }
 
         private static readonly ColonyProfiler.Spot DailyFingerprint = ColonyProfiler.Declare("Daily colony check (every entity)");
@@ -347,7 +356,63 @@ namespace BeaverBuddies.Colonies
             r.AppendLine("Colony code since load (name: calls, total ms, average µs, slowest ms):");
             foreach (var (name, calls, totalMs, maxMs) in ColonyProfiler.Snapshot())
                 r.AppendLine($"  {name}: {calls}, {totalMs:0.0}, {(calls > 0 ? totalMs * 1000 / calls : 0):0.0}, {maxMs:0.00}");
+            // What Script P and a long session read (1.4.0-rc1 review, D-S2 and D-S7).
+            r.AppendLine(InterruptLine(0, 0));
+            r.AppendLine("Memory: " + MemoryLine());
             CoopDelay(r);
+        }
+
+        // ---- counters for the report and the daily performance line: read only, nothing simulated reads them ----
+
+        private int perfDay = int.MinValue, perfTicks;
+        private long perfFramesTicking, perfCutShort, perfLost;
+        private readonly int[] perfCollections = new int[3];
+
+        /// <summary>
+        /// How often a creation or deletion in a tick ended a frame's ticking (co-op; TickingService), since load or since
+        /// the given counts. Each such frame leaves the rest of the tick to the next frame, and the buckets it gives back
+        /// are capped at one tick: what the cap throws away is game time lost.
+        /// </summary>
+        private string InterruptLine(long framesTickingBefore, long cutShortBefore, long lostBefore = 0, int ticksBefore = 0)
+        {
+            TickingService ticking = SingletonManager.GetSingleton<TickingService>();
+            if (ticking == null) return "Frames cut short: no co-op ticking in this game";
+            int span = ticks - ticksBefore;
+            long cut = ticking.FramesCutShort - cutShortBefore, lost = ticking.BucketsLost - lostBefore;
+            return $"Frames cut short by a creation or deletion in a tick: {cut} in {span} ticks ({(span > 0 ? (double)cut / span : 0):0.00} a tick), "
+                + $"of {ticking.FramesTicking - framesTickingBefore} frames that ticked | buckets lost to the one-tick cap {lost} "
+                + $"({lost / 129.0:0.0} ticks of game time), given back since load {ticking.BucketsGivenBack}";
+        }
+
+        /// <summary>The heap, garbage collections, and the mod's own collections that grow with a session.</summary>
+        private static string MemoryLine()
+        {
+            return $"heap {GC.GetTotalMemory(false) / 1048576.0:0} MB, collections gen0 {GC.CollectionCount(0)} gen1 {GC.CollectionCount(1)} "
+                + $"gen2 {GC.CollectionCount(2)} | detailed-logging traces {DesyncDetecter.DesyncDetecterService.KeptTicks} ticks "
+                + $"({DesyncDetecter.DesyncDetecterService.KeptTraces}), water snapshots {DesyncDetecter.WaterDiagnostics.KeptBytes / 1048576.0:0.0} MB, "
+                + $"walker records {DesyncDetecter.WalkerDiagnostics.KeptTicks} ticks | colony changes counted {ColonyDigest.Changes}, "
+                + $"marked tiles {ColonyMarks.Instance?.MarkedTiles ?? 0}";
+        }
+
+        // Once a game day, in a co-op game: one line in the log, for long sessions and Script P (1.4.0-rc1 review, D-S7).
+        private void DailyPerformanceLine()
+        {
+            int day = _dayNightCycle.DayNumber;
+            if (day == perfDay) return;
+            bool first = perfDay == int.MinValue;
+            perfDay = day;
+            TickingService ticking = SingletonManager.GetSingleton<TickingService>();
+            if (!first && ticking != null)
+            {
+                string gcs = $"gen0 +{GC.CollectionCount(0) - perfCollections[0]} gen1 +{GC.CollectionCount(1) - perfCollections[1]} gen2 +{GC.CollectionCount(2) - perfCollections[2]}";
+                Plugin.Log($"[Perf] Day {day} (tick {ticks}): {InterruptLine(perfFramesTicking, perfCutShort, perfLost, perfTicks)} | "
+                    + $"collections today {gcs} | {MemoryLine()}");
+            }
+            perfTicks = ticks;
+            perfFramesTicking = ticking?.FramesTicking ?? 0;
+            perfCutShort = ticking?.FramesCutShort ?? 0;
+            perfLost = ticking?.BucketsLost ?? 0;
+            for (int generation = 0; generation < perfCollections.Length; generation++) perfCollections[generation] = GC.CollectionCount(generation);
         }
 
         // A guest's delay: the link to each player, how long its own actions take to come back, how far behind the host

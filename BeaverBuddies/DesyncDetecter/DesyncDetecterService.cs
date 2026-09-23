@@ -66,6 +66,18 @@ namespace BeaverBuddies.DesyncDetecter
 
         private static bool warnedNotDebug;
 
+        /// <summary>Ticks of traces kept, and the traces in them, for the diagnostics report.</summary>
+        internal static int KeptTicks => traces.Count;
+        internal static int KeptTraces
+        {
+            get
+            {
+                int count = 0;
+                foreach (List<Trace> tick in traces) count += tick.Count;
+                return count;
+            }
+        }
+
         private static string lastDesyncTrace = null;
 
         DesyncDetecterService()

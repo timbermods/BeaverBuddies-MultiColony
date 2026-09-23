@@ -41,6 +41,33 @@ static class RcPerformanceChecks
 
     public static IEnumerable<(string Name, Action Run)> Tests()
     {
+        yield return ("D-S1: a sampled profiler spot counts every call, times one in 16 and reports it scaled up, for less than a timed spot costs", () =>
+        {
+            var sampled = BeaverBuddies.Colonies.ColonyProfiler.DeclareSampled("D-S1 sampled spot");
+            var timed = BeaverBuddies.Colonies.ColonyProfiler.Declare("D-S1 timed spot");
+            BeaverBuddies.Colonies.ColonyProfiler.Reset();
+            for (int i = 0; i < 1600; i++)
+                BeaverBuddies.Colonies.ColonyProfiler.StopSampled(sampled, BeaverBuddies.Colonies.ColonyProfiler.StartSampled(sampled));
+            var row = BeaverBuddies.Colonies.ColonyProfiler.Snapshot().Single(r => r.name.StartsWith("D-S1 sampled spot"));
+            Check(row.calls == 1600, $"{row.calls} calls counted, not 1600");
+            Check(row.name.EndsWith("(~)"), "a sampled spot's row does not say it is estimated");
+            // The working-hours check: every beaver and workplace, every tick. The spot's own cost, per call.
+            const int n = 4_000_000;
+            for (int i = 0; i < 100_000; i++)
+            {
+                BeaverBuddies.Colonies.ColonyProfiler.Stop(timed, BeaverBuddies.Colonies.ColonyProfiler.Start());
+                BeaverBuddies.Colonies.ColonyProfiler.StopSampled(sampled, BeaverBuddies.Colonies.ColonyProfiler.StartSampled(sampled));
+            }
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < n; i++) BeaverBuddies.Colonies.ColonyProfiler.Stop(timed, BeaverBuddies.Colonies.ColonyProfiler.Start());
+            double every = clock.Elapsed.TotalMilliseconds; clock.Restart();
+            for (int i = 0; i < n; i++) BeaverBuddies.Colonies.ColonyProfiler.StopSampled(sampled, BeaverBuddies.Colonies.ColonyProfiler.StartSampled(sampled));
+            double oneIn16 = clock.Elapsed.TotalMilliseconds;
+            Console.WriteLine($"      Profiler: {n:N0} calls cost {every:F0} ms timed every call, {oneIn16:F0} ms timed one in 16 ({every * 1e6 / n:F1} and {oneIn16 * 1e6 / n:F1} ns a call)");
+            Check(oneIn16 < every, $"sampling ({oneIn16:F0} ms) should cost less than timing every call ({every:F0} ms)");
+            BeaverBuddies.Colonies.ColonyProfiler.Reset();
+        });
+
         yield return ("D-S9: a walker's animation goes on from its cached corner each frame, and starts again only when its clock goes back", () =>
         {
             var animator = new Timberborn.CharacterMovementSystem.MovementAnimator();

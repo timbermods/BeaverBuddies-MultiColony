@@ -15,14 +15,25 @@ namespace BeaverBuddies.Colonies
         public sealed class Spot
         {
             public readonly string Name;
+            internal readonly bool Sampled;
             internal long Calls, Total, Longest;
-            internal Spot(string name) { Name = name; }
+            internal Spot(string name, bool sampled) { Name = name; Sampled = sampled; }
         }
 
         private static readonly List<Spot> spots = new List<Spot>();
 
         /// <summary>Declares a spot (once, as a static field). Two declarations of one name share the spot.</summary>
-        public static Spot Declare(string name)
+        public static Spot Declare(string name) => Declare(name, sampled: false);
+
+        /// <summary>
+        /// Declares a spot on a path called so often that two timestamps a call cost about as much as the work (every
+        /// beaver's working-hours check every tick, every walker's animation every frame): one call in
+        /// <see cref="SampleEvery"/> is timed (StartSampled, StopSampled) and every call counted; the report scales the
+        /// timed ones up and marks the row (1.4.0-rc1 review, D-S1).
+        /// </summary>
+        public static Spot DeclareSampled(string name) => Declare(name, sampled: true);
+
+        private static Spot Declare(string name, bool sampled)
         {
             lock (spots)
             {
@@ -30,7 +41,7 @@ namespace BeaverBuddies.Colonies
                 {
                     if (spot.Name == name) return spot;
                 }
-                Spot made = new Spot(name);
+                Spot made = new Spot(name, sampled);
                 spots.Add(made);
                 return made;
             }
@@ -46,7 +57,26 @@ namespace BeaverBuddies.Colonies
             if (elapsed > spot.Longest) spot.Longest = elapsed;
         }
 
-        /// <summary>Name, calls, total ms, largest single call in ms; most time first. Spots never reached are left out.</summary>
+        /// <summary>One call in this many to a sampled spot is timed.</summary>
+        public const int SampleEvery = 16;
+
+        /// <summary>Starts a call to a sampled spot: a timestamp for one call in <see cref="SampleEvery"/>, else 0 (not timed).</summary>
+        public static long StartSampled(Spot spot) => ((spot.Calls + 1) & (SampleEvery - 1)) == 0 ? Stopwatch.GetTimestamp() : 0;
+
+        /// <summary>Ends a call to a sampled spot: counted always, timed if its start was.</summary>
+        public static void StopSampled(Spot spot, long start)
+        {
+            spot.Calls++;
+            if (start == 0) return;
+            long elapsed = Stopwatch.GetTimestamp() - start;
+            spot.Total += elapsed * SampleEvery;
+            if (elapsed > spot.Longest) spot.Longest = elapsed;
+        }
+
+        /// <summary>
+        /// Name, calls, total ms, largest single call in ms; most time first. Spots never reached are left out. A sampled
+        /// spot's name ends "(~)": its total is its timed calls scaled up, and its largest is the largest timed.
+        /// </summary>
         public static List<(string name, long calls, double totalMs, double maxMs)> Snapshot()
         {
             double toMs = 1000.0 / Stopwatch.Frequency;
@@ -55,7 +85,7 @@ namespace BeaverBuddies.Colonies
             {
                 foreach (Spot spot in spots)
                 {
-                    if (spot.Calls > 0) result.Add((spot.Name, spot.Calls, spot.Total * toMs, spot.Longest * toMs));
+                    if (spot.Calls > 0) result.Add((spot.Sampled ? spot.Name + " (~)" : spot.Name, spot.Calls, spot.Total * toMs, spot.Longest * toMs));
                 }
             }
             result.Sort((a, b) => b.totalMs.CompareTo(a.totalMs));
