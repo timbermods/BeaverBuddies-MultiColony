@@ -202,5 +202,99 @@ internal static class RcPerformanceRuntimeChecks
             double first = Run(fromFirst, reset), cached = Run(resumed, goOn);
             Console.WriteLine($"  per frame, 600 walkers: from the first corner (beta24) {first:0} µs, from the cached corner {cached:0} µs");
         });
+
+        // ---- D-S4: the road networks' district conflict walk ----
+
+        Type navigation(string name) => Game("Timberborn.Navigation", "Timberborn.Navigation." + name);
+        object Update(bool roads)
+        {
+            object ReadOnly<T>(List<T> list) => Game("Timberborn.Common", "Timberborn.Common.ReadOnlyList`1").MakeGenericType(typeof(T))
+                .GetConstructors(All).Single().Invoke(new object[] { list });
+            Type updateType = navigation("NavMeshUpdate"), cell = Game("UnityEngine.CoreModule", "UnityEngine.Vector3Int");
+            var terrain = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(cell))!;
+            terrain.Add(Activator.CreateInstance(cell, 5, 5, 2));
+            object Of(IList list) => Game("Timberborn.Common", "Timberborn.Common.ReadOnlyList`1").MakeGenericType(cell)
+                .GetConstructors(All).Single().Invoke(new object[] { list });
+            return updateType.GetConstructors(All).Single().Invoke(new[] { Activator.CreateInstance(Game("Timberborn.Common", "Timberborn.Common.BoundingBox"))!,
+                Of(terrain), ReadOnly(new List<int> { 42 }), ReadOnly(roads ? new List<int> { 43 } : new List<int>()) });
+        }
+
+        test("D-S4: a navigation update that changed no road does not walk the road networks", () =>
+        {
+            Type networks = Mod("BeaverBuddies.Colonies.ColonyRoadNetworks");
+            FieldInfo separate = Mod("BeaverBuddies.Colonies.ColonyModeService").GetField("separateNow", All)!;
+            object spot = networks.GetField("ConflictWalks", All)?.GetValue(null)
+                ?? throw new Exception("the conflict walk has no profiler spot, so nobody can see what it costs");
+            FieldInfo calls = spot.GetType().GetField("Calls", All)!;
+            // Its services are never read before the walk: an instance made without them stands for the game's.
+            object listener = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(networks);
+            MethodInfo updated = Only(networks, "OnNavMeshUpdated");
+            object priorMode = separate.GetValue(null)!;
+            separate.SetValue(null, true);
+            try
+            {
+                long before = (long)calls.GetValue(spot)!;
+                updated.Invoke(listener, new[] { Update(roads: false) });
+                if ((long)calls.GetValue(spot)! != before) throw new Exception("a terrain-only update walked the road networks");
+                updated.Invoke(listener, new[] { Update(roads: true) });
+                if ((long)calls.GetValue(spot)! != before + 1) throw new Exception("a road update did not walk them");
+                separate.SetValue(null, false);
+                updated.Invoke(listener, new[] { Update(roads: true) });
+                if ((long)calls.GetValue(spot)! != before + 1) throw new Exception("a shared-colony game walked them");
+            }
+            finally { separate.SetValue(null, priorMode); }
+        });
+
+        test("D-S4: micro-benchmark, the game's district conflict walk over 3,000 path tiles and buildings in 12 districts", () =>
+        {
+            // A 256 x 256 map, one level: 12 districts, each a road network of about 250 path tiles with a building entrance
+            // every other tile (a building's own road node), none joined to another. Built straight into the game's graph.
+            const int size = 256, districts = 12, tilesEach = 250;
+            Type graphType = navigation("RoadNavMeshGraph"), nodeType = navigation("NavMeshNode");
+            object graph = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(graphType);
+            var lists = Array.CreateInstance(typeof(List<>).MakeGenericType(nodeType), size * size * 2);
+            IList Neighbours(int id)
+            {
+                var list = (IList?)lists.GetValue(id);
+                if (list == null) { list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(nodeType))!; lists.SetValue(list, id); }
+                return list;
+            }
+            void Join(int a, int b)
+            {
+                Neighbours(a).Add(Activator.CreateInstance(nodeType, b, 0, 1f)!);
+                Neighbours(b).Add(Activator.CreateInstance(nodeType, a, 0, 1f)!);
+            }
+            var centers = new List<int>();
+            int nodes = 0;
+            for (int d = 0; d < districts; d++)
+            {
+                // A snake of path tiles in its own band of rows, a building node beside every other tile.
+                int row0 = d * 20 + 2, previous = -1;
+                for (int i = 0; i < tilesEach; i++)
+                {
+                    int x = 2 + i % 200, y = row0 + (i / 200) * 2;
+                    int id = y * size + x;
+                    if (previous >= 0) Join(previous, id); else centers.Add(id);
+                    if ((i / 200) != ((i - 1) / 200) && i > 0) Join(id - size * 2, id);
+                    previous = id;
+                    nodes++;
+                    if (i % 2 == 0) { Join(id, size * size + id); nodes++; }
+                }
+            }
+            for (int i = 0; i < lists.Length; i++) if (lists.GetValue(i) == null) lists.SetValue(Activator.CreateInstance(typeof(List<>).MakeGenericType(nodeType)), i);
+            graphType.GetField("_neighbors", All)!.SetValue(graph, lists);
+            object obstacles = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(navigation("DistrictObstacleService"));
+            obstacles.GetType().GetField("_obstacles", All)!.SetValue(obstacles, new bool[lists.Length]);
+            object detector = Activator.CreateInstance(navigation("DistrictConflictDetector"), true)!;
+            MethodInfo walk = detector.GetType().GetMethod("AreDistrictsInConflict")!;
+            object[] args = { graph, obstacles, centers };
+            if ((bool)walk.Invoke(detector, args)!) throw new Exception("the test network has two districts joined");
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            const int runs = 50;
+            for (int r = 0; r < runs; r++) walk.Invoke(detector, args);
+            double ms = watch.Elapsed.TotalMilliseconds / runs;
+            Console.WriteLine($"  one walk over {nodes} road nodes in {districts} districts: {ms:0.00} ms (.NET 8; the game's Mono is slower). " +
+                "It ran on every regular navigation update in separate colonies; now only on those that changed a road");
+        });
     }
 }
