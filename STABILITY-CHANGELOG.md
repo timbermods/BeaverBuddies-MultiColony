@@ -5,6 +5,71 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc4
+
+**Every game is hosted through a Co-op Game page.** A save is hosted from the main menu's new **Host co-op game**
+button, and a game hosts itself by going there: **Host co-op game** in single player's game menu, and **Save and
+Rehost**, whose players rejoin from their main menu. The original BeaverBuddies hosting dialog is gone: it let guests
+load as soon as they connected, before the host pressed Start. A shared save can be made separate colonies on its page.
+Decided by Kyler after rc3. Wire: a new host-only action, `ColonyConversionEvent`, and the room's roster may carry
+`separateAtStart`. Saves are unchanged.
+
+- **Host co-op game on the main menu**, under Load game, above Join co-op game. It opens the game's own Load Game box as
+  the **Host co-op game** box (`Connect/HostCoopFlow.cs`, `HostCoopMenu`, and the `LoadGameBox` patches in
+  `ServerHostingUtils.cs`):
+  - its title is Host co-op game, and its **Host co-op game** button (a copy of Load) stands in Load's place. Enter
+    and a double-click host too (`LoadGameBox.LoadGame`, `[ManualMethodOverwrite]`);
+  - under the save's picture, in the save list's own small gold text (`game-text-small text--yellow`), a line says
+    what the selected save is: *Separate colonies: 2 players* (its colony slot table's rows), *… only yours so far*
+    (and *Folktails and Iron Teeth* for a mixed save), or *One shared colony*;
+  - the line is read off the menu's thread, once per save and box (`SaveColonyReader`, `LobbyRules.SaveStatusKey`),
+    and its two lines are kept, so the list doesn't move.
+
+  **Load game** is the game's own box again, in the main menu and in a game: it only loads.
+- **Host co-op game in a game** played alone, in the game menu under Load game. After a confirmation, the game is
+  saved as a new save (`<date> Co-op`) and its Co-op Game page opens in the main menu (`RehostingService.HostThisGame`,
+  `HostCoopFlow.HostInMainMenu`; `HostCoopMenu` opens the handed-over save once the menu is up, through the game's
+  own save checks). A co-op host's button is **Save and Rehost**; a guest has neither.
+- **Save and Rehost** (the game menu, and the desync dialog) goes the same way: `<date> Rehost`, then its page. The
+  other players:
+  - *The multiplayer connection was lost* now offers **Rejoin** (and *Stay here*);
+  - the desync dialog's **Reconnect (wait for Rehost)** does the same;
+  - either takes them to their main menu, where *Waiting for the host to host again…* tries every 3 s, quietly, the way
+    they joined (the host's Steam lobby when Steam shows it or its invite; the address they typed), and they land on
+    the page as soon as it opens (`ClientConnectionService.WatchRejoin`). **Cancel** stops waiting.
+
+  The order doesn't matter: the host and the guests can press their buttons either way round.
+- **A shared save made separate colonies at Start.** For a save that is not separate colonies (a single-player game, a
+  shared co-op save, a Stability Fork save), the host's page shows the New Game page's **Separate colonies**
+  checkbox, unticked, with **Separate science and unlocks** under it (starting at the host's last New Game choice).
+  - **The guests see it.** Ticked, the room tells the guests (`LobbyRoom.SetSeparateAtStart`, the roster's
+    `separateAtStart`), whose gold line reads *Separate colonies from Start: everything built so far is the host's
+    colony, and each player founds their own.*
+  - **At Start** the choice is frozen, and once the host's game has loaded, its first action is `ColonyConversionEvent`
+    (`Colonies/SaveConversion.cs`). Every computer plays it at the same point: the split a guest makes from the game
+    menu, without a founding (`ColonyModeService.Enable(..., newGame: false)`: the buildings and marks go to the host's
+    colony, the science with separate science).
+  - **Then** the host is told, and each guest is offered to found their colony.
+  - **Only the host sends it** (`ColonyRulesService`), and it does nothing in a game already separate. A start that
+    fails, or the next main menu, drops it.
+- **Removed:**
+  - the original hosting dialog (the rest of `ServerHostingUtils.LoadAndHost`, its client list and `GiveUpHosting`);
+  - the Load Game box's own Host button outside the Host co-op game box.
+
+  The in-game *Start the game?* prompt (`HostStartGate`) is no longer reached: every game starts from a room, where
+  joining closes at Start.
+- **Checks:** StabilityTests 450 → **453**, RuntimeChecks 429 → **431** on both builds. Both builds have 0 warnings.
+  - StabilityTests: the hosting path and the box's mode, the buttons, the save line's rule, the room's flag and its
+    frames, the conversion's start, send and play, and the rejoin.
+  - RuntimeChecks: every Load Game box member hooked, its layout's names and the main menu's classes; the game menu's
+    and main menu's Load game; `OpenMainMenu`; the rehost and the handed-over save in the IL; the old dialog gone; the
+    rejoin in the menu's update; `EndSession`'s Rejoin.
+  - Four older checks follow the change: the hosted save's Steam description, the shared-events list with
+    `ColonyConversionEvent`, the reconnect plan now in `ReconnectNow` and `WatchRejoin`, and the room's note count.
+- **Docs:** README (hosting a save, from a game, rehost and rejoin, troubleshooting) and TWO-COLONIES (a save in the
+  waiting room, a shared save made separate at Start, founding, how joining closes). ALPHA-TEST-SCRIPTS: the steps that
+  used Load Game → Host or the old dialog, and a new **Script H**. Not played; nothing here has been seen in a game.
+
 ## 1.4.0-rc3
 
 **Separate or shared, chosen where the game is made.** A new game's colonies are now chosen on the New Game difficulty

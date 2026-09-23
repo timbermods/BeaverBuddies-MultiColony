@@ -19,7 +19,7 @@ using BeaverBuddies.Lobby;
 
 namespace BeaverBuddies.Connect
 {
-    public class ClientConnectionService : IUpdatableSingleton
+    public class ClientConnectionService : RegisteredSingleton, IUpdatableSingleton
     {
         private GameSceneLoader _gameSceneLoader;
         private GameSaveRepository _gameSaveRepository;
@@ -43,9 +43,11 @@ namespace BeaverBuddies.Connect
             UrlOpener urlOpener,
             Settings settings,
             PanelStack panelStack,
-            VisualElementLoader visualElementLoader
+            VisualElementLoader visualElementLoader,
+            Timberborn.MainMenuSceneLoading.MainMenuSceneLoader mainMenuSceneLoader
         )
         {
+            _mainMenuSceneLoader = mainMenuSceneLoader;
             _gameSceneLoader = gameSceneLoader;
             _gameSaveRepository = gameSaveRepository;
             _dialogBoxShower = dialogBoxShower;
@@ -111,7 +113,8 @@ namespace BeaverBuddies.Connect
 
             if (!TryToConnect(new TCPClientWrapper(address, port))) return false;
             lastJoin = JoinRoute.ViaAddress(typed);
-            ShowConnecting(typed);
+            // A rejoin's quiet try waits under its own box (WatchRejoin): no Connecting box for each try.
+            if (!quietJoin) ShowConnecting(typed);
             return true;
         }
 
@@ -123,8 +126,15 @@ namespace BeaverBuddies.Connect
             saveReceived = false;
             // An earlier session's host factions mean nothing to this one (the host's first message brings its own).
             BeaverBuddies.Colonies.ColonySession.ForgetHostFactions();
+            bool quiet = quietJoin;
             client = ClientEventIO.Create(socket, LoadMap, (error, net) =>
             {
+                // A rejoin's try that found no host yet (its page not open): the next try comes, and nothing is said.
+                if (quiet && (net == null || !net.Lobby.View().Welcomed))
+                {
+                    Plugin.Log("[Lobby] Rejoin: the host is not hosting yet (" + error + ")");
+                    return;
+                }
                 // Only reached while joining, before the host's game has loaded (see ClientEventIO): once a game
                 // exists, a lost connection is reported by that game, because this service's dialogs belong to the
                 // scene that started the join. In 1.0.4 showing one after the game loaded threw, and the uncaught
@@ -165,11 +175,105 @@ namespace BeaverBuddies.Connect
         }
 
         /// <summary>
-        /// A guest's "Reconnect (wait for Rehost)" after a desync: joins the host again the way it joined before. It
-        /// used to dial the address in the settings whatever the route, so a guest who had joined over Steam dialled
-        /// 127.0.0.1 (the default) or a stale address. See DesyncDialogPlan.Reconnect.
+        /// A guest's "Reconnect (wait for Rehost)" after a desync, and Rejoin after a lost connection: joins the host again
+        /// the way it joined before (DesyncDialogPlan.Reconnect). A rehost is hosted through its Co-op Game page, a
+        /// main-menu page (1.4.0-rc4): from a game this player goes to the main menu, and joins the page there as soon as
+        /// it opens (<see cref="WatchRejoin"/>).
         /// </summary>
         public void Reconnect()
+        {
+            if (SingletonManager.GetSingleton<LobbyGuestPanel>() == null)
+            {
+                Plugin.Log("[Lobby] Rejoin: going to the main menu to wait for the host's Co-op Game page");
+                rejoinPending = true;
+                _mainMenuSceneLoader.OpenMainMenu();
+                return;
+            }
+            ReconnectNow();
+        }
+
+        /// <summary>From a game whose session ended: <see cref="Reconnect"/>, from wherever this service is found.</summary>
+        public static void RejoinFromGame() => SingletonManager.GetSingleton<ClientConnectionService>()?.Reconnect();
+
+        // ---- a rejoin, in the main menu (1.4.0-rc4) ----
+
+        // Set in a game (Reconnect, Rejoin) as it goes to the main menu; there this service waits for the host's Co-op Game
+        // page and joins it. Static: it crosses the scene change.
+        private static bool rejoinPending;
+        private const double RejoinEveryMs = 3000;
+        private readonly Timberborn.MainMenuSceneLoading.MainMenuSceneLoader _mainMenuSceneLoader;
+        private ConnectingBox rejoinBox;
+        private double nextRejoinMs;
+        private ulong triedLobby;
+        // The join under way is one of the rejoin's quiet tries: finding nobody there is not an error.
+        private bool quietJoin;
+
+        /// <summary>Every frame in the main menu: a rejoin waits for the host's page, trying every few seconds, until it is in.</summary>
+        private void WatchRejoin()
+        {
+            if (!rejoinPending) return;
+            // The main menu's (its guest page shows the room), once it is up.
+            if (SingletonManager.GetSingleton<LobbyGuestPanel>() == null) return;
+            TimberClient net = client?.NetBase;
+            if (net != null && !net.IsStopped && net.Lobby.View().Welcomed)
+            {
+                // In the host's room: its page has taken over.
+                StopRejoin(resetJoin: false);
+                return;
+            }
+            if (rejoinBox == null || rejoinBox.IsClosed)
+            {
+                if (_panelStack._stack.Count == 0 || _panelStack.TopPanel.IsOverlay) return;
+                rejoinBox = ConnectingBox.Show(_visualElementLoader, _panelStack,
+                    RegisteredLocalizationService.T("BeaverBuddies.Rejoin.Waiting"), () => StopRejoin(resetJoin: true));
+            }
+            // A try under way.
+            if (net != null && !net.IsStopped) return;
+            double now = RttTracker.NowMs;
+            if (now < nextRejoinMs) return;
+            nextRejoinMs = now + RejoinEveryMs;
+            ReconnectPlan plan = DesyncDialogPlan.Reconnect(lastJoin, _settings.ClientConnectionAddress.Value, FindHostLobby);
+            switch (plan.Step)
+            {
+                case ReconnectStep.JoinSteamLobby:
+                    // The host's lobby is there: entering it joins as accepting an invite does, with its own Connecting box.
+                    if (plan.Lobby == triedLobby) return;
+                    triedLobby = plan.Lobby;
+                    Plugin.Log("[Lobby] Rejoin: the host's lobby is up; joining it");
+                    StopRejoin(resetJoin: false);
+                    try { SteamMatchmaking.JoinLobby(new CSteamID(plan.Lobby)); }
+                    catch (Exception error) { Plugin.LogWarning("[Lobby] Rejoin: could not join the host's Steam lobby: " + error.Message); }
+                    break;
+                case ReconnectStep.WaitForSteamInvite:
+                    // Not visible yet (or the host's lobby is invite-only): keep looking; the host's invite joins too.
+                    break;
+                default:
+                    quietJoin = true;
+                    try { TryToConnect(plan.Address); }
+                    finally { quietJoin = false; }
+                    break;
+            }
+        }
+
+        private void StopRejoin(bool resetJoin)
+        {
+            rejoinPending = false;
+            triedLobby = 0;
+            ConnectingBox box = rejoinBox;
+            rejoinBox = null;
+            if (box != null && !box.IsClosed)
+            {
+                try { box.Close(); }
+                catch (Exception error) { Plugin.LogWarning("[Lobby] Could not close the rejoin box: " + error.Message); }
+            }
+            if (!resetJoin) return;
+            Plugin.Log("[Lobby] The player stopped waiting to rejoin");
+            ClientEventIO joining = client;
+            client = null;
+            if (joining != null) EventIO.ResetIf(joining);
+        }
+
+        private void ReconnectNow()
         {
             ReconnectPlan plan = DesyncDialogPlan.Reconnect(lastJoin, _settings.ClientConnectionAddress.Value, FindHostLobby);
             Plugin.Log($"Reconnecting after a desync; joined by {lastJoin?.ToString() ?? "an unknown route"}: {plan.Step}");
@@ -261,6 +365,12 @@ namespace BeaverBuddies.Connect
         /// <summary>Takes the Connecting box away (the waiting room opened, or an error is about to be shown).</summary>
         public void CloseConnectingBox()
         {
+            // A rejoin's box goes as the room's page comes (WatchRejoin sees it in, and stops).
+            if (rejoinBox != null && !rejoinBox.IsClosed)
+            {
+                try { rejoinBox.Close(); }
+                catch (Exception error) { Plugin.LogWarning("Could not close the rejoin box: " + error.Message); }
+            }
             ConnectingBox box = connectingBox;
             if (box == null) return;
             try { box.Close(); }
@@ -384,6 +494,8 @@ namespace BeaverBuddies.Connect
         public void UpdateSingleton()
         {
             connectingBox?.Poll();
+            rejoinBox?.Poll();
+            WatchRejoin();
             if (client == null) return;
             //Plugin.Log("Updating client!");
             client.Update();

@@ -158,5 +158,61 @@ internal static class RcMainRuntimeChecks
                 throw new Exception("the split no longer checks the game has started and asks for confirmation");
             if (ask.Any(i => i.Calls && i.Member?.Name == "BeginSplit")) throw new Exception("the split begins before it is confirmed");
         });
+
+        // ---- 1.4.0-rc4: hosting a save through its Co-op Game page ----
+
+        test("rc4: the Host co-op game box is the game's Load Game box, and every game member it hooks is still there", () =>
+        {
+            Type box = Game("Timberborn.GameSaveRepositorySystemUI", "Timberborn.GameSaveRepositorySystemUI.LoadGameBox");
+            foreach (string member in new[] { "GetPanel", "Open", "OnUICancelled", "LoadGame", "OnSaveSelectionChanged", "_saveList", "_loc",
+                "_validatingGameLoader", "_dialogBoxShower", "_gameSaveRepository" })
+                if (box.GetMember(member, All).Length == 0) throw new Exception("LoadGameBox has no " + member);
+            if (box.GetMethod("LoadGame", All)?.ReturnType != typeof(bool)) throw new Exception("LoadGameBox.LoadGame no longer returns whether it loaded");
+            if (box.GetMethod("OnSaveSelectionChanged", All)?.GetParameters().Length != 0) throw new Exception("LoadGameBox.OnSaveSelectionChanged changed its parameters");
+            using ZipArchive ui = ZipFile.OpenRead(Path.GetFullPath(Path.Combine(managedPath, "..", "StreamingAssets", "Modding", "UI.zip")));
+            string Read(string entry)
+            {
+                using var reader = new StreamReader((ui.GetEntry(entry) ?? throw new Exception("UI.zip has no " + entry)).Open());
+                return reader.ReadToEnd();
+            }
+            string layout = Read("Views/Options/LoadGameBox.uxml");
+            foreach (string name in new[] { "SavesWrapper", "LoadButton", "Header" })
+                if (!layout.Contains("\"" + name + "\"")) throw new Exception("the Load Game box has no " + name);
+            // The line under the picture: the save list's own gold small text (its rows use these), from the sheets the main
+            // menu's title screen loads, under which the box opens.
+            var defined = new HashSet<string>();
+            foreach (Match sheet in Regex.Matches(Read("Views/MainMenu/TitleScreen.uxml"), "Style src=\"/Assets/Resources/UI/(Views/[^\"]+\\.uss)\""))
+                foreach (Match m in Regex.Matches(Read(sheet.Groups[1].Value), "\\.([A-Za-z_][A-Za-z0-9_-]*)")) defined.Add(m.Groups[1].Value);
+            foreach (string cls in new[] { "game-text-small", "text--yellow" })
+                if (!defined.Contains(cls)) throw new Exception(cls + " is not in the main menu's style sheets");
+            if (!Read("Views/Options/GameSaveItemElement.uxml").Contains("game-text-small text--yellow"))
+                throw new Exception("the save list's rows no longer use the small gold text");
+            // Host co-op game under Load game, in the main menu and the game menu.
+            if (!Read("Views/MainMenu/MainMenuPanel.uxml").Contains("name=\"LoadGameButton\"")) throw new Exception("the main menu has no LoadGameButton");
+            if (!Read("Views/Game/GameOptionsBox.uxml").Contains("name=\"LoadGameButton\"")) throw new Exception("the game menu has no LoadGameButton");
+            Type menuLoader = Game("Timberborn.MainMenuSceneLoading", "Timberborn.MainMenuSceneLoading.MainMenuSceneLoader");
+            if (menuLoader.GetMethod("OpenMainMenu", All) == null) throw new Exception("MainMenuSceneLoader.OpenMainMenu is gone");
+        });
+
+        test("rc4: a game hosts itself through the main menu's Co-op Game page, and a guest rejoins it there", () =>
+        {
+            bool Calls(Type type, string name) => type.GetMethods(All).Concat(type.GetNestedTypes(All).SelectMany(t => t.GetMethods(All)))
+                .Any(m => IlScan.Instructions(m).Any(i => i.Calls && i.Member?.Name == name));
+            Type rehosting = mod.GetType("BeaverBuddies.Connect.RehostingService", true)!;
+            if (!Calls(rehosting, "HostInMainMenu")) throw new Exception("a game no longer hosts itself through the main menu");
+            if (Calls(rehosting, "LoadIfSaveValidAndHost")) throw new Exception("a game hosts in place again (the original dialog)");
+            Type menu = mod.GetType("BeaverBuddies.Connect.HostCoopMenu", true)!;
+            if (!IlScan.Instructions(Only(menu, "UpdateSingleton")).Any(i => i.Calls && i.Member?.Name == "LoadIfSaveValidAndHost"))
+                throw new Exception("the main menu no longer opens a handed-over save's page");
+            Type utils = mod.GetType("BeaverBuddies.Connect.ServerHostingUtils", true)!;
+            if (utils.GetMethod("UpdateDialogBox", All) != null || utils.GetMethod("GiveUpHosting", All) != null)
+                throw new Exception("the original hosting dialog is back");
+            Type service = mod.GetType("BeaverBuddies.Connect.ClientConnectionService", true)!;
+            if (!IlScan.Instructions(Only(service, "UpdateSingleton")).Any(i => i.Calls && i.Member?.Name == "WatchRejoin"))
+                throw new Exception("the main menu no longer waits for a rehost to rejoin");
+            Type replay = mod.GetType("BeaverBuddies.ReplayService", true)!;
+            MethodInfo end = replay.GetMethod("EndSession", All) ?? throw new Exception("ReplayService.EndSession is gone");
+            if (!end.GetParameters().Any(p => p.Name == "offerRejoin")) throw new Exception("a lost session no longer offers Rejoin");
+        });
     }
 }

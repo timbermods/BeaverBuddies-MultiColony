@@ -47,6 +47,13 @@ namespace BeaverBuddies.Lobby
         public bool SeparateScience { get; set; } = true;
 
         /// <summary>
+        /// A hosted shared save (1.4.0-rc4): the host ticked Separate colonies in the room, so the game becomes a
+        /// separate-colonies game at Start (SaveConversion), with separate science if <see cref="ConvertScience"/>.
+        /// </summary>
+        public bool ConvertSeparate { get; set; }
+        public bool ConvertScience { get; set; }
+
+        /// <summary>
         /// Each colony plays a faction of its own (Mixed factions for new games, with every faction unlocked on the host's
         /// computer; for a save, the save's own mode). Players pick theirs in the room.
         /// </summary>
@@ -198,6 +205,10 @@ namespace BeaverBuddies.Lobby
                 string.Join(", ", StartedWith.Select(g => $"{g.Number} {g.Name} ({(g.Ready ? "ready" : "not ready")})")));
             if (Setup.IsSave)
             {
+                // A shared save the host chose to make separate: the host's game says so as its first action, once it has
+                // loaded, and every computer plays it at the same point (SaveConversion).
+                BeaverBuddies.Colonies.SaveConversion.Pending = Setup.ConvertSeparate && Setup.SaveColonies != null && !Setup.SaveColonies.SeparateColonies
+                    ? new BeaverBuddies.Colonies.PendingConversion(Setup.ConvertScience) : null;
                 SetState(LobbySessionState.CreatingWorld);
                 OnWorldSaved(Setup.Save, Setup.SaveBytes);
                 return;
@@ -310,6 +321,8 @@ namespace BeaverBuddies.Lobby
         {
             if (State == LobbySessionState.Cancelled || State == LobbySessionState.Failed) return;
             Plugin.LogError("[Lobby] The co-op start failed: " + reason);
+            // A shared save's conversion belongs to the game that failed to start, not to whatever is hosted next.
+            BeaverBuddies.Colonies.SaveConversion.Pending = null;
             try { Server?.CancelLobby(LobbyEndReason.Failed, reason); }
             catch (Exception error) { Plugin.LogWarning("[Lobby] Could not tell the guests: " + error.Message); }
             EventIO.ResetIf(IO);

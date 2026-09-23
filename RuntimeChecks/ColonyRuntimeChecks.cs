@@ -58,9 +58,10 @@ internal static class ColonyRuntimeChecks
             // only ever the actor's own colony's (the stamped slot), like working hours. So is dev mode's Add 1000 Science,
             // which the host also refuses while its dev mode is off. A mixed-factions game's switch is only ever the actor's
             // own colony's, and the host allows it only from that colony's own seated player while it is untouched
-            // (FactionChoice.HostJudgeSwitch), and it is judged again as it is played.
+            // (FactionChoice.HostJudgeSwitch), and it is judged again as it is played. Making a hosted shared save separate
+            // colonies (1.4.0-rc4) is refused from anyone but the host, and does nothing in a game already separate.
             var expected = new[] { "ActAsColonyEvent", "ActionRefusedEvent", "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
-                "ColonyFactionSwitchEvent", "ColonyHandoverEvent", "ColonyPresenceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
+                "ColonyConversionEvent", "ColonyFactionSwitchEvent", "ColonyHandoverEvent", "ColonyPresenceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
                 "PlantingAreaMarkedEvent", "PlayerHelloEvent", "ScienceAddedEvent", "ShowOptionsMenuEvent", "SpeedBoostEvent",
                 "SpeedSetEvent", "StewardGrantedEvent", "StewardRevokedEvent", "TraceLoggedForTickEvent", "TreeCuttingAreaEvent",
                 "WishlistChangedEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };

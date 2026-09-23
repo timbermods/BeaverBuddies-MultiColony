@@ -7,8 +7,9 @@ namespace TimberNet
     public sealed class LobbyView
     {
         public LobbyView(int version, bool welcomed, int you, LobbySummary? summary, IReadOnlyList<LobbyPlayer> players,
-            LobbyStage stage, bool ended, LobbyEndReason endReason, string? endDetail, double lastFrameAtMs)
+            LobbyStage stage, bool ended, LobbyEndReason endReason, string? endDetail, double lastFrameAtMs, bool separateAtStart = false)
         {
+            SeparateAtStart = separateAtStart;
             Version = version;
             Welcomed = welcomed;
             You = you;
@@ -20,6 +21,9 @@ namespace TimberNet
             EndDetail = endDetail;
             LastFrameAtMs = lastFrameAtMs;
         }
+
+        /// <summary>A hosted shared save becomes separate colonies at Start, as the host last said.</summary>
+        public bool SeparateAtStart { get; }
 
         /// <summary>Changes whenever anything here does (a keep-alive with nothing new included).</summary>
         public int Version { get; }
@@ -50,6 +54,7 @@ namespace TimberNet
         private LobbySummary? summary;
         private IReadOnlyList<LobbyPlayer> players = new List<LobbyPlayer>();
         private string? lastRosterText;
+        private bool separateAtStart;
         private LobbyStage stage = LobbyStage.Open;
         private int lastSequence = -1;
         private bool ended;
@@ -64,7 +69,8 @@ namespace TimberNet
 
         public LobbyView View()
         {
-            lock (gate) return new LobbyView(version, welcomed, you, summary, players, stage, ended, endReason, endDetail, lastFrameAtMs);
+            lock (gate) return new LobbyView(version, welcomed, you, summary, players, stage, ended, endReason, endDetail, lastFrameAtMs,
+                separateAtStart);
         }
 
         internal void Receive(string? type, JObject frame, double nowMs)
@@ -83,9 +89,10 @@ namespace TimberNet
                     case LobbyFrames.RosterType:
                         // The host repeats the roster with every keep-alive: only a different one is news.
                         string rosterText = frame.ToString(Newtonsoft.Json.Formatting.None);
-                        if (rosterText == lastRosterText || !LobbyFrames.TryParseRoster(frame, out List<LobbyPlayer> roster)) return;
+                        if (rosterText == lastRosterText || !LobbyFrames.TryParseRoster(frame, out List<LobbyPlayer> roster, out bool separate)) return;
                         lastRosterText = rosterText;
                         players = roster;
+                        separateAtStart = separate;
                         break;
                     case LobbyFrames.StateType:
                         // Frames come in order on one connection; the sequence only guards against an old one.

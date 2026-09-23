@@ -59,12 +59,21 @@ internal static class DesyncDialogChecks
                 throw new Exception("Joining over Steam is not remembered");
             if (!IlScan.Names(IlScan.Members(Method("TryToConnect", "String")), "BeaverBuddies.Connect.JoinRoute", "ViaAddress"))
                 throw new Exception("Joining by address is not remembered");
-            var reconnect = IlScan.Members(type.GetMethod("Reconnect", all, Type.EmptyTypes)
+            // Since 1.4.0-rc4 Reconnect, from a game, goes to the main menu (a rehost's Co-op Game page is there) and
+            // WatchRejoin tries there; in the main menu it reconnects at once (ReconnectNow). Both follow the plan.
+            var fromGame = IlScan.Members(type.GetMethod("Reconnect", all, Type.EmptyTypes)
                 ?? throw new Exception("ClientConnectionService has no Reconnect"));
+            if (!IlScan.Names(fromGame, "Timberborn.MainMenuSceneLoading.MainMenuSceneLoader", "OpenMainMenu"))
+                throw new Exception("Reconnect from a game no longer goes to the main menu, where the rehost's page is");
+            var watch = IlScan.Members(type.GetMethod("WatchRejoin", all, Type.EmptyTypes) ?? throw new Exception("ClientConnectionService has no WatchRejoin"));
+            if (!IlScan.Names(watch, plan, "Reconnect")) throw new Exception("the rejoin does not ask DesyncDialogPlan.Reconnect");
+            if (!IlScan.Names(watch, "Steamworks.SteamMatchmaking", "JoinLobby")) throw new Exception("the rejoin never joins the host's Steam lobby");
+            var reconnect = IlScan.Members(type.GetMethod("ReconnectNow", all, Type.EmptyTypes)
+                ?? throw new Exception("ClientConnectionService has no ReconnectNow"));
             if (!IlScan.Names(reconnect, plan, "Reconnect")) throw new Exception("Reconnect does not ask DesyncDialogPlan.Reconnect");
             if (!IlScan.Names(reconnect, "Steamworks.SteamMatchmaking", "JoinLobby")) throw new Exception("Reconnect never joins the host's Steam lobby");
             // A direct guest dials the address the plan chose (the one it typed), never the one in the settings.
-            var steps = IlScan.Instructions(type.GetMethod("Reconnect", all, Type.EmptyTypes)!);
+            var steps = IlScan.Instructions(type.GetMethod("ReconnectNow", all, Type.EmptyTypes)!);
             if (steps.Any(i => i.Calls && i.Is(service, "ConnectOrShowFailureMessage") && ((MethodBase)i.Member!).GetParameters().Length == 0))
                 throw new Exception("Reconnect dials the saved address instead of the one the guest joined with");
             int dial = steps.FindIndex(i => i.Calls && i.Is(service, "ConnectOrShowFailureMessage") &&

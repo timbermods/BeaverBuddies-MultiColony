@@ -48,14 +48,33 @@ namespace BeaverBuddies.Lobby
             Math.Max(1, Math.Min(Math.Min(playersField, 1 + Math.Max(0, guests)), LobbyRoom.MaxColonies));
 
         /// <summary>
+        /// The Host co-op game box's line under a save's picture (1.4.0-rc4), as a text key with the players as {0}; null
+        /// for a save whose data could not be read. A separate-colonies save says how many players it remembers (its colony
+        /// slot table's rows); a shared one, that its Co-op Game page can make it separate.
+        /// </summary>
+        public static string SaveStatusKey(bool readable, bool separate, bool mixed, int players)
+        {
+            if (!readable) return null;
+            if (!separate) return "BeaverBuddies.Saving.Status.Shared";
+            string key = mixed ? "BeaverBuddies.Saving.Status.SeparateMixed" : "BeaverBuddies.Saving.Status.Separate";
+            return players <= 1 ? key + ".One" : key;
+        }
+
+        /// <summary>The players a separate-colonies save remembers: its colony slot table's rows, at least the host's.</summary>
+        public static int PlayersRemembered(string slotTable) =>
+            Math.Max(1, (slotTable ?? "").Split('\n').Count(line => !string.IsNullOrWhiteSpace(line)));
+
+        /// <summary>
         /// The gold line under the room's plate: what kind of game it is (1.4.0-rc3), the same words on the host's page and
         /// every guest's. Null when a hosted save's own data could not be read (it has no faction then): nothing is said
         /// rather than a guess.
         /// </summary>
-        public static string ColonyNoteKey(bool isSave, string factionId, bool separate, bool mixed)
+        /// <param name="separateAtStart">A hosted shared save the host has ticked Separate colonies for: it becomes a
+        /// separate-colonies game at Start (1.4.0-rc4).</param>
+        public static string ColonyNoteKey(bool isSave, string factionId, bool separate, bool mixed, bool separateAtStart = false)
         {
             if (isSave && string.IsNullOrEmpty(factionId)) return null;
-            if (!separate) return KeyPrefix + "Colonies.Shared";
+            if (!separate) return isSave && separateAtStart ? KeyPrefix + "Colonies.SharedToSeparate" : KeyPrefix + "Colonies.Shared";
             if (mixed) return isSave ? KeyPrefix + "Faction.MixedSave" : KeyPrefix + "Colonies.SeparateMixed";
             return isSave ? KeyPrefix + "Colonies.SeparateSave" : KeyPrefix + "Colonies.Separate";
         }

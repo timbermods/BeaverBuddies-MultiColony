@@ -272,11 +272,20 @@ namespace TimberNet
             return LobbySummary.TryParse(frame["summary"], out summary);
         }
 
-        public static JObject Roster(IEnumerable<LobbyPlayer> players) =>
-            new JObject { [TimberNetBase.TYPE_KEY] = RosterType, ["players"] = new JArray(players.Select(p => p.ToJson())) };
-
-        public static bool TryParseRoster(JObject frame, out List<LobbyPlayer> players)
+        /// <param name="separateAtStart">A hosted shared save becomes separate colonies at Start (sent only when true).</param>
+        public static JObject Roster(IEnumerable<LobbyPlayer> players, bool separateAtStart = false)
         {
+            var frame = new JObject { [TimberNetBase.TYPE_KEY] = RosterType, ["players"] = new JArray(players.Select(p => p.ToJson())) };
+            if (separateAtStart) frame["separateAtStart"] = true;
+            return frame;
+        }
+
+        public static bool TryParseRoster(JObject frame, out List<LobbyPlayer> players) => TryParseRoster(frame, out players, out _);
+
+        /// <summary>A roster, and whether the host has the save become separate colonies at Start (absent: no).</summary>
+        public static bool TryParseRoster(JObject frame, out List<LobbyPlayer> players, out bool separateAtStart)
+        {
+            separateAtStart = frame["separateAtStart"] is JValue { Type: JTokenType.Boolean } flag && (bool)flag;
             players = new List<LobbyPlayer>();
             if (!(frame["players"] is JArray array) || array.Count > MaxRosterPlayers) return false;
             foreach (JToken token in array)

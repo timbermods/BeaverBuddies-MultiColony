@@ -69,6 +69,8 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyFoundingService>().AsSingleton();
             // A guest's one-time split of a shared game, from the game menu (1.4.0-rc3).
             containerDefinition.Bind<SharedColonySplit>().AsSingleton();
+            // A hosted shared save made separate colonies at Start, from its waiting room (1.4.0-rc4).
+            containerDefinition.Bind<SaveConversion>().AsSingleton();
             containerDefinition.Bind<ColonyViewService>().AsSingleton();
             containerDefinition.Bind<ColonyJournal>().AsSingleton();
             containerDefinition.Bind<ColonyScienceService>().AsSingleton();

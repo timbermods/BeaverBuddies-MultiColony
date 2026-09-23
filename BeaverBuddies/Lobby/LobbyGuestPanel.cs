@@ -117,6 +117,8 @@ namespace BeaverBuddies.Lobby
             if (view.Version != shownVersion)
             {
                 shownVersion = view.Version;
+                // A hosted shared save: the host may tick Separate colonies while the room is open.
+                if (view.SeparateAtStart != shownSeparateAtStart) ShowNote(view);
                 bool open = view.Stage == LobbyStage.Open;
                 page.SetPlayers(view.Players, view.You, hostPage: false, canChange: open, faction?.Logo.Asset);
                 RefreshPicker(view, open);
@@ -167,14 +169,24 @@ namespace BeaverBuddies.Lobby
                 ? LobbyPage.SaveLine(_timestampFormatter, summary.SaveName, summary.Cycle, summary.Day)
                 : summary?.Settlement);
             page.SetFactions(FactionOrNull);
-            // What kind of game it is, in the host's page's words (LobbyRules.ColonyNoteKey).
-            string noteKey = summary == null ? null : LobbyRules.ColonyNoteKey(summary.IsSave, summary.FactionId, summary.SeparateColonies, summary.Mixed);
-            if (noteKey != null) page.SetFactionNote(RegisteredLocalizationService.T(noteKey));
+            ShowNote(view);
             shown = true;
             popWhenOnTop = false;
             Plugin.Log($"[Lobby] In {hostName}'s waiting room as player {view.You}");
             _panelStack.HideAndPush(this);
             Pump();
+        }
+
+        // What kind of game it is, in the host's page's words (LobbyRules.ColonyNoteKey), as the host last set it.
+        private bool shownSeparateAtStart;
+
+        private void ShowNote(LobbyView view)
+        {
+            LobbySummary summary = view.Summary;
+            shownSeparateAtStart = view.SeparateAtStart;
+            string noteKey = summary == null ? null
+                : LobbyRules.ColonyNoteKey(summary.IsSave, summary.FactionId, summary.SeparateColonies, summary.Mixed, view.SeparateAtStart);
+            page.SetFactionNote(noteKey == null ? null : RegisteredLocalizationService.T(noteKey));
         }
 
         // The Game Mode page's summary, as this player's game words it; a save's settlement for a save.

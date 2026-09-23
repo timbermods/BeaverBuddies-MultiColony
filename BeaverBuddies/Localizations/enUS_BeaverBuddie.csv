@@ -23,11 +23,11 @@ Would you like to open the troubleshooting guide?","Joining failed with error:
 {0}
 Would you like to open the troubleshooting guide?"
 BeaverBuddies.JoinCoopGame.ConnectionFailedMessage,"Failed to connect to Host. Would you like to open the troubleshooting guide?","Failed to connect to Host. Would you like to open the troubleshooting guide?"
-BeaverBuddies.ClientDesynced.Message,"A connected player desynced and cannot continue playing - sorry about that! The Host should hit Rehost and, AFTER that, the Client should Reconnect. You may need to restart the game if problems persist. Before reloading, would you like to file a bug report to help us fix this issue?",""
+BeaverBuddies.ClientDesynced.Message,"A connected player desynced and cannot continue playing - sorry about that! The host chooses Save and Rehost and the other players Reconnect, in any order: everyone meets again on the host's Co-op Game page, in the main menu. You may need to restart the game if problems persist. Before reloading, would you like to file a bug report to help us fix this issue?",""
 BeaverBuddies.ClientDesynced.FailedToRehostMessage,"Failed to Rehost. Manually save and Host again.","Failed to Rehost. Manually save and Host again."
 BeaverBuddies.ClientDesynced.SaveAndRehostButton,"Save and Rehost","Save and Rehost"
 BeaverBuddies.ClientDesynced.WaitForRehostButton,"Reconnect (wait for Rehost)","Reconnect (wait for Rehost)"
-BeaverBuddies.ClientDesynced.WaitForSteamInvite,"You joined this game through Steam, and Steam does not show the host's new game to you yet. Once the host has chosen Save and Rehost, accept the host's new Steam invite, or join the host from your Steam friends list.",""
+BeaverBuddies.ClientDesynced.WaitForSteamInvite,"You joined this game through Steam, and Steam does not show the host's new game to you yet. Once the host has chosen Save and Rehost, accept the host's new Steam invite, or join the host from Join co-op game in the main menu.",""
 BeaverBuddies.ClientDesynced.PostBugReportButton,"Post Bug Report","Post Bug Report"
 BeaverBuddies.Editor.StartingLocation1,"Starting Location - Player 1",""
 BeaverBuddies.Editor.StartingLocation2,"Starting Location - Player 2",""
@@ -532,3 +532,21 @@ This turns the game into a separate-colonies game for every player, and it can't
 
 You place a new district center, which starts with the game's starting beavers and goods. Science and unlocks stay shared by every colony.",""
 BeaverBuddies.Colony.Split.ConfirmButton,"Found my colony",""
+BeaverBuddies.Lobby.Colonies.SharedToSeparate,"Separate colonies from Start: everything built so far is the host's colony, and each player founds their own.",""
+BeaverBuddies.Lobby.Convert.SeparateTooltip,"This save becomes a separate-colonies game at Start, for good: everything built so far is your colony, and each friend founds their own. Unticked, it stays one shared colony.",""
+BeaverBuddies.Lobby.Convert.ScienceTooltip,"Each colony earns its own science and unlocks its own buildings; the science and unlocks so far stay with your colony. Unticked, the colonies share them.",""
+BeaverBuddies.Colony.Converted.Host,"This game now has separate colonies, for good: everything built so far is your colony. Your friends are founding theirs.",""
+BeaverBuddies.Saving.Status.Shared,"One shared colony. When you host it, you can make it separate colonies.",""
+BeaverBuddies.Saving.Status.Separate,"Separate colonies: {0} players",""
+BeaverBuddies.Saving.Status.Separate.One,"Separate colonies: only yours so far",""
+BeaverBuddies.Saving.Status.SeparateMixed,"Separate colonies, Folktails and Iron Teeth: {0} players",""
+BeaverBuddies.Saving.Status.SeparateMixed.One,"Separate colonies, Folktails and Iron Teeth: only yours so far",""
+BeaverBuddies.Host.FromGame.Confirm,"Host this game as a co-op game?
+
+It is saved first, as a new save, and its Co-op Game page opens in the main menu. Invite your friends there; when everyone is ready, Start Game loads it for all of you.",""
+BeaverBuddies.Host.Rehost.Confirm,"Save and Rehost?
+
+Everyone leaves this game. It is saved, and its Co-op Game page opens in the main menu. The other players choose Rejoin (or Reconnect, after a desync) and come back to it; when everyone is ready, Start Game loads it for all of you.",""
+BeaverBuddies.Rejoin.Waiting,"Waiting for the host to host again. You join their Co-op Game page as soon as it opens.",""
+BeaverBuddies.Rejoin.Button,"Rejoin",""
+BeaverBuddies.Rejoin.Stay,"Stay here",""

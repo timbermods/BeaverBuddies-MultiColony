@@ -56,9 +56,11 @@ namespace BeaverBuddies.Connect
             PanelStack panelStack,
             VisualElementLoader visualElementLoader,
             VisualElementInitializer visualElementInitializer,
-            InputService inputService
+            InputService inputService,
+            DialogBoxShower dialogBoxShower
         )
         {
+            _dialogBoxShower = dialogBoxShower;
             _inputBoxShower = inputBoxShower;
             _clientConnectionService = clientConnectionService;
             _loc = loc;
@@ -69,9 +71,23 @@ namespace BeaverBuddies.Connect
             _inputService = inputService;
         }
 
+        public const string HostButtonName = "HostCoopButton";
+        private readonly DialogBoxShower _dialogBoxShower;
+
+        /// <summary>
+        /// Host co-op game and Join co-op game, under Load game (1.4.0-rc4 adds Host). In the main menu, Host opens the Host
+        /// co-op game box (HostCoopMenu). In a game, single player's Host co-op game hosts this game, and a co-op host's
+        /// button is Save and Rehost; a guest has neither.
+        /// </summary>
         public void AddJoinButton(VisualElement __result, bool mainMenu)
         {
-            Button button = ButtonInserter.DuplicateOrGetButton(__result, "LoadGameButton", "JoinButton", button =>
+            Button host = ButtonInserter.DuplicateOrGetButton(__result, "LoadGameButton", HostButtonName, created =>
+            {
+                created.text = _loc.T("BeaverBuddies.Saving.HostCoopGame");
+                created.clicked += () => HostClicked(mainMenu);
+            });
+            if (!mainMenu) DressHostInGame(host);
+            Button button = ButtonInserter.DuplicateOrGetButton(__result, HostButtonName, "JoinButton", button =>
             {
                 button.text = _loc.T("BeaverBuddies.Menu.JoinCoopGame");
                 button.clicked += () =>
@@ -82,6 +98,37 @@ namespace BeaverBuddies.Connect
                     else ShowBox();
                 };
             });
+        }
+
+        // A game's menu: Host co-op game alone, Save and Rehost as the host of a co-op game, nothing as a guest.
+        private void DressHostInGame(Button host)
+        {
+            bool alone = EventIO.IsNull;
+            bool hosting = EventIO.Get() is ServerEventIO;
+            host.ToggleDisplayStyle((alone || hosting) && SingletonManager.GetSingleton<RehostingService>() != null);
+            host.text = _loc.T(hosting ? "BeaverBuddies.ClientDesynced.SaveAndRehostButton" : "BeaverBuddies.Saving.HostCoopGame");
+        }
+
+        private void HostClicked(bool mainMenu)
+        {
+            if (mainMenu)
+            {
+                HostCoopMenu.Instance?.OpenBox();
+                return;
+            }
+            RehostingService rehosting = SingletonManager.GetSingleton<RehostingService>();
+            if (rehosting == null) return;
+            bool hosting = EventIO.Get() is ServerEventIO;
+            // It leaves this game for the main menu: asked first, saying what happens.
+            _dialogBoxShower.Create()
+                .SetMessage(_loc.T(hosting ? "BeaverBuddies.Host.Rehost.Confirm" : "BeaverBuddies.Host.FromGame.Confirm"))
+                .SetConfirmButton(() =>
+                {
+                    bool saved = hosting ? rehosting.RehostGame() : rehosting.HostThisGame();
+                    if (!saved) _dialogBoxShower.Create().SetLocalizedMessage("BeaverBuddies.ClientDesynced.FailedToRehostMessage").Show();
+                }, _loc.T(hosting ? "BeaverBuddies.ClientDesynced.SaveAndRehostButton" : "BeaverBuddies.Saving.HostCoopGame"))
+                .SetDefaultCancelButton()
+                .Show();
         }
 
         private void ShowJoinBox()

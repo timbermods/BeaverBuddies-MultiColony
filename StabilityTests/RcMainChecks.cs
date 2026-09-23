@@ -281,9 +281,124 @@ static class RcMainChecks
             string csv = Source("BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv").Replace("\r\n", "\n");
             foreach (string key in new[] { "Colonies.Separate", "Colonies.SeparateMixed", "Colonies.Shared", "Colonies.SeparateSave", "Faction.MixedSave" })
                 Check(csv.Contains("\nBeaverBuddies.Lobby." + key + ",\""), "no English line for " + key);
-            Check(Source("BeaverBuddies", "Lobby", "LobbyHostPanel.cs").Split("LobbyRules.ColonyNoteKey(").Length == 3, "the host's page (a new game and a save) must use the rule");
-            Check(Source("BeaverBuddies", "Lobby", "LobbyGuestPanel.cs").Contains("LobbyRules.ColonyNoteKey(summary.IsSave, summary.FactionId, summary.SeparateColonies, summary.Mixed)"),
+            Check(Source("BeaverBuddies", "Lobby", "LobbyHostPanel.cs").Split("LobbyRules.ColonyNoteKey(").Length >= 3, "the host's page (a new game and a save) must use the rule");
+            Check(Source("BeaverBuddies", "Lobby", "LobbyGuestPanel.cs").Contains("LobbyRules.ColonyNoteKey(summary.IsSave, summary.FactionId, summary.SeparateColonies, summary.Mixed"),
                 "a guest's page must use the rule on the host's summary");
+        });
+
+        // ---- 1.4.0-rc4: a save is hosted through its Co-op Game page, from the main menu; a game goes there first ----
+
+        yield return ("rc4: a save is hosted only through its Co-op Game page: Host co-op game in the main menu, and a game hosts itself from there", () =>
+        {
+            string hosting = Source("BeaverBuddies", "Connect", "ServerHostingUtils.cs");
+            Check(!hosting.Contains("new ServerEventIO") && !hosting.Contains("UpdateDialogBox"), "the original BeaverBuddies hosting dialog is back");
+            Check(Body(hosting, "public static void LoadAndHost(").Contains("waitingRoom.OpenForSave(saveReference, data)"), "a save no longer opens its Co-op Game page");
+            // The Load Game box as the Host co-op game box: its Host button only then, its Enter and double-click host.
+            string flow = Source("BeaverBuddies", "Connect", "HostCoopFlow.cs");
+            string dress = Body(flow, "public void Dress(VisualElement root)");
+            Check(dress.Contains("root.Q<Button>(\"LoadButton\")?.ToggleDisplayStyle(!HostMode)") && dress.Contains("ToggleDisplayStyle(HostMode)"),
+                "the box's Load and Host co-op game must swap with the mode");
+            Check(Body(hosting, "static bool Prefix(LoadGameBox __instance, ref bool __result)").Contains("if (!HostCoopMenu.HostMode) return true;"),
+                "Enter and a double-click must load in the Load Game box and host only in the Host co-op game box");
+            Check(hosting.Contains("static void Postfix() => HostCoopMenu.BoxClosed();"), "closing the box must end its host mode");
+            Check(hosting.Contains("else __result.Q<Button>(LoadGameBoxHostButton.Name)?.ToggleDisplayStyle(false);"),
+                "a game's Load Game box must not host");
+            // A save a game handed over opens once the main menu is up, through the game's own save checks.
+            string update = Body(flow, "public void UpdateSingleton()");
+            Check(update.Contains("_panelStack.TopPanel.IsOverlay") && update.Contains("ServerHostingUtils.LoadIfSaveValidAndHost("),
+                "a handed-over save must wait for the main menu, and go through the game's checks");
+            // The main menu's and a game's buttons, under Load game: Host, then Join.
+            string ui = Source("BeaverBuddies", "Connect", "ClientConnectionUI.cs");
+            string add = Body(ui, "public void AddJoinButton(VisualElement __result, bool mainMenu)");
+            Check(add.Contains("DuplicateOrGetButton(__result, \"LoadGameButton\", HostButtonName,") && add.Contains("DuplicateOrGetButton(__result, HostButtonName, \"JoinButton\","),
+                "Host co-op game must come under Load game, and Join co-op game under it");
+            string dressInGame = Body(ui, "private void DressHostInGame(Button host)");
+            Check(dressInGame.Contains("(alone || hosting)") && dressInGame.Contains("SaveAndRehostButton"),
+                "in a game: Host co-op game alone, Save and Rehost when hosting, nothing for a guest");
+            Check(Body(ui, "private void HostClicked(bool mainMenu)").Contains(".SetConfirmButton(") , "leaving the game must be asked first");
+            // Both ways a game hosts itself: saved, then its page in the main menu.
+            string rehosting = Source("BeaverBuddies", "Connect", "RehostingService.cs");
+            Check(Body(rehosting, "public bool RehostGame()").Contains("HostCoopFlow.HostInMainMenu(_mainMenuSceneLoader, save, rehost: true)"),
+                "Save and Rehost must open the Co-op Game page in the main menu");
+            Check(Body(rehosting, "public bool HostThisGame()").Contains("HostCoopFlow.HostInMainMenu(_mainMenuSceneLoader, save, rehost: false), true, \" Co-op\""),
+                "Host co-op game in a game must save a new Co-op save and open its page");
+            // What the box says of the selected save.
+            Check(BeaverBuddies.Lobby.LobbyRules.SaveStatusKey(false, true, false, 3) == null, "a save that could not be read: nothing");
+            Check(BeaverBuddies.Lobby.LobbyRules.SaveStatusKey(true, false, false, 0) == "BeaverBuddies.Saving.Status.Shared", "shared");
+            Check(BeaverBuddies.Lobby.LobbyRules.SaveStatusKey(true, true, false, 1) == "BeaverBuddies.Saving.Status.Separate.One", "separate, the host's alone");
+            Check(BeaverBuddies.Lobby.LobbyRules.SaveStatusKey(true, true, true, 3) == "BeaverBuddies.Saving.Status.SeparateMixed", "separate, mixed");
+            Check(BeaverBuddies.Lobby.LobbyRules.PlayersRemembered("0|a|Kyler\n1|b|Friend\n") == 2 && BeaverBuddies.Lobby.LobbyRules.PlayersRemembered("") == 1,
+                "the players a save remembers are its slot table's rows");
+            string csv = Source("BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv").Replace("\r\n", "\n");
+            foreach (string key in new[] { "Saving.Status.Shared", "Saving.Status.Separate", "Saving.Status.Separate.One", "Saving.Status.SeparateMixed",
+                "Saving.Status.SeparateMixed.One", "Host.FromGame.Confirm", "Host.Rehost.Confirm" })
+                Check(csv.Contains("\nBeaverBuddies." + key + ",\""), "no English line for " + key);
+        });
+
+        yield return ("rc4: the host can make a shared save separate colonies at Start, in its Co-op Game page; guests see it; only the host's game does it", () =>
+        {
+            TimberNet.LobbySummary Save(bool separate) => TimberNet.LobbySummary.ForSave("Town", "Save", 3, 4, "Kyler", "Folktails", separate, false, null);
+            var shared = new TimberNet.LobbyRoom(Save(false));
+            int before = shared.Version;
+            shared.SetSeparateAtStart(true);
+            Check(shared.SeparateAtStart && shared.Snapshot().SeparateAtStart && shared.Version > before, "a shared save's room takes the host's tick");
+            shared.SetSeparateAtStart(false);
+            Check(!shared.SeparateAtStart, "and its untick");
+            var separate = new TimberNet.LobbyRoom(Save(true));
+            separate.SetSeparateAtStart(true);
+            Check(!separate.SeparateAtStart, "a separate-colonies save stays what it is");
+            var fresh = new TimberNet.LobbyRoom(new TimberNet.LobbySummary("Folktails", "Map", null, "Town", "Kyler", false));
+            fresh.SetSeparateAtStart(true);
+            Check(!fresh.SeparateAtStart, "a new game chooses on its own page, not here");
+            // Told to guests in the roster; an older roster (no field) reads as no.
+            var players = shared.Snapshot().Players;
+            Check(TimberNet.LobbyFrames.TryParseRoster(TimberNet.LobbyFrames.Roster(players, true), out _, out bool told) && told, "the guests are told");
+            Check(TimberNet.LobbyFrames.TryParseRoster(TimberNet.LobbyFrames.Roster(players), out _, out bool none) && !none, "no field: no");
+            Check(BeaverBuddies.Lobby.LobbyRules.ColonyNoteKey(true, "Folktails", false, false, separateAtStart: true) == "BeaverBuddies.Lobby.Colonies.SharedToSeparate",
+                "the room's line says it becomes separate");
+            Check(BeaverBuddies.Lobby.LobbyRules.ColonyNoteKey(false, "Folktails", false, false, separateAtStart: true) == "BeaverBuddies.Lobby.Colonies.Shared",
+                "only a save's room");
+            // The host's page offers it only for a shared save, and freezes it at Start; the start leaves it for the host's game.
+            string host = Source("BeaverBuddies", "Lobby", "LobbyHostPanel.cs");
+            Check(Body(host, "private VisualElement BuildConvertOptions(LobbySetup setup)").Contains("if (!setup.IsSave || setup.SaveColonies == null || setup.SaveColonies.SeparateColonies) return null;"),
+                "the checkboxes only for a shared save");
+            Check(Body(host, "private void StartNow()").Contains("convertOptions?.SetEnabled(false)"), "the choice must be frozen at Start");
+            Check(Body(Source("BeaverBuddies", "Lobby", "LobbySession.cs"), "public void Start(ISceneLoader sceneLoader, string tip)")
+                .Contains("SaveConversion.Pending = Setup.ConvertSeparate && Setup.SaveColonies != null && !Setup.SaveColonies.SeparateColonies"),
+                "the start must leave the conversion for the host's game");
+            // The host's game says it as its first action, once loaded; every computer plays it; only the host may send it.
+            string conversion = Source("BeaverBuddies", "Colonies", "SaveConversion.cs");
+            string sends = Body(conversion, "public void UpdateSingleton()");
+            Check(sends.Contains("EventIO.Get() is ServerEventIO") && sends.Contains("if (!ReplayService.IsLoaded) return;") && sends.Contains("ReplayEvent.DoPrefix("),
+                "the host's game sends it once the session plays actions");
+            string plays = Body(conversion, "public override void Replay(IReplayContext context)");
+            Check(plays.Contains("if (mode == null || mode.Enabled) return;") && plays.Contains("separateScience,") && plays.Contains("newGame: false"),
+                "every computer makes it separate the same way, once");
+            Check(Source("BeaverBuddies", "Colonies", "ColonyRulesService.cs").Contains("|| replayEvent is ColonyConversionEvent)"), "only the host may send it");
+            string csv = Source("BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv").Replace("\r\n", "\n");
+            foreach (string key in new[] { "Lobby.Colonies.SharedToSeparate", "Lobby.Convert.SeparateTooltip", "Lobby.Convert.ScienceTooltip", "Colony.Converted.Host" })
+                Check(csv.Contains("\nBeaverBuddies." + key + ",\""), "no English line for " + key);
+        });
+
+        yield return ("rc4: a guest rejoins a rehost in the main menu: Reconnect and Rejoin go there, wait quietly, and join the host's page when it opens", () =>
+        {
+            string service = Source("BeaverBuddies", "Connect", "ClientConnectionService.cs");
+            string reconnect = Body(service, "public void Reconnect()");
+            Check(reconnect.Contains("rejoinPending = true;") && reconnect.Contains("_mainMenuSceneLoader.OpenMainMenu();"),
+                "from a game, a rejoin must go to the main menu, where the host's page is");
+            string watch = Body(service, "private void WatchRejoin()");
+            Check(watch.Contains("StopRejoin(resetJoin: false)") && watch.Contains("RejoinEveryMs") && watch.Contains("quietJoin = true;"),
+                "the rejoin must wait, try every few seconds, quietly, and stop once in");
+            Check(watch.Contains("() => StopRejoin(resetJoin: true)"), "the player must be able to stop waiting");
+            Check(service.Contains("if (quiet && (net == null || !net.Lobby.View().Welcomed))"), "a quiet try that finds nobody must not show an error");
+            Check(Body(service, "public void CloseConnectingBox()").Contains("rejoinBox"), "the rejoin's box must go as the host's page comes");
+            // A lost connection offers Rejoin.
+            Check(SessionEndMessages.ConnectionLost(null).Contains("Rejoin"), "the lost-connection message must name Rejoin");
+            Check(Source("BeaverBuddies", "IO", "ClientEventIO.cs").Contains("EndSession(SessionEndMessages.ConnectionLost(error), offerRejoin: true)")
+                && Source("BeaverBuddies", "ReplayService.cs").Contains("offerRejoin: io is ClientEventIO"), "a guest's lost connection must offer Rejoin");
+            string csv = Source("BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv").Replace("\r\n", "\n");
+            foreach (string key in new[] { "Rejoin.Waiting", "Rejoin.Button", "Rejoin.Stay" })
+                Check(csv.Contains("\nBeaverBuddies." + key + ",\""), "no English line for " + key);
         });
     }
 }

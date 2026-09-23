@@ -22,7 +22,12 @@ using static Timberborn.GameSaveRuntimeSystem.GameSaver;
 
 namespace BeaverBuddies.Connect
 {
-    public class RehostingService
+    /// <summary>
+    /// A game hosts itself (1.4.0-rc4): it saves, as a new save of its settlement, and opens the Co-op Game page for that
+    /// save in the main menu (HostCoopFlow), where the players join and ready up. Host co-op game from single player's game
+    /// menu (a "… Co-op" save), and Save and Rehost in co-op (a "… Rehost" save: its players rejoin it).
+    /// </summary>
+    public class RehostingService : RegisteredSingleton
     {
         private readonly AutosaveNameService _autosaveNameService;
         private readonly GameSaver _gameSaver;
@@ -30,7 +35,7 @@ namespace BeaverBuddies.Connect
         private readonly SettlementReferenceService _settlementReferenceService;
         private readonly ValidatingGameLoader _validatingGameLoader;
         private readonly DialogBoxShower _dialogBoxShower;
-
+        private readonly Timberborn.MainMenuSceneLoading.MainMenuSceneLoader _mainMenuSceneLoader;
 
         public RehostingService(
             AutosaveNameService autosaveNameService, 
@@ -38,9 +43,11 @@ namespace BeaverBuddies.Connect
             GameSaveRepository gameSaveRepository,
             SettlementReferenceService settlementReferenceService,
             ValidatingGameLoader validatingGameLoader,
-            DialogBoxShower dialogBoxShower
+            DialogBoxShower dialogBoxShower,
+            Timberborn.MainMenuSceneLoading.MainMenuSceneLoader mainMenuSceneLoader
         ) 
         {
+            _mainMenuSceneLoader = mainMenuSceneLoader;
             _autosaveNameService = autosaveNameService;
             _gameSaver = gameSaver;
             _gameSaveRepository = gameSaveRepository;
@@ -53,7 +60,7 @@ namespace BeaverBuddies.Connect
         // that Autosaver uses, both here and in general when a client joins to avoid
         // saving when it could corrupt things. Hopefully the save would fail if
         // there's a real issue, rather than corrupting, but I don't know...
-        public bool SaveRehostFile(Action<SaveReference> callback, bool waitUntilAccessible)
+        public bool SaveRehostFile(Action<SaveReference> callback, bool waitUntilAccessible, string suffix = " Rehost")
         {
             if (ReplayService.HasReplayFailure)
             {
@@ -78,7 +85,7 @@ namespace BeaverBuddies.Connect
                 };
             }
             SettlementReference settlementReference = _settlementReferenceService.SettlementReference;
-            string saveName = _autosaveNameService.Timestamp().Replace(",", "") + " Rehost";
+            string saveName = _autosaveNameService.Timestamp().Replace(",", "") + suffix;
             SaveReference saveReference = new SaveReference(saveName, settlementReference);
             try
             {
@@ -101,14 +108,19 @@ namespace BeaverBuddies.Connect
             return true;
         }
 
+        /// <summary>
+        /// Save and Rehost (the desync dialog, and the host's game menu in co-op): everyone leaves this game, which is saved,
+        /// and its Co-op Game page opens in the main menu; its players rejoin it there (Reconnect, Rejoin).
+        /// </summary>
         public bool RehostGame()
         {
-            return SaveRehostFile(LoadGame, true);
+            return SaveRehostFile(save => HostCoopFlow.HostInMainMenu(_mainMenuSceneLoader, save, rehost: true), true);
         }
 
-        public void LoadGame(SaveReference saveReference)
+        /// <summary>Host co-op game in single player's game menu: this game, saved, on its Co-op Game page.</summary>
+        public bool HostThisGame()
         {
-            ServerHostingUtils.LoadIfSaveValidAndHost(_validatingGameLoader, _dialogBoxShower, saveReference);
+            return SaveRehostFile(save => HostCoopFlow.HostInMainMenu(_mainMenuSceneLoader, save, rehost: false), true, " Co-op");
         }
     }
 }

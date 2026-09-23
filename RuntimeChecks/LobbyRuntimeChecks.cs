@@ -184,16 +184,17 @@ internal static class LobbyRuntimeChecks
             Has(Steam("SteamFriends"), "GetPersonaName", "the host's name in its lobby");
         });
 
-        test("Waiting room for a save: Host co-op game opens it in the main menu, and keeps the dialog in a game", () =>
+        test("Waiting room for a save: every save is hosted through it, from the main menu (a game goes there first)", () =>
         {
-            // LoadAndHost opens the waiting room when the host page is there (the main menu binds it; a game does not),
-            // and otherwise goes on to its own server and dialog (Options → Load and Save and Rehost in a game).
+            // LoadAndHost opens the waiting room (the main menu binds its page; a game does not). Since 1.4.0-rc4 there is
+            // no other way: the original BeaverBuddies dialog, which let guests load as soon as they connected, is gone,
+            // and a game hosts itself by saving and opening the page in the main menu (HostCoopFlow).
             MethodInfo loadAndHost = Mod("BeaverBuddies.Connect.ServerHostingUtils").GetMethod("LoadAndHost", all)!;
             var code = IlScan.Instructions(loadAndHost);
             if (!code.Any(i => i.Calls && i.Is("BeaverBuddies.Lobby.LobbyHostPanel", "OpenForSave")))
                 throw new Exception("Host co-op game on a save no longer opens the waiting room");
-            if (!code.Any(i => i.Op == OpCodes.Newobj && i.Member?.DeclaringType?.FullName == "BeaverBuddies.IO.ServerEventIO"))
-                throw new Exception("hosting from inside a game lost its own dialog");
+            if (code.Any(i => i.Op == OpCodes.Newobj && i.Member?.DeclaringType?.FullName == "BeaverBuddies.IO.ServerEventIO"))
+                throw new Exception("a save is hosted without its waiting room again (its own server and dialog)");
             // Only the main menu has the page.
             var menu = Mod("BeaverBuddies.ConnectionMenuConfigurator").GetMethod("Configure", all)!;
             var game = Mod("BeaverBuddies.ReplayConfigurator").GetMethod("Configure", all)!;

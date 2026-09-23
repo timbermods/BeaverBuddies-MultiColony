@@ -76,7 +76,9 @@ static class JoinBoxChecks
             Check(Source("BeaverBuddies", "IO", "ServerEventIO.cs").Contains("steam.SetDetails(room != null, SteamDescription)"),
                 "the server no longer hands the lobby its details");
             Check(Source("BeaverBuddies", "Lobby", "LobbySession.cs").Contains("SteamDescription ="), "a waiting room no longer describes itself");
-            Check(Source("BeaverBuddies", "Connect", "ServerHostingUtils.cs").Contains("SteamDescription ="), "a hosted save no longer describes itself");
+            // A save is hosted only through its waiting room since 1.4.0-rc4: the room describes it (its settlement).
+            Check(Source("BeaverBuddies", "Lobby", "LobbySession.cs").Contains("SteamDescription = setup.IsSave ? setup.Settlement"),
+                "a hosted save no longer describes itself");
         });
 
         yield return ("Waiting room: its two buttons are one size (Cancel / Start Game, Leave / Ready), and the guest's reads Ready", () =>

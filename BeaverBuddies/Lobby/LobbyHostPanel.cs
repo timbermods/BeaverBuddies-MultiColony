@@ -51,6 +51,10 @@ namespace BeaverBuddies.Lobby
         // A mixed-factions room: the host's own faction switcher (a new game), and the line under the settlement.
         private LobbyFactionPicker picker;
         private string factionNote;
+        // A hosted shared save: Separate colonies, and Separate science and unlocks under it (1.4.0-rc4).
+        private VisualElement convertOptions;
+        private Toggle convertSeparate, convertScience;
+        private VisualElement convertScienceRow;
 
         // The room's gold line under the plate (LobbyRules.ColonyNoteKey), or none.
         private static string Note(string key) => key == null ? null : RegisteredLocalizationService.T(key);
@@ -170,6 +174,7 @@ namespace BeaverBuddies.Lobby
             page.SetSummary(setup.SummaryText,
                 setup.IsSave ? LobbyPage.SaveLine(_timestampFormatter, setup.Save.SaveName, setup.Cycle, setup.Day) : setup.Settlement);
             page.SetFactionNote(factionNote);
+            page.SetColonyOptions(BuildConvertOptions(setup));
             page.SetFactions(id => NewGameFactionCapture.Instance?.Spec(id));
             LocalFactionPick.Clear();
             picker = null;
@@ -194,6 +199,48 @@ namespace BeaverBuddies.Lobby
             starting = false;
             Refresh();
             _panelStack.HideAndPush(this);
+        }
+
+        /// <summary>
+        /// A hosted save that is not separate colonies (a single-player game, or a shared co-op one): the host may make it
+        /// one at Start, for good, with the New Game page's checkboxes (Separate colonies, and Separate science and
+        /// unlocks under it). Unticked by default: the save stays what it is. Null for any other room.
+        /// </summary>
+        private VisualElement BuildConvertOptions(LobbySetup setup)
+        {
+            convertOptions = null;
+            convertSeparate = convertScience = null;
+            convertScienceRow = null;
+            if (!setup.IsSave || setup.SaveColonies == null || setup.SaveColonies.SeparateColonies) return null;
+            convertOptions = NewGameColonyOptions.CheckboxColumn("BeaverBuddiesConvertOptions");
+            convertSeparate = NewGameColonyOptions.CheckboxRow(convertOptions, "BeaverBuddies.NewGame.SeparateColonies", false, _initializer,
+                out VisualElement separateRow, out _);
+            convertScience = NewGameColonyOptions.CheckboxRow(convertOptions, "BeaverBuddies.NewGame.SeparateScience", true, _initializer,
+                out convertScienceRow, out _);
+            _tooltipRegistrar.Register(separateRow, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Convert.SeparateTooltip"));
+            _tooltipRegistrar.Register(convertScienceRow, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Convert.ScienceTooltip"));
+            setup.ConvertSeparate = false;
+            // The science choice starts as the host's last on the New Game page.
+            setup.ConvertScience = NewGameColonyChoice.SeparateScience;
+            convertSeparate.SetValueWithoutNotify(false);
+            convertScience.SetValueWithoutNotify(setup.ConvertScience);
+            convertScienceRow.ToggleDisplayStyle(false);
+            convertSeparate.RegisterValueChangedCallback(change =>
+            {
+                if (session == null || session.Setup != setup || starting) return;
+                setup.ConvertSeparate = change.newValue;
+                convertScienceRow.ToggleDisplayStyle(change.newValue);
+                session.IO.NetBase?.SetLobbySeparateAtStart(change.newValue);
+                factionNote = Note(LobbyRules.ColonyNoteKey(true, setup.SaveColonies.BaseFaction, false, false, separateAtStart: change.newValue));
+                page?.SetFactionNote(factionNote);
+                Plugin.Log($"[Lobby] The save {(change.newValue ? "becomes separate colonies" : "stays one shared colony")} at Start");
+            });
+            convertScience.RegisterValueChangedCallback(change =>
+            {
+                if (session == null || session.Setup != setup || starting) return;
+                setup.ConvertScience = change.newValue;
+            });
+            return convertOptions;
         }
 
         public VisualElement GetPanel() => page?.Root;
@@ -263,6 +310,7 @@ namespace BeaverBuddies.Lobby
             starting = true;
             page.Back.SetEnabled(false);
             page.Next.SetEnabled(false);
+            convertOptions?.SetEnabled(false);
             page.SetStatus(new LobbyText(LobbyRules.KeyPrefix + "Status.Starting"));
             LobbySession started = session;
             // The menu scene ends here for a new game; the session carries on (LobbyWorldMaker).

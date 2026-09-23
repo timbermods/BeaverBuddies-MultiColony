@@ -113,7 +113,7 @@ namespace BeaverBuddies.IO
                     // The game's own dialog: the join attempt's belongs to a menu that no longer exists. With no
                     // game yet (the save is still loading) the new game finds the session over and reports it itself,
                     // see ReplayService.UpdateSingleton.
-                    SingletonManager.GetSingleton<ReplayService>()?.EndSession(SessionEndMessages.ConnectionLost(error));
+                    SingletonManager.GetSingleton<ReplayService>()?.EndSession(SessionEndMessages.ConnectionLost(error), offerRejoin: true);
                     break;
             }
         }

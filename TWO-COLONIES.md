@@ -73,32 +73,43 @@ or nobody came. At Start:
   field and four), each to its player in room order; anyone beyond founds a colony;
 - the game opens paused at tick 0 with every guest loading; the connection panel marks a guest *(loading)* until
   its game has loaded. There is no *Joining: open* and no *Start the game?*: joining closed at Start. **Founding**,
-  switching colonies and asking a steward work at once, while paused (a hosted save waits for the first tick, below);
-  the host's **Hand to …** buttons still wait for the first tick (a guest still loading looks away).
+  switching colonies and asking a steward work at once, while paused; the host's **Hand to …** buttons still wait
+  for the first tick (a guest still loading looks away).
 
-**A save in the waiting room** (1.4.0-beta19). **Load Game → Host co-op game** from the main menu opens the same page
-for the save (its settlement, name and in-game date), after the game's own checks of the save. At **Start Game** the
-save's bytes go to everyone and the host loads the same bytes; joining closes at Start, so founding, switching
-colonies and asking a steward work at once, as after a new game's waiting room. A save seats each player by who it
-remembers (the slot table in the save); since 1.4.0-beta20 the page reads that from the save and shows each row's
-colony and its faction, and the save's faction ring (a brand-new player's row shows the colony they would most
-likely get). Hosting from inside a game (Options → Load, Save and Rehost) keeps the old way below.
+**A save in the waiting room.** Every save is hosted through the same page (the only way since 1.4.0-rc4):
+- **From the main menu**, **Host co-op game** (under Load game) opens the game's own save browser as the **Host co-op
+  game** box: its title, its settlements and saves, and **Host co-op game** in place of Load (Enter and a double-click
+  host too). Under the selected save's picture a gold line says what it is: *Separate colonies: 2 players* (the
+  players its slot table remembers), *… only yours so far*, or *One shared colony*. **Host co-op game** opens the page
+  for the save (its settlement, name and in-game date), after the game's own checks of the save.
+- **From inside a game**, the game menu's **Host co-op game** (playing alone) saves the game as a new save
+  (`<date> Co-op`) and opens its page in the main menu. A co-op host's same button is **Save and Rehost** (`<date>
+  Rehost`, also on the desync dialog): everyone leaves the game, and the others' **Rejoin** (on the lost-connection
+  message) or **Reconnect (wait for Rehost)** takes them to their main menu, where they join the page as soon as it
+  opens, trying every few seconds (Cancel stops waiting). **Load game** only loads.
 
-**Joining closes** (a save hosted from inside a game) at the host's first tick, or at the first action that changes the game while it is still
-paused (placing or marking something): a player joining after that would be sent the save the host started from,
-without it. The host should wait for everyone, then unpause. So that this never happens by accident, the host's
-first change while joining is open is held and the host is asked (**Start the game**, which plays it and closes
-joining, or **Keep waiting**, which drops it), and a guest's change while the host waits is refused with the same
-notice as a founding. The connection panel shows the host *Joining: open* until then.
+At **Start Game** the save's bytes go to everyone and the host loads the same bytes; joining closes at Start, so
+founding, switching colonies and asking a steward work at once, as after a new game's waiting room. A save seats each
+player by who it remembers (the slot table in the save); the page reads that from the save and shows each row's
+colony and its faction, and the save's faction ring (a brand-new player's row shows the colony they would most likely
+get).
+
+**A shared save made separate at Start** (1.4.0-rc4). For a save that is not separate colonies (a single-player game,
+a shared co-op save, a Stability Fork save), the host's page shows the New Game page's **Separate colonies** checkbox,
+unticked, and under it **Separate science and unlocks** (starting as the host's last choice on the New Game page).
+Ticked, the guests' pages say so (*Separate colonies from Start: everything built so far is the host's colony…*), and at
+Start the game becomes a separate-colonies game, for good: once the host's game has loaded, its first action says so,
+and every computer plays it at the same point, as a split (every building and mark already there becomes the host's
+colony's). The host is told; each guest is offered to found their colony. With separate science, each colony earns
+its own from then on and what was earned so far stays with the host's colony; unticked, the colonies share one pool.
+Only the host can send it, and it does nothing in a game already separate.
 
 **Any other separate-colonies game** (a new game on a standard map, or a separate-colonies save): the district
 centers already there are the host's colony's. Every other player **founds** their colony once:
 
-1. Once the host has unpaused, a message offers to place a district center. (If you cancel, **Ctrl+K** opens the
-   same tool.) Not before: while the game is paused at the start, other players can still join, and a player who
-   joined after the founding would load the save without it. The host can hand colonies over (Ctrl+T) from the first
-   tick on, for the same reason. After a waiting room nobody can join late, so the message comes as soon as the
-   guest is in, even while paused.
+1. As soon as you are in, a message offers to place a district center, even while the game is still paused (if you
+   cancel, **Ctrl+K** opens the same tool): every game starts from a waiting room, where joining closed at Start. The
+   host's **Hand to …** buttons wait for the first tick (a guest still loading looks away).
 2. Place it anywhere its roads won't join another colony's (other colonies' roads show in their colors). It is
    free, needs no science, and appears **already built**, yours, with starting
    beavers, food and water (the new game's, or for a save that did not record them the host's Normal difficulty:
@@ -496,10 +507,10 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - In a mixed game both halves of a Trading Post show the placing colony's faction's model; achievements, the Iron
   Teeth unlock goal and the save's own faction (the load menu) are the host's faction's; other mods that read the
   game's faction see the host's.
-- A game made alone and hosted later, or a save hosted from inside a game, has no waiting room: players pick their
-  faction when founding, or switch an untouched colony.
-- The waiting room is used from the main menu (a new game, or Load Game → Host co-op game); hosting from inside a game
-  (Options → Load, Save and Rehost) keeps the old dialog. It holds at most seven guests (the Steam lobby's eight), and
+- In a hosted save's waiting room a player whose colony has no faction yet picks one there; the others keep theirs, and
+  a player can still switch an untouched colony.
+- Every game is hosted through the waiting room, from the main menu (a new game; a save, from Host co-op game); a game
+  hosts itself by going there (the game menu's Host co-op game, Save and Rehost). It holds at most seven guests (the Steam lobby's eight), and
   is joined from the main menu only: a guest who accepts its invite while in a game is told to go back to the menu
   (before beta19 a hosted save could be joined from a game). It has no chat, map preview or mod-list
   comparison (mismatch warnings still show in the game). Its settlement-name box has no *Change start location*.
@@ -631,10 +642,11 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   again as someone else, an id the slot table can't hold as it is (a line break or `|`, over 64 characters) is
   refused, and so is a hello the host could not stamp with a guest's number (a connection it no longer knows).
   (`ColonySlotTable.SeatHello` and `CheckHello`; a refused hello is logged as `[Colony] Refused PlayerHelloEvent …`.)
-- **Joining** closes at the first tick, or at the first action played while the host still waits paused, since a
-  later joiner is sent the save the host started from. After a waiting room it closed at Start, before the world was
-  made: the host's first message says so (`InitializeClientEvent.joiningClosedAtStart`), and `ColonyRules.WaitsForStart`
-  then holds nothing back.
+- **Joining** closes at the waiting room's Start, before the world is made or the save sent: every game is hosted
+  through a waiting room since 1.4.0-rc4 (a game hosts itself by saving and opening its room in the main menu,
+  `HostCoopFlow`). The host's first message says so (`InitializeClientEvent.joiningClosedAtStart`), and
+  `ColonyRules.WaitsForStart` then holds nothing back. (A host that waited in its game, paused, while players joined,
+  held its first change for *Start the game?*; that way of hosting, BeaverBuddies' original, is gone.)
 - **The waiting room** is a phase of the host's server before any save exists (`TimberNet`: `LobbyRoom`,
   `LobbyFrames`, `LobbyInbox`): after the build check a guest waits there, and only its hello and ready are read; the
   host's roster and progress go to it every second from a lane of its own (never the game thread), marked by a -1

@@ -52,6 +52,8 @@ namespace BeaverBuddies.Lobby
         private readonly Label settlement;
         private readonly Label factionNote;
         private readonly VisualElement factionSlot;
+        // A hosted shared save: the host's Separate colonies checkboxes (1.4.0-rc4).
+        private readonly VisualElement optionsSlot;
         private readonly Label listTitle;
         private readonly ScrollView board;
         // A mixed-factions room: the faction of each id, for each row's logo and its tooltip.
@@ -120,6 +122,10 @@ namespace BeaverBuddies.Lobby
             factionNote.style.marginBottom = 6;
             factionNote.style.display = DisplayStyle.None;
             main.Add(factionNote);
+            optionsSlot = new VisualElement();
+            optionsSlot.style.alignItems = Align.Center;
+            optionsSlot.style.marginBottom = 6;
+            main.Add(optionsSlot);
             factionSlot = new VisualElement();
             factionSlot.style.alignItems = Align.Center;
             main.Add(factionSlot);
@@ -178,6 +184,13 @@ namespace BeaverBuddies.Lobby
         {
             factionNote.text = text ?? "";
             factionNote.style.display = string.IsNullOrEmpty(text) ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
+        /// <summary>Puts the host's colony checkboxes on the page (null takes them away).</summary>
+        public void SetColonyOptions(VisualElement options)
+        {
+            optionsSlot.Clear();
+            if (options != null) optionsSlot.Add(options);
         }
 
         /// <summary>Puts the faction switcher on the page (null takes it away).</summary>

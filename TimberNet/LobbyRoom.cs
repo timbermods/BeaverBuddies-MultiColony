@@ -57,13 +57,15 @@ namespace TimberNet
     /// <summary>What the waiting room looks like right now, for the host's page. Safe to keep.</summary>
     public sealed class LobbySnapshot
     {
-        public LobbySnapshot(int version, LobbyStage stage, bool closed, IReadOnlyList<LobbyPlayer> players, IReadOnlyList<LobbyMemberInfo> guests)
+        public LobbySnapshot(int version, LobbyStage stage, bool closed, IReadOnlyList<LobbyPlayer> players, IReadOnlyList<LobbyMemberInfo> guests,
+            bool separateAtStart = false)
         {
             Version = version;
             Stage = stage;
             ClosedToNewcomers = closed;
             Players = players;
             Guests = guests;
+            SeparateAtStart = separateAtStart;
         }
 
         /// <summary>Changes whenever anything in the room does.</summary>
@@ -74,6 +76,8 @@ namespace TimberNet
         public IReadOnlyList<LobbyPlayer> Players { get; }
         /// <summary>The guests alone, in the same order, with what the host needs to seat them.</summary>
         public IReadOnlyList<LobbyMemberInfo> Guests { get; }
+        /// <summary>A hosted shared save becomes a separate-colonies game at Start (the host's choice in the room).</summary>
+        public bool SeparateAtStart { get; }
     }
 
     public sealed class LobbyMemberInfo
@@ -126,6 +130,24 @@ namespace TimberNet
         public LobbySummary Summary { get; }
 
         private string? hostFaction;
+        private bool separateAtStart;
+
+        /// <summary>A hosted shared save becomes a separate-colonies game at Start: the host's checkbox, told to every guest.</summary>
+        public bool SeparateAtStart { get { lock (gate) return separateAtStart; } }
+
+        /// <summary>
+        /// The host ticked or unticked Separate colonies for a hosted shared save, while the room is open. Only for a save
+        /// that is not separate already (a separate-colonies game stays one, and a new game chose on its own page).
+        /// </summary>
+        public void SetSeparateAtStart(bool separate)
+        {
+            lock (gate)
+            {
+                if (!Summary.IsSave || Summary.SeparateColonies || stage != LobbyStage.Open || separateAtStart == separate) return;
+                separateAtStart = separate;
+                version++;
+            }
+        }
 
         /// <summary>
         /// A hosted save's seating, set by the host before any guest comes in: given every row's stable id in the room's
@@ -282,7 +304,7 @@ namespace TimberNet
                     guests.Add(new LobbyMemberInfo(member.Number, member.Name, member.StableId, member.SaidHello, member.Ready, member.inGame,
                         member.Faction));
                 }
-                return new LobbySnapshot(version, stage, closedMessage != null, players, guests);
+                return new LobbySnapshot(version, stage, closedMessage != null, players, guests, separateAtStart);
             }
         }
 

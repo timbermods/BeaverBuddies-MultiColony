@@ -166,6 +166,14 @@ namespace TimberNet
             RequestLobbyPump();
         }
 
+        /// <summary>The host ticked Separate colonies for a hosted shared save: the guests see it at once.</summary>
+        public void SetLobbySeparateAtStart(bool separate)
+        {
+            if (lobby == null) return;
+            lobby.SetSeparateAtStart(separate);
+            RequestLobbyPump();
+        }
+
         /// <summary>Tells the room's guests where the host is (making the world, sending it).</summary>
         public void SetLobbyStage(LobbyStage stage)
         {
@@ -410,7 +418,7 @@ namespace TimberNet
                 return;
             }
             LobbySnapshot snapshot = room.Snapshot();
-            byte[] roster = MessageToBuffer(LobbyFrames.Roster(snapshot.Players));
+            byte[] roster = MessageToBuffer(LobbyFrames.Roster(snapshot.Players, snapshot.SeparateAtStart));
             byte[] state = MessageToBuffer(LobbyFrames.State(++lobbySequence, snapshot.Stage));
             foreach (LobbyMember member in room.Members())
             {

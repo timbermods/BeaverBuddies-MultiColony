@@ -552,7 +552,8 @@ namespace BeaverBuddies
         /// goes nowhere and the game stays paused. The game is left paused. <paramref name="message"/> is shown to the
         /// player; null says nothing (the host chose to give up).
         /// </summary>
-        public void EndSession(string message)
+        /// <param name="offerRejoin">A guest's lost connection: the message offers Rejoin (ClientConnectionService.Reconnect).</param>
+        public void EndSession(string message, bool offerRejoin = false)
         {
             // A desync or a failed action ended it already, and said so.
             if (IsDesynced) return;
@@ -567,7 +568,13 @@ namespace BeaverBuddies
             if (message == null) return;
             try
             {
-                GetSingleton<DialogBoxShower>().Create().SetMessage(message).Show();
+                var box = GetSingleton<DialogBoxShower>().Create().SetMessage(message);
+                if (offerRejoin)
+                {
+                    box.SetConfirmButton(Connect.ClientConnectionService.RejoinFromGame, Util.RegisteredLocalizationService.T("BeaverBuddies.Rejoin.Button"))
+                        .SetCancelButton(() => { }, Util.RegisteredLocalizationService.T("BeaverBuddies.Rejoin.Stay"));
+                }
+                box.Show();
             }
             catch (Exception error)
             {
@@ -752,7 +759,7 @@ namespace BeaverBuddies
             // connection dropped while this game was still loading. Only a guest is told; a host chose it.
             if (io.IsSessionOver)
             {
-                EndSession(io is ClientEventIO ? SessionEndMessages.ConnectionLost(null) : null);
+                EndSession(io is ClientEventIO ? SessionEndMessages.ConnectionLost(null) : null, offerRejoin: io is ClientEventIO);
                 return;
             }
             // Only replay events on Update if we're paused by the user.

@@ -86,7 +86,8 @@ namespace BeaverBuddies.Colonies
             }
 
             // Who is playing, handing a colony over, and telling a player an action was refused, are the host's to say.
-            if ((replayEvent is ColonyPresenceEvent || replayEvent is ColonyHandoverEvent || replayEvent is ActionRefusedEvent)
+            if ((replayEvent is ColonyPresenceEvent || replayEvent is ColonyHandoverEvent || replayEvent is ActionRefusedEvent
+                    || replayEvent is ColonyConversionEvent)
                 && replayEvent.player != ColonySession.HostPlayer)
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: only the host sends it");

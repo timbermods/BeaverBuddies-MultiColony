@@ -100,6 +100,8 @@ namespace BeaverBuddies
             EventIO.Reset();
             // A faction picked in an earlier waiting room is not this next game's.
             BeaverBuddies.Factions.LocalFactionPick.Clear();
+            // Nor a hosted save's conversion to separate colonies that never started (1.4.0-rc4).
+            BeaverBuddies.Colonies.SaveConversion.Pending = null;
 
             Plugin.Log($"Registering Main Menu Services");
             containerDefinition.Bind<ClientConnectionService>().AsSingleton();
@@ -114,6 +116,8 @@ namespace BeaverBuddies
             containerDefinition.Bind<BeaverBuddies.Factions.NewGameFactionCapture>().AsSingleton();
             // The Game Mode page's colony checkboxes (Separate colonies, and under it science and factions).
             containerDefinition.Bind<BeaverBuddies.Lobby.NewGameColonyOptions>().AsSingleton();
+            // Host co-op game on the main menu (the Load Game box as the Host co-op game box), and a save a game handed over.
+            containerDefinition.Bind<HostCoopMenu>().AsSingleton();
 
             //new ReportingService().PostDesync("test").ContinueWith(result => Plugin.Log($"Posted: {result.Result}"));
             containerDefinition.Bind<SteamOverlayConnectionService>().AsSingleton();

@@ -111,12 +111,9 @@ namespace BeaverBuddies.Lobby
             VisualElement tutorial = root.Q("TutorialToggleWrapper");
             VisualElement details = tutorial?.parent ?? root.Q("ModeDetails");
             if (details == null) throw new InvalidOperationException("the Game Mode page has no ModeDetails");
-            block = new VisualElement { name = BlockName };
             // One column, centred as a whole and left-aligned inside: the page centres each of its rows on its own, so rows of
             // different lengths would not line up.
-            block.style.flexDirection = FlexDirection.Column;
-            block.style.alignItems = Align.FlexStart;
-            block.style.alignSelf = Align.Center;
+            block = CheckboxColumn(BlockName);
             VisualElement custom = details.Q("CustomModeSettings");
             int at = tutorial != null ? details.IndexOf(tutorial) : custom != null && custom.parent == details ? details.IndexOf(custom) : details.childCount;
             details.Insert(at, block);
@@ -149,7 +146,17 @@ namespace BeaverBuddies.Lobby
         }
 
         // A row as the page's Tutorial row: the checkbox, then its label.
-        private Toggle Row(string textKey, bool indent, out VisualElement row, out Label label)
+        private Toggle Row(string textKey, bool indent, out VisualElement row, out Label label) =>
+            CheckboxRow(block, textKey, indent, _initializer, out row, out label);
+
+        /// <summary>
+        /// A checkbox row as the Game Mode page's Tutorial row (also the waiting room's, for a hosted shared save): a
+        /// new-game-mode-panel__setting-wrapper holding the page's checkbox and label, added to <paramref name="parent"/>.
+        /// Initialised alone, never with its column: a column may hold the game's own Tutorial row, already initialised,
+        /// and a second pass would give its checkbox a second click sound.
+        /// </summary>
+        internal static Toggle CheckboxRow(VisualElement parent, string textKey, bool indent, VisualElementInitializer initializer,
+            out VisualElement row, out Label label)
         {
             row = new VisualElement();
             row.AddToClassList("new-game-mode-panel__setting-wrapper");
@@ -160,11 +167,19 @@ namespace BeaverBuddies.Lobby
             label.AddToClassList("new-game-mode-panel__tutorial-label");
             row.Add(toggle);
             row.Add(label);
-            block.Add(row);
-            // Each row alone (never the column): the game's Tutorial row in it is already initialised, and a second pass
-            // would give its checkbox a second click sound.
-            _initializer.InitializeVisualElement(row);
+            parent.Add(row);
+            initializer.InitializeVisualElement(row);
             return toggle;
+        }
+
+        /// <summary>A column of checkbox rows, centred as a whole and left-aligned inside, so every checkbox lines up.</summary>
+        internal static VisualElement CheckboxColumn(string name)
+        {
+            var column = new VisualElement { name = name };
+            column.style.flexDirection = FlexDirection.Column;
+            column.style.alignItems = Align.FlexStart;
+            column.style.alignSelf = Align.Center;
+            return column;
         }
 
         private void Refresh()
