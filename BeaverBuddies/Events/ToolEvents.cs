@@ -160,13 +160,39 @@ namespace BeaverBuddies.Events
                 var blockObject = gameObject.GetComponentSlow<BlockObject>();
                 blockObject.MarkAsPreviewAndInitialize();
                 blockObject.Reposition(placement);
-                return blockObject.IsValid();
+                return IsValidWithoutHostPreviews(blockObject);
             }
             finally
             {
                 UnityEngine.Random.state = randomState;
                 if (gameObject != null) UnityEngine.Object.Destroy(gameObject);
             }
+        }
+
+        /*
+         * 9/23/2026 (Timberborn 1.1.2.4), BlockObject.IsValid, which this repeats but for one validator:
+            if (_blockValidator.BlocksValid(PositionedBlocks))
+                return _blockObjectValidationService.IsValid(this);
+            return false;
+         */
+        /// <summary>
+        /// The game's own check of a placement, less the one validator that reads the host's own tool previews:
+        /// DistrictPreviewsValidator asks whether the previews shown now join two districts' roads, from the preview road
+        /// graph (this copy is not in it: previews join it only through the tools' preview service). So while the host
+        /// hovered a preview that joined two districts, such as a path beside another colony's road, every placement
+        /// played then was refused, and skipped on every computer (E-6). It never saw the building itself: whether that
+        /// joins two districts' roads is checked by the placing player's own tool (whose previews are in their graph)
+        /// and, between colonies, by the colony rules (ColonyRoadRule), judged before this.
+        /// </summary>
+        internal static bool IsValidWithoutHostPreviews(BlockObject blockObject)
+        {
+            if (!blockObject._blockValidator.BlocksValid(blockObject.PositionedBlocks)) return false;
+            foreach (IBlockObjectValidator validator in blockObject._blockObjectValidationService._blockObjectValidators)
+            {
+                if (validator is Timberborn.GameDistrictsUI.DistrictPreviewsValidator) continue;
+                if (!validator.IsValid(blockObject, out _)) return false;
+            }
+            return true;
         }
 
         public override string ToActionString()
@@ -250,6 +276,9 @@ namespace BeaverBuddies.Events
             {
                 // If we cancel the event, clean up the tool
                 __instance._temporaryBlockObjects.Clear();
+                // And the terrain it picked with them, as the game's DeleteBlockObjects does: left, it piled up over a
+                // session and every later deletion's prompt raised the view to the highest terrain ever picked (E-4).
+                __instance._temporaryTerrainCoords.Clear();
             }
 
             return result;
@@ -275,6 +304,12 @@ namespace BeaverBuddies.Events
 
         public override void Replay(IReplayContext context)
         {
+            // A plant this game does not have: the host refuses one (ColonyRulesService.AllowOnHost), so only a guest
+            // meets it, when the host marks a crop from a mod this guest does not run. Found before anything is marked,
+            // so this guest leaves quietly and the others play on (ReplayService), as for a building (E-1).
+            if (NamesUnknownPlant(context))
+                throw new MissingContentException($"The host marked {prefabName} for planting, which this game does not have " +
+                    "(it comes from a mod that is not installed here).");
             var plantingService = context.GetSingleton<PlantingSelectionService>();
             List<Vector3Int> leveled = coordinates
                 ?? LevelAbove(inputBlocks, plantingService._terrainAreaService._terrainService.OnGround);
@@ -297,6 +332,20 @@ namespace BeaverBuddies.Events
                 PlantingLeveledCoordinatesPatcher.Recorded = null;
                 Colonies.ColonyMarks.ActingSlot = null;
             }
+        }
+
+        /// <summary>
+        /// Whether this marks a plant this game does not know: a crop from a mod that only another player runs (the mod
+        /// lists only warn when they differ). The game's planting check looks the plant up by name for the first free
+        /// tile (SpawnValidationService.IsUnobstructed, TemplateNameMapper.GetTemplate) and throws for an unknown one,
+        /// which inside a replay stopped the session for everyone. Unmarking names no plant. False when it can't tell.
+        /// </summary>
+        internal bool NamesUnknownPlant(IReplayContext context)
+        {
+            if (prefabName == UNMARK) return false;
+            if (string.IsNullOrEmpty(prefabName)) return true;
+            var names = context?.GetSingleton<PlantingSelectionService>()?._plantingAreaValidator?._spawnValidationService?._templateNameMapper;
+            return names != null && !names.TryGetTemplate(prefabName, out _);
         }
 
         /// <summary>
@@ -561,11 +610,14 @@ namespace BeaverBuddies.Events
             // into the event). Otherwise the one shared pool and set, as in the game.
             int actorSlot = System.Math.Max(0, slot);
             bool separate = Colonies.ColonyScienceService.IsEnabled;
-            // Only the per-colony sets are the same on every computer: the game's own set also holds a few buildings
-            // remembered in each player's profile (UnlockableOnceSpec), so in a shared game this is not checked.
-            if (separate && Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlocked(building)))
+            // Two players of one colony unlocking the same building at once must not pay twice. The per-colony sets are the
+            // same on every computer, and so is the game's own set but for the buildings each player's profile remembers
+            // (UnlockableOnceSpec: the HTTP Lever and Adapter), which a shared game does not check (it paid twice, E-5).
+            bool alreadyUnlocked = separate
+                ? Colonies.ColonyScienceService.InSlot(actorSlot, () => unlocking.Unlocked(building))
+                : !building.HasSpec<UnlockableOnceSpec>() && unlocking.Unlocked(building);
+            if (alreadyUnlocked)
             {
-                // Two players of one colony unlocking the same building at once must not pay twice.
                 Plugin.Log($"Already unlocked for slot {actorSlot}: {buildingName}");
                 return;
             }
