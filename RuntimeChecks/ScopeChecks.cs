@@ -17,6 +17,8 @@ static class ScopeChecks
                 var field = service.GetField(name == "BeaverNameServiceRandomNamePatcher" ? "activeGamePatchers" : "activeNonGamePatchers",flags)!;
                 var active = (IDictionary)field.GetValue(null)!;
                 active.Clear();
+                // The markers only count in a multiplayer game (1.4.0-rc1, D-S10): checked inside one.
+                using var session = Multiplayer(assembly);
                 object[] outer = {false}, inner = {false};
                 prefix.Invoke(null,outer); prefix.Invoke(null,inner);
                 if(active.Count != 1 || (int)active.Values.Cast<object>().Single() != 2) throw new Exception("Nested scope missing");
@@ -76,6 +78,7 @@ static class ScopeChecks
             var patcher = assembly.GetType("BeaverBuddies.InputPatcher", true)!;
             var active = (IDictionary)service.GetField("activeNonGamePatchers", flags)!.GetValue(null)!;
             active.Clear();
+            using var session = Multiplayer(assembly);
             var harmonyAssembly = Assembly.Load("0Harmony");
             var harmonyType = harmonyAssembly.GetType("HarmonyLib.Harmony", true)!;
             var methodType = harmonyAssembly.GetType("HarmonyLib.HarmonyMethod", true)!;
@@ -103,4 +106,20 @@ static class ScopeChecks
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     static void InvokeBody(Action body) => body();
+
+    /// <summary>A multiplayer game (an installed EventIO that does nothing) until disposed.</summary>
+    internal static IDisposable Multiplayer(System.Reflection.Assembly assembly)
+    {
+        var field = assembly.GetType("BeaverBuddies.IO.EventIO", true)!.GetField("instance", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)!;
+        object prior = field.GetValue(null);
+        field.SetValue(null, DispatchProxy.Create(assembly.GetType("BeaverBuddies.IO.EventIO", true)!, typeof(EmptyEventProxy)));
+        return new Restore(() => field.SetValue(null, prior));
+    }
+
+    sealed class Restore : IDisposable
+    {
+        readonly Action undo;
+        public Restore(Action undo) { this.undo = undo; }
+        public void Dispose() => undo();
+    }
 }

@@ -120,8 +120,6 @@ namespace BeaverBuddies
         private readonly TickingService _tickingService;
         private readonly DeterminismService _determinismService;
 
-        private readonly GameSaveHelper gameSaveHelper;
-
         private List<object> singletons = new();
 
         // TODO: I believe that this could be a non-static variable
@@ -269,8 +267,6 @@ namespace BeaverBuddies
             AddSingleton(this);
 
             _eventBus.Register(this);
-
-            gameSaveHelper = new GameSaveHelper(gameSaver);
 
             _tickingService.replayService = this;
         }
@@ -930,6 +926,10 @@ namespace BeaverBuddies
         {
             if (!CanAct) return;
 
+            // Detailed logging names the ticking entity in its random-draw lines: patched now, between ticks, and never in
+            // a game without detailed logging (DeterminismService.TickableEntityTickPatcher).
+            if (Settings.Debug) DeterminismService.TickableEntityTickPatcher.EnsurePatched();
+
             if (Settings.Debug && io.ShouldSendHeartbeat)
             {
                 // Before incrementing the tick (which creates a new blank trace),
@@ -982,11 +982,6 @@ namespace BeaverBuddies
                 $"Order hash: {TEBPatcher.EntityUpdateHash:X8}; " +
                 $"Move hash: {TEBPatcher.PositionHash:X8}; " +
                 $"Random s0: {UnityEngine.Random.state.s0:X8}");
-
-            if (ticksSinceLoad % 20 == 0)
-            {
-                //gameSaveHelper.LogStateCheck(ticksSinceLoad);
-            }
 
             // Update speed and pause if needed for the new tick.
             UpdateSpeed();

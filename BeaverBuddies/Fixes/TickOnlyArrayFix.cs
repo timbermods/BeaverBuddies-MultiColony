@@ -16,7 +16,7 @@ namespace BeaverBuddies.Fixes
         {
             // Allow edit access during save operations since saves only need read access
             // but the poorly designed API requires write permission for read operations
-            if (GameSaveHelper.IsSavingDeterministically || GameSaverSavePatcher.IsSaving)
+            if (GameSaverSavePatcher.IsSaving)
             {
                 __result = true;
                 return false; // Skip original method
