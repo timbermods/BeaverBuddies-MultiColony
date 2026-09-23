@@ -243,7 +243,12 @@ namespace BeaverBuddies.Colonies
             if (replayEvent is BeaverBuddies.Factions.ColonyFactionSwitchEvent switching)
             {
                 var verdict = BeaverBuddies.Factions.FactionChoice.HostJudgeSwitch(switching);
-                if (verdict == BeaverBuddies.Factions.FactionSwitchVerdict.Allowed) return true;
+                if (verdict == BeaverBuddies.Factions.FactionSwitchVerdict.Allowed)
+                {
+                    // The colony is remade with what the host says, on every computer (as a founding).
+                    switching.startingSettings = SingletonManager.GetSingleton<ColonyFoundingService>()?.HostStartingSettings();
+                    return true;
+                }
                 Plugin.Log($"[Factions] Refused colony {switching.slot + 1}'s switch to {switching.faction} from player {replayEvent.player}: {verdict}");
                 refusal = verdict == BeaverBuddies.Factions.FactionSwitchVerdict.Unavailable || verdict == BeaverBuddies.Factions.FactionSwitchVerdict.Unknown
                     ? ColonyRefusal.FactionUnavailable

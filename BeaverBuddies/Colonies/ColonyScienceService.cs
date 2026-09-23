@@ -351,6 +351,8 @@ namespace BeaverBuddies.Colonies
             {
                 Context = previous;
             }
+            // A mixed game: the local colony may be of another faction now (a hello, a steward, a handover).
+            Factions.FactionToolbar.Refresh();
         }
 
         /// <summary>Runs <paramref name="action"/> with science counted as <paramref name="slot"/>'s.</summary>

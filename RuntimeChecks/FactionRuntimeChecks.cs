@@ -286,7 +286,7 @@ internal static class FactionRuntimeChecks
                 if (!item.Contains(cls)) throw new Exception("the faction page no longer uses " + cls);
         });
 
-        test("Factions: a founding's faction and the host's factions survive the trip through the event JSON", () =>
+        test("Factions: a founding's faction, the host's factions and a switch's starting numbers survive the trip through the event JSON", () =>
         {
             Type replayEvent = mod.GetTypes().First(t => t.Name == "ReplayEvent" && t.IsAbstract);
             var json = mod.GetType("BeaverBuddies.IO.JsonSettings", true)!;
@@ -305,8 +305,15 @@ internal static class FactionRuntimeChecks
             var switchType = mod.GetType("BeaverBuddies.Factions.ColonyFactionSwitchEvent", true)!;
             object switching = Activator.CreateInstance(switchType, true)!;
             switchType.GetField("faction")!.SetValue(switching, "IronTeeth");
+            // The host's starting numbers travel with the switch, as with a founding.
+            var settingsType = mod.GetType("BeaverBuddies.Colonies.ColonyStartingSettings", true)!;
+            object settings = Activator.CreateInstance(settingsType, true)!;
+            settingsType.GetField("Adults")!.SetValue(settings, 7);
+            switchType.GetField("startingSettings")!.SetValue(switching, settings);
             object back = RoundTrip(switching);
             if (back.GetType() != switchType || (string?)switchType.GetField("faction")!.GetValue(back) != "IronTeeth") throw new Exception("the switch changed on the way");
+            object? backSettings = switchType.GetField("startingSettings")!.GetValue(back);
+            if (backSettings == null || (int)settingsType.GetField("Adults")!.GetValue(backSettings)! != 7) throw new Exception("the switch's starting numbers were lost");
         });
 
         zip?.Dispose();

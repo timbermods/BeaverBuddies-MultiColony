@@ -413,9 +413,9 @@ namespace BeaverBuddies.Colonies
         // ---- a mixed game's faction switch (D14) ----
 
         /// <summary>
-        /// Whether a colony is still untouched, as every computer counts it (saved state only): its district centers, and
-        /// the buildings of a faction of their own it owns besides them, finished or not. Common buildings (paths, which a
-        /// map may already have) look right in either faction, and a colony keeps them.
+        /// Whether a colony is still untouched, as every computer counts it (saved state only): its district centers, the
+        /// buildings of a faction of their own it owns besides them, finished or not, and whether it has an exchange open.
+        /// Common buildings (paths, which a map may already have) look right in either faction, and a colony keeps them.
         /// </summary>
         public UntouchedFacts UntouchedFacts(int slot)
         {
@@ -428,12 +428,14 @@ namespace BeaverBuddies.Colonies
                 if (stamp == null || stamp.Slot != slot || entity.GetComponent<DistrictCenter>() != null) continue;
                 if (catalog?.FactionOfTemplate(entity.GetComponent<TemplateSpec>()?.TemplateName) != null) others++;
             }
-            return new UntouchedFacts(centers, others, marks: 0, tradeOpen: false, unlocks: 0);
+            bool tradeOpen = ColonyExchangeService.Instance?.HasOpenExchange(slot) ?? false;
+            return new UntouchedFacts(centers, others, marks: 0, tradeOpen: tradeOpen, unlocks: 0);
         }
 
         /// <summary>Display: whether a colony is untouched, stopping at the first building of its own faction.</summary>
         public bool IsUntouched(int slot)
         {
+            if (ColonyExchangeService.Instance?.HasOpenExchange(slot) ?? false) return false;
             FactionCatalog catalog = FactionCatalog.Instance;
             foreach (EntityComponent entity in _entityRegistry.Entities)
             {
@@ -447,9 +449,10 @@ namespace BeaverBuddies.Colonies
         /// <summary>
         /// Played on every computer (ColonyFactionSwitchEvent): an untouched colony becomes another faction. Each of its
         /// district centers is replaced in place by that faction's (the same footprint), its stock moved across, and its
-        /// beavers by as many of that faction's (up to the starting numbers). Judged again here, from saved state.
+        /// beavers by as many of that faction's (up to the starting numbers, the host's from the event). Judged again here,
+        /// from saved state.
         /// </summary>
-        public void SwitchFaction(int slot, string faction)
+        public void SwitchFaction(int slot, string faction, ColonyStartingSettings settings)
         {
             FactionSwitchVerdict verdict = FactionRules.JudgeSwitch(MixedFactions.IsOn, isSeatOwner: true,
                 ColonyFactionService.FactionOfSlot(slot), faction, ColonyFactionService.FactionIds.ToList(), null, UntouchedFacts(slot));
@@ -458,7 +461,7 @@ namespace BeaverBuddies.Colonies
                 Plugin.LogWarning($"[Factions] Colony {slot + 1}'s switch to {faction} skipped: {verdict}");
                 return;
             }
-            ColonyStartingSettings start = HostStartingSettings();
+            ColonyStartingSettings start = settings ?? HostStartingSettings();
             List<DistrictCenter> centers = _districtCenterRegistry.AllDistrictCenters
                 .Where(dc => DistrictOwner.OwnerOfDistrict(dc) == slot).ToList();
             int adults = 0, children = 0;

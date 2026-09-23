@@ -159,6 +159,9 @@ static class FactionChecks
             Equal<int?>(1, FactionRules.PreferSameFaction(candidates, FactionOf, IronTeeth));
             Equal<int?>(1, FactionRules.PreferSameFaction(new List<(int, long)> { (3, 10), (1, 10) }, FactionOf, "Otters"));
             Equal<int?>(null, FactionRules.PreferSameFaction(new List<(int, long)>(), FactionOf, Folktails));
+            // No district center to measure from: nobody, as the handover's own choice.
+            Equal<int?>(null, FactionRules.PreferSameFaction(new List<(int, long)> { (2, long.MaxValue) }, FactionOf, Folktails));
+            Equal<int?>(3, FactionRules.PreferSameFaction(new List<(int, long)> { (2, long.MaxValue), (3, 40) }, FactionOf, Folktails));
         });
 
         yield return ("Factions: the waiting room's switcher steps through the factions and wraps, and who may pick", () =>
@@ -240,6 +243,39 @@ static class FactionChecks
                 }
             }
             Check(patches >= 30, $"found only {patches} patches; the check is not looking in the right place");
+        });
+
+        yield return ("Patches: no class or method stacks two patch targets' names (Harmony merges them into one target)", () =>
+        {
+            // beta20's review: two [HarmonyPatch(nameof(...))] on one patch method patched only the last name; a patch
+            // of several methods uses TargetMethods.
+            var named = new Regex(@"^\[HarmonyPatch\((?:typeof\([^)]*\)\s*,\s*)?(?:nameof\(|"")");
+            int files = 0;
+            var stacked = new List<string>();
+            foreach (string file in Directory.GetFiles(Path.Combine(Root(), "BeaverBuddies"), "*.cs", SearchOption.AllDirectories))
+            {
+                if (file.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)) continue;
+                files++;
+                string[] lines = File.ReadAllLines(file);
+                int run = 0, first = 0;
+                for (int i = 0; i <= lines.Length; i++)
+                {
+                    string line = i < lines.Length ? lines[i].Trim() : "";
+                    if (line.StartsWith("[") && line.EndsWith("]") && !line.StartsWith("[assembly"))
+                    {
+                        if (named.IsMatch(line))
+                        {
+                            if (run == 0) first = i + 1;
+                            run++;
+                        }
+                        continue;
+                    }
+                    if (run >= 2) stacked.Add($"{Path.GetFileName(file)}:{first}");
+                    run = 0;
+                }
+            }
+            Check(files > 100, $"found only {files} files; the check is not looking in the right place");
+            Check(stacked.Count == 0, "stacked patch names at " + string.Join(", ", stacked));
         });
 
         yield return ("Factions: every string the feature uses exists in the English file", () =>

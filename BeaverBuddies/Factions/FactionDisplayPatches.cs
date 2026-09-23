@@ -67,7 +67,8 @@ namespace BeaverBuddies.Factions
 
     /*
      * 2026-09-22, Timberborn 1.1.2.4, WellbeingUI: PopulationWellbeingBox — one counter per beaver need of every loaded
-     * faction, built once. Opened, it shows the needs of the local colony's faction.
+     * faction, built once. Opened, it hides the needs of other factions (the game has just set each counter's own
+     * visibility, which hides a never-positive need nobody has).
      */
     [HarmonyPatch(typeof(PopulationWellbeingBox), nameof(PopulationWellbeingBox.GetPanel))]
     static class FactionWellbeingBoxPatcher
@@ -77,7 +78,9 @@ namespace BeaverBuddies.Factions
             if (!MixedFactions.IsOn || FactionCatalog.Instance == null) return;
             string faction = ColonyFactionService.LocalFaction;
             foreach (PopulationWellbeingCounter counter in __instance._counters)
-                counter._root.ToggleDisplayStyle(FactionCatalog.Instance.HasNeed(faction, counter.NeedId));
+            {
+                if (!FactionCatalog.Instance.HasNeed(faction, counter.NeedId)) counter._root.ToggleDisplayStyle(false);
+            }
         }
     }
 

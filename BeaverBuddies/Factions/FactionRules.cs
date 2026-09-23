@@ -122,12 +122,14 @@ namespace BeaverBuddies.Factions
 
         /// <summary>
         /// The colony a handover goes to (D21): the nearest of the same faction, else the nearest; the lower slot on a tie.
-        /// Null when there are no candidates.
+        /// Null when there are no candidates. A candidate at no distance (long.MaxValue: no district center on one side)
+        /// is none, as in the handover's own choice.
         /// </summary>
         public static int? PreferSameFaction(IEnumerable<(int slot, long distance)> candidates, Func<int, string> factionOf,
             string fromFaction)
         {
-            var list = (candidates ?? Enumerable.Empty<(int, long)>()).OrderBy(c => c.Item2).ThenBy(c => c.Item1).ToList();
+            var list = (candidates ?? Enumerable.Empty<(int, long)>()).Where(c => c.Item2 < long.MaxValue)
+                .OrderBy(c => c.Item2).ThenBy(c => c.Item1).ToList();
             if (list.Count == 0) return null;
             if (fromFaction != null && factionOf != null)
             {

@@ -204,6 +204,8 @@ namespace BeaverBuddies.Factions
     public class ColonyFactionSwitchEvent : ReplayEvent
     {
         public string faction;
+        /// <summary>The host's starting numbers (up to which beavers are remade), written when it allows the switch.</summary>
+        public ColonyStartingSettings startingSettings;
 
         public override ColonyScope GetColonyScope() => ColonyScope.Global;
 
@@ -215,7 +217,7 @@ namespace BeaverBuddies.Factions
                 Plugin.LogWarning("[Factions] Cannot switch a colony's faction: the founding service is missing");
                 return;
             }
-            founding.SwitchFaction(slot, faction);
+            founding.SwitchFaction(slot, faction, startingSettings);
         }
 
         public override string ToActionString() => $"Colony {slot + 1} switches to {faction}";

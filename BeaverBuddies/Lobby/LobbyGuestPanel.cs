@@ -213,6 +213,8 @@ namespace BeaverBuddies.Lobby
             pickerShown = true;
             string shown = LocalFactionPick.Mine ?? own.Faction ?? summary.FactionId;
             picker.Set(summary.Factions.Select(FactionOrNull).Where(f => f != null), shown, open);
+            // Not picked yet: the faction the host has for this player follows the host's own changes.
+            if (LocalFactionPick.Mine == null) picker.Select(shown);
         }
 
         private void SetReady(bool value)

@@ -31,11 +31,11 @@ namespace BeaverBuddies.Factions
 
         private readonly ISpecService _specService;
         private readonly TemplateCollectionService _templateCollectionService;
-        private readonly TemplateNameMapper _templateNameMapper;
         private readonly FactionNeedService _factionNeedService;
         private readonly FactionUnlockingService _factionUnlockingService;
 
         private bool built;
+        private bool failed;
         private FactionSets templates;
         private FactionSets goods;
         private FactionSets needs;
@@ -51,12 +51,11 @@ namespace BeaverBuddies.Factions
         public static FactionCatalog Instance => SingletonManager.GetSingleton<FactionCatalog>();
 
         public FactionCatalog(ISpecService specService, TemplateCollectionService templateCollectionService,
-            TemplateNameMapper templateNameMapper, FactionNeedService factionNeedService, FactionUnlockingService factionUnlockingService)
+            FactionNeedService factionNeedService, FactionUnlockingService factionUnlockingService)
         {
             _factionUnlockingService = factionUnlockingService;
             _specService = specService;
             _templateCollectionService = templateCollectionService;
-            _templateNameMapper = templateNameMapper;
             _factionNeedService = factionNeedService;
         }
 
@@ -183,11 +182,17 @@ namespace BeaverBuddies.Factions
         private void EnsureBuilt()
         {
             if (built) return;
-            built = true;
-            try { Build(); }
+            // Kept unbuilt on a failure, so a later call tries again (the first callers are other services' Load);
+            // the error is logged once.
+            try
+            {
+                Build();
+                built = true;
+            }
             catch (Exception error)
             {
-                Plugin.LogError("[Factions] Could not read the factions' collections: " + error);
+                if (!failed) Plugin.LogError("[Factions] Could not read the factions' collections: " + error);
+                failed = true;
             }
         }
 
@@ -233,7 +238,14 @@ namespace BeaverBuddies.Factions
                 _specService.GetSpecs<NeedCollectionSpec>().GroupBy(s => s.CollectionId)
                     .ToDictionary(g => g.Key, g => (IEnumerable<string>)g.SelectMany(s => s.Needs).ToList()));
 
-            // Each faction's own pieces, found among the templates the game loaded.
+            // Each faction's own pieces, found among the templates the game loaded (by name here, not through
+            // TemplateNameMapper, which may not have loaded yet when the first caller asks).
+            var byName = new Dictionary<string, TemplateSpec>();
+            foreach (Blueprint blueprint in _templateCollectionService.AllTemplates)
+            {
+                TemplateSpec template = blueprint.GetSpec<TemplateSpec>();
+                if (template != null && !byName.ContainsKey(template.TemplateName)) byName[template.TemplateName] = template;
+            }
             foreach (Blueprint blueprint in _templateCollectionService.AllTemplates)
             {
                 if (!blueprintFactions.TryGetValue(blueprint, out string faction)) continue;
@@ -245,7 +257,7 @@ namespace BeaverBuddies.Factions
             }
             foreach (FactionSpec faction in factions)
             {
-                if (_templateNameMapper.TryGetTemplate(faction.StartingBuildingId, out TemplateSpec center))
+                if (faction.StartingBuildingId != null && byName.TryGetValue(faction.StartingBuildingId, out TemplateSpec center))
                     districtCenters[faction.Id] = center;
             }
             foreach (WorkerOutfitSpec outfit in _specService.GetSpecs<WorkerOutfitSpec>())

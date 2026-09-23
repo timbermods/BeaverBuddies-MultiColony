@@ -94,6 +94,8 @@ namespace BeaverBuddies
             // A new game's waiting room left over from a scene the flow did not expect (its guests are told why).
             BeaverBuddies.Lobby.LobbySession.EndStale("the host went back to the main menu");
             EventIO.Reset();
+            // A faction picked in an earlier waiting room is not this next game's.
+            BeaverBuddies.Factions.LocalFactionPick.Clear();
 
             Plugin.Log($"Registering Main Menu Services");
             containerDefinition.Bind<ClientConnectionService>().AsSingleton();

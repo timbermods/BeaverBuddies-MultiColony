@@ -28,7 +28,13 @@ namespace BeaverBuddies.Factions
 
         private string factionId;
 
-        public string FactionId => factionId ??= FactionCreationContext.Current ?? MixedFactions.BaseFaction;
+        public string FactionId => factionId ??= FactionCreationContext.Current ?? Unknown();
+
+        private static string Unknown()
+        {
+            if (MixedFactions.IsOn) FactionCreationContext.WarnOnce("A beaver");
+            return MixedFactions.BaseFaction;
+        }
 
         public void Save(IEntitySaver entitySaver)
         {
@@ -124,14 +130,18 @@ namespace BeaverBuddies.Factions
     /*
      * 2026-09-22, Timberborn 1.1.2.4, Reproduction: NewbornSpawner.SpawnAdult / SpawnChild(BaseComponent spawner)
         _beaverFactory.CreateNewbornAdult(valueOrDefault, CreateInitComponent(spawner));
-     * A beaver born in a lodge or breeding pod is that building's faction.
+     * A beaver born in a lodge or breeding pod is that building's faction. Both methods, through TargetMethods: two
+     * [HarmonyPatch] attributes on one patch method merge into one target (the last name wins), not two.
      */
-    [HarmonyPatch(typeof(NewbornSpawner))]
+    [HarmonyPatch]
     static class NewbornSpawnerFactionPatcher
     {
-        [HarmonyPatch(nameof(NewbornSpawner.SpawnAdult))]
-        [HarmonyPatch(nameof(NewbornSpawner.SpawnChild))]
-        [HarmonyPrefix]
+        static IEnumerable<System.Reflection.MethodBase> TargetMethods()
+        {
+            yield return AccessTools.Method(typeof(NewbornSpawner), nameof(NewbornSpawner.SpawnAdult));
+            yield return AccessTools.Method(typeof(NewbornSpawner), nameof(NewbornSpawner.SpawnChild));
+        }
+
         static void Prefix(BaseComponent spawner, out bool __state)
         {
             __state = false;
@@ -140,9 +150,6 @@ namespace BeaverBuddies.Factions
             __state = true;
         }
 
-        [HarmonyPatch(nameof(NewbornSpawner.SpawnAdult))]
-        [HarmonyPatch(nameof(NewbornSpawner.SpawnChild))]
-        [HarmonyFinalizer]
         static void Finalizer(bool __state)
         {
             if (__state && MixedFactions.IsOn) FactionCreationContext.Pop();

@@ -351,6 +351,20 @@ namespace BeaverBuddies.Colonies
 
         public static int OwnerOf(DistrictCrossing half) => DistrictOwner.OwnerOfDistrict(TradingPosts.DistrictOf(half)) ?? -1;
 
+        /// <summary>
+        /// Whether a colony has an offer or exchange open at any post, on its own half or as the side it was offered to
+        /// (a mixed game's faction switch waits for it to end, D14). Saved state only.
+        /// </summary>
+        public bool HasOpenExchange(int slot)
+        {
+            foreach (DistrictCrossing half in _entityComponentRegistry.GetEnabled<DistrictCrossing>())
+            {
+                CrossingExchange side = Of(half);
+                if (side != null && side.IsOpen && (OwnerOf(half) == slot || side.Colony == slot)) return true;
+            }
+            return false;
+        }
+
         // ---- carrying (in the tick, every computer) ----
 
         /// <summary>
@@ -688,7 +702,9 @@ namespace BeaverBuddies.Colonies
                 || theirs.Total != getAmount || mine.GoodId != ExchangeTerms.GoodOf(giveGood, giveAmount)
                 || theirs.GoodId != ExchangeTerms.GoodOf(getGood, getAmount))
                 why = "the offer changed";
-            else if (theirs.Colony >= 0 && OwnerOf(partner) != theirs.Colony)
+            // A mixed game only (the faction check below needs the colony it was offered to); otherwise the tick's
+            // check ends such an exchange, as before.
+            else if (Factions.MixedFactions.IsOn && theirs.Colony >= 0 && OwnerOf(partner) != theirs.Colony)
                 why = "the other half has changed colony";
             else if (!FactionsAllow(OwnerOf(half), OwnerOf(partner), mine.Total > 0 ? mine.GoodId : null, theirs.Total > 0 ? theirs.GoodId : null))
                 why = FactionsRefuse;
