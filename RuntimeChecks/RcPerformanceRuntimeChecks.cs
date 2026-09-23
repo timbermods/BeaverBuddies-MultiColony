@@ -316,6 +316,61 @@ internal static class RcPerformanceRuntimeChecks
                 "It ran on every regular navigation update in separate colonies; now only on those that changed a road");
         });
 
+        // ---- D-S7: long sessions ----
+
+        FieldInfo pluginLogger = Mod("BeaverBuddies.Plugin").GetField("logger", All)!;
+        void Quietly(Action run)
+        {
+            object? previous = pluginLogger.GetValue(null);
+            pluginLogger.SetValue(null, DispatchProxy.Create(Mod("BeaverBuddies.Util.Logging.ILogger"), typeof(QuietLoggerProxy)));
+            try { run(); } finally { pluginLogger.SetValue(null, previous); }
+        }
+
+        test("D-S7: detailed-logging traces stay bounded: a guest whose host logs nothing, logging switched on mid-session, and none outside a session", () => Quietly(() =>
+        {
+            Type service = Mod("BeaverBuddies.DesyncDetecter.DesyncDetecterService");
+            PropertyInfo debug = Mod("BeaverBuddies.Settings").GetProperty("TemporarilyDebug", All)!;
+            var traces = (IList)service.GetField("traces", All)!.GetValue(null)!;
+            MethodInfo startTick = Only(service, "StartTick"), trace = Only(service, "Trace");
+            object instance = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(service);
+            void Reset() => Only(service, "Reset").Invoke(instance, null);
+            void Log(string text) => trace.Invoke(null, new object[] { text, true, true });
+            debug.SetValue(null, true);
+            try
+            {
+                using (ScopeChecks.Multiplayer(mod))
+                {
+                    // A guest's ticks, with nothing from the host to check them against.
+                    Reset();
+                    for (int tick = 0; tick < 1000; tick++) { startTick.Invoke(null, new object[] { tick }); Log("a draw"); }
+                    if (traces.Count > 200) throw new Exception($"a guest kept {traces.Count} ticks of traces with nothing to check them against");
+                    // Logging switched on at tick 20,000 of a session that had it off (the ticks were never counted).
+                    Reset();
+                    startTick.Invoke(null, new object[] { 20000 });
+                    if (traces.Count > 200) throw new Exception($"switching logging on at tick 20,000 made {traces.Count} ticks of traces at once");
+                }
+                // Single player, or a session ended by a desync: nobody will check them.
+                Reset();
+                int before = traces.Count > 0 ? ((IList)traces[traces.Count - 1]!).Count : 0;
+                for (int i = 0; i < 100; i++) Log("a draw");
+                int after = traces.Count > 0 ? ((IList)traces[traces.Count - 1]!).Count : 0;
+                if (after != before) throw new Exception($"{after - before} traces kept outside a session");
+            }
+            finally { debug.SetValue(null, false); Reset(); }
+        }));
+
+        test("D-S7: the Trading Post template cache and the Steam callbacks do not keep a left game or menu alive", () =>
+        {
+            FieldInfo cache = Mod("BeaverBuddies.Colonies.TradingPosts").GetField("isTradingPostTemplate", All)!;
+            if (!cache.FieldType.Name.StartsWith("ConditionalWeakTable")) throw new Exception($"the template cache holds its specs strongly ({cache.FieldType.Name}): each game loaded adds a set");
+            // Only the Steam build has the callbacks (IS_STEAM; the other build keeps an empty service).
+            Type? steam = mod.GetType("BeaverBuddies.Steam.SteamOverlayConnectionService", false);
+            if (steam?.GetField("callbacks", All) == null) return;
+            var update = IlScan.Instructions(Only(steam, "UpdateSingleton"));
+            if (!update.Any(i => i.Calls && i.Member?.Name == "Clear" && i.Member.DeclaringType?.Name.StartsWith("List") == true))
+                throw new Exception("the disposed Steam callbacks stay in the static list, each holding its scene");
+        });
+
         // ---- D-S12: the daily colony check ----
 
         test("D-S12: each computer walks every entity once a day for the colony check, as the host's day plays", () =>
