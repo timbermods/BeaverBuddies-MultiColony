@@ -65,7 +65,7 @@ BeaverBuddies.Settings.SilenceLogging.Tooltip,"For developers: no routine log li
 BeaverBuddies.Settings.ShowFirstTimerMessage,"Show First Timer Message",""
 BeaverBuddies.Settings.AlwaysTrace,"Always Use Detailed Logging",""
 BeaverBuddies.Settings.AlwaysTrace.Tooltip,"Detailed desync tracing from the first tick, so the first desync can be reported.
-Every player must turn it on. Costs some performance.",""
+Every player must turn it on. Slows the game: a colony of 200 or more beavers and bots can't keep up.",""
 BeaverBuddies.Settings.ReportingConsent,"Consent to Reporting",""
 BeaverBuddies.Settings.EnableSteamConnection,"Enable Steam Networking",""
 BeaverBuddies.Settings.EnableSteamConnection.Tooltip,"Let players join through Steam (no port forwarding). Joining by IP still works.",""

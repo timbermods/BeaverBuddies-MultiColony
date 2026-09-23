@@ -70,19 +70,32 @@ namespace BeaverBuddies.Connect
         /// token can post a report, and public builds have none. In debug mode the button posts the report; otherwise
         /// it turns detailed logging on ("Enable Logging"), so that the next desync can be reported.
         /// </summary>
-        public static string ReportButtonKey(bool debug, bool canPostReports)
+        /// <param name="largeGame">
+        /// The game is too large for detailed logging (<see cref="LargeGameCharacters"/>): it is not offered then. It traces
+        /// every beaver's behaviour and every random draw with a stack trace each, hashes the water map every tick, and
+        /// the host sends every trace to every guest every tick, so a large colony could no longer keep up (1.4.0-rc1
+        /// review, D-S11). Posting a report, with logging already on, is still offered.
+        /// </param>
+        public static string ReportButtonKey(bool debug, bool canPostReports, bool largeGame = false)
         {
             if (!canPostReports) return null;
-            return debug ? PostBugReportKey : EnableLoggingKey;
+            if (debug) return PostBugReportKey;
+            return largeGame ? null : EnableLoggingKey;
         }
+
+        /// <summary>
+        /// Characters from which detailed logging is not offered: the population at which the game itself slows the
+        /// game's speed the most (GameSpeedThrottlerSpec.MaxPopulation, 200 in 1.1.2.4).
+        /// </summary>
+        public const int LargeGameCharacters = 200;
 
         /// <summary>
         /// Whether the message adds the sentence that asks every player to press Enable Logging, below: only when
         /// that button is there to press.
         /// </summary>
-        public static bool AsksToEnableLogging(bool debug, bool canPostReports)
+        public static bool AsksToEnableLogging(bool debug, bool canPostReports, bool largeGame = false)
         {
-            return ReportButtonKey(debug, canPostReports) == EnableLoggingKey;
+            return ReportButtonKey(debug, canPostReports, largeGame) == EnableLoggingKey;
         }
 
         /// <summary>

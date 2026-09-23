@@ -41,6 +41,23 @@ static class RcPerformanceChecks
 
     public static IEnumerable<(string Name, Action Run)> Tests()
     {
+        yield return ("D-S11: in a large game the desync dialog never offers to turn detailed logging on; with it on, posting stays", () =>
+        {
+            Check(BeaverBuddies.Connect.DesyncDialogPlan.ReportButtonKey(debug: false, canPostReports: true, largeGame: true) == null,
+                "a large game is offered detailed logging, which would stop it for everyone");
+            Check(!BeaverBuddies.Connect.DesyncDialogPlan.AsksToEnableLogging(debug: false, canPostReports: true, largeGame: true),
+                "a large game's message asks every player to enable logging");
+            Check(BeaverBuddies.Connect.DesyncDialogPlan.ReportButtonKey(debug: true, canPostReports: true, largeGame: true)
+                == BeaverBuddies.Connect.DesyncDialogPlan.PostBugReportKey, "with logging already on, a large game can no longer post");
+            Check(BeaverBuddies.Connect.DesyncDialogPlan.ReportButtonKey(debug: false, canPostReports: true)
+                == BeaverBuddies.Connect.DesyncDialogPlan.EnableLoggingKey, "a small game is no longer offered logging");
+            Check(BeaverBuddies.Connect.DesyncDialogPlan.LargeGameCharacters == 200, "the line moved from the game's own large-colony population");
+            string dialog = Source("BeaverBuddies", "Events", "ConnectionEvents.cs");
+            Check(dialog.Contains("DesyncDialogPlan.ReportButtonKey(Settings.Debug, reportingService.HasAccessToken, largeGame)")
+                && dialog.Contains("DesyncDialogPlan.AsksToEnableLogging(Settings.Debug, reportingService.HasAccessToken, largeGame)"),
+                "the desync dialog does not tell the plan how large the game is");
+        });
+
         yield return ("D-S1: a sampled profiler spot counts every call, times one in 16 and reports it scaled up, for less than a timed spot costs", () =>
         {
             var sampled = BeaverBuddies.Colonies.ColonyProfiler.DeclareSampled("D-S1 sampled spot");

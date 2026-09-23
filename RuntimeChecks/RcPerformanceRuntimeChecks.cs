@@ -441,6 +441,54 @@ internal static class RcPerformanceRuntimeChecks
             if (wrong.Count > 0) throw new Exception("missing or not sampled as it should be: " + string.Join("; ", wrong));
         });
 
+        // ---- D-S11: detailed logging at late-game size ----
+
+        test("D-S11: micro-benchmark, what detailed logging costs a tick at late-game size (traces, the host's send, the water map)", () => Quietly(() =>
+        {
+            Type service = Mod("BeaverBuddies.DesyncDetecter.DesyncDetecterService");
+            PropertyInfo debug = Mod("BeaverBuddies.Settings").GetProperty("TemporarilyDebug", All)!;
+            object instance = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(service);
+            MethodInfo trace = Only(service, "Trace"), startTick = Only(service, "StartTick");
+            debug.SetValue(null, true);
+            try
+            {
+                using var session = ScopeChecks.Multiplayer(mod);
+                Only(service, "Reset").Invoke(instance, null);
+                startTick.Invoke(null, new object[] { 1 });
+                // About what a colony of 600 beavers traces a tick: each beaver's running behaviour, and the game's random
+                // draws (every one of them a line with a stack trace).
+                const int traces = 1500;
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                for (int i = 0; i < traces; i++)
+                    trace.Invoke(null, new object[] { $"Tick RNG; s0 before: {i * 7919:X8}; Last entity: BeaverAdult - {Guid.NewGuid()}", true, false });
+                double tracing = watch.Elapsed.TotalMilliseconds;
+                // The host sends every trace of the tick to every guest.
+                watch.Restart();
+                var events = ((IEnumerable)Only(service, "CreateReplayEventsAndClear").Invoke(null, null)!).Cast<object>().ToList();
+                MethodInfo serialize = Mod("BeaverBuddies.IO.JsonSettings").GetMethod("Serialize")!.MakeGenericMethod(Mod("BeaverBuddies.Events.ReplayEvent"));
+                long bytes = events.Sum(e => ((string)serialize.Invoke(null, new[] { e })!).Length);
+                double sending = watch.Elapsed.TotalMilliseconds;
+                // The water map, hashed and copied every tick: 256 x 256 columns, 3 deep.
+                Type column = Game("Timberborn.WaterSystem", "Timberborn.WaterSystem.ReadOnlyWaterColumn");
+                Array columns = Array.CreateInstance(column, 256 * 256 * 3);
+                byte[] counts = new byte[256 * 256];
+                Type water = Mod("BeaverBuddies.DesyncDetecter.WaterDiagnostics");
+                watch.Restart();
+                Only(water, "Describe").Invoke(null, new object[] { columns, counts, 256 * 256 });
+                Only(water, "CaptureData").Invoke(null, new object[] { columns, counts, 1, 256, 256 * 256 });
+                double waterMs = watch.Elapsed.TotalMilliseconds;
+                Only(water, "Reset").Invoke(null, null);
+                Console.WriteLine($"  a tick of {traces} traces: {tracing:0.0} ms to trace ({tracing * 1000 / traces:0.0} µs each, a shallow stack here; " +
+                    $"the game's are deeper), {sending:0.0} ms and {bytes / 1024} KB of JSON to send, {bytes * 11.7 / 1048576:0.0} MB/s at speed 7 " +
+                    $"(direct IP is paced at 1 MB/s); the water map {waterMs:0.0} ms");
+            }
+            finally
+            {
+                debug.SetValue(null, false);
+                Only(service, "Reset").Invoke(instance, null);
+            }
+        }));
+
         // ---- D-S8: the shipping build is not optimised ----
 
         test("D-S8: micro-benchmark of the mod's own per-tick and per-frame code, in this build (compare the Release and Release Steam runs)", () =>

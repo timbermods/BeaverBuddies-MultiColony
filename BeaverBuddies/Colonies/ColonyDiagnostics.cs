@@ -384,6 +384,18 @@ namespace BeaverBuddies.Colonies
                 + $"({lost / 129.0:0.0} ticks of game time), given back since load {ticking.BucketsGivenBack}";
         }
 
+        /// <summary>Beavers and bots in every district: how large the game is, for the desync dialog (DesyncDialogPlan).</summary>
+        public int CharactersInDistricts()
+        {
+            int characters = 0;
+            foreach (DistrictCenter districtCenter in _districtCenterRegistry.AllDistrictCenters)
+            {
+                DistrictPopulation people = districtCenter.GetComponent<DistrictPopulation>();
+                if (people != null) characters += people.NumberOfAdults + people.NumberOfChildren + people.NumberOfBots;
+            }
+            return characters;
+        }
+
         /// <summary>The heap, garbage collections, and the mod's own collections that grow with a session.</summary>
         private static string MemoryLine()
         {
