@@ -62,6 +62,7 @@ internal static class RcColonyRuntimeChecks
         }
 
         Type contextType = mod.GetType("BeaverBuddies.Events.IReplayContext", true)!;
+        Type registryType = Game("Timberborn.EntitySystem", "Timberborn.EntitySystem.EntityRegistry");
         object Event(string name, params (string field, object? value)[] fields)
         {
             Type type = mod.GetType("BeaverBuddies.Events." + name) ?? mod.GetType("BeaverBuddies.Colonies." + name, true)!;
@@ -319,9 +320,68 @@ internal static class RcColonyRuntimeChecks
             finally { separateNow.SetValue(null, wasSeparate); }
         })));
 
+        // ---- E-8: a beaver with no district joined the nearest district center, whoever's ----
+
+        Type citizenType = Game("Timberborn.GameDistricts", "Timberborn.GameDistricts.Citizen");
+        Type assignerType = Game("Timberborn.GameDistricts", "Timberborn.GameDistricts.DistrictCitizenAssigner");
+
+        test("E-8: the game gives a beaver with no district to the nearest district center it can walk to, whoever's", () =>
+        {
+            var assign = IlScan.Members(Only(assignerType, "AssignToClosestDistrict"));
+            foreach (string name in new[] { "get_FinishedDistrictCenters", "IsGloballyReachableFromCitizen", "DistanceToCitizen", "AssignDistrict" })
+                if (!assign.Any(m => m.Name == name)) throw new Exception($"AssignToClosestDistrict no longer calls {name}: review the mod's copy of it");
+            // It runs each tick for every beaver without a district, right after those cut off lose theirs.
+            var tick = IlScan.Members(Only(assignerType, "Tick"));
+            if (!tick.Any(m => m.Name == "AssignCharactersWithoutDistricts")) throw new Exception("the assigner's tick changed");
+            // Leaving a district drops the beaver's home and job at once: nothing else says whose it was afterwards.
+            foreach (var (assembly, method) in new[] { ("Timberborn.DwellingSystem", "UnassignFromHomeIfNotInDistrict"),
+                ("Timberborn.WorkSystem", "UnemployIfWorkplaceIsNotInDistrict") })
+            {
+                if (!Assembly.Load(assembly).GetTypes().Any(t => t.GetMethod(method, All) != null))
+                    throw new Exception($"{method} is gone from {assembly}: review E-8's premise");
+            }
+        });
+
+        test("E-8: a beaver with no district joins only its own colony's district centers, and a hand-over takes it along", () => Quietly(() => WithSingletons(_ =>
+        {
+            Type citizensType = mod.GetType("BeaverBuddies.Colonies.ColonyCitizens")
+                ?? throw new Exception("ColonyCitizens is missing: a beaver with no district joins whichever colony is nearest");
+            object citizens = Activator.CreateInstance(citizensType, null, Activator.CreateInstance(registryType))!;
+            MethodInfo left = citizensType.GetMethod("Left", All)!, lastOf = citizensType.GetMethod("LastColonyOf", All)!, transfer = citizensType.GetMethod("Transfer", All)!;
+            Guid a = Guid.NewGuid(), b = Guid.NewGuid();
+            left.Invoke(citizens, new object?[] { a, 1 });
+            left.Invoke(citizens, new object?[] { b, 2 });
+            int? Last(Guid id) => (int?)lastOf.Invoke(citizens, new object[] { id });
+            if (Last(a) != 1 || Last(b) != 2 || Last(Guid.NewGuid()) != null) throw new Exception("the colony a beaver left is not kept");
+            transfer.Invoke(citizens, new object[] { 1, 0 });
+            if (Last(a) != 0 || Last(b) != 2) throw new Exception("a hand-over does not take the colony's beavers without a district along");
+            left.Invoke(citizens, new object?[] { b, null });
+            if (Last(b) != null) throw new Exception("a district without an owner left a record");
+
+            // The copy of the game's assigner: its own colony's district centers only, asked before the walk check.
+            Type patcher = mod.GetType("BeaverBuddies.Colonies.ColonyCitizenAssignerPatcher", true)!;
+            MethodInfo prefix = patcher.GetMethod("Prefix", All)!;
+            var code = IlScan.Instructions(prefix);
+            int gate = code.FindIndex(i => i.Calls && i.Member?.Name == "get_IsSeparateColonies");
+            int join = code.FindIndex(i => i.Calls && i.Member?.Name == "MayJoin");
+            int reach = code.FindIndex(i => i.Calls && i.Member?.Name == "IsGloballyReachableFromCitizen");
+            int firstLookup = code.FindIndex(i => i.Calls && (i.Member?.Name == "GetSingleton" || i.Member?.Name == "get_Instance"));
+            if (gate < 0 || (firstLookup >= 0 && firstLookup < gate)) throw new Exception("the assigner patch must read the mode's static flag first");
+            if (join < 0 || reach < 0 || join > reach) throw new Exception("the assigner patch does not keep a beaver to its own colony's district centers");
+            if (!patcher.GetCustomAttributesData().Any(d => d.AttributeType.Name == "HarmonyPatch" && d.ConstructorArguments.Count == 2
+                && Equals(d.ConstructorArguments[0].Value, assignerType) && Equals(d.ConstructorArguments[1].Value, "AssignToClosestDistrict")))
+                throw new Exception("the assigner patch does not target DistrictCitizenAssigner.AssignToClosestDistrict");
+            // The colony left is read from the district center itself: a deleted one's (OwnerOfDistrict says nobody's).
+            Type leave = mod.GetType("BeaverBuddies.Colonies.ColonyCitizenLeavePatcher", true)!;
+            if (!leave.GetCustomAttributesData().Any(d => d.AttributeType.Name == "HarmonyPatch" && d.ConstructorArguments.Count == 2
+                && Equals(d.ConstructorArguments[0].Value, citizenType) && Equals(d.ConstructorArguments[1].Value, "UnassignDistrict")))
+                throw new Exception("the colony a beaver leaves is not read in Citizen.UnassignDistrict");
+            var reads = IlScan.Members(leave.GetMethod("Prefix", All)!);
+            if (reads.Any(m => m.Name == "OwnerOfDistrict")) throw new Exception("OwnerOfDistrict is null for a deleted district center: read its DistrictOwner");
+        })));
+
         // ---- H1 (sweep 7): the id-naming events of this area, played after what they name is gone ----
 
-        Type registryType = Game("Timberborn.EntitySystem", "Timberborn.EntitySystem.EntityRegistry");
         test("E-H1: every district, deletion and duplication event naming things deleted earlier in the tick skips them", () => Quietly(() =>
         {
             string Id() => Guid.NewGuid().ToString();

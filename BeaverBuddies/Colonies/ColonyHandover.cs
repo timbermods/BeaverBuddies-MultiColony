@@ -385,6 +385,8 @@ namespace BeaverBuddies.Colonies
                 if (stamp != null && stamp.Slot == from) stamp.Stamp(to);
             }
             ColonyMarks.Instance?.Transfer(from, to);
+            // Its beavers without a district join the new owner's districts (E-8).
+            ColonyCitizens.Instance?.Transfer(from, to);
             ColonyScienceService.Instance?.Transfer(from, to);
             ColonyDigest.Note("handover", from, to, (int)reason);
             // A trading post between the two is now a crossing within one colony: its exchange ends, and what waited on

@@ -95,6 +95,23 @@ static class RcColonyChecks
                 "a colony handed over is announced no more");
         });
 
+        yield return ("E-8: a beaver with no district joins only its own colony's districts; one that never had one, any", () =>
+        {
+            Check(ColonyModeState.MayJoin(lastColony: 1, districtOwner: 1), "its own colony's district");
+            Check(!ColonyModeState.MayJoin(lastColony: 1, districtOwner: 0), "not another colony's, however near");
+            Check(!ColonyModeState.MayJoin(lastColony: 1, districtOwner: null), "not one nobody owns");
+            Check(ColonyModeState.MayJoin(lastColony: null, districtOwner: 0), "a new game's start joins the nearest, as in the game");
+            // The copy of the game's loop asks the rule for each district center, after the mode and before anything else.
+            string patches = Source("BeaverBuddies", "Colonies", "ColonySimulationPatches.cs");
+            string prefix = Body(Body(patches, "static class ColonyCitizenAssignerPatcher"), "static bool Prefix(");
+            int gate = prefix.IndexOf("ColonyModeService.IsSeparateColonies", StringComparison.Ordinal);
+            int rule = prefix.IndexOf("ColonyModeState.MayJoin(", StringComparison.Ordinal);
+            int reach = prefix.IndexOf("IsGloballyReachableFromCitizen", StringComparison.Ordinal);
+            Check(gate >= 0 && rule > gate && reach > rule, "the assigner's copy must gate on the mode, then keep to the beaver's colony");
+            Check(Body(Source("BeaverBuddies", "Colonies", "ColonyHandover.cs"), "public void Transfer(int from, int to, HandoverReason reason)")
+                .Contains("ColonyCitizens.Instance?.Transfer(from, to)"), "a hand-over must take the colony's beavers without a district along");
+        });
+
         yield return ("E-4: a deletion sent as an action leaves no picked terrain behind in the tool", () =>
         {
             string patcher = Body(Source("BeaverBuddies", "Events", "ToolEvents.cs"), "class BuildingDeconstructionPatcher");

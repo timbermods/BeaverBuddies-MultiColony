@@ -74,6 +74,7 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyTradeLedger>().AsSingleton();
             containerDefinition.Bind<ColonyExchangeService>().AsSingleton();
             containerDefinition.Bind<ColonyStamps>().AsSingleton();
+            containerDefinition.Bind<ColonyCitizens>().AsSingleton();
             containerDefinition.Bind<ColonyMarks>().AsSingleton();
             containerDefinition.Bind<ColonyWorkingHours>().AsSingleton();
             containerDefinition.Bind<ColonyLifecycle>().AsSingleton();
