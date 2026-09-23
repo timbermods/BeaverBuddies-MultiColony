@@ -2,6 +2,7 @@ using BeaverBuddies.Events;
 using BeaverBuddies.IO;
 using BeaverBuddies.Util;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Timberborn.BlockSystem;
 using Timberborn.Buildings;
@@ -96,7 +97,8 @@ namespace BeaverBuddies.Colonies
             int hostTicks = SingletonManager.GetSingleton<ReplayService>()?.TicksSinceLoad ?? 1;
             // Founding, handing over and switching colonies wait for the first tick, unless the game began from a waiting
             // room with joining already closed (ColonyRules.WaitsForStart).
-            if (ColonyRules.WaitsForStart(replayEvent is FoundColonyEvent || replayEvent is ColonyHandoverEvent || replayEvent is ActAsColonyEvent,
+            if (ColonyRules.WaitsForStart(replayEvent is FoundColonyEvent || replayEvent is ColonyHandoverEvent || replayEvent is ActAsColonyEvent
+                || replayEvent is BeaverBuddies.Factions.ColonyFactionSwitchEvent,
                 hostTicks, ColonySession.JoiningClosedAtStart))
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: the game has not started, players can still join");
@@ -163,12 +165,17 @@ namespace BeaverBuddies.Colonies
                 || replayEvent is WorkingHoursChangedEvent || replayEvent is PlantingAreaMarkedEvent
                 || replayEvent is TreeCuttingAreaEvent || replayEvent is ClearResourcesMarkedEvent
                 || replayEvent is StewardGrantedEvent || replayEvent is StewardRevokedEvent || replayEvent is ActAsColonyEvent
-                || replayEvent is WishlistChangedEvent || replayEvent is ExchangeFloorSetEvent || replayEvent is ScienceAddedEvent))
+                || replayEvent is WishlistChangedEvent || replayEvent is ExchangeFloorSetEvent || replayEvent is ScienceAddedEvent
+                || replayEvent is BeaverBuddies.Factions.ColonyFactionSwitchEvent))
             {
                 Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: not seated yet");
                 refusal = ColonyRefusal.HostRefused;
                 return false;
             }
+
+            // Mixed factions (D1, D14, D15, D17): a founding's faction, a colony's switch, and each colony builds its own
+            // faction's buildings (and common ones). The host decides, and writes what it decided into the event.
+            if (!JudgeFactions(replayEvent, out refusal)) return false;
 
             // Founding is judged in every game: it is how a shared game becomes a separate-colonies one.
             if (!ColonyModeService.IsSeparateColonies && !(replayEvent is FoundColonyEvent)) return true;
@@ -200,6 +207,62 @@ namespace BeaverBuddies.Colonies
             }
             if (verdict.Removed > 0)
                 Plugin.Log($"[Colony] Kept only slot {replayEvent.slot}'s part of {replayEvent.type} from player {replayEvent.player}: removed {verdict.Removed}");
+            return true;
+        }
+
+        /// <summary>
+        /// Host only: the mixed-factions part of judging an action. A founding's faction must be one the game has and the
+        /// host has unlocked (the event is then given its faction, the base faction when it names none, and none at all
+        /// outside a mixed game). A switch must be the colony's own seated player's, to an available faction, while the
+        /// colony is untouched. A building of one faction alone may only be placed by a colony of that faction; Trading
+        /// Posts of any faction may (the host gives each half its faction, JudgePairs).
+        /// </summary>
+        private static bool JudgeFactions(ReplayEvent replayEvent, out ColonyRefusal refusal)
+        {
+            refusal = ColonyRefusal.None;
+            if (replayEvent is FoundColonyEvent found)
+            {
+                if (!BeaverBuddies.Factions.MixedFactions.IsOn)
+                {
+                    found.faction = null;
+                    return true;
+                }
+                var verdict = BeaverBuddies.Factions.FactionRules.JudgeFoundingFaction(true, found.faction,
+                    BeaverBuddies.Factions.ColonyFactionService.FactionIds.ToList(),
+                    BeaverBuddies.Factions.FactionChoice.Available().Select(f => f.Id).ToList());
+                if (verdict != BeaverBuddies.Factions.FactionChoiceVerdict.Allowed)
+                {
+                    Plugin.Log($"[Factions] Refused a founding as {found.faction} from player {replayEvent.player}: {verdict}");
+                    refusal = ColonyRefusal.FactionUnavailable;
+                    return false;
+                }
+                found.faction = BeaverBuddies.Factions.FactionRules.FoundingFaction(true, found.faction,
+                    BeaverBuddies.Factions.MixedFactions.BaseFaction);
+                return true;
+            }
+            if (replayEvent is BeaverBuddies.Factions.ColonyFactionSwitchEvent switching)
+            {
+                var verdict = BeaverBuddies.Factions.FactionChoice.HostJudgeSwitch(switching);
+                if (verdict == BeaverBuddies.Factions.FactionSwitchVerdict.Allowed) return true;
+                Plugin.Log($"[Factions] Refused colony {switching.slot + 1}'s switch to {switching.faction} from player {replayEvent.player}: {verdict}");
+                refusal = verdict == BeaverBuddies.Factions.FactionSwitchVerdict.Unavailable || verdict == BeaverBuddies.Factions.FactionSwitchVerdict.Unknown
+                    ? ColonyRefusal.FactionUnavailable
+                    : verdict == BeaverBuddies.Factions.FactionSwitchVerdict.Touched ? ColonyRefusal.FactionSwitchNotAllowed : ColonyRefusal.HostRefused;
+                return false;
+            }
+            if (replayEvent is BuildingPlacedEvent placed && BeaverBuddies.Factions.MixedFactions.IsOn && replayEvent.slot >= 0)
+            {
+                var service = SingletonManager.GetSingleton<ColonyRulesService>();
+                string templateFaction = BeaverBuddies.Factions.FactionCatalog.Instance?.FactionOfTemplate(placed.prefabName);
+                bool tradingPost = service != null && service.world.IsTradingPostTemplate(placed.prefabName);
+                if (!BeaverBuddies.Factions.FactionRules.MayPlace(true, templateFaction,
+                    BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot(replayEvent.slot), tradingPost))
+                {
+                    Plugin.Log($"[Factions] Refused {placed.prefabName} for colony {replayEvent.slot + 1}: a {templateFaction} building");
+                    refusal = ColonyRefusal.OtherFactionBuilding;
+                    return false;
+                }
+            }
             return true;
         }
 
@@ -357,6 +420,9 @@ namespace BeaverBuddies.Colonies
             ColonyRefusal.TouchesOtherColony => "BeaverBuddies.Colony.Refused.TouchesOtherColony",
             ColonyRefusal.DevModeOff => "BeaverBuddies.Colony.Refused.DevModeOff",
             ColonyRefusal.HostRefused => "BeaverBuddies.Colony.Refused.HostRefused",
+            ColonyRefusal.FactionUnavailable => "BeaverBuddies.Colony.Refused.FactionUnavailable",
+            ColonyRefusal.FactionSwitchNotAllowed => "BeaverBuddies.Colony.Refused.FactionSwitch",
+            ColonyRefusal.OtherFactionBuilding => "BeaverBuddies.Colony.Refused.OtherFactionBuilding",
             ColonyRefusal.NotStartedYet => "BeaverBuddies.Colony.Refused.NotStartedYet",
             _ => "BeaverBuddies.Colony.Refused.OtherColony",
         });

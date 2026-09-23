@@ -160,6 +160,12 @@ namespace BeaverBuddies.Colonies
         HostRefused,
         /// <summary>Founding or handing over a colony before the host's first tick, while players can still join.</summary>
         NotStartedYet,
+        /// <summary>A mixed-factions game: a faction the host has not unlocked, or one the game does not have.</summary>
+        FactionUnavailable,
+        /// <summary>A mixed-factions game: a colony that has built something of its own faction can no longer switch.</summary>
+        FactionSwitchNotAllowed,
+        /// <summary>A mixed-factions game: another faction's building (each colony builds its own faction's).</summary>
+        OtherFactionBuilding,
     }
 
     public readonly struct ColonyVerdict

@@ -56,9 +56,11 @@ internal static class ColonyRuntimeChecks
             // refused from anyone but the host (ColonyRulesService), and so is telling a guest its action was refused.
             // Looking after a colony (grants, switching) is judged by the host against ColonyStewardRules; a wishlist is
             // only ever the actor's own colony's (the stamped slot), like working hours. So is dev mode's Add 1000 Science,
-            // which the host also refuses while its dev mode is off.
+            // which the host also refuses while its dev mode is off. A mixed-factions game's switch is only ever the actor's
+            // own colony's, and the host allows it only from that colony's own seated player while it is untouched
+            // (FactionChoice.HostJudgeSwitch), and it is judged again as it is played.
             var expected = new[] { "ActAsColonyEvent", "ActionRefusedEvent", "AutosaveEvent", "BuildingUnlockedEvent", "ClientDesyncedEvent",
-                "ColonyHandoverEvent", "ColonyPresenceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
+                "ColonyFactionSwitchEvent", "ColonyHandoverEvent", "ColonyPresenceEvent", "GroupedEvent", "HeartbeatEvent", "InitializeClientEvent", "PingEvent",
                 "PlantingAreaMarkedEvent", "PlayerHelloEvent", "ScienceAddedEvent", "ShowOptionsMenuEvent", "SpeedBoostEvent",
                 "SpeedSetEvent", "StewardGrantedEvent", "StewardRevokedEvent", "TraceLoggedForTickEvent", "TreeCuttingAreaEvent",
                 "WishlistChangedEvent", "WorkerTypeUnlockedEvent", "WorkingHoursChangedEvent" };

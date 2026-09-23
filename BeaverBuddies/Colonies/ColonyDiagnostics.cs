@@ -196,7 +196,9 @@ namespace BeaverBuddies.Colonies
             }
             ColonyModeService mode = ColonyModeService.Instance;
             string flags = $"{(mode?.Enabled == true ? "sep" : "shared")}/{(ColonyScienceService.IsEnabled ? "sci" : "-")}"
-                + $"/{(uint)ColonyDigest.Of(mode?.StartingSettings?.ToString()):x}";
+                + $"/{(uint)ColonyDigest.Of(mode?.StartingSettings?.ToString()):x}"
+                // Mixed factions: each colony's faction (nothing is added in any other game, whose line stays as it was).
+                + (BeaverBuddies.Factions.MixedFactions.IsOn ? $"/mixed:{BeaverBuddies.Factions.ColonyFactionService.Fingerprint()}" : "");
             // Not the table of who plays which colony: that is the host's bookkeeping, which it changes as it loads (its own
             // seat, SeatHost) and hands to everyone only inside the next hello. A guest whose hello was refused kept the
             // save's table and was stopped at its next daily check, although no guest simulates anything from it.

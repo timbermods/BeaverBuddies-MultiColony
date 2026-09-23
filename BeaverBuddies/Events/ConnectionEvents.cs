@@ -4,6 +4,8 @@ using BeaverBuddies.IO;
 using BeaverBuddies.Reporting;
 using BeaverBuddies.Util;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Timberborn.CoreUI;
 using Timberborn.GameSaveRepositorySystem;
@@ -37,12 +39,15 @@ namespace BeaverBuddies.Events
         // The host started this session from a new game's waiting room: nobody joins late, so founding and the rest
         // don't wait for the first tick (ColonySession.JoiningClosedAtStart).
         public bool joiningClosedAtStart;
+        // A mixed-factions game: the factions unlocked on the host's computer (D1), which a colony may take. Null otherwise.
+        public List<string> hostFactions;
 
         public override void Replay(IReplayContext context)
         {
             //context.GetSingleton<ReplayService>().SetServerMapName(mapName);
             LargeColonySpeedLimit.AdoptHostChoice(removeLargeColonySpeedLimit);
             ColonySession.AdoptHostChoice(foundingInSharedGame, separateScience, joiningClosedAtStart);
+            ColonySession.AdoptHostFactions(hostFactions);
             context.GetSingleton<ReplayService>().SetBoost(speedBoost);
             string warningMessage = null;
             if (serverGameVersion != GameVersions.CurrentVersion.ToString())
@@ -79,6 +84,7 @@ namespace BeaverBuddies.Events
                 separateScience = ColonySession.HostSeparateScience,
                 speedBoost = ReplayService.SessionBoost,
                 joiningClosedAtStart = ColonySession.JoiningClosedAtStart,
+                hostFactions = BeaverBuddies.Factions.MixedFactions.IsOn ? ColonySession.HostFactions?.ToList() : null,
                 //mapName = mapName,
             };
             return message;

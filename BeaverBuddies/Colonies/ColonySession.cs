@@ -1,4 +1,6 @@
 using BeaverBuddies.IO;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BeaverBuddies.Colonies
 {
@@ -36,6 +38,31 @@ namespace BeaverBuddies.Colonies
         /// guests in the host's first message. Read from any thread (the init event is built on a network thread).
         /// </summary>
         public static bool JoiningClosedAtStart => joiningClosedAtStart;
+
+        private static volatile string[] hostFactions;
+
+        /// <summary>
+        /// A mixed-factions game: the factions a colony may take, the ones unlocked on the host's computer (D1). Latched
+        /// by the host when the game loads (on the main thread: the profile is read there), told to guests in the host's
+        /// first message. Null while unknown, which allows every faction (the host still judges every choice).
+        /// </summary>
+        public static IReadOnlyList<string> HostFactions => hostFactions;
+
+        public static bool HostHasFaction(string faction) => hostFactions == null || System.Array.IndexOf(hostFactions, faction) >= 0;
+
+        /// <summary>The host (or a game played alone) records the factions unlocked on its own profile.</summary>
+        public static void LatchHostFactions(IEnumerable<string> factions)
+        {
+            hostFactions = factions?.ToArray();
+            Plugin.Log($"[Factions] Factions this game may take: {(hostFactions == null ? "every one" : string.Join(", ", hostFactions))}");
+        }
+
+        /// <summary>A guest learns the host's factions from the host's first message (null from a game that is not mixed).</summary>
+        public static void AdoptHostFactions(List<string> factions)
+        {
+            if (factions == null) return;
+            hostFactions = factions.ToArray();
+        }
 
         /// <summary>The host starts hosting: its settings are fixed for the whole session.</summary>
         public static void BeginHostSession()

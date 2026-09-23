@@ -1,4 +1,5 @@
 using BeaverBuddies.Events;
+using BeaverBuddies.Factions;
 using BeaverBuddies.IO;
 using BeaverBuddies.Util;
 using System;
@@ -14,6 +15,7 @@ using Timberborn.Coordinates;
 using Timberborn.CoreUI;
 using Timberborn.DistributionSystem;
 using Timberborn.EntitySystem;
+using Timberborn.FactionSystem;
 using Timberborn.GameDistricts;
 using Timberborn.GameStartup;
 using Timberborn.Goods;
@@ -23,6 +25,7 @@ using Timberborn.NewGameConfigurationSystem;
 using Timberborn.SelectionSystem;
 using Timberborn.SimpleOutputBuildings;
 using Timberborn.SingletonSystem;
+using Timberborn.TemplateSystem;
 using Timberborn.ToolSystem;
 using Timberborn.ToolSystemUI;
 using UnityEngine;
@@ -56,16 +59,23 @@ namespace BeaverBuddies.Colonies
         private readonly DistrictCenterRegistry _districtCenterRegistry;
         private readonly BlockValidator _blockValidator;
         private readonly ISpecService _specService;
+        private readonly EntityRegistry _entityRegistry;
+        private readonly EntityService _entityService;
 
-        private BlockObjectTool foundingTool;
+        // One founding tool per faction (a mixed game places each faction's own district center).
+        private readonly Dictionary<string, BlockObjectTool> foundingTools = new Dictionary<string, BlockObjectTool>();
+        private string placingFaction;
 
         public ColonyFoundingService(ColonyModeService colonyModeService, StartingBuildingSpawner startingBuildingSpawner,
             StartingBuildingToolDescriber startingBuildingToolDescriber, BlockObjectToolFactory blockObjectToolFactory,
             ConstructionFactory constructionFactory, BeaverFactory beaverFactory,
             EntityComponentRegistry entityComponentRegistry, ToolService toolService, InputService inputService,
             CameraTargeter cameraTargeter, DialogBoxShower dialogBoxShower, BlockValidator blockValidator,
-            ISpecService specService, DistrictCenterRegistry districtCenterRegistry)
+            ISpecService specService, DistrictCenterRegistry districtCenterRegistry, EntityRegistry entityRegistry,
+            EntityService entityService)
         {
+            _entityRegistry = entityRegistry;
+            _entityService = entityService;
             _colonyModeService = colonyModeService;
             _startingBuildingSpawner = startingBuildingSpawner;
             _startingBuildingToolDescriber = startingBuildingToolDescriber;
@@ -83,7 +93,17 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>True while this computer's player is using the founding tool (not the ordinary build menu).</summary>
-        public bool FoundingToolActive => foundingTool != null && _toolService.ActiveTool == foundingTool;
+        public bool FoundingToolActive => foundingTools.Values.Any(tool => _toolService.ActiveTool == tool);
+
+        /// <summary>
+        /// The district center a colony of this faction starts with: in a mixed game that faction's own (the two have the
+        /// same footprint and entrance, which RuntimeChecks pins), otherwise the game's.
+        /// </summary>
+        public TemplateSpec CenterOf(string faction)
+        {
+            TemplateSpec own = MixedFactions.IsOn ? FactionCatalog.Instance?.DistrictCenterOf(faction) : null;
+            return own ?? _startingBuildingSpawner.StartingBuildingTemplateSpec;
+        }
 
         public void Load() { }
 
@@ -125,7 +145,7 @@ namespace BeaverBuddies.Colonies
         public bool ProcessInput()
         {
             if (!_inputService.IsKeyDown(FoundKeyBindingId)) return false;
-            if (LocalPlayerMayFound) StartPlacing();
+            if (LocalPlayerMayFound) ChooseAndPlace();
             else Notice(WhyNot());
             return false;
         }
@@ -142,12 +162,22 @@ namespace BeaverBuddies.Colonies
                 offerPending = true;
                 return;
             }
-            if (!LocalPlayerMayFound) return;
+            if (!LocalPlayerMayFound)
+            {
+                // A mixed game's colony that already stands (a multi-start game's start): the chance to switch faction.
+                OfferFactionSwitch();
+                return;
+            }
             try
             {
+                if (MixedFactions.IsOn)
+                {
+                    FactionChoice.ShowFoundingDialog(_dialogBoxShower, StartPlacing);
+                    return;
+                }
                 _dialogBoxShower.Create()
                     .SetMessage(RegisteredLocalizationService.T("BeaverBuddies.Colony.Founding.Prompt"))
-                    .SetConfirmButton(StartPlacing, RegisteredLocalizationService.T("BeaverBuddies.Colony.Founding.PlaceButton"))
+                    .SetConfirmButton(() => StartPlacing(null), RegisteredLocalizationService.T("BeaverBuddies.Colony.Founding.PlaceButton"))
                     .SetDefaultCancelButton()
                     .Show();
             }
@@ -180,23 +210,38 @@ namespace BeaverBuddies.Colonies
             return "BeaverBuddies.Colony.Founding.NotYours";
         }
 
-        private void StartPlacing()
+        // Ctrl+K: in a mixed game the faction first (the waiting room's pick, or a card each), then the tool.
+        private void ChooseAndPlace()
+        {
+            if (!MixedFactions.IsOn) StartPlacing(null);
+            else FactionChoice.ShowFoundingDialog(_dialogBoxShower, StartPlacing);
+        }
+
+        private void StartPlacing(string faction)
         {
             if (!LocalPlayerMayFound) return;
-            foundingTool ??= _blockObjectToolFactory.Create(
-                _startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<PlaceableBlockObjectSpec>(),
-                new FoundingPlacer(this), _startingBuildingToolDescriber);
-            _toolService.SwitchTool(foundingTool);
+            faction = MixedFactions.IsOn ? faction ?? MixedFactions.BaseFaction : null;
+            string key = faction ?? "";
+            if (!foundingTools.TryGetValue(key, out BlockObjectTool tool))
+            {
+                tool = _blockObjectToolFactory.Create(CenterOf(faction).GetSpec<PlaceableBlockObjectSpec>(), new FoundingPlacer(this),
+                    _startingBuildingToolDescriber);
+                foundingTools[key] = tool;
+            }
+            placingFaction = faction;
+            _toolService.SwitchTool(tool);
         }
 
         private void PlacedByTool(Placement placement)
         {
             _toolService.SwitchToDefaultTool();
+            string faction = placingFaction;
             bool playedHere = ReplayEvent.DoPrefix(() => new FoundColonyEvent
             {
                 coordinates = placement.Coordinates,
                 orientation = placement.Orientation,
                 isFlipped = placement.FlipMode.IsFlipped,
+                faction = faction,
             });
             // Founding exists only in a hosted game, where the action always goes through the host.
             if (playedHere) Notice("BeaverBuddies.Colony.Founding.HostFirst");
@@ -293,7 +338,7 @@ namespace BeaverBuddies.Colonies
 
         // ---- founding (replayed on every computer) ----
 
-        public void Found(Placement placement, int slot, ColonyStartingSettings settings)
+        public void Found(Placement placement, int slot, ColonyStartingSettings settings, string faction = null)
         {
             // Judged again here, at the tick it happens: the host judged it when it arrived, but someone may have built
             // or blasted there since. The world is the same on every computer now, so is the answer, and an invalid
@@ -317,19 +362,10 @@ namespace BeaverBuddies.Colonies
                     ColonySession.HostSeparateScience, newGame: false);
             }
 
-            var builder = new EntitySetup.Builder(_startingBuildingSpawner.StartingBuildingTemplateSpec.GetSpec<BlockObjectSpec>().Blueprint);
-            BlockObject blockObject;
-            DistrictOwner.PendingSlot = slot;
-            try
-            {
-                blockObject = _constructionFactory.CreateAsFinished(builder, placement);
-            }
-            finally
-            {
-                DistrictOwner.PendingSlot = null;
-            }
-            blockObject.GetComponent<DistrictOwner>()?.SetSlot(slot);
-            Building building = blockObject.GetComponent<Building>();
+            // A mixed game's colony plays the faction the host allowed (the event's), recorded before anything is made.
+            string colonyFaction = FactionRules.FoundingFaction(MixedFactions.IsOn, faction, MixedFactions.BaseFaction);
+            if (MixedFactions.IsOn) ColonyFactionService.Set(slot, colonyFaction);
+            Building building = PlaceCenter(placement, slot, colonyFaction, out BlockObject blockObject);
 
             Inventory inventory = building.GetComponent<SimpleOutputInventory>()?.Inventory;
             if (inventory != null)
@@ -340,9 +376,13 @@ namespace BeaverBuddies.Colonies
             }
 
             Vector3 position = SpawnPosition(building, blockObject);
-            SpawnBeavers(position, adults: true, start.Adults, start.AdultAgeMin, start.AdultAgeMax);
-            SpawnBeavers(position, adults: false, start.Children, start.ChildAgeMin, start.ChildAgeMax);
-            Plugin.Log($"[Colony] Slot {slot} founded a colony at {placement.Coordinates} with {start}");
+            using (MixedFactions.IsOn ? FactionCreationContext.Push(colonyFaction) : default)
+            {
+                SpawnBeavers(position, adults: true, start.Adults, start.AdultAgeMin, start.AdultAgeMax);
+                SpawnBeavers(position, adults: false, start.Children, start.ChildAgeMin, start.ChildAgeMax);
+            }
+            if (ColonySession.LocalSlot == slot) LocalFactionPick.Clear();
+            Plugin.Log($"[Colony] Slot {slot} founded a{(MixedFactions.IsOn ? " " + colonyFaction : "")} colony at {placement.Coordinates} with {start}");
 
             // Display only, on this computer.
             if (ColonySession.LocalSlot == slot)
@@ -351,6 +391,122 @@ namespace BeaverBuddies.Colonies
                 catch (Exception error) { Plugin.LogWarning("[Colony] Could not move the camera: " + error.Message); }
             }
             TellFounding(slot, founded: true);
+        }
+
+        // A finished district center of this faction, owned by the slot from the moment it is made.
+        private Building PlaceCenter(Placement placement, int slot, string faction, out BlockObject blockObject)
+        {
+            var builder = new EntitySetup.Builder(CenterOf(faction).GetSpec<BlockObjectSpec>().Blueprint);
+            DistrictOwner.PendingSlot = slot;
+            try
+            {
+                blockObject = _constructionFactory.CreateAsFinished(builder, placement);
+            }
+            finally
+            {
+                DistrictOwner.PendingSlot = null;
+            }
+            blockObject.GetComponent<DistrictOwner>()?.SetSlot(slot);
+            return blockObject.GetComponent<Building>();
+        }
+
+        // ---- a mixed game's faction switch (D14) ----
+
+        /// <summary>
+        /// Whether a colony is still untouched, as every computer counts it (saved state only): its district centers, and
+        /// the buildings of a faction of their own it owns besides them, finished or not. Common buildings (paths, which a
+        /// map may already have) look right in either faction, and a colony keeps them.
+        /// </summary>
+        public UntouchedFacts UntouchedFacts(int slot)
+        {
+            int centers = _districtCenterRegistry.AllDistrictCenters.Count(dc => DistrictOwner.OwnerOfDistrict(dc) == slot);
+            int others = 0;
+            FactionCatalog catalog = FactionCatalog.Instance;
+            foreach (EntityComponent entity in _entityRegistry.Entities)
+            {
+                ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
+                if (stamp == null || stamp.Slot != slot || entity.GetComponent<DistrictCenter>() != null) continue;
+                if (catalog?.FactionOfTemplate(entity.GetComponent<TemplateSpec>()?.TemplateName) != null) others++;
+            }
+            return new UntouchedFacts(centers, others, marks: 0, tradeOpen: false, unlocks: 0);
+        }
+
+        /// <summary>
+        /// Played on every computer (ColonyFactionSwitchEvent): an untouched colony becomes another faction. Each of its
+        /// district centers is replaced in place by that faction's (the same footprint), its stock moved across, and its
+        /// beavers by as many of that faction's (up to the starting numbers). Judged again here, from saved state.
+        /// </summary>
+        public void SwitchFaction(int slot, string faction)
+        {
+            FactionSwitchVerdict verdict = FactionRules.JudgeSwitch(MixedFactions.IsOn, isSeatOwner: true,
+                ColonyFactionService.FactionOfSlot(slot), faction, ColonyFactionService.FactionIds.ToList(), null, UntouchedFacts(slot));
+            if (verdict != FactionSwitchVerdict.Allowed)
+            {
+                Plugin.LogWarning($"[Factions] Colony {slot + 1}'s switch to {faction} skipped: {verdict}");
+                return;
+            }
+            ColonyStartingSettings start = HostStartingSettings();
+            List<DistrictCenter> centers = _districtCenterRegistry.AllDistrictCenters
+                .Where(dc => DistrictOwner.OwnerOfDistrict(dc) == slot).ToList();
+            int adults = 0, children = 0;
+            var stock = new List<GoodAmount>();
+            var placements = new List<Placement>();
+            foreach (DistrictCenter center in centers)
+            {
+                DistrictPopulation population = center.GetComponent<DistrictPopulation>();
+                List<Beaver> beavers = population != null ? population.Beavers.ToList() : new List<Beaver>();
+                adults += population?.NumberOfAdults ?? 0;
+                children += population?.NumberOfChildren ?? 0;
+                foreach (Beaver beaver in beavers) _entityService.Delete(beaver);
+                Inventory inventory = center.GetComponent<SimpleOutputInventory>()?.Inventory;
+                if (inventory != null) stock.AddRange(inventory.Stock.Where(good => good.Amount > 0));
+                placements.Add(center.GetComponent<BlockObject>().Placement);
+                _entityService.Delete(center);
+            }
+            ColonyFactionService.Set(slot, faction);
+            HashSet<string> keeps = FactionCatalog.Instance?.GoodsOf(faction);
+            bool first = true;
+            foreach (Placement placement in placements)
+            {
+                Building building = PlaceCenter(placement, slot, faction, out BlockObject blockObject);
+                if (!first) continue;
+                first = false;
+                Inventory inventory = building.GetComponent<SimpleOutputInventory>()?.Inventory;
+                foreach (GoodAmount good in stock)
+                {
+                    if (inventory != null && (keeps == null || keeps.Contains(good.GoodId))) inventory.GiveExistingIgnoringCapacity(good);
+                }
+                Vector3 position = SpawnPosition(building, blockObject);
+                using (FactionCreationContext.Push(faction))
+                {
+                    SpawnBeavers(position, adults: true, Math.Min(adults, start.Adults), start.AdultAgeMin, start.AdultAgeMax);
+                    SpawnBeavers(position, adults: false, Math.Min(children, start.Children), start.ChildAgeMin, start.ChildAgeMax);
+                }
+                if (ColonySession.LocalSlot == slot)
+                {
+                    try { _cameraTargeter.CenterCameraOn(building.GetComponent<SelectableObject>()); }
+                    catch (Exception error) { Plugin.LogWarning("[Factions] Could not move the camera: " + error.Message); }
+                }
+            }
+            if (ColonySession.LocalSlot == slot) LocalFactionPick.Clear();
+            Plugin.Log($"[Factions] Colony {slot + 1} switched to {faction}: {placements.Count} district center(s), {adults} adults, {children} children");
+            try
+            {
+                FactionSpec spec = MixedFactions.Spec(faction);
+                SingletonManager.GetSingleton<ColonyRulesService>()?.ShowNotice(RegisteredLocalizationService.T(
+                    "BeaverBuddies.Colony.Faction.Switched", ColonyExchangeService.ColonyName(slot), spec?.DisplayName.Value ?? faction), warning: false);
+            }
+            catch (Exception error) { Plugin.LogWarning("[Factions] Could not show the switch: " + error.Message); }
+        }
+
+        /// <summary>A seated player whose mixed game's colony already stands: offered the switch while it is untouched.</summary>
+        private void OfferFactionSwitch()
+        {
+            if (!MixedFactions.IsOn || EventIO.IsNull) return;
+            int slot = ColonySession.LocalSlot;
+            if (slot < 0 || ColonySession.LocalSeat != slot || !SlotOwnsDistrict(slot)) return;
+            try { FactionChoice.OfferSwitch(_dialogBoxShower, slot, UntouchedFacts(slot)); }
+            catch (Exception error) { Plugin.LogWarning("[Factions] Could not offer the faction switch: " + error.Message); }
         }
 
         private static Vector3 SpawnPosition(Building building, BlockObject blockObject)
@@ -430,6 +586,8 @@ namespace BeaverBuddies.Colonies
         public bool isFlipped;
         /// <summary>What the colony starts with, written by the host when it allows the founding (null from an older host).</summary>
         public ColonyStartingSettings startingSettings;
+        /// <summary>A mixed game's colony's faction: the founder's choice, which the host checked is available (D1, D15).</summary>
+        public string faction;
 
         public Placement Placement => new Placement(coordinates, orientation, isFlipped ? FlipMode.Flipped : FlipMode.Unflipped);
 
@@ -451,7 +609,7 @@ namespace BeaverBuddies.Colonies
                 return;
             }
             // The host wrote the founder's slot and the starting settings into the event before playing it.
-            service.Found(Placement, slot, startingSettings);
+            service.Found(Placement, slot, startingSettings, faction);
         }
 
         public override string ToActionString() => $"Founding a colony for slot {slot} at {coordinates}";

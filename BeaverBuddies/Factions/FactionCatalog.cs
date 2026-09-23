@@ -1,3 +1,4 @@
+using BeaverBuddies.IO;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -32,6 +33,7 @@ namespace BeaverBuddies.Factions
         private readonly TemplateCollectionService _templateCollectionService;
         private readonly TemplateNameMapper _templateNameMapper;
         private readonly FactionNeedService _factionNeedService;
+        private readonly FactionUnlockingService _factionUnlockingService;
 
         private bool built;
         private FactionSets templates;
@@ -49,8 +51,9 @@ namespace BeaverBuddies.Factions
         public static FactionCatalog Instance => SingletonManager.GetSingleton<FactionCatalog>();
 
         public FactionCatalog(ISpecService specService, TemplateCollectionService templateCollectionService,
-            TemplateNameMapper templateNameMapper, FactionNeedService factionNeedService)
+            TemplateNameMapper templateNameMapper, FactionNeedService factionNeedService, FactionUnlockingService factionUnlockingService)
         {
+            _factionUnlockingService = factionUnlockingService;
             _specService = specService;
             _templateCollectionService = templateCollectionService;
             _templateNameMapper = templateNameMapper;
@@ -59,7 +62,21 @@ namespace BeaverBuddies.Factions
 
         public void Load()
         {
-            if (MixedFactions.IsOn) EnsureBuilt();
+            if (!MixedFactions.IsOn) return;
+            EnsureBuilt();
+            // The host's unlocks decide which factions a colony may take (D1); a guest learns them from the host.
+            if (!(EventIO.Get() is ClientEventIO))
+            {
+                try
+                {
+                    BeaverBuddies.Colonies.ColonySession.LatchHostFactions(MixedFactions.AllFactions
+                        .Where(f => !_factionUnlockingService.IsLocked(f)).Select(f => f.Id));
+                }
+                catch (Exception error)
+                {
+                    Plugin.LogWarning("[Factions] Could not read this computer's faction unlocks (every faction allowed): " + error.Message);
+                }
+            }
         }
 
         /// <summary>The faction whose collections alone list this template (null: common, or not a mixed game).</summary>

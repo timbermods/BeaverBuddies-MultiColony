@@ -83,14 +83,23 @@ namespace BeaverBuddies.MultiStart
 				int slot = startingLocation.GetComponent<StartingLocationPlayer>()?.PlayerIndex ?? 0;
 				if (slot < 0 || slot >= BeaverBuddies.Colonies.ColonySlotTable.MaxSlots) slot = 0;
 				if (separateColonies) BeaverBuddies.Colonies.DistrictOwner.PendingSlot = slot;
+				// A mixed-factions game places each start in its player's faction (their pick in the waiting room, else the
+				// base faction): the spawner builds its StartingBuildingTemplateSpec, swapped for this one start.
+				var spawnerTemplate = __instance._startingBuildingSpawner.StartingBuildingTemplateSpec;
+				string startFaction = separateColonies && BeaverBuddies.Factions.MixedFactions.IsOn
+					? BeaverBuddies.Factions.MixedFactions.PlannedTable.Of(slot) ?? BeaverBuddies.Factions.MixedFactions.BaseFaction : null;
+				var startTemplate = startFaction != null ? BeaverBuddies.Factions.FactionCatalog.Instance?.DistrictCenterOf(startFaction) : null;
 				try
 				{
+					if (startTemplate != null) __instance._startingBuildingSpawner.StartingBuildingTemplateSpec = startTemplate;
 					__instance._startingBuildingSpawner.Place(startingLocation.GetComponent<BlockObject>().Placement);
 				}
 				finally
 				{
+					__instance._startingBuildingSpawner.StartingBuildingTemplateSpec = spawnerTemplate;
 					BeaverBuddies.Colonies.DistrictOwner.PendingSlot = null;
 				}
+				if (startFaction != null) BeaverBuddies.Factions.ColonyFactionService.Set(slot, startTemplate != null ? startFaction : BeaverBuddies.Factions.MixedFactions.BaseFaction);
 				if (separateColonies)
 					__instance._startingBuildingSpawner.StartingBuilding?.GetComponent<BeaverBuddies.Colonies.DistrictOwner>()?.SetSlot(slot);
 				// Register all start buildings
@@ -176,7 +185,10 @@ namespace BeaverBuddies.MultiStart
 				{
 					Vector3 valueOrDefault = unblockedSingleAccess.GetValueOrDefault();
 					GameModeSpec newGameMode = __instance._sceneLoader.GetSceneParameters<GameSceneParameters>().NewGameConfiguration.GameMode;
-					__instance._startingBeaverInitializer.Initialize(valueOrDefault, newGameMode.StartingAdults, newGameMode.AdultAgeProgress, newGameMode.StartingChildren, newGameMode.ChildAgeProgress);
+					// A mixed-factions game's start makes beavers of its own district center's faction.
+					string faction = BeaverBuddies.Factions.ColonyFactionService.SimFactionOf(startingBuilding);
+					using (faction != null ? BeaverBuddies.Factions.FactionCreationContext.Push(faction) : default)
+						__instance._startingBeaverInitializer.Initialize(valueOrDefault, newGameMode.StartingAdults, newGameMode.AdultAgeProgress, newGameMode.StartingChildren, newGameMode.ChildAgeProgress);
 				}
 			}
 			__result = InitializationState.PostSpawnBeavers;
