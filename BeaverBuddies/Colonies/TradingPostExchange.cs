@@ -112,13 +112,13 @@ namespace BeaverBuddies.Colonies
             CancelAsked = false;
             Colony = colony;
             Keep = ExchangeTerms.IsValidKeep(keep) ? keep : 0;
-            Changed("propose");
+            Changed("exchange-propose");
         }
 
         internal void SetKeep(int keep)
         {
             Keep = Math.Max(0, Math.Min(ExchangeTerms.MaxKeep, keep));
-            Changed("keep");
+            Changed("exchange-keep");
         }
 
         /// <summary>The terms just offered or accepted, from this side, kept after the exchange ends so they can be offered again.</summary>
@@ -131,13 +131,13 @@ namespace BeaverBuddies.Colonies
         internal void Activate()
         {
             State = ExchangeState.Active;
-            Changed("activate");
+            Changed("exchange-activate");
         }
 
         internal void Hold(int amount)
         {
             Held += amount;
-            Changed("hold");
+            Changed("exchange-hold");
         }
 
         /// <summary>The round's goods crossed: the next round (if any) starts with nothing on the half.</summary>
@@ -145,13 +145,13 @@ namespace BeaverBuddies.Colonies
         {
             Done++;
             Held = 0;
-            Changed("crossed");
+            Changed("exchange-crossed");
         }
 
         internal void AskCancel(bool asked)
         {
             CancelAsked = asked;
-            Changed("cancel-asked");
+            Changed("exchange-cancel-asked");
         }
 
         internal void Record(TradeRecord record)
@@ -168,14 +168,15 @@ namespace BeaverBuddies.Colonies
             + 17L * ColonyDigest.Of(GoodId) + 19L * ledger.Count + (ledger.Count > 0 ? ColonyDigest.Of(ledger[ledger.Count - 1].Encode()) : 0)
             + 23L * Keep + 29L * ColonyDigest.Of(LastTerms);
 
-        private void Changed(string what) => ColonyDigest.Note("exchange-" + what, Hash(), Fingerprint());
+        // The change is named whole ("exchange-hold"), so no string is built per arriving load.
+        private void Changed(string what) => ColonyDigest.Note(what, Hash(), Fingerprint());
 
         private long Hash() => GetComponent<EntityComponent>()?.EntityId.GetHashCode() ?? 0;
 
         /// <summary>No exchange here any more; the serial and the ledger stay.</summary>
         internal void Clear()
         {
-            Changed("clear");
+            Changed("exchange-clear");
             State = ExchangeState.None;
             ProposedHere = false;
             GoodId = null;

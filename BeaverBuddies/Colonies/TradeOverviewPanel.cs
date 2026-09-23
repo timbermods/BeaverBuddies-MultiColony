@@ -376,9 +376,12 @@ namespace BeaverBuddies.Colonies
             int me = ColonySession.LocalSlot;
             ColonyExchangeService exchanges = ColonyExchangeService.Instance;
 
-            // Trading Posts with a half in this player's colony (trading or not yet), each seen from that half.
+            // Trading Posts with a half in this player's colony (trading or not yet), each seen from that half; and a half
+            // whose road was removed while this colony's exchange is open there (in no colony now, so found by the exchange),
+            // which shows as paused rather than vanishing from the list.
             var posts = _entityComponentRegistry.GetEnabled<DistrictCrossing>()
-                .Where(half => TradingPosts.IsTradingPostBuilding(half) && ColonyExchangeService.OwnerOf(half) == me)
+                .Where(half => TradingPosts.IsTradingPostBuilding(half) && (ColonyExchangeService.OwnerOf(half) == me
+                    || (ColonyExchangeService.OwnerOf(half) < 0 && ColonyExchangeService.Of(half) is CrossingExchange open && open.IsOpen && open.Colony == me)))
                 .Select(half => (key: ReplayEvent.GetEntityID(half), half))
                 .Where(p => p.key != null).OrderBy(p => p.key, StringComparer.Ordinal).ToList();
             NativeElements.SetText(postsTitle, string.Format(T("BeaverBuddies.Colony.Overview.Posts"), posts.Count));

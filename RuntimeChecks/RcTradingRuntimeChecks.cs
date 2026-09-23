@@ -75,8 +75,6 @@ internal static class RcTradingRuntimeChecks
             var status = IlScan.Instructions(Only(fragment, "StatusLine"));
             Need(status.Count(i => i.Calls && i.Member?.Name == "WhyWaiting") == 2, "the panel no longer says why either side waits");
             Need(Calls(Only(fragment, "Status"), fragment.Name, "StatusLine"), "the panel's status is no longer its StatusLine");
-            Type window = mod.GetType("BeaverBuddies.Colonies.TradeOverviewPanel", true)!;
-            Need(Calls(Only(window, "Describe"), fragment.Name, "StatusLine"), "the trading window no longer says why a post's round waits");
             foreach (string key in new[] { "StatusYourHalfBlocked", "StatusNoRoom", "StatusNoStock", "StatusTheirHalfBlocked", "StatusTheirNoWorkers",
                 "StatusTheirNoStock", "StatusHaulAway" })
                 Need(status.Any(i => i.Text == "BeaverBuddies.Colony.Trade." + key), "the panel no longer shows " + key);
@@ -85,6 +83,16 @@ internal static class RcTradingRuntimeChecks
             // The game: pausing (and flooding) a building blocks it, which is what the panel reads.
             Type pausable = Game("Timberborn.Buildings", "Timberborn.Buildings.PausableBuilding");
             Need(Calls(Only(pausable, "Pause"), "BlockableObject", "Block"), "the game's pause no longer blocks the building");
+        });
+
+        test("C8: the Ctrl+T window says why a post's round is held up, and shows a paused exchange as paused", () =>
+        {
+            Type fragment = mod.GetType("BeaverBuddies.Colonies.TradingPostFragment", true)!;
+            Type window = mod.GetType("BeaverBuddies.Colonies.TradeOverviewPanel", true)!;
+            var describe = IlScan.Instructions(Only(window, "Describe"));
+            Need(describe.Any(i => i.Calls && i.Member?.Name == "StatusLine" && i.Member.DeclaringType == fragment),
+                "the trading window no longer says why a post's round waits");
+            Need(describe.Any(i => i.Text == "BeaverBuddies.Colony.Trade.PausedTitle"), "the trading window no longer shows a paused exchange as paused");
         });
 
         test("C4: the Trading Posts' check holds what already waits on a giving half before it judges the round", () =>
@@ -135,6 +143,8 @@ internal static class RcTradingRuntimeChecks
             MethodInfo check = Only(service, "CheckTradingPosts");
             Need(!Calls(check, "Enumerable", "ToList"), "CheckTradingPosts copies the crossings into a new list every 8 ticks");
             Need(service.GetField("halves", All)?.FieldType.Name == "List`1", "the check's kept list is gone");
+            // Every load held on a half notes the digest: by a name given whole, not built per load.
+            Need(!Calls(Only(side, "Changed"), "String", "Concat"), "CrossingExchange builds a string for each change it notes");
         });
 
         test("T2: every good of both factions can be offered, carried to a half, held there, and stored by each faction that may receive it", () =>

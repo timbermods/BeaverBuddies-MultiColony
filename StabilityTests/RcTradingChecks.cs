@@ -135,10 +135,17 @@ static class RcTradingChecks
                 Check(csv.Contains("\nBeaverBuddies.Colony.Trade." + key + ",\""), "no English line for " + key);
             string report = Body(Source("BeaverBuddies", "Colonies", "ColonyDiagnostics.cs"), "private static string Stall(");
             Check(report.Contains("WhyNotIn("), "the diagnostics report no longer says why a round waits as the panel does");
-            // The Ctrl+T window: a round held up says why, and an exchange at a paused post reads as paused (T7).
+        });
+
+        yield return ("C8: the Ctrl+T window says why a post's round is held up, shows a paused exchange as paused, and keeps its post listed", () =>
+        {
+            // beta24 read an exchange at a paused post as "Not trading yet", showed a stalled round as "60/100" only, and
+            // dropped a post whose half of this colony had lost its road (it is in no colony then) while goods waited on it.
             string window = Body(Source("BeaverBuddies", "Colonies", "TradeOverviewPanel.cs"), "private void Describe(");
             Check(window.Contains("TradingPostFragment.StatusLine(") && window.Contains("\"BeaverBuddies.Colony.Trade.PausedTitle\""),
                 "the trading window no longer says why a post's round waits, or that it is paused");
+            Check(Body(Source("BeaverBuddies", "Colonies", "TradeOverviewPanel.cs"), "private void RefreshLists()").Contains("open.Colony == me"),
+                "the trading window drops a paused post whose half of this colony lost its road");
         });
 
         yield return ("C7: the tick's check of every post allocates no list, and counts beavers without LINQ", () =>
