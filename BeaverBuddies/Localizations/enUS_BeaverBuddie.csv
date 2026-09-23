@@ -513,3 +513,4 @@ BeaverBuddies.Colony.Trade.ErrorBeaversFaction,"Beavers can only move between co
 BeaverBuddies.Colony.Trade.Notice.OfferFailedFaction,"Your offer was not made: between factions, only goods both factions use, and science, can be traded.",""
 BeaverBuddies.Colony.Trade.Notice.VoidFaction,"An exchange at a Trading Post ended: its colonies' factions no longer allow its terms.",""
 BeaverBuddies.Colony.Trade.BetweenFactions,"Between factions: goods both factions use, and science. No beavers.",""
+BeaverBuddies.CoopFix.Stopped,"Co-op has stopped. This version of Timberborn changed a part of the game MultiColony keeps in step for co-op, and this game needs it: {0}. Played together, the game would go out of step. You can play on alone. To play together again, update MultiColony, and check that every player runs the same Timberborn version.",""

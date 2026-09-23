@@ -70,6 +70,7 @@ namespace BeaverBuddies
             containerDefinition.Bind<BeaverBuddies.Activity.PlayerCursorSettingsUI>().AsSingleton();
             containerDefinition.Bind<ModMismatchWarningService>().AsSingleton();
             containerDefinition.Bind<DevModeCoopWarning>().AsSingleton();
+            containerDefinition.Bind<CoopFixGuard>().AsSingleton();
             containerDefinition.Bind<TickOnceCoopNotice>().AsSingleton();
             containerDefinition.Bind<GateTickRunner>().AsSingleton();
             containerDefinition.Bind<RealGateConflict>().AsSingleton();

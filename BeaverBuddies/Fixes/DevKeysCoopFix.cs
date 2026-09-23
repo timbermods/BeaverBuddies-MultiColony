@@ -3,6 +3,7 @@ using HarmonyLib;
 using Timberborn.Buildings;
 using Timberborn.BuildingTools;
 using Timberborn.DeconstructionSystem;
+using Timberborn.PlantingUI;
 using Timberborn.RecoveredGoodSystem;
 
 namespace BeaverBuddies.Fixes
@@ -46,5 +47,28 @@ namespace BeaverBuddies.Fixes
             __instance.PrepareToSpawning(buildingDeconstructedEvent.Deconstructible, buildingDeconstructedEvent.Coordinates);
             return false;
         }
+    }
+
+    /// <summary>
+    /// A third dev key on Ctrl: planting with it held (dev mode on) also spawns the plants at once, grown with Shift, with
+    /// their yield with Alt (DevModePlantableSpawner, called by the planting tool beside the marking it records). The
+    /// marking is shared, the spawning ran on the planting player's computer alone: plants that exist on one computer
+    /// only, from a player holding Ctrl for the shared free unlock (1.4.0-rc1, A2). In a co-op game the planting tool
+    /// only marks. Single player is unchanged.
+    /// </summary>
+    [ManualMethodOverwrite]
+    /*
+     * 2026-09-23 (Timberborn 1.1.2.4, DevModePlantableSpawner.SpawnPlantables)
+        if (!_inputService.IsKeyHeld(PlantSpawnedKey))
+        {
+            return;
+        }
+        foreach (Vector3Int block in blocks) { ...SpawnIgnoringConstraints, IncreaseGrowthProgress, FastForwardGrowth... }
+     */
+    [HarmonyPatch(typeof(DevModePlantableSpawner), nameof(DevModePlantableSpawner.SpawnPlantables))]
+    static class DevPlantSpawnKeyCoopPatcher
+    {
+        [HarmonyPriority(Priority.Last)]
+        static bool Prefix() => EventIO.IsNull;
     }
 }

@@ -110,13 +110,32 @@ internal static class TimingChecks
                 if ((float)run.DynamicInvoke(Source(0.4f, false)) != 0f ||
                     (float)run.DynamicInvoke(Source(0.9f)) != 1f) throw new Exception("Game clamp/reset changed");
             });
-            test("Timing transpiler rejects a missing clock call instead of silently not patching", () =>
+            // 1.4.0-rc1 (R8): a changed method body no longer throws out of the mod's patching (which stopped every patch
+            // after it); it is left as the game has it and the fix says it is unavailable, not silently: CoopFixGuard then
+            // stops a co-op game with water seeps (RcLateGameRuntimeChecks).
+            test("Timing transpiler leaves a changed method body as it is and says the fix is unavailable, instead of silently not patching", () =>
             {
                 var codeType = harmony.GetType("HarmonyLib.CodeInstruction");
-                var empty = Array.CreateInstance(codeType, 0);
-                try { transpiler.Invoke(null, new object[]{empty}); }
-                catch (TargetInvocationException e) when (e.InnerException is InvalidOperationException) { return; }
-                throw new Exception("An incompatible method body was accepted");
+                var unavailable = fix.GetProperty("Unavailable", All);
+                var pluginLogger = mod.GetType("BeaverBuddies.Plugin", true).GetField("logger", All);
+                var loggerType = mod.GetType("BeaverBuddies.Util.Logging.ILogger", true);
+                object previousLogger = pluginLogger.GetValue(null);
+                pluginLogger.SetValue(null, DispatchProxy.Create(loggerType, typeof(QuietLoggerProxy)));
+                try
+                {
+                    var empty = Array.CreateInstance(codeType, 0);
+                    var result = (IEnumerable)transpiler.Invoke(null, new object[]{empty});
+                    if (result.Cast<object>().Any()) throw new Exception("instructions were added to an empty body");
+                    if (unavailable.GetValue(null) == null) throw new Exception("a body with no clock call was accepted silently");
+                }
+                finally
+                {
+                    pluginLogger.SetValue(null, previousLogger);
+                    // The installed game's body again, so the fix reads as available for the checks after this one.
+                    var dummy = new DynamicMethod("Reset", typeof(void), Type.EmptyTypes, typeof(TimingChecks).Module, true);
+                    transpiler.Invoke(null, new[]{ReadInstructions(original, dummy.GetILGenerator(), codeType)});
+                }
+                if (unavailable.GetValue(null) != null) throw new Exception("the installed game's body reads as incompatible");
             });
         }
         finally { eventField.SetValue(null, prior); }

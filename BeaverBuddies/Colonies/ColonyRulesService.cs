@@ -148,6 +148,16 @@ namespace BeaverBuddies.Colonies
                 refusal = ColonyRefusal.HostRefused;
                 return false;
             }
+            // The same for a workshop's recipe (a mod can add recipes to the game's own buildings), 1.4.0-rc1 (H1).
+            Timberborn.Workshops.RecipeSpecService recipes = replayEvent is ManufactoryRecipeSelectedEvent
+                ? SingletonManager.GetSingleton<ReplayService>()?.GetSingleton<Timberborn.Workshops.RecipeSpecService>() : null;
+            if (recipes != null && replayEvent is ManufactoryRecipeSelectedEvent recipeChoice && recipeChoice.itemID != null
+                && !ManufactoryRecipeSelectedEvent.TryGetRecipe(recipes, recipeChoice.itemID, out _))
+            {
+                Plugin.Log($"[Colony] Refused {replayEvent.type} from player {replayEvent.player}: this game has no recipe {recipeChoice.itemID}");
+                refusal = ColonyRefusal.HostRefused;
+                return false;
+            }
 
             // Zipline links, in every game: the game's own check, made here once instead of in every computer's replay.
             if (replayEvent is ZiplineConnectionChangedEvent zipline && ColonyRoadNetworks.Instance != null

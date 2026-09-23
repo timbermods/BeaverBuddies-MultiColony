@@ -248,8 +248,12 @@ namespace BeaverBuddies.Events
 
             if (!result)
             {
-                // If we cancel the event, clean up the tool
+                // If we cancel the event, clean up the tool. The terrain it picked too (terrain held up by what is
+                // deleted, G9): left there it piled up with every deletion, raised the view's level to its old heights
+                // (the tool's SetVisibleLayerToShowAllObjects) and, the first time the game's own method ran again on this
+                // computer (a session that ended), was all destroyed at once (1.4.0-rc1, X4).
                 __instance._temporaryBlockObjects.Clear();
+                __instance._temporaryTerrainCoords.Clear();
             }
 
             return result;
