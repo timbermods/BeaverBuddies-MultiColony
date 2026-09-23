@@ -51,6 +51,9 @@ namespace BeaverBuddies.Factions
         /// <summary>The faction the power shafts' models are being built for (FactionModelPatches); null for the base.</summary>
         internal static string ShaftBuildFaction;
 
+        /// <summary>Why mixed factions can't run in this process (one of its patches no longer fits the game), or null.</summary>
+        public static string Unavailable { get; internal set; }
+
         /// <summary>
         /// A scene is being set up: nothing is mixed until this scene's FactionService decides (a previous game's answer
         /// must never leak into what loads before it).
@@ -62,6 +65,13 @@ namespace BeaverBuddies.Factions
             LoadedTable = new FactionTable();
             PlannedTable = new FactionTable();
             ShaftBuildFaction = null;
+            // What an earlier game left behind: its faction icon (an old scene's UI), its power-shaft models and the
+            // once-only warning. (The factions an earlier host allowed are forgotten when a session begins, not here: a
+            // waiting room latches them at Start, and a slow guest's start message may be built after the host's game
+            // scene is set up. See ColonySession.ForgetHostFactions.)
+            FactionDisplay.Reset();
+            FactionModels.Reset();
+            FactionCreationContext.Reset();
         }
 
         internal static void Decide(FactionService service)
@@ -74,12 +84,19 @@ namespace BeaverBuddies.Factions
             try
             {
                 AllFactions = service._factionSpecService.Factions.OrderBy(f => f.Order).ToImmutableArray();
+                if (Unavailable != null)
+                {
+                    how = "unavailable in this run: " + Unavailable;
+                    return;
+                }
                 if (service._mapEditorMode.IsMapEditor)
                 {
                     how = "the map editor";
                     return;
                 }
                 GameSceneParameters parameters = service._sceneLoader.GetSceneParameters<GameSceneParameters>();
+                // A locked-faction notice is for the new game whose Start noted it, never a save loaded after it.
+                if (!parameters.NewGame) NewGameFactionCapture.NoticeLockedFaction = null;
                 if (parameters.NewGame)
                 {
                     string baseFaction = parameters.NewGameConfiguration.FactionId;
@@ -116,6 +133,9 @@ namespace BeaverBuddies.Factions
                     how = "the save";
                 }
                 else how = "the save (not mixed)";
+                if (IsOn && AllFactions.Length > 2)
+                    // A save that is already mixed keeps its mode: loaded as one faction, it would lose the other's buildings.
+                    Plugin.LogWarning($"[Factions] This mixed game now has {AllFactions.Length} factions (a faction mod?); mixed factions is only checked with two");
                 if (IsOn && AllFactions.Length < 2)
                 {
                     Plugin.LogWarning("[Factions] Mixed factions asked for, but the game has only one faction");

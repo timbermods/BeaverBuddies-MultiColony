@@ -12,7 +12,10 @@ using BeaverBuddies.Util;
 using BeaverBuddies.Util.Logging;
 using Bindito.Core;
 using HarmonyLib;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using Timberborn.ModManagerScene;
 
@@ -171,9 +174,9 @@ namespace BeaverBuddies
             Colonies.ColonyDigest.Gate = () => Colonies.ColonyModeService.IsSeparateColonies && ReplayService.IsLoaded
                 && (DeterminismService.IsTicking || ReplayService.IsReplayingEvents);
 
-            // apply all harmony patches automatically.
+            // apply all harmony patches automatically (mixed factions' on their own, see PatchAllIsolatingFactions).
             Harmony harmony = new Harmony(ID);
-            harmony.PatchAll();
+            PatchAllIsolatingFactions(harmony);
             AutomationEvent.ApplyAutomationPatches(harmony);
 
             // apply each advanced monomod patch manually.
@@ -181,6 +184,31 @@ namespace BeaverBuddies
             TimeTimePatcher.Install();
 
             Log(UnityEngine.Application.consoleLogPath);
+        }
+
+        /// <summary>
+        /// PatchAll, except that mixed factions' patches (BeaverBuddies.Factions: UI, models and needs that only a mixed game
+        /// uses) go last and on their own: if a game update breaks one, mixed factions is off for this run
+        /// (MixedFactions.Unavailable) and the rest of the mod still starts. A failure in any other patch still stops the
+        /// mod, as PatchAll did (co-op can't run on part of its patches). Every mixed-factions patch but the decision does
+        /// nothing while mixed factions is off (RuntimeChecks: PatchGateChecks), so the ones already applied stay inert.
+        /// No method is patched by classes of both groups, so no two patches change places.
+        /// </summary>
+        private static void PatchAllIsolatingFactions(Harmony harmony)
+        {
+            const string factions = "BeaverBuddies.Factions";
+            List<Type> classes = AccessTools.GetTypesFromAssembly(typeof(Plugin).Assembly).Where(t => t.HasHarmonyAttribute()).ToList();
+            foreach (Type type in classes.Where(t => t.Namespace != factions)) harmony.CreateClassProcessor(type).Patch();
+            try
+            {
+                foreach (Type type in classes.Where(t => t.Namespace == factions)) harmony.CreateClassProcessor(type).Patch();
+            }
+            catch (Exception error)
+            {
+                Factions.MixedFactions.Unavailable = error.GetBaseException().Message;
+                LogError("[Factions] A game method that mixed factions changes is not what this version expects; mixed factions is off " +
+                    "until the mod is updated: " + error);
+            }
         }
 
         public static string GetWithDate(string message)

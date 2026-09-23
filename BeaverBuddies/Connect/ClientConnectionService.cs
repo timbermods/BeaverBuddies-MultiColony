@@ -120,7 +120,10 @@ namespace BeaverBuddies.Connect
             Plugin.Log("Connecting client");
             // Only a waiting room this join enters names the loading screen.
             lobbyHostName = null;
-            client = ClientEventIO.Create(socket, LoadMap, (error) =>
+            saveReceived = false;
+            // An earlier session's host factions mean nothing to this one (the host's first message brings its own).
+            BeaverBuddies.Colonies.ColonySession.ForgetHostFactions();
+            client = ClientEventIO.Create(socket, LoadMap, (error, net) =>
             {
                 // Only reached while joining, before the host's game has loaded (see ClientEventIO): once a game
                 // exists, a lost connection is reported by that game, because this service's dialogs belong to the
@@ -129,6 +132,14 @@ namespace BeaverBuddies.Connect
                 ShowSafely(() =>
                 {
                     CloseConnectingBox();
+                    LobbyGuestPanel page = SingletonManager.GetSingleton<LobbyGuestPanel>();
+                    if (net != null && net.Lobby.View().Ended && page != null)
+                    {
+                        // A host's waiting room ended this join and said why: its page shows that, or, if the page never
+                        // opened (the welcome and the end were read in one frame), it is shown from here.
+                        page.ShowEndIfUnseen(net);
+                        return;
+                    }
                     ShowError("BeaverBuddies.JoinCoopGame.Error.CouldNotConnect", error);
                 });
             });
@@ -230,6 +241,10 @@ namespace BeaverBuddies.Connect
             ShowSafely(() =>
             {
                 CloseConnectingBox();
+                // Asked for late (a Steam overlay closing after the room's page opened, or after the join failed): nothing is
+                // connecting any more, and a box pushed now would sit over the page, or over nothing, until cancelled.
+                TimberClient net = client?.NetBase;
+                if (!JoinFlowRules.ShowConnectingBox(net != null && !net.IsStopped && !saveReceived, net?.Lobby.View().Welcomed == true)) return;
                 string message = string.IsNullOrEmpty(host)
                     ? RegisteredLocalizationService.T("BeaverBuddies.Lobby.ConnectingAnyone")
                     : RegisteredLocalizationService.T("BeaverBuddies.Lobby.Connecting", host);
@@ -323,10 +338,8 @@ namespace BeaverBuddies.Connect
 
         private void LoadMap(byte[] mapBytes)
         {
-            // Clean up our current co-op state before loading,
-            // so we don't, for example, end up ticking the client before
-            // it's actually loaded.
-            SingletonManager.Reset();
+            // The waiting room is over for this guest from here, whatever happens below (see CheckWaitingRoom).
+            saveReceived = true;
 
             Plugin.Log("Loading map");
             //string saveName = Guid.NewGuid().ToString();
@@ -339,15 +352,31 @@ namespace BeaverBuddies.Connect
             // Set the RNG seed before loading the map
             // The server does the same
             DeterminismService.InitGameStartState(mapBytes);
-            // From a new game's waiting room, the loading screen says whose game this is.
+            // From a new game's waiting room, the loading screen says whose game this is. Worded before the reset below,
+            // which empties the registry the text comes from (in 1.4.0-beta18 to beta20 it was worded after it and threw,
+            // so no waiting-room guest's save ever loaded).
             string waitingRoomHost = lobbyHostName;
             lobbyHostName = null;
+            string tip = null;
             if (waitingRoomHost != null)
-                _gameSceneLoader._sceneLoader.LoadScene(GameSceneParameters.CreateGameSaveParameters(saveRef),
-                    RegisteredLocalizationService.T("BeaverBuddies.Lobby.Tip.GuestLoading", waitingRoomHost));
+            {
+                try { tip = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Tip.GuestLoading", waitingRoomHost); }
+                catch (Exception error) { Plugin.LogWarning("Could not word the loading screen's tip: " + error.Message); }
+            }
+
+            // Clean up our current co-op state before loading,
+            // so we don't, for example, end up ticking the client before
+            // it's actually loaded. Only now, with the load certain: a failure above leaves the menu's singletons (the
+            // guest's page, the main menu panel's patch) whole for the join's error dialog.
+            SingletonManager.Reset();
+            if (tip != null)
+                _gameSceneLoader._sceneLoader.LoadScene(GameSceneParameters.CreateGameSaveParameters(saveRef), tip);
             else
                 _gameSceneLoader.StartSaveGame(saveRef);
         }
+
+        // LoadMap has been given the host's save (this join's). Checked by CheckWaitingRoom on the same thread.
+        private bool saveReceived;
 
         // The host's name, once a waiting room has welcomed this guest (for the loading screen).
         private static string lobbyHostName;
@@ -368,11 +397,14 @@ namespace BeaverBuddies.Connect
         private void CheckWaitingRoom()
         {
             TimberClient net = client?.NetBase;
-            if (net == null || net.IsStopped) return;
-            LobbyView view = net.Lobby.View();
-            if (!view.Welcomed) return;
+            LobbyView view = net?.Lobby.View();
+            // Once the save has come the room is over, and LoadMap has emptied the registry, so the page is not found:
+            // taking that for "in a game" dropped every waiting-room guest as its save loaded (1.4.0-beta18 to beta20).
+            WaitingRoomStep step = JoinFlowRules.CheckWaitingRoom(net != null && !net.IsStopped, view?.Welcomed == true,
+                saveReceived, SingletonManager.GetSingleton<LobbyGuestPanel>() != null);
+            if (step == WaitingRoomStep.Nothing) return;
             lobbyHostName = view.Summary?.HostName;
-            if (SingletonManager.GetSingleton<LobbyGuestPanel>() != null) return;
+            if (step == WaitingRoomStep.ShowRoom) return;
             Plugin.Log("[Lobby] A host's waiting room answered while this player is in a game; leaving it");
             ClientEventIO joining = client;
             client = null;

@@ -43,12 +43,27 @@ namespace BeaverBuddies.Factions
         /// A new game made now would be mixed. When it was asked for but a faction is still locked on this profile,
         /// <paramref name="lockedFaction"/> is that faction's display name.
         /// </summary>
-        public bool MixedAvailable(out string lockedFaction)
+        public bool MixedAvailable(out string lockedFaction) => MixedAvailable(out lockedFaction, out _);
+
+        /// <summary>
+        /// As above; <paramref name="notTwoFactions"/> when it was asked for but the game has other than the two factions
+        /// the feature is made and checked for (a faction mod is installed). A third faction's content would load into
+        /// every mixed game, and a mod that reuses a faction's templates turns them into common ones for everyone
+        /// (review of 1.4.0-beta20, C-C1), so new games stay one faction.
+        /// </summary>
+        public bool MixedAvailable(out string lockedFaction, out bool notTwoFactions)
         {
             lockedFaction = null;
-            if (!Requested) return false;
+            notTwoFactions = false;
+            if (!Requested || MixedFactions.Unavailable != null) return false;
+            if (Factions().Count() != 2)
+            {
+                notTwoFactions = true;
+                Plugin.LogWarning($"[Factions] Mixed factions is made for the game's two factions; this game has {Factions().Count()} ({string.Join(", ", Factions().Select(f => f.Id))}), so new games have one faction");
+                return false;
+            }
             FactionSpec locked = Factions().FirstOrDefault(f => _factionUnlockingService.IsLocked(f));
-            if (locked == null) return Factions().Count() > 1;
+            if (locked == null) return true;
             lockedFaction = locked.DisplayName.Value;
             return false;
         }

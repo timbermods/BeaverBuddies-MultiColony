@@ -28,8 +28,10 @@ namespace BeaverBuddies.Factions
 
     /// <summary>
     /// Reads a save's colonies from its bytes: the save is a zip whose world.json holds "Singletons" before "Entities"; the
-    /// reader streams it and stops once it has the few singletons it wants (or at the end of "Singletons"), so a large world
-    /// costs little. Plain code (System and Newtonsoft only), checked headless.
+    /// reader streams it and stops once it has the few singletons it wants, or at the end of "Singletons", never reading the
+    /// entities. The mod's singletons are saved after the game's, so in practice it reads nearly all of "Singletons": about
+    /// 35-55 ms for a 9 MB world under .NET 8 (review of 1.4.0-beta20, C-E6), likely a few times that in the game, once, on
+    /// the click that opens a save's waiting room. Plain code (System and Newtonsoft only), checked headless.
     /// </summary>
     public static class SaveColonyReader
     {

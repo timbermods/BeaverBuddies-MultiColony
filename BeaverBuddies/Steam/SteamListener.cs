@@ -48,6 +48,9 @@ namespace BeaverBuddies.Steam
             }
         }
 
+        // Set when the host starts the game, maybe before Steam has made the lobby (OnLobbyCreated reads it).
+        private volatile bool closed;
+
         private void CreateLobby()
         {
             if (stopped) return;
@@ -68,8 +71,11 @@ namespace BeaverBuddies.Steam
             // Friends-only lets friends join from Steam directly; invisible means invite-only.
             var type = Settings.LobbyJoinable ? ELobbyType.k_ELobbyTypeFriendsOnly : ELobbyType.k_ELobbyTypeInvisible;
             SteamMatchmaking.SetLobbyType(LobbyID, type);
-            SteamMatchmaking.SetLobbyData(LobbyID, OpenKey, "1");
-            Plugin.Log($"Steam lobby created with ID {LobbyID}; joinable by friends={Settings.LobbyJoinable}");
+            // Closed already (the host pressed Start before Steam answered): the lobby opens closed, as CloseToNewGuests
+            // would have left it. It used to open for friends after the game had started (review of beta20, J11a).
+            SteamMatchmaking.SetLobbyData(LobbyID, OpenKey, closed ? "0" : "1");
+            if (closed) SteamMatchmaking.SetLobbyJoinable(LobbyID, false);
+            Plugin.Log($"Steam lobby created with ID {LobbyID}; joinable by friends={Settings.LobbyJoinable}{(closed ? "; closed, the game has started" : "")}");
         }
 
         // Only people who joined our lobby (by invite or from the friends list) may connect.
@@ -96,6 +102,7 @@ namespace BeaverBuddies.Steam
         /// <summary>Called when the host starts the game: nobody new can join, so say so in the lobby.</summary>
         public void CloseToNewGuests()
         {
+            closed = true;
             SteamNet.RunOnMain(() =>
             {
                 if (stopped || !LobbyID.IsValid()) return;

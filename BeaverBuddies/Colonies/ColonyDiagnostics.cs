@@ -164,7 +164,8 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public string Fingerprint()
         {
-            long owners = 0, stamps = 0, exchanges = 0, districts = 0, stock = 0;
+            long owners = 0, stamps = 0, exchanges = 0, districts = 0, stock = 0, characters = 0;
+            bool mixed = BeaverBuddies.Factions.MixedFactions.IsOn;
             var population = new int[ColonySlotTable.MaxSlots];
             foreach (DistrictCenter districtCenter in _districtCenterRegistry.AllDistrictCenters)
             {
@@ -178,6 +179,14 @@ namespace BeaverBuddies.Colonies
             {
                 ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
                 if (stamp != null) stamps += Hash(entity) * (stamp.Slot + 2);
+                // Mixed factions: each character's faction and how many needs it has (a beaver's is fixed when it is made).
+                if (mixed)
+                {
+                    Timberborn.NeedSystem.NeedManager needs = entity.GetComponent<Timberborn.NeedSystem.NeedManager>();
+                    if (needs != null)
+                        characters += Hash(entity) * (ColonyDigest.Of(BeaverBuddies.Factions.ColonyFactionService.SimFactionOf(entity)) * 31
+                            + needs.NeedSpecs.Length + 1);
+                }
                 // Which district each building and construction site is joined to (what haulers and builders go by).
                 DistrictBuilding districtBuilding = entity.GetComponent<DistrictBuilding>();
                 if (districtBuilding != null)
@@ -198,7 +207,7 @@ namespace BeaverBuddies.Colonies
             string flags = $"{(mode?.Enabled == true ? "sep" : "shared")}/{(ColonyScienceService.IsEnabled ? "sci" : "-")}"
                 + $"/{(uint)ColonyDigest.Of(mode?.StartingSettings?.ToString()):x}"
                 // Mixed factions: each colony's faction (nothing is added in any other game, whose line stays as it was).
-                + (BeaverBuddies.Factions.MixedFactions.IsOn ? $"/mixed:{BeaverBuddies.Factions.ColonyFactionService.Fingerprint()}" : "");
+                + (mixed ? $"/mixed:{BeaverBuddies.Factions.ColonyFactionService.Fingerprint()}/chars:{(uint)characters:x}" : "");
             // Not the table of who plays which colony: that is the host's bookkeeping, which it changes as it loads (its own
             // seat, SeatHost) and hands to everyone only inside the next hello. A guest whose hello was refused kept the
             // save's table and was stopped at its next daily check, although no guest simulates anything from it.

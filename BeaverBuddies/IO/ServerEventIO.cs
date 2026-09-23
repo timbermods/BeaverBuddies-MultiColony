@@ -87,6 +87,9 @@ namespace BeaverBuddies.IO
         {
             // Seats for separate colonies are fixed for the whole session, like the other host choices.
             BeaverBuddies.Colonies.ColonySession.BeginHostSession();
+            // A new session's boost is 0 (ReplayService's constructor says so too, but only once the host's game loads: a
+            // guest whose start message is built before that, as every waiting-room guest's is, got the last session's).
+            ReplayService.ResetSessionBoost();
             try
             {
                 List<ISocketListener> listeners = [
@@ -132,7 +135,7 @@ namespace BeaverBuddies.IO
             // loading the map.
             return () =>
             {
-                var message = InitializeClientEvent.Create();
+                var message = InitializeClientEvent.Create(this);
                 message.ticksSinceLoad = 0;
                 Plugin.Log($"Sending start state: {JsonSettings.Serialize(message)}");
                 return JObject.Parse(JsonSettings.Serialize(message));

@@ -72,9 +72,10 @@ or nobody came. At Start:
 **A save in the waiting room** (1.4.0-beta19). **Load Game → Host co-op game** from the main menu opens the same page
 for the save (its settlement, name and in-game date), after the game's own checks of the save. At **Start Game** the
 save's bytes go to everyone and the host loads the same bytes; joining closes at Start, so founding, switching
-colonies and asking a steward work at once, as after a new game's waiting room. The rows show no colony: a save seats
-each player by who it remembers (the slot table in the save), which the menu does not read. Hosting from inside a
-game (Options → Load, Save and Rehost) keeps the old way below.
+colonies and asking a steward work at once, as after a new game's waiting room. A save seats each player by who it
+remembers (the slot table in the save); since 1.4.0-beta20 the page reads that from the save and shows each row's
+colony and its faction, and the save's faction ring (a brand-new player's row shows the colony they would most
+likely get). Hosting from inside a game (Options → Load, Save and Rehost) keeps the old way below.
 
 **Joining closes** (a save hosted from inside a game) at the host's first tick, or at the first action that changes the game while it is still
 paused (placing or marking something): a player joining after that would be sent the save the host started from,
@@ -134,7 +135,9 @@ the colony has an offer or exchange open at a Trading Post: end it first.
 - **Toolbar**: your faction's buildings and crops, and the common ones (paths, stairs, dev buildings). A steward
   sees the faction of the colony they run. A colony can't place the other faction's buildings (the host refuses them).
 - **Beavers and bots** look like their faction and have its needs: an Iron Teeth bot needs Energy, a Folktails bot
-  Biofuel. A beaver only eats its own faction's food (Berries and water are everyone's). Babies are born the faction
+  Biofuel. Any food stills a beaver's hunger, but only its own faction's foods give their wellbeing bonus (Berries
+  and water are everyone's); since goods only cross where the other faction stores them, that shows only after a
+  handover of the other faction's food buildings. Babies are born the faction
   of the lodge or breeding pod they come from; a child grows up the faction it was.
 - **Buildings, paths and power shafts** look like their own faction. A path takes its colony's.
 - **Warehouses, piles and tanks** hold their own faction's goods and the common ones. Farmhouses and foresters plant

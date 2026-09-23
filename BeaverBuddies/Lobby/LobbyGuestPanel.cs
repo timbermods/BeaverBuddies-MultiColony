@@ -262,7 +262,35 @@ namespace BeaverBuddies.Lobby
             EventIO.ResetIf(leaving);
         }
 
+        // The connection whose room's end this page last showed.
+        private TimberClient endShownFor;
+
+        /// <summary>
+        /// A room that ended this join (ClientConnectionService): this page says why, unless it is showing that room (its
+        /// update says it) or already has. A room whose welcome and end were read in one frame never opened the page, and
+        /// nothing else would say anything.
+        /// </summary>
+        public void ShowEndIfUnseen(TimberClient ended)
+        {
+            if (ended == null) return;
+            bool pageSaysIt = ReferenceEquals(endShownFor, ended) || (shown && ReferenceEquals(net, ended));
+            if (!BeaverBuddies.Connect.JoinFlowRules.ReportJoinError(waitingRoomEnded: true, pageShowedEnd: pageSaysIt)) return;
+            LobbyView view = ended.Lobby.View();
+            hostName = view.Summary?.HostName ?? "";
+            endShownFor = ended;
+            ShowEndBox(view);
+        }
+
         private void ShowEnd(LobbyView view)
+        {
+            // Said once: the join's error report (ClientConnectionService) may reach this room's end as well.
+            if (ReferenceEquals(endShownFor, net)) { EventIO.ResetIf(io); return; }
+            endShownFor = net;
+            EventIO.ResetIf(io);
+            ShowEndBox(view);
+        }
+
+        private void ShowEndBox(LobbyView view)
         {
             string key;
             switch (view.EndReason)
@@ -272,7 +300,6 @@ namespace BeaverBuddies.Lobby
                 default: key = "BeaverBuddies.Lobby.End.Cancelled"; break;
             }
             Plugin.Log($"[Lobby] {hostName}'s waiting room ended: {view.EndReason} {view.EndDetail}");
-            EventIO.ResetIf(io);
             _dialogBoxShower.Create().SetMessage(RegisteredLocalizationService.T(key, hostName, view.EndDetail ?? "")).Show();
         }
 

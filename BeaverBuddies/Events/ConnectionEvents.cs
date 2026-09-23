@@ -40,6 +40,7 @@ namespace BeaverBuddies.Events
         // don't wait for the first tick (ColonySession.JoiningClosedAtStart).
         public bool joiningClosedAtStart;
         // A mixed-factions game: the factions unlocked on the host's computer (D1), which a colony may take. Null otherwise.
+        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public List<string> hostFactions;
 
         public override void Replay(IReplayContext context)
@@ -72,19 +73,23 @@ namespace BeaverBuddies.Events
             }
         }
 
-        public static InitializeClientEvent Create()
+        /// <param name="host">The session this message starts (built on a join thread: EventIO may not be it yet, or at all).</param>
+        public static InitializeClientEvent Create(EventIO host = null)
         {
             InitializeClientEvent message = new InitializeClientEvent()
             {
                 serverModVersion = Plugin.Version,
                 serverGameVersion = GameVersions.CurrentVersion.ToString(),
                 isDebugMode = Settings.Debug,
-                removeLargeColonySpeedLimit = LargeColonySpeedLimit.BeginHostSession(),
+                removeLargeColonySpeedLimit = LargeColonySpeedLimit.BeginHostSession(host),
                 foundingInSharedGame = ColonySession.HostAllowsFounding,
                 separateScience = ColonySession.HostSeparateScience,
                 speedBoost = ReplayService.SessionBoost,
                 joiningClosedAtStart = ColonySession.JoiningClosedAtStart,
-                hostFactions = BeaverBuddies.Factions.MixedFactions.IsOn ? ColonySession.HostFactions?.ToList() : null,
+                // A waiting room's guest is sent this before the host's game exists (MixedFactions.IsOn is the menu's, or
+                // between scenes): its room says whether the game is mixed, and latched the host's factions at Start.
+                hostFactions = BeaverBuddies.Factions.MixedFactions.IsOn || BeaverBuddies.Lobby.LobbySession.Current?.Setup.Mixed == true
+                    ? ColonySession.HostFactions?.ToList() : null,
                 //mapName = mapName,
             };
             return message;

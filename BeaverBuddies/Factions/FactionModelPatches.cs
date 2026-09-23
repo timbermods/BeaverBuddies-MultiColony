@@ -102,6 +102,9 @@ namespace BeaverBuddies.Factions
             Plugin.Log($"[Factions] Power shaft models for {string.Join(", ", shaftModels.Keys)}");
         }
 
+        /// <summary>A new scene: the last mixed game's models (and the objects they hold) go.</summary>
+        internal static void Reset() => shaftModels.Clear();
+
         internal static void UseFactionShaftModels(ModularShaftModelUpdater updater)
         {
             if (!MixedFactions.IsOn || shaftModels.Count == 0 || UpdaterServiceField == null) return;

@@ -57,6 +57,13 @@ namespace BeaverBuddies.Colonies
             Plugin.Log($"[Factions] Factions this game may take: {(hostFactions == null ? "every one" : string.Join(", ", hostFactions))}");
         }
 
+        /// <summary>
+        /// A session begins (the host's BeginHostSession, a guest's join): the factions an earlier session's host allowed are
+        /// forgotten. The host latches its own at a mixed waiting room's Start and as a mixed game loads; a guest adopts the
+        /// host's from the first message. None known allows every faction (the host still judges every choice).
+        /// </summary>
+        public static void ForgetHostFactions() => hostFactions = null;
+
         /// <summary>A guest learns the host's factions from the host's first message (null from a game that is not mixed).</summary>
         public static void AdoptHostFactions(List<string> factions)
         {
@@ -71,6 +78,7 @@ namespace BeaverBuddies.Colonies
             HostSeparateScience = Settings.SeparateScienceForNewColonies;
             HostSlotShift = 0;
             joiningClosedAtStart = false;
+            ForgetHostFactions();
             Plugin.Log($"[Colony] Hosting; founding a colony in a shared game {(HostAllowsFounding ? "allowed" : "off")}");
         }
 

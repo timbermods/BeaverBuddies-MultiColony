@@ -120,6 +120,11 @@ RoadRuleChecks.Run(assembly, Path.GetDirectoryName(modPath)!, Path.GetFullPath(a
 PlaytestFixChecks.Run(assembly, Test);
 LobbyRuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Test);
 FactionRuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Path.GetDirectoryName(modPath)!, Test);
+// Reviewer C (1.4.0-beta18-20 review): the real container and Harmony's own resolver, and the gate and stacking scans on the IL.
+BinditoChecks.Run(assembly, Path.GetFullPath(args[1]), args.Skip(2).Select(Path.GetFullPath), Test);
+HarmonyResolutionChecks.Run(assembly, Test);
+PatchGateChecks.Run(assembly, Test);
+ReviewBeta21RuntimeChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

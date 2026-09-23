@@ -14,7 +14,7 @@ internal static class IlScan
     /// One instruction: its offset and opcode, and what it names: the method or field (<see cref="Member"/>), the
     /// string it loads (<see cref="Text"/>), or where it branches to (<see cref="Target"/>).
     /// </summary>
-    public sealed record Instruction(int Offset, OpCode Op, MemberInfo? Member, string? Text, int? Target)
+    public sealed record Instruction(int Offset, OpCode Op, MemberInfo? Member, string? Text, int? Target, int? Number = null)
     {
         public bool Stores => Op == OpCodes.Stfld || Op == OpCodes.Stsfld;
         public bool Loads => Op == OpCodes.Ldfld || Op == OpCodes.Ldsfld || Op == OpCodes.Ldflda || Op == OpCodes.Ldsflda;
@@ -39,13 +39,16 @@ internal static class IlScan
             MemberInfo? member = null;
             string? text = null;
             int? target = null;
+            int? number = null;
             switch (op.OperandType)
             {
                 case OperandType.InlineNone: break;
                 case OperandType.ShortInlineBrTarget: target = at + 1 + (sbyte)body[at]; at += 1; break;
                 case OperandType.InlineBrTarget: target = at + 4 + BitConverter.ToInt32(body, at); at += 4; break;
-                case OperandType.ShortInlineI: case OperandType.ShortInlineVar: at += 1; break;
-                case OperandType.InlineVar: at += 2; break;
+                case OperandType.ShortInlineI: number = op == OpCodes.Ldc_I4_S ? (sbyte)body[at] : body[at]; at += 1; break;
+                case OperandType.ShortInlineVar: number = body[at]; at += 1; break;
+                case OperandType.InlineVar: number = BitConverter.ToUInt16(body, at); at += 2; break;
+                case OperandType.InlineI: number = BitConverter.ToInt32(body, at); at += 4; break;
                 case OperandType.InlineI8: case OperandType.InlineR: at += 8; break;
                 case OperandType.InlineSwitch: at += 4 + 4 * BitConverter.ToInt32(body, at); break;
                 case OperandType.InlineString: text = method.Module.ResolveString(BitConverter.ToInt32(body, at)); at += 4; break;
@@ -63,7 +66,7 @@ internal static class IlScan
                     break;
                 default: at += 4; break;
             }
-            instructions.Add(new Instruction(offset, op, member, text, target));
+            instructions.Add(new Instruction(offset, op, member, text, target, number));
         }
         return instructions;
     }

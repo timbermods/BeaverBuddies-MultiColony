@@ -10,6 +10,7 @@ using Timberborn.BlockObjectTools;
 using Timberborn.BlockSystem;
 using Timberborn.BlueprintSystem;
 using Timberborn.Buildings;
+using Timberborn.Characters;
 using Timberborn.ConstructionSites;
 using Timberborn.Coordinates;
 using Timberborn.CoreUI;
@@ -93,7 +94,20 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>True while this computer's player is using the founding tool (not the ordinary build menu).</summary>
-        public bool FoundingToolActive => foundingTools.Values.Any(tool => _toolService.ActiveTool == tool);
+        // Asked for every preview block of every frame while placing: no allocation (no lambda, no boxed enumerator).
+        public bool FoundingToolActive
+        {
+            get
+            {
+                ITool active = _toolService.ActiveTool;
+                if (active == null) return false;
+                foreach (BlockObjectTool tool in foundingTools.Values)
+                {
+                    if (tool == active) return true;
+                }
+                return false;
+            }
+        }
 
         /// <summary>
         /// The district center a colony of this faction starts with: in a mixed game that faction's own (the two have the
@@ -464,6 +478,21 @@ namespace BeaverBuddies.Colonies
             ColonyStartingSettings start = settings ?? HostStartingSettings();
             List<DistrictCenter> centers = _districtCenterRegistry.AllDistrictCenters
                 .Where(dc => DistrictOwner.OwnerOfDistrict(dc) == slot).ToList();
+            // Beavers made with the colony (a new game's start, a founding) are in no district until the game's district
+            // assigner runs, in the tick: a switch made while paused before that (tick 0 of a waiting-room game) finds
+            // them in no DistrictPopulation. The assigner gives each to its nearest district center; those of the colony's
+            // faction nearest to one of its centers are its own. Saved state and positions only, in entity order.
+            string oldFaction = ColonyFactionService.FactionOfSlot(slot);
+            var waiting = new List<Beaver>();
+            foreach (EntityComponent entity in _entityRegistry.Entities)
+            {
+                Beaver beaver = entity.GetComponent<Beaver>();
+                Citizen citizen = entity.GetComponent<Citizen>();
+                if (beaver == null || citizen == null || citizen.HasAssignedDistrict) continue;
+                if (!(entity.GetComponent<Character>()?.Alive ?? false) || entity.GetComponent<CharacterFaction>()?.FactionId != oldFaction) continue;
+                DistrictCenter nearest = _districtCenterRegistry.FinishedDistrictCenters.OrderBy(dc => dc.DistanceToCitizen(citizen)).FirstOrDefault();
+                if (nearest != null && centers.Contains(nearest)) waiting.Add(beaver);
+            }
             int adults = 0, children = 0;
             var stock = new List<GoodAmount>();
             var placements = new List<Placement>();
@@ -473,13 +502,25 @@ namespace BeaverBuddies.Colonies
                 List<Beaver> beavers = population != null ? population.Beavers.ToList() : new List<Beaver>();
                 adults += population?.NumberOfAdults ?? 0;
                 children += population?.NumberOfChildren ?? 0;
-                foreach (Beaver beaver in beavers) _entityService.Delete(beaver);
+                foreach (Beaver beaver in beavers) RemoveBeaver(beaver);
                 Inventory inventory = center.GetComponent<SimpleOutputInventory>()?.Inventory;
                 if (inventory != null) stock.AddRange(inventory.Stock.Where(good => good.Amount > 0));
                 placements.Add(center.GetComponent<BlockObject>().Placement);
                 _entityService.Delete(center);
             }
+            foreach (Beaver beaver in waiting)
+            {
+                if (beaver.GetComponent<Child>() != null) children++;
+                else adults++;
+                RemoveBeaver(beaver);
+            }
             ColonyFactionService.Set(slot, faction);
+            // Its paths look like its faction's (they are repainted when stamped, not when the colony changes faction).
+            foreach (EntityComponent entity in _entityRegistry.Entities.ToList())
+            {
+                ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
+                if (stamp != null && stamp.Slot == slot) FactionModels.RepaintIfPath(entity);
+            }
             HashSet<string> keeps = FactionCatalog.Instance?.GoodsOf(faction);
             bool first = true;
             foreach (Placement placement in placements)
@@ -514,6 +555,14 @@ namespace BeaverBuddies.Colonies
             }
             catch (Exception error) { Plugin.LogWarning("[Factions] Could not show the switch: " + error.Message); }
         }
+
+        /// <summary>
+        /// Takes a living beaver out of the world as the game does (a child that grows up, a Wonder's pilot):
+        /// Character.DestroyCharacter kills it first, so CharacterPopulation, BeaverPopulation, its district, home and
+        /// reservations let go of it, then deletes it. A bare EntityService.Delete leaves it in those lists after Unity
+        /// destroys it at the frame's end, and the next explosion or Beehive check reads its Transform and throws.
+        /// </summary>
+        private static void RemoveBeaver(Beaver beaver) => beaver.GetComponent<Character>().DestroyCharacter();
 
         /// <summary>A seated player whose mixed game's colony already stands: offered the switch while it is untouched.</summary>
         private void OfferFactionSwitch()
@@ -603,6 +652,7 @@ namespace BeaverBuddies.Colonies
         /// <summary>What the colony starts with, written by the host when it allows the founding (null from an older host).</summary>
         public ColonyStartingSettings startingSettings;
         /// <summary>A mixed game's colony's faction: the founder's choice, which the host checked is available (D1, D15).</summary>
+        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string faction;
 
         public Placement Placement => new Placement(coordinates, orientation, isFlipped ? FlipMode.Flipped : FlipMode.Unflipped);

@@ -28,7 +28,7 @@ namespace BeaverBuddies.IO
         private bool mapDelivered = false;
 
         private ClientEventIO(ISocketStream socket, MapReceived mapReceivedCallback,
-            Action<string> onError)
+            Action<string, TimberClient> onError)
         {
             this.mapReceivedCallback = mapReceivedCallback;
 
@@ -51,7 +51,7 @@ namespace BeaverBuddies.IO
             }
             catch (Exception ex)
             {
-                onError(ex.Message);
+                onError(ex.Message, null);
                 Plugin.LogError(ex.ToString());
                 CleanUp();
                 FailedToConnect = true;
@@ -88,14 +88,15 @@ namespace BeaverBuddies.IO
         /// The connection failed or dropped. What that means depends on how far the join got (see
         /// ConnectionErrorPlanner); this is reached on the update thread, from wherever the session is being updated.
         /// </summary>
-        private void OnConnectionError(string error, Action<string> onError)
+        private void OnConnectionError(string error, Action<string, TimberClient> onError)
         {
             Plugin.LogError(error);
             // One failure is one report: a second error queued behind the first (a save that then failed to load, say)
             // must not show a second dialog.
             if (FailedToConnect) return;
-            // A host's waiting room that ended (closed, this guest removed, the start failed) said why on its page.
-            bool waitingRoomEnded = NetBase?.Lobby.View().Ended == true;
+            // Kept for the report: a host's waiting room that ended (closed, this guest removed, the start failed) says why
+            // itself, on its page, and the join says nothing more (ClientConnectionService).
+            TimberClient net = NetBase;
             CleanUp();
             FailedToConnect = true;
 
@@ -106,7 +107,7 @@ namespace BeaverBuddies.IO
                     // Nothing came of this join, so nothing should stay installed: a session that is over but still
                     // installed turns the next game loaded from this menu into one that is paused for good.
                     EventIO.ResetIf(this);
-                    if (!waitingRoomEnded) onError(error);
+                    onError(error, net);
                     break;
                 case ConnectionErrorPlan.EndRunningGame:
                     // The game's own dialog: the join attempt's belongs to a menu that no longer exists. With no
@@ -127,7 +128,8 @@ namespace BeaverBuddies.IO
             NetBase = null;
         }
 
-        public static ClientEventIO Create(ISocketStream socket, MapReceived mapReceivedCallback, Action<string> onError)
+        /// <param name="onError">A join that failed before its save loaded: the error, and the connection (null if it never started).</param>
+        public static ClientEventIO Create(ISocketStream socket, MapReceived mapReceivedCallback, Action<string, TimberClient> onError)
         {
             ClientEventIO eventIO = new ClientEventIO(socket, mapReceivedCallback, onError);
             if (eventIO.FailedToConnect) return null;

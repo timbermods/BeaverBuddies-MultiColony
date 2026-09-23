@@ -88,7 +88,8 @@ namespace BeaverBuddies.Lobby
             factionNote = null;
             NewGameFactionCapture capture = NewGameFactionCapture.Instance;
             string locked = null;
-            if (capture != null && capture.MixedAvailable(out locked))
+            bool notTwo = false;
+            if (capture != null && capture.MixedAvailable(out locked, out notTwo))
             {
                 setup.Mixed = true;
                 setup.Factions = capture.OfferedFactions();
@@ -98,6 +99,7 @@ namespace BeaverBuddies.Lobby
                 factionNote = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Faction.Mixed");
             }
             else if (locked != null) factionNote = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Faction.NotUnlocked", locked);
+            else if (notTwo) factionNote = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Faction.NotTwo");
             SettlementNamePanel.Show(_panelStack, _gameSaveRepository, _dialogBoxShower, _loader, _initializer, _inputService,
                 lastSettlementName, name =>
                 {

@@ -34,6 +34,21 @@ namespace TimberNet
         // Set as the save is about to go out: from then on the stream belongs to the game, and nothing of the waiting room
         // is written to it (see TimberServer.WriteLobbyFrame).
         internal volatile bool inGame;
+
+        // Waiting (0), in the game (1) or gone (2), claimed once: the join's StartQueuing and the room's removal (the host's,
+        // the 10 s straggler rule's, a lost connection's) can race, and exactly one of them must win.
+        private int fate;
+
+        /// <summary>The join takes this member into the game; false if it has already left the room.</summary>
+        internal bool TryEnterGame()
+        {
+            if (System.Threading.Interlocked.CompareExchange(ref fate, 1, 0) != 0) return false;
+            inGame = true;
+            return true;
+        }
+
+        /// <summary>The room lets this member go; false if it is already in the game (or already gone).</summary>
+        internal bool TryLeave() => System.Threading.Interlocked.CompareExchange(ref fate, 2, 0) == 0;
         /// <summary>What the room says to this guest, written in order on a thread of its own (never waiting for it).</summary>
         internal SendLane? Lane;
         public bool InGame => inGame;
@@ -219,25 +234,30 @@ namespace TimberNet
 
         internal LobbyMember? Find(int number) { lock (gate) return members.FirstOrDefault(m => m.Number == number); }
 
-        internal void SetHello(LobbyMember member, string id, string name)
+        /// <summary>A guest's hello: taken once (its page sends one), so a guest can't change who it is, or flood the room.</summary>
+        internal bool SetHello(LobbyMember member, string id, string name)
         {
             lock (gate)
             {
+                if (member.SaidHello) return false;
                 member.ClaimedId = id;
                 member.Name = name;
                 member.SaidHello = true;
                 version++;
+                return true;
             }
         }
 
-        internal void SetReady(LobbyMember member, bool ready)
+        /// <summary>A guest's ready: false when it changes nothing.</summary>
+        internal bool SetReady(LobbyMember member, bool ready)
         {
             lock (gate)
             {
                 // Once the host has pressed Start the rows stay as they were: readiness no longer changes anything.
-                if (stage != LobbyStage.Open || member.Ready == ready) return;
+                if (stage != LobbyStage.Open || member.Ready == ready) return false;
                 member.Ready = ready;
                 version++;
+                return true;
             }
         }
 

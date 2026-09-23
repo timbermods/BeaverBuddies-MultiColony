@@ -31,9 +31,11 @@ namespace BeaverBuddies
         // Host: called as the session's start message is built. Returns the value to send.
         // It can run on a network thread, so it only records the value: the host's own game picks it up when
         // it next asks for the speed scale, which it does as the save finishes loading.
-        public static bool BeginHostSession()
+        public static bool BeginHostSession(EventIO session = null)
         {
-            _sessionIo = EventIO.Get();
+            // The session the message is for: a waiting room's is built before the server is EventIO (LobbySession), and
+            // EventIO.Get() then recorded null, so the host's own game fell back to its live setting.
+            _sessionIo = session ?? EventIO.Get();
             _sessionRemoved = Settings.RemoveSpeedLimit;
             return _sessionRemoved;
         }

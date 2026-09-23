@@ -77,6 +77,13 @@ namespace BeaverBuddies.Factions
             return new Scope(true);
         }
 
+        /// <summary>A new scene (main thread): nothing pushed is left, and the warning may be given again.</summary>
+        internal static void Reset()
+        {
+            stack?.Clear();
+            warned = false;
+        }
+
         internal static void Pop()
         {
             if (stack != null && stack.Count > 0) stack.Pop();

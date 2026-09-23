@@ -176,10 +176,16 @@ namespace BeaverBuddies.Lobby
         public void Start(ISceneLoader sceneLoader, string tip)
         {
             if (State != LobbySessionState.Open) return;
+            // Closed first, then counted: a guest let in between the two came into the game unseated, with no start and no
+            // planned faction (StartedWith is what the world is made for).
+            IO.CloseLobby(ClosedMessage);
             LobbySnapshot snapshot = Room.Snapshot();
             StartedWith = snapshot.Guests;
-            IO.CloseLobby(ClosedMessage);
             ColonySession.CloseJoiningAtStart();
+            // A mixed room's factions are the host's unlocked ones (D1). Latched now: the start message each guest gets is
+            // built on its join thread while the host is still in the menu (a save) or between scenes, where
+            // MixedFactions.IsOn says nothing about this game.
+            if (Setup.Mixed) ColonySession.LatchHostFactions(Setup.Factions);
             Plugin.Log($"[Lobby] Starting with {StartedWith.Count} guest(s): " +
                 string.Join(", ", StartedWith.Select(g => $"{g.Number} {g.Name} ({(g.Ready ? "ready" : "not ready")})")));
             if (Setup.IsSave)

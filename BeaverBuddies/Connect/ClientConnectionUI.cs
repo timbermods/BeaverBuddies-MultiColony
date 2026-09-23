@@ -19,7 +19,8 @@ namespace BeaverBuddies.Connect
     {
         public static void Postfix(IPanelController __instance, ref VisualElement __result)
         {
-            SingletonManager.GetSingleton<ClientConnectionUI>().AddJoinButton(__result);
+            // Null while the registry is empty (LoadMap resets it a frame before the scene goes): a panel shown then must still show.
+            SingletonManager.GetSingleton<ClientConnectionUI>()?.AddJoinButton(__result);
         }
     }
 
@@ -28,7 +29,8 @@ namespace BeaverBuddies.Connect
     {
         public static void Postfix(IPanelController __instance, ref VisualElement __result)
         {
-            SingletonManager.GetSingleton<ClientConnectionUI>().AddJoinButton(__result);
+            // Null while the registry is empty (LoadMap resets it a frame before the scene goes): a panel shown then must still show.
+            SingletonManager.GetSingleton<ClientConnectionUI>()?.AddJoinButton(__result);
         }
     }
 

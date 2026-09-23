@@ -152,7 +152,9 @@ namespace TimberNet
         /// <summary>Nobody new comes in from now on (the host pressed Start); those in the room are refused nothing.</summary>
         public void CloseLobbyToNewcomers(string message)
         {
-            lobby?.CloseToNewcomers(message);
+            // Under the gate AdmitToLobby holds from its check to its Add: once this returns, every guest it let in is in the
+            // room (LobbySession.Start counts the room right after).
+            lock (lobbyPumpGate) lobby?.CloseToNewcomers(message);
             RequestLobbyPump();
         }
 
@@ -213,7 +215,7 @@ namespace TimberNet
             List<LobbyMember> waiting;
             lock (lobbyPumpGate)
             {
-                waiting = lobby.Members().Where(m => !m.inGame).ToList();
+                waiting = lobby.Members().Where(m => m.TryLeave()).ToList();
                 foreach (LobbyMember member in waiting)
                 {
                     ForgetLobbyMember(member);
@@ -234,7 +236,8 @@ namespace TimberNet
         public bool RemoveFromLobby(int playerNumber, LobbyEndReason reason = LobbyEndReason.Removed, string? detail = null)
         {
             LobbyMember? member = lobby?.Find(playerNumber);
-            if (member == null || member.inGame) return false;
+            // Claimed, not just checked: its join may be entering the game this very moment (StartQueuing).
+            if (member == null || !member.TryLeave()) return false;
             lock (lobbyPumpGate) ForgetLobbyMember(member);
             member.Lane?.Post(MessageToBuffer(LobbyFrames.End(reason, detail)), LobbyFrames.EndType, 0);
             Task.Run(() =>
@@ -282,7 +285,8 @@ namespace TimberNet
             return member;
         }
 
-        // Off the roster and out of the room's books; its connection is closed separately.
+        // Off the roster and out of the room's books; its connection is closed separately. The caller has claimed it
+        // (LobbyMember.TryLeave), so a member that is entering the game is never forgotten under it.
         private void ForgetLobbyMember(LobbyMember member)
         {
             if (member.inGame) return;
@@ -299,27 +303,31 @@ namespace TimberNet
 
         private void LeaveLobby(LobbyMember member)
         {
-            if (member.inGame) return;
+            if (!member.TryLeave()) return;
             ForgetLobbyMember(member);
             CloseLobbyMember(member);
         }
 
+        // In a waiting room every connection read is one the room let in (its reader starts at AdmitToLobby), and it stays
+        // gated until it enters the game: one the room has let go (removed, a straggler, the room ended) is still read until
+        // its connection closes, up to AbortFlushMs later, and ungated its frames reached the game as player -1 actions and
+        // as a SessionFault queued for the co-op game's first update.
         protected override bool IsInWaitingRoom(ISocketStream source) =>
-            lobbyMembers.TryGetValue(source, out LobbyMember? member) && !member.inGame;
+            lobby != null && !(lobbyMembers.TryGetValue(source, out LobbyMember? member) && member.inGame);
 
         protected override void HandleLobbyFrame(ISocketStream source, string type, JObject frame)
         {
             if (lobby == null || !lobbyMembers.TryGetValue(source, out LobbyMember? member) || member.inGame) return;
+            bool changed;
             if (type == LobbyFrames.HelloType && LobbyFrames.TryParseHello(frame, out string id, out string name))
-                lobby.SetHello(member, id, name);
+                changed = lobby.SetHello(member, id, name);
             else if (type == LobbyFrames.ReadyType && LobbyFrames.TryParseReady(frame, out bool ready))
-                lobby.SetReady(member, ready);
+                changed = lobby.SetReady(member, ready);
             else if (type == LobbyFrames.FactionType && LobbyFrames.TryParseFaction(frame, out string faction))
-            {
-                if (!lobby.SetFaction(member, faction)) return;
-            }
+                changed = lobby.SetFaction(member, faction);
             else return;
-            RequestLobbyPump();
+            // Only a change is news for everyone (see RequestLobbyPump for how often it is sent).
+            if (changed) RequestLobbyPump();
         }
 
         protected override void HandleConnectionFailure(ISocketStream stream, string message)
@@ -332,11 +340,21 @@ namespace TimberNet
             }
         }
 
+        /// <summary>
+        /// The shortest time between two of the waiting room's passes. Each change a guest makes goes to every guest, so
+        /// without it one guest sending frames as fast as it could (a direct-IP guest can: anyone who reaches the port may
+        /// come in) had the room write the roster to everyone thousands of times a second, and a slower guest's lane filled
+        /// past MaxLobbyQueuedBytes and it was taken out of the room.
+        /// </summary>
+        public static int LobbyPumpGapMs = 50;
+        private long lastLobbyPumpMs = long.MinValue / 2;
+
         private void RequestLobbyPump()
         {
             if (lobby == null) return;
             Volatile.Write(ref lobbyPumpRequested, 1);
-            try { lobbyTimer?.Change(0, LobbyIntervalMs); }
+            long wait = Math.Max(0, Interlocked.Read(ref lastLobbyPumpMs) + LobbyPumpGapMs - SendLane.NowMs);
+            try { lobbyTimer?.Change(wait, LobbyIntervalMs); }
             catch (ObjectDisposedException) { }
         }
 
@@ -348,11 +366,19 @@ namespace TimberNet
             if (!Monitor.TryEnter(lobbyPumpGate)) { Volatile.Write(ref lobbyPumpRequested, 1); return; }
             try
             {
-                do
+                long now = SendLane.NowMs;
+                long wait = Interlocked.Read(ref lastLobbyPumpMs) + LobbyPumpGapMs - now;
+                if (wait > 0)
                 {
-                    Volatile.Write(ref lobbyPumpRequested, 0);
-                    PumpLobbyOnce();
-                } while (Volatile.Read(ref lobbyPumpRequested) == 1);
+                    try { lobbyTimer?.Change(wait, LobbyIntervalMs); } catch (ObjectDisposedException) { }
+                    return;
+                }
+                Volatile.Write(ref lobbyPumpRequested, 0);
+                Interlocked.Exchange(ref lastLobbyPumpMs, now);
+                PumpLobbyOnce();
+                // A change that came in while this pass ran goes out on the next one, a gap from now.
+                if (Volatile.Read(ref lobbyPumpRequested) == 1)
+                    try { lobbyTimer?.Change(LobbyPumpGapMs, LobbyIntervalMs); } catch (ObjectDisposedException) { }
             }
             catch (Exception e) { Log("The waiting room could not update its guests: " + e.Message); }
             finally { Monitor.Exit(lobbyPumpGate); }
@@ -526,8 +552,11 @@ namespace TimberNet
                 // handshake ran (the host acted, see ReplayService), and it would miss what was just played. Once
                 // closed it never reopens. A guest from the waiting room was let in when it came, and comes in now
                 // although the room is closed to newcomers: it is queued before the host plays anything.
-                bool fromWaitingRoom = lobbyMembers.TryGetValue(client, out LobbyMember? member);
-                if (IsAcceptingClients || fromWaitingRoom)
+                // In a waiting room only a member it still holds comes in, claimed here against its removal: a guest the
+                // room had just let go (the 10 s straggler rule, say) was numbered afresh and let in as a new player, since a
+                // waiting room never sets errorMessage and IsAcceptingClients stays true all game.
+                bool fromWaitingRoom = lobbyMembers.TryGetValue(client, out LobbyMember? member) && member!.TryEnterGame();
+                if (fromWaitingRoom || (lobby == null && IsAcceptingClients))
                 {
                     queuedMessages.TryAdd(client, new ConcurrentQueue<Outgoing>());
                     clients.Add(client);
@@ -541,13 +570,15 @@ namespace TimberNet
                     // From here the stream belongs to the save: the waiting room writes nothing more to it. A lobby frame
                     // being written now holds the stream's lock, which the save waits for; one written later sees this
                     // (WriteLobbyFrame). Nothing here waits for the guest's connection.
-                    if (fromWaitingRoom)
-                    {
-                        member!.inGame = true;
-                        member.Lane?.Close();
-                    }
+                    if (fromWaitingRoom) member!.Lane?.Close();
                     return;
                 }
+            }
+            // A waiting room's leaver was told why by the room (LobbyEnd) and is being closed; there is no errorMessage.
+            if (lobby != null)
+            {
+                client.Close();
+                throw new IOException("This guest left the waiting room before it came into the game.");
             }
             // Refused outside the lock, so a slow guest cannot hold up what the host sends everyone else.
             SendErrorMessage(client);
