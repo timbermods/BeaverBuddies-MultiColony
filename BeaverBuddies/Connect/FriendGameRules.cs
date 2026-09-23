@@ -26,10 +26,11 @@ namespace BeaverBuddies.Connect
         {
             FriendId = friendId;
             LobbyId = lobbyId;
-            Name = name ?? "";
+            // Lobby data comes from whoever made the lobby: kept to one short line here, whatever wrote it.
+            Name = FriendGameRules.OneLine(name, FriendGameRules.NameLimit);
             State = state;
-            Description = description ?? "";
-            Version = version ?? "";
+            Description = FriendGameRules.OneLine(description, FriendGameRules.DescriptionLimit);
+            Version = FriendGameRules.OneLine(version, FriendGameRules.VersionLimit);
         }
 
         public ulong FriendId { get; }
@@ -47,6 +48,33 @@ namespace BeaverBuddies.Connect
     /// </summary>
     public static class FriendGameRules
     {
+        /// <summary>The most of a lobby's name, description and version a row shows (a host writes at most 120 of its
+        /// description, SteamListener.SetDetails, but any lobby can say anything).</summary>
+        public const int NameLimit = 64;
+        public const int DescriptionLimit = 120;
+        public const int VersionLimit = 40;
+
+        /// <summary>
+        /// Lobby text as one line: control characters (line breaks, tabs) become spaces, runs of spaces one, and the
+        /// result is cut to <paramref name="limit"/> characters. The row's labels also show it without rich text, so a
+        /// name like "&lt;size=200&gt;Bob" reads as typed.
+        /// </summary>
+        public static string OneLine(string text, int limit)
+        {
+            if (string.IsNullOrEmpty(text)) return "";
+            var line = new System.Text.StringBuilder(Math.Min(text.Length, limit));
+            bool space = false;
+            foreach (char c in text)
+            {
+                bool blank = char.IsWhiteSpace(c) || char.IsControl(c);
+                if (blank) { space = line.Length > 0; continue; }
+                if (space) { if (line.Length + 1 >= limit) break; line.Append(' '); space = false; }
+                if (line.Length >= limit) break;
+                line.Append(c);
+            }
+            return line.ToString();
+        }
+
         /// <summary>
         /// A friend's lobby from its data: <paramref name="version"/> is the host's mod version (bb_ver, since 1.4.0-beta24),
         /// <paramref name="open"/> bb_open ("1" while players may join), <paramref name="room"/> bb_room ("1" for a waiting

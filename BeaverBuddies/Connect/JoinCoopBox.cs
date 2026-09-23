@@ -142,14 +142,26 @@ namespace BeaverBuddies.Connect
 
         public VisualElement GetPanel() => _root;
 
-        // Enter: the address when it is being typed (its own confirm handles that), else the selected friend's game.
+        // Enter: the address while it is being typed, else the selected friend's game. The game hands Enter to the panel
+        // stack even while a text field has focus (its key bindings aren't blocked by typing), and the field's own
+        // confirm only runs when it loses focus, in either order: so a player typing an IP with a friend's row still
+        // selected was sent to the friend's game instead (review of beta24, B24-b).
         public bool OnUIConfirmed()
         {
             if (closed) return false;
+            if (Typing())
+            {
+                if (!string.IsNullOrWhiteSpace(address.value)) Connect();
+                return true;
+            }
             if (list.selectedItem is FriendGame game && game.Joinable) Join();
             else if (!string.IsNullOrWhiteSpace(address.value)) Connect();
             return true;
         }
+
+        // The address field (or the text input inside it) has the keyboard focus.
+        private bool Typing() =>
+            address.focusController?.focusedElement is VisualElement focused && (focused == address || address.Contains(focused));
 
         public void OnUICancelled() => Close();
 
@@ -178,10 +190,17 @@ namespace BeaverBuddies.Connect
         // One friend: their name, what they are playing (gold, left) and whether you can join (gold, right).
         private static void Bind(VisualElement row, FriendGame game)
         {
-            row.Q<Label>("DisplayName").text = game.Name;
-            row.Q<Label>("GameTime").text = game.State == FriendGameState.Looking ? "" : game.Description;
-            row.Q<Label>("Timestamp").text = StateText(game);
+            // The text is a friend's Steam name and what their lobby says: shown as typed, never as rich text.
+            Show(row.Q<Label>("DisplayName"), game.Name);
+            Show(row.Q<Label>("GameTime"), game.State == FriendGameState.Looking ? "" : game.Description);
+            Show(row.Q<Label>("Timestamp"), StateText(game));
             row.SetEnabled(game.Joinable);
+        }
+
+        private static void Show(Label label, string text)
+        {
+            label.enableRichText = false;
+            label.text = text;
         }
 
         private static string StateText(FriendGame game)
