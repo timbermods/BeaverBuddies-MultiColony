@@ -85,6 +85,9 @@ build cannot join.
 - **Guests**, **from the main menu**: **Join co-op game** lists your Steam friends' co-op games; pick the host's
   and press **Join** (1.4.0-beta24). Or accept the Steam invite, or type the host's IP under the list. A short
   *Connecting* box, then the same page with **Ready** and **Leave**.
+  A game that has started may drop off the list instead of showing *Already started* (Steam may stop reporting a
+  lobby nobody can join). A friend with the same version number but another build (one they built themselves) lists
+  as joinable and is then refused with *Multiplayer build mismatch*: everyone installs the same zip.
 - In the game, the host has the map's district center. On a standard map every other player is offered **Place your
   district center** as soon as they are in, even while the game is still paused (step 5). On a BeaverBuddies
   multi-start map each player gets a start, in the order they came into the room (only as many starts as players,

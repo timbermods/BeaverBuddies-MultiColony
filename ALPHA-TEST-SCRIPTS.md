@@ -1,6 +1,7 @@
 # Separate colonies: test scripts
 
-For the 1.4.0 betas (separate colonies, trading posts and barter, colony handover). The scripts began with
+For the 1.4.0 betas and release candidates (separate colonies, trading posts and barter, colony handover, and since
+1.4.0-rc1 the late-game playtest at the end). The scripts began with
 the alphas; a label such as *(alpha13)* or *(beta2)* says which build a line was added for. Please report a
 result for **every line**: *works*, *fails* (what you saw), or *not tried*. A screenshot helps for anything drawn on
 screen (the trading-post panel, a notice, the connection panel, the toolbar). Send `Player.log` at the end
@@ -483,3 +484,205 @@ waiting room and of each colony help.
 13a. **A faction mod (beta21).** With a mod that adds a faction installed, Mixed factions on, a new room: the gold line
     says mixed factions is made for Folktails and Iron Teeth and everyone plays one faction.
 14. Send both `Player.log` files. Lines start with `[Factions]` and `[Lobby]`.
+
+## The late-game playtest (two players) *(1.4.0-rc1)*
+
+The 1.4.0-rc1 review read the late game, Folktails and Iron Teeth together and Trading Posts at scale against the game's
+own code, and fixed what it found; none of it has been played. This playtest is what it leaves to people. It has
+three parts (Scripts L, M and T), a set of short recordings (Script P) and a long session. Each line says what should
+happen and, in brackets, the review finding it checks (`design/REVIEW-FINDINGS-1.4.0-beta24.md`).
+
+**For every part:**
+- Both players install the same zip and use the same mods and settings.
+- The host turns on **Always Use Detailed Logging** only for Script T and small tests. From 200 beavers and bots it
+  costs too much, and the desync dialog no longer offers it.
+- After each part, send both players' `Player.log` and the Ctrl+Shift+J report (press it just before leaving; it is
+  saved in `BeaverBuddies-Reports` next to `Player.log`).
+- **Building a late game quickly:** use dev mode (Alt+Shift+Z) **in single player** (placing finished buildings,
+  adding beavers and science), save, then host that save. In co-op only three dev tools are shared: Ctrl-click
+  unlock, *Finish now* and *Add 1000 Science*. Turn dev mode off before the tests.
+
+## Script L: the late game, two players (about 90 minutes) *(1.4.0-rc1)*
+
+**Setup (the host, single player, dev mode, about 30 minutes):**
+1. Take a copy of your largest late save (300 or more beavers).
+2. Near where the guest will found their colony, build:
+   - a chain of automation: a lever, a relay, a memory, a timer, and an Indicator set to *warn*;
+   - a Population Counter set to count everywhere;
+   - an HTTP Lever and an HTTP Adapter;
+   - a spring-return lever wired to a Detonator on a Dynamite, a few tiles from where the guest will build;
+   - a pump and a throttling valve;
+   - three synchronised floodgates along the edge of your land;
+   - a gravity battery on a power shaft that ends at that edge.
+3. Save.
+4. In Mod Settings, turn **Allow founding colonies in a shared game** on and **Separate science and unlocks per
+   colony** off (so the guest can build the late game at once).
+5. Main menu → Load Game → the save → **Host co-op game**. The guest joins; Start.
+
+1. **Founding beside your fields** (E-7). The guest founds (Ctrl+K) right beside the host's farms and forests, then
+   builds a farmhouse and a lumberjack flag that reach them. After a day none of the host's marked crops or trees is
+   worked by the guest's beavers, and the guest's unmark tool leaves the host's marks.
+1a. **Unlocking together** (E-5). Both players click **Unlock** on the same locked building within a second: the
+    science counter drops once, not twice.
+2. **Automation** (A1). The guest builds the same chain as the host's; one player caps their frame rate at 15 (the
+   game's frame limit setting). Flip levers on both computers: both see the same lights within a tick. Pause, flip,
+   unpause: the change shows on the first tick after unpausing, the same on both. Press **Reset** and **Reset all** on
+   a memory: Reset resets that one, Reset all the whole chain (P-1: they were swapped).
+3. **The HTTP API** (A3).
+   - Each player starts the HTTP API (the HTTP Lever's panel) and switches their own HTTP lever by URL
+     (`http://localhost:8080/api/switch-on/<name>`): it switches on both computers.
+   - The guest switching the host's HTTP lever by URL is refused with a notice.
+   - `http://localhost:8080/api/color/<name>/ff0000` does nothing in co-op (the log says so once).
+4. **The Detonator** (A1-1). One click on the spring-return lever wired to the Detonator: the dynamite goes off on
+   both computers, the same tick (compare the logs). Before rc1 it never did in co-op.
+5. **Counters and warnings** (A4, O4). Set each colony's global Population Counter's threshold between the two
+   colonies' populations: each lights by its own colony's count, the same on both computers. Switch each colony's
+   warning Indicator on: each player sees only their own colony's warning.
+6. **Water settings** (A2, W1). The guest drags their pump's flow rate, and their throttling valve's outflow from
+   *unlimited* to half: the pump's panel and the valve read the same on both computers. The guest places two
+   floodgates touching the host's synchronised ones, changes their height and wires them to a lever: only the guest's
+   follow; the host's keep their height and wiring.
+7. **Power across colonies** (P1, documented). The guest lays a shaft into the host's power shaft: one network (both
+   see the same power). A clutch of either colony cuts it, and either colony's Power Meter reads all of it.
+8. **Weather** (W4). Play through a drought and a badtide with automated floodgates, valves and regulators on both
+   colonies: no desync through both.
+9. **A blast beside the other colony** (X1, X2, E-8). The guest builds a second district center next to the host's
+   colony, fills it with beavers, then deletes it: its beavers join the guest's first district, none the host's (the
+   top bars' counts show it). Then set off a chain of dynamite beside the other colony: the same result on both
+   computers, no error; note how long it takes at speed 3 (the Ctrl+Shift+J report's *Frames cut short* line).
+10. **Placing while the host hovers** (E-6, a regression line). The host holds a path preview beside the guest's road
+    (red) without clicking; the guest places three buildings elsewhere: all three appear on both computers.
+11. **Maximum speed** (S5). Twenty minutes at speed 3 (x7), then at a boost of 15 (chat box `/boost 15`). The game
+    stays in step; at the boost the host eases off (logged) and the guest's lag stays steady, not growing.
+12. **A steward's colony** (E-3). Host setting *Hand over a colony after its player is away* = 1. The guest asks the
+    host to look after their colony (Ctrl+T), then leaves. Play three days; the host ends the stewardship. The next
+    day brings the warning (*… unless they are in the game tomorrow*), and the hand-over comes the day after.
+13. **Save and Rehost.** Options → Save and Rehost; the guest rejoins: everything as before, no desync. Both players
+    press Ctrl+Shift+J and compare the `day N tick T:` check lines: equal.
+14. Send both `Player.log` files and reports.
+
+## Script M: Folktails and Iron Teeth in the late game (two players, about 90 minutes) *(1.4.0-rc1)*
+
+1. **Setup** (hosted alone with dev mode; TWO-COLONIES, *Testing alone*):
+   - A new game with *Separate colonies* and *Mixed factions* on, Folktails. Three colonies: 1 Folktails (the
+     host's), 2 Iron Teeth (the guest's), 3 Folktails (nobody's).
+   - For colonies 1 and 2, with dev mode:
+     - a bot assembler, a bot part factory and 6 or more bots;
+     - Folktails: a refinery (Biofuel, Catalyst) and a printing press (PunchCard);
+     - Iron Teeth: two charging stations, a grease factory and a control tower;
+     - lodges (Folktails) and breeding pods (Iron Teeth) with beavers;
+     - ziplines (Folktails) and tubeways (Iron Teeth);
+     - a badwater rig (Folktails) and a deep badwater pump (Iron Teeth);
+     - an explosives factory and the metal buildings;
+     - three monuments or decorations each;
+     - a Beehive beside some Folktails and Iron Teeth crops;
+     - a Trading Post between them.
+   - The Earth Recultivator (colony 1) finished, filled and staffed. The Earth Repopulator (colony 2) finished,
+     filled, set to bots, its eight places taken by Iron Teeth bots.
+   - Colony 3: a bot assembler and 8 Folktails bots. Then, still alone, Ctrl+T → hand colony 3 over to colony 2.
+     Acting as colony 2, build a second Earth Repopulator in colony 3's old district: finished, filled, set to bots,
+     its eight places taken by the Folktails bots.
+   - Save. Host; the guest joins as colony 2.
+2. **The daily check** (F6). Play two in-game days. Each player's daily `[Colony] Check day N …` line ends in
+   `/census:0=Folktails:A+B,1=IronTeeth:C+D`, the same on both, and A to D match each colony's beavers and bots in its
+   population panel.
+3. **Births** (F2). A lodge birth, a breeding-pod birth and a child growing up: each new beaver has its colony's
+   faction's fur and avatar. Neither log has *was made with no faction in hand*.
+4. **Bots** (F3). Each assembler makes its own faction's bot (model, name, avatar). Iron Teeth bots charge at the
+   charging stations; Folktails bots never go there. No bot shows a need of the other faction.
+5. **Both Wonders** (V1, V2, B5). The host activates the Earth Recultivator, the guest the Earth Repopulator; the guest
+   caps their frame rate at 15 and both play at speed 7 while the planes launch. The activating player hears the
+   launch sound, the other doesn't. All planes launch; the pilots are gone half an hour later; no desync.
+6. **A Wonder's effect** (V1). While the Recultivator is active, a Folktails beaver near it shows the Earth Recultivator
+   need rising; an Iron Teeth beaver walked near it does not.
+7. **Completion** (V1). Half an hour after the first Wonder switches off, both players see the completion screen, each
+   with their own faction's picture and words; the game waits for the host to close it; the next daily check is
+   equal.
+8. **Folktails bots flying an Iron Teeth Wonder** (B1). The guest activates the second Earth Repopulator (in colony 3's
+   old district, with Folktails bots). The planes launch with Folktails bots aboard (in their ordinary pose). **No
+   "Multiplayer has stopped" message**: beta24 stopped here for everyone. Both logs have `[Factions] A character
+   without the "Piloting" animation does it without`. Save and reload: no error. The census shows colony 2 with
+   Folktails bots (`1=Folktails:…+8`) beside its Iron Teeth beavers and bots.
+9. **The Beehive** (F5). It stings only Folktails beavers; the Iron Teeth crops beside it grow faster too (documented).
+10. **Ctrl+T at scale** (B4). In the late game, keep Ctrl+T open for two minutes: no hitch every second.
+11. **Save and rehost mid-flight** (F9). Save while a plane is on the runway, rehost, the guest joins: the plane and its
+    pilot carry on; the census and `chars:` of the next daily check are equal on both.
+12. Send both `Player.log` files and reports.
+
+## Script T: Trading Posts at scale (two players, about 90 minutes) *(1.4.0-rc1)*
+
+**Setup:** a separate-colonies game with separate science and two colonies (a third for T-9). With dev mode **only in
+single player**, build 20 Trading Posts between them, tanks, piles and warehouses on both sides, and stock of every
+good. Save, host, and have a guest join. Turn on detailed logging for both, the guest a minute after the host: the game
+goes on with no desync dialog (D-new-2; before rc1, switching it on mid-game read as a desync).
+
+1. **40 exchanges** (T4, T7). Open an exchange at every post: goods of each kind, science, beavers, gifts and requests,
+   some repeating, some with a reserve. Ctrl+T lists every post with its terms and round, and the window stays smooth.
+2. **Conservation** (C6). Play 10 in-game days. Each day both logs have one `[Colony] Day … trade:` line, identical on
+   both computers, with `checks ok`; no `Trade check:` warning.
+3. **No room** (C3). At a post where you give 100 Logs a round, take away the other colony's storage room for Logs.
+   After the first round your panel says *No room on your half for more Logs: 100 … still wait on …'s half*, and
+   theirs says *… haul them away (they need storage room)*. Give them room: the round goes on.
+4. **Paused or flooded** (C3). Pause one half (its button, then with automation) and flood one: both panels and Ctrl+T
+   say *paused or flooded*. Unpause: it goes on.
+5. **No stock** (C3). Give away all of a good you trade: *Your district has no more … to bring.*
+6. **Beavers** (C2). Trade 5 beavers from a district of 6 adults while they work: the round waits (*adults free to
+   go*), then moves exactly 5, and the ledger and the log's *crossed* line say 5. No *Only N of M beavers* warning.
+7. **Every good both ways** (T2). One exchange per good both ways (liquids into tanks, piles into piles), plus science
+   and beavers, repeating for 10 cycles. Each crosses; the panel's *Traded with* totals match the log.
+8. **Goods already on the half** (C4). Receive 100 Water with no tank room, then offer 100 Water back: the round fills
+   at once from the Water waiting there, and crosses.
+9. **Mixed** (C1). A three-colony mixed game hosted as Folktails, with two Iron Teeth colonies trading Grease. Remove
+   the road at one half: the exchange shows *paused*, not ended. Restore the road: it goes on.
+10. **A post blown up mid-round** (C5). With goods held on both halves, blow the post up with dynamite. Both players
+    get *An exchange ended: its Trading Post was removed…*; the log lists what waited; the goods lie as recovered goods.
+    No desync.
+11. **Save and rehost mid-round** (T1). With rounds half filled at several posts, save, reload and rehost: the bars show
+    the same held amounts, the rounds finish, there is no desync, and the day's trade lines still match.
+12. **Cost** (C7). With all 40 exchanges running at speed 7, the Ctrl+Shift+J report's *Trading post exchanges*,
+    *Trading post workers* and *Trading post daily check* rows stay small (well under 1 ms a tick on average).
+
+## Script P: performance recordings (one or two players) *(1.4.0-rc1)*
+
+**For every recording:**
+- Use Kyler's **PerformanceLog** mod, with its defaults. Change nothing else between the two recordings of a pair.
+- Close other programs, keep the game window in front, and keep the same window size.
+- Load the save and choose speed 7 (the third speed button). Wait **1 minute**, play untouched for **3 minutes**, then
+  leave to the main menu.
+- Send the session folders (`Documents\Timberborn\PerformanceLog\`), `Player.log`, and in co-op the Ctrl+Shift+J
+  reports. Compare pairs with `python tools/perflog.py compare <A> <B>`.
+
+1. **P1, single player, with and without MultiColony** (B1, S10). The late save with MultiColony disabled (restart),
+   then enabled (restart). Tick time within 1 % of each other; PerformanceLog no longer lists MultiColony on
+   `TickableEntity.Tick`.
+2. **P2, hosting with nobody joined** (B2, B3, C3, S9). Host the late save from the main menu and record. Then, in the
+   same game, found a second colony with *Allow founding colonies in a shared game* on, let a day pass, and record
+   again. In each, also hold a path tool over roads for 30 s. MultiColony's share of tick time: at most 5 % shared and
+   7 % split. No MultiColony method among the top allocators.
+3. **P3, with a guest** (B4, S2, S5). The late save split into two colonies, a guest joined. Three minutes each at
+   speed 2, speed 3, and speed 3 with a boost of 15. Both players record.
+   - At speeds 2 and 3, the guest stays within 4 ticks of the host 95 % of the time.
+   - At boost 15, the host eases off (logged) and the guest's lag is steady.
+   - The report's *Frames cut short … a tick* is small at speed 3.
+4. **P4, mixed factions** (B6). Script M's grown game against a one-faction game of the same size, P2's steps. Tick
+   cost within 5 %; load time and the report's `Memory:` line within 25 %.
+5. **P5, with LateGamePerformance** (C1). P2 again with LateGamePerformance 0.4.28 on both computers. The same daily
+   `[Colony] Check` lines on both (no desync). LateGamePerformance's own warning about `ColonyStamp`'s hash appears
+   once (C1-4, a finding for that mod).
+6. **P6, a rehost** (B5, S6). In P3's session, Options → Save and Rehost; the guest rejoins. From the click to the
+   guest playing: under 30 s on a home network, and no host freeze over 1 s.
+7. **P7, big actions** (A6, E). Record the frames around each of these on the split late save:
+   - placing a 50-building automation blueprint;
+   - a hand-over of a large colony by hand (Ctrl+T);
+   - the founding that splits the save;
+   - a 100-tile path dragged by the guest (the host's *Placement checks in replays* row).
+
+## The long session *(1.4.0-rc1)*
+
+A late two-colony game with a guest, for at least 20 in-game cycles; then a mixed game and a trading game for 10 each
+(Scripts M and T's games). Play it or leave it running, as you like. At the end, copy every `[Perf] Day` line from
+both players' `Player.log`. What to look for:
+- the heap levelling off after the first days, not climbing steadily;
+- *detailed-logging traces 0 ticks* (detailed logging off);
+- *buckets lost to the one-tick cap* near 0 at normal speed;
+- no `[Colony] Colony state differs` line and no `[Colony] Trade check:` line.

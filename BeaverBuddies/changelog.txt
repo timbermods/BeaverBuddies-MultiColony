@@ -1,3 +1,14 @@
+v1.4.0-rc1 (BeaverBuddies MultiColony)
+* The release candidate for 1.4.0: a review read the late game (automation and the HTTP API, water automation, power, dynamite, both Wonders, bots), Folktails and Iron Teeth together and Trading Posts at scale against the game's own code, and fixed what it found. Not played yet: a two-player late-game playtest comes next.
+* Desyncs fixed: a pump's flow rate, a throttling valve's limit switched on or off by its slider, and the dev power generator's panel now change every computer's game.
+* No longer stops the game for everyone: a Folktails bot flying an Earth Repopulator's plane, and a crop, good or recipe from a mod only one player has (the host refuses it; a guest missing it leaves quietly).
+* Your colony stays yours: synchronised floodgates and valves keep in step with your own colony's only, a Population Counter set to everywhere counts your colony, Indicator warnings show only to their colony, and beavers left without a district join only their own colony's.
+* Automation: Reset and Reset all are the right way round in co-op, and a spring-return lever sets off a Detonator.
+* Trading Posts: a round that waits says why (paused, no workers, no room, nothing to bring), goods already on a half count toward its round, a round of beavers moves exactly what was agreed, a paused post no longer ends an exchange, and a post blown up mid-round tells both players.
+* A steward's colony is always warned the day before it is handed over, and a shared game split by a founding keeps its fields and forests with the first colony.
+* Lighter at late-game size, a daily [Perf] line in the log for long sessions, and after a Timberborn update co-op stops with a message instead of going out of step.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta24 (BeaverBuddies MultiColony)
 * Join co-op game in the main menu lists your Steam friends' co-op games: pick one and press Join (or double-click it) to go straight into their waiting room. The IP address is still there, under the list.
 * In the waiting room both buttons are one size (Cancel / Start Game, Leave / Ready), and a guest's button reads Ready.

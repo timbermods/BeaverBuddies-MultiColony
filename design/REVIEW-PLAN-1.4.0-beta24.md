@@ -5,6 +5,14 @@ box, reviewed in §0.1). Written to be carried out by one session (Opus 5.5, xhi
 fixes what it finds and cuts a release candidate, on Kyler's computer. It never runs the game (the rule below).
 Findings go to `design/REVIEW-FINDINGS-1.4.0-beta24.md`.
 
+**Carried out** 2026-09-23 and released as **1.4.0-rc1**. The findings, the coverage matrix and what was left are in
+[REVIEW-FINDINGS-1.4.0-beta24.md](REVIEW-FINDINGS-1.4.0-beta24.md), and the reviewers' reports in
+[review-1.4.0-beta24/](review-1.4.0-beta24/). Corrections to this plan:
+- a fifth reviewer (E, the colony lifecycle) was added;
+- in P-1, `ToActionString` was right, and only the replay was swapped;
+- only deletions end a frame's ticking in a game (P-5), not creations;
+- E-6, a finding of the review, was refuted at merge (findings, §2).
+
 > **Hard rule: never start, drive or test Timberborn, and never touch the installed mods.** Kyler, 2026-09-23: "I just
 > don't want you controlling timberborn."
 >

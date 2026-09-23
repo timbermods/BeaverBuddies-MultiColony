@@ -48,7 +48,9 @@ jobs:
             "A guest's ping over Steam grows with the players' frame length, and pumping between ticks removes that",
             "Status traffic never changes the hash, the event script or tick progress",
             # 1.4.0-beta21: starves the thread pool on purpose and times seven guests' paced saves under the 5 s test limit.
-            "J4: seven guests' paced saves, with the thread pool starved, all queue well inside the 10 s"
+            "J4: seven guests' paced saves, with the thread pool starved, all queue well inside the 10 s",
+            # 1.4.0-rc1: compares two timed loops (about 15 ms against 140 ms locally); a busy runner can stall the short one.
+            "D-S1: a sampled profiler spot counts every call, times one in 16 and reports it scaled up, for less than a timed spot costs"
           )
           dotnet run --project StabilityTests --no-restore | Tee-Object -Variable output
           $code = $LASTEXITCODE

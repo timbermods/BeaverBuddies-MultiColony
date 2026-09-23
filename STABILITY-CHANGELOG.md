@@ -5,6 +5,216 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc1
+
+**The release candidate for 1.4.0.** Until now only the early game had been played. This release comes from a review of
+beta24 that read the rest against Timberborn 1.1.2.4's own code (`design/REVIEW-PLAN-1.4.0-beta24.md`; findings,
+coverage matrix and what was left in `design/REVIEW-FINDINGS-1.4.0-beta24.md`; the five reviewers' reports in
+`design/review-1.4.0-beta24/`). It covered:
+- the late game: automation and the HTTP API, water automation, power, dynamite and tunnels, both Wonders, bots;
+- Folktails and Iron Teeth together;
+- Trading Posts at scale;
+- cost at late-game size and long sessions;
+- the colony lifecycle.
+
+It found and fixed desyncs, a session-stopping crash, rules that let one colony change another, and trading edges.
+**Nothing here has been played:** the game was never started for this review. Each finding was traced through the mod
+and the decompiled game, and nearly every fix has a check that fails on beta24's DLL or source. A two-player late-game
+playtest (ALPHA-TEST-SCRIPTS, Scripts L, M, T and P) comes before 1.4.0.
+
+**Wire:** `AutomationEvent` knows four more game methods (below), and no event was added or changed. Everyone needs this
+build, which the handshake already enforces. **Save:** one new singleton, `BeaverBuddies.ColonyCitizens` (separate
+colonies only, only while a beaver has no district). Older saves load.
+
+### Desyncs fixed
+- **A pump's flow rate** (Timberborn 1.1's slider on every pump) changed the water moved on the dragging player's computer
+  alone. `WaterMover.SetFlowRate` is now shared (A2-1).
+- **A throttling valve's outflow slider** shared the limit but not its on/off: dragging from *unlimited* limited the flow
+  on one computer only. `ThrottlingValve.SetOutflowLimitEnabledAndSynchronize` is now shared (A2-2).
+- **The dev power generator's panel** works without dev mode once the generator stands, and wasn't shared.
+  `AdjustableStrengthPowerGenerator.set_GeneratorStrength` and `FlipRotation` are now shared (A2-3).
+- **Dev mode's plant spawning:** holding Ctrl while planting spawned grown plants on one computer. It is off in co-op, like
+  the other Ctrl dev keys (A2-4, `DevPlantSpawnKeyCoopPatcher`).
+- **Switching detailed logging on mid-session:** one computer turning *Always Use Detailed Logging* on during a game made
+  up traces for every tick already played, which the other computer read as a desync that stopped the session. It now
+  starts at the current tick (D-new-2).
+- **Detailed logging's on-demand patch** would have drawn its IDs from the game's random state on one computer only. It
+  now uses real IDs and puts Unity's random state back (D-new-1, `GuidPatcher.WithRealGuids`).
+- **A check now scans the panels:** every call the game's panels, tools and keys make into the simulation (9,250 methods,
+  223 unrecorded calls, each with its reason) is shared, dev mode's, the map editor's, or display only. A game update that
+  adds a path fails the check (A2).
+
+### Crashes and session stops fixed
+- **A Folktails bot piloting an Earth Repopulator's plane** stopped multiplayer for everyone. A Folktails bot's animator
+  has no *Piloting* flag, and the game sets it unchecked. It happens in a mixed game when an Iron Teeth colony receives a
+  Folktails colony's bots and uses them as pilots. In a mixed game only, the flag is now left out when the animator lacks
+  it, and the bot flies in its ordinary pose. Loading a pilot in flight takes the same path (B1,
+  `FactionPilotAnimationPatcher`).
+- **Content from a guest's mod that the host's game lacks** stopped the session for everyone. That covered a planting mark
+  of an unknown crop (E-1), a distribution change for an unknown good (E-2) and a workshop recipe (H1-1). Now:
+  - the host refuses the mark and the recipe, as it already refused a building;
+  - the distribution change is skipped;
+  - a guest who meets content the host used leaves quietly.
+- **A game update that breaks one patch** no longer takes the rest with it (R8):
+  - **Each patch applies on its own.** Each patch class and each hand-made patch is applied separately. One that fails is
+    logged and named (`Plugin.FailedPatches`), and the others still apply.
+  - **The water-seep and automation fixes don't throw.** The water-seep timing fix never throws out of the mod's start,
+    and a renamed automation setter is logged (`AutomationEvent.MissingRecorders`).
+  - **Single player carries on, co-op stops at load.** A co-op game that needs something missing is stopped at load on
+    each computer, with a message naming it (`CoopFixGuard`, `BeaverBuddies.CoopFix.Stopped`). The seep fix counts only
+    when the map has a seep.
+- **An unreadable faction catalog** (from a game update or a faction mod's data) made every faction lookup throw, inside
+  ticks and replays. Each lookup now falls back to the game's own answer, and the catalog stops retrying after load (B2).
+- **A check that every replayed action copes with a vanished entity:** all 59 of the mod's `Replay` methods already
+  null-check each entity they look up by ID. A source scan keeps it so (H1).
+
+### Colonies kept apart
+- **Synchronised fill valves, throttling valves and floodgates** changed, and rewired, the other colony's touching
+  buildings. Synchronising now stops at another colony's building (W1-1, `Colonies/ColonyWaterSync.cs`).
+- **A Population Counter set to count everywhere** counted every colony. It now counts its own colony's districts (A4-1,
+  `Colonies/ColonyPopulationCounter.cs`).
+- **An Indicator's warning** showed to every player. It now shows to its own colony's player, as its journal entry already
+  did (O4-1, `Colonies/ColonyIndicatorView.cs`).
+- **Beavers and bots without a district** joined the nearest district center, whoever's. That happened when their district
+  center was deleted, or when a blast or flood cut them off: a colony lost beavers to its neighbour, and in a mixed game
+  across factions. Now:
+  - they join the nearest center of their own colony they can walk to;
+  - with none in reach they wait, as in the game, until their player founds again or the colony is handed over;
+  - one that never had a district joins the nearest, as before (E-8, `ColonyCitizens`, saved while it waits).
+- **A shared game split by a founding** left every planting and cutting mark nobody's, so the new colony's workers took
+  the first colony's fields and forests. The split now gives every unowned mark to the first colony (E-7,
+  `ColonyMarks.AdoptUnowned`).
+- **A steward's colony** could be handed over for absence with no warning. That happened on the first day nobody kept it,
+  and after a load. A hand-over for absence now always comes the day after its warning, in the same session (E-3).
+- **Two players unlocking the same building at once** paid for it twice in a shared game, or with shared science. The
+  second unlock is skipped (E-5; the HTTP Lever and Adapter, unlocked once per profile, as before).
+
+### Automation
+- **Reset and Reset all** on a memory or timer were swapped in co-op. They now do what the game's panel does (P-1).
+- **A spring-return lever wired to a Detonator** never set the dynamite off in co-op. The lever's one-tick pulse armed and
+  disarmed the Detonator in one evaluation. In co-op the Detonator now only arms on its input, so the pulse sets it off as
+  a click does in single player (A1-1, `DetonatorPulseCoopPatcher`).
+- **The HTTP API** works in co-op and is now documented:
+  - a request to switch an HTTP lever is that player's shared action;
+  - a request for another colony's lever is refused;
+  - a request to colour a lever is ignored in co-op, logged once (A3-1).
+- **The relay panel** could index past its list after two quick *add input* clicks (H1-2). **The timer panel's** static
+  reference is tested with Unity's check (H1-3). Both are interface fixes.
+- **The dev-mode co-op warning** now names what is not shared: the debug buttons, the dev panel, Delete on a selected
+  beaver, and the beaver and bot tools (H2).
+
+### Trading Posts
+- **A paused post** (a road removed at one half) ended the exchange between two colonies of the faction the host didn't
+  pick. The factions are now judged only while the post trades, so the exchange waits for its road (C1,
+  `ExchangeTerms.Ending`).
+- **A round of beavers** could move fewer than agreed while the other side paid in full: beavers carrying something, or
+  unable to walk there, were counted but not moved. One rule now counts and moves the same adults, and the round waits
+  until enough are free (C2).
+- **A round that stalls says why,** in the panel, the Ctrl+T list and the report (C3, C8):
+  - paused or flooded;
+  - no workers;
+  - no room (last round's goods still waiting on the other half, which the receiver must haul away);
+  - nothing left to bring.
+
+  Ctrl+T also shows a paused exchange as paused, and keeps a post listed whose own half lost its road.
+- **Goods already waiting on a giving half** now count toward its round, as the game's own crossing does. Before, a colony
+  offering back goods it had received and couldn't store had a round that never filled (C4).
+- **A post removed mid-round** (by a player, a blast or the ground) tells both colonies and logs what waited on its halves.
+  The game leaves those goods as recovered goods (C5).
+- **A daily trade check:** once a day every computer checks that each exchange's held goods are on its half and reserved,
+  and that no post holds more than its room. A failure is logged as `[Colony] Trade check:`. With detailed logging on, a
+  daily `[Colony] Day … trade:` line lists exchanges, holds, crossings and stocks (C6).
+- **Cost:** the check every 8 ticks copies no list, counts beavers without LINQ, and works out each post's owners once
+  (C7).
+
+### Folktails and Iron Teeth, and the Wonders
+- **The Wonder launch sound:** activating a Wonder played no sound in co-op (the panel's method is recorded, not run). The
+  player who activated it now hears it (B5).
+- **The daily check** of a mixed game now names each colony's beavers and bots by faction (`/census:`), the same on every
+  computer (F6).
+- **Cost:**
+  - the yield filter skips the faction lookup for goods every faction has, which covers every tree's Log and every ruin's
+    Scrap Metal (B3);
+  - `MixedFactions.Spec` allocates nothing (B3);
+  - a path is painted once, from its model's own pieces, not searched for by name twice at load (B4);
+  - the Ctrl+T window's "untouched" test no longer walks every entity once a second (B4).
+
+### Cost and long sessions
+- **In every game, co-op or not** (D-S10):
+  - a random draw's check answers before any lookup;
+  - a new entity outside a session keeps the game's own ID (no draws from Unity's random state);
+  - the markers for gameplay and not-gameplay calls count nothing;
+  - `TickableEntity.Tick` is no longer patched (it is patched on demand, only while detailed logging is on);
+  - dead code is removed: the never-bound tick watcher, and a process-wide `DateTime.ToString` prefix that every log
+    line went through.
+- **The walking animation** goes on from its cached corner instead of searching each walker's path from the first corner
+  every frame (D-S9). **The alert filter** reads the player's seat once a frame (D-S9b).
+- **The daily colony check** walks every entity once a day instead of twice (D-S12). The `[Colony] Check day N` line is
+  now logged as the host's day plays, one tick later than before, on every computer alike.
+- **The road-networks conflict walk** runs only when a navigation update changed a road (D-S4).
+- **Three things that grew without bound over a session** (D-S7):
+  - detailed-logging traces are capped at 128 ticks;
+  - the Trading Post template cache is weakly keyed;
+  - disposed Steam callbacks are let go, and no longer keep every earlier scene alive.
+- **Detailed logging** can't keep up with a large colony: about 27 ms a tick of tracing and sending at 600 beavers. The
+  desync dialog no longer offers it from 200 beavers and bots, and its Mod Settings tooltip says so (D-S11).
+- **The reporting a long session needs** (D-S2, D-S1):
+  - the Ctrl+Shift+J report and a new daily `[Perf]` line count frames cut short by deletions in a tick, game time lost to
+    the one-tick cap, the heap, GC counts and the mod's growing collections;
+  - every per-tick and per-frame hot path has a profiler spot, the busiest sampled (one call in 16).
+- **Measured and left:**
+  - a lockstep model shows no spiral: the slower computer sets the pace, and a boost the computers can't carry settles
+    seconds behind (D-S5);
+  - the unoptimised Release Steam build shows no consistent gain from optimising outside the game (D-S8, Script P1b).
+
+### The Join co-op box (beta24)
+- **A friend's lobby text:** each lobby field is now one short line, and labels show it without rich text, so a Steam
+  name with angle brackets reads as typed (B24-a).
+- **Enter while typing an IP address** with a friend's game selected could join the friend's game. While the address field
+  has focus, Enter now connects to the address (B24-b).
+
+### Display
+- **The demolish tool:** a deletion sent as an action left the terrain the tool had picked in its list. The list grew all
+  session and raised the layer view to old heights (X4-1, E-4).
+
+### Refuted (no change)
+- **E-6:** the host's check of a played placement reads its own previews. The validator already passes in a replay
+  (`DistrictPreviewsValidatorReplayPatcher`).
+- **F1 to F3:**
+  - all 313 buildings of both factions are covered;
+  - pilots and planes are not character creation sites;
+  - `BotFactory._botTemplate` is safe.
+- **V1:** Wonder completion is not a desync.
+- **Five trading leads**, including a crossing that could throw for want of room: each half's room is mirrored on its
+  partner.
+- **Creations ending frames:** in a game, only loading does that.
+
+### Left, and documented (TWO-COLONIES, README)
+- **Power:** two colonies' shafts that touch make one network (P1).
+- **Blasts** reach any colony (X2).
+- **Demolishing a platform** that holds up terrain-block dirt leaves the dirt floating in co-op (G9).
+- **Local display choices** stay each player's own until a rehost: a light's colour, a decal, a bell, a stream gauge's
+  marker, an HTTP Adapter's webhooks.
+- **Automation pulses:** two opposite actions in one tick lose the pulse.
+- **A paused post's half in no colony** can be removed by any colony.
+- **The road rule** treats a district center, a Wonder and a tubeway or zipline station as road on every tile (E-10). A
+  vertical tubeway is judged on its own level only (E-11).
+- **The frame-ending interrupt on deletions** stays, because determinism needs it. It is now counted and reported
+  (D-S2).
+- **The `Time.time` detour** is still installed in single player (D-S10e).
+- **The Join co-op box:** *Already started* may not show (B24-c). A friend's self-built DLL of the same version lists
+  as joinable, then is refused at the handshake (B24-d).
+- **Findings in LateGamePerformance and Kyler's other mods** are in the findings document, for those mods.
+
+### Checks and docs
+- **Checks:** StabilityTests 417 → **445**, RuntimeChecks 361 → **426** on both builds (Release Steam and Release). Both
+  builds have 0 warnings. Each reviewer's checks live in their own files (`Rc*Checks.cs`, `Rc*RuntimeChecks.cs`).
+- **Docs:**
+  - TWO-COLONIES: state of testing, what reaches across, the new rules, Trading Post stalls, Wonders and handovers across
+    factions, and many *Known limits*;
+  - README: the release-candidate note and *Good to know*;
+  - ALPHA-TEST-SCRIPTS: the late-game playtest (Scripts L, M, T, P and a long session).
+
 ## 1.4.0-beta24
 
 **Join a friend from a list.** **Join co-op game** in the main menu opens a box listing the Steam friends who are

@@ -118,6 +118,12 @@ older build ignores the key.
   counter drops once.
 
 ### E-6. The host's check of a played placement read the host's own tool previews
+
+> **Main session, on merging: refuted, and the fix taken out again (`6f3728c`).** The validator already passes while a
+> replay runs (`DistrictPreviewsValidatorReplayPatcher`, since 1.3.0-exchange-alpha1), and the host checks a played placement only in
+> its replay, so nothing was ever refused. The host's check stays the game's own `BlockObject.IsValid`; E's two checks
+> became one that pins what does the work (`MayPlace` is reached only from the replay, and the validator's prefix
+> passes while replaying). What follows is E's text as written.
 - **Status:** Confirmed. **Kind:** gameplay (a building silently not placed, on every computer). **Hits:** everyone,
   mostly separate colonies.
 - **Evidence:**
@@ -233,7 +239,7 @@ older build ignores the key.
 
 | Feature | Desync | Crash | Cross-colony | Mixed | Cost | Save/rehost |
 |---|---|---|---|---|---|---|
-| Placing a building, a dragged line of many, copies of a building's settings | Sound: host checks once and writes `placed`; guests take it (`ToolEvents.cs:102-112`); check copy puts the random state back (PlacementRandomChecks) | Fixed: E-6 (the host's own previews); Sound: missing building → MissingContent, host refuses (`ReplayEvent.cs:122-135`, `ColonyRulesService.cs:143-150`); deleted copy source → plain placement | Sound: road rule + unlock per slot (`ColonyRules.cs:260-267`); copied settings of another colony's building dropped (`ColonyRulesService.cs:193-198`) | Sound: B's other-faction refusal (`ColonyRulesService.cs:267-279`) | Playtest: Script P, host drags a 100-tile path; Ctrl+Shift+J "Placement checks in replays" (D's spot) | Sound: events are not saved; the placed buildings are, stamped (`ColonyStamps.cs:36-47`) |
+| Placing a building, a dragged line of many, copies of a building's settings | Sound: host checks once and writes `placed`; guests take it (`ToolEvents.cs:102-112`); check copy puts the random state back (PlacementRandomChecks) | Refuted: E-6 (the validator already passes in a replay, `DistrictPreviewsValidatorReplayPatcher`; see E-6); Sound: missing building → MissingContent, host refuses (`ReplayEvent.cs:122-135`, `ColonyRulesService.cs:143-150`); deleted copy source → plain placement | Sound: road rule + unlock per slot (`ColonyRules.cs:260-267`); copied settings of another colony's building dropped (`ColonyRulesService.cs:193-198`) | Sound: B's other-faction refusal (`ColonyRulesService.cs:267-279`) | Playtest: Script P, host drags a 100-tile path; Ctrl+Shift+J "Placement checks in replays" (D's spot) | Sound: events are not saved; the placed buildings are, stamped (`ColonyStamps.cs:36-47`) |
 | Deleting buildings (tool, panel button) | Sound: same ids, same order everywhere | Sound: deleted earlier in the tick → skipped (E-H1 check) | Sound: list trimmed to the actor's (`ColonyRules.cs:281-289`); a post's partner may delete it | Sound: nothing faction-specific | Sound: O(ids) | Fixed: E-4 (tool state); Left: G9 terrain (A's X4) |
 | Planting marks over large areas | Sound: tiles levelled by the marker, carried (PlantingLevelChecks) | Fixed: E-1 (plant the host lacks) | Sound: each tile the actor's or free (`ColonyMarks`); Fixed: E-7 (split) | Sound: plantables per faction come from each planter's own list | Playtest: Script P, a 100×100 mark (D: per-tile digest notes) | Sound: marks saved per owner, sorted (`ColonyMarks.cs:193-196`) |
 | Cutting and demolition marks over large areas | Sound: coordinates and ids carried | Sound: gone entities skipped (ReplayEventChecks, E-H1); `Demolishable` exists on every picked entity | Sound: own or free marks only; list trimmed | Sound: nothing faction-specific | Playtest: the host judges one `OwnerOf` per id (~µs each) | Sound: as above |
