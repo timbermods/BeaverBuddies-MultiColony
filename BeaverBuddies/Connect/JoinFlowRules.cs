@@ -65,6 +65,34 @@ namespace BeaverBuddies.Connect
         public static bool RejoinEntersLobby(FriendGameState state) => state == FriendGameState.WaitingRoom;
     }
 
+    /// <summary>What an accepted Steam invite does (SteamOverlayConnectionService).</summary>
+    public enum InviteStep
+    {
+        /// <summary>In the main menu: join the host's page now.</summary>
+        Join,
+        /// <summary>In a game played alone: ask, then save it and join from the main menu.</summary>
+        OfferFromGame,
+        /// <summary>In a co-op game: its session is not ended for an invite; the player leaves it first.</summary>
+        LeaveCoopGameFirst,
+        /// <summary>Hosting a Co-op Game page (or loading its game): closed first, not replaced by a join.</summary>
+        StopHostingFirst,
+    }
+
+    public static class InviteRules
+    {
+        /// <summary>
+        /// An accepted invite to an open Co-op Game page. A page is joined only from the main menu (D20); a game played
+        /// alone is saved and left for it after asking (1.4.0-rc6); a co-op game or a page this player hosts is never
+        /// ended or replaced by a join (the in-game join used to take over the running session's connection).
+        /// </summary>
+        public static InviteStep Decide(bool inMainMenu, bool inCoopSession, bool hostingPage)
+        {
+            if (hostingPage) return InviteStep.StopHostingFirst;
+            if (inMainMenu) return InviteStep.Join;
+            return inCoopSession ? InviteStep.LeaveCoopGameFirst : InviteStep.OfferFromGame;
+        }
+    }
+
     /// <summary>The main menu's band, grown to fit its panel with the mod's two buttons (ClientConnectionUI.FitMainMenu).</summary>
     public static class MainMenuFit
     {

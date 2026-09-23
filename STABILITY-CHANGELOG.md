@@ -5,6 +5,32 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc6
+
+**Joining: the two rough edges left after rc5's review.** Asked for by Kyler after rc5. Wire and saves unchanged;
+everyone needs this build (the handshake checks).
+
+- **An invite accepted in a game never connects from it** (`InviteRules`, `SteamOverlayConnectionService.JoinHostLobby`).
+  A Co-op Game page can only be joined from the main menu, so before rc6 the join connected, was welcomed, and was then
+  dropped with a message to go back and accept again. Now:
+  - **playing alone**, a box asks (*… Co-op games are joined from the main menu: save this game and go there to join
+    them?*). **Save and join** makes the game's own exit save (`MainMenuSceneLoader.SaveAndOpenMainMenu`, as the game
+    menu's exit does) and goes to the main menu, which joins the host's page by itself once the menu is up
+    (`JoinPendingInvite`; the player stays in the host's Steam lobby meanwhile, so the host lets them in). **Stay here**
+    leaves the invite's lobby;
+  - **in a co-op game**, the invite is set aside with a message (leave the game first): the join used to replace the
+    running session's connection, ending the player's part in it;
+  - **while hosting a Co-op Game page**, the same: the page is closed first.
+- **A direct join is no longer waited for on the game thread.** `TimberClient.Start` starts the connection and its
+  network thread waits for it (up to 3 s, as before): an address where nothing answered froze the menu for up to 3 s. The
+  *Connecting* box now shows at once, and a failure comes as any later one does (through `OnError`, with the transport's
+  reason). rc5 had fixed this only for Rejoin's tries. A host name is still looked up as before (normally instant).
+- **Checks:** StabilityTests 474 → **476**, RuntimeChecks 438 → **440** (`Rc6Checks.cs`, `Rc6RuntimeChecks.cs`: the
+  invite's rule and its order before any connection, the exit save, the pending join; `Start` never waits and a refused
+  connection is reported with its reason), on both builds; 0 warnings. The new runtime checks fail on rc5's DLL.
+- **Docs:** README (joining, troubleshooting), TWO-COLONIES (the waiting room's joining; the co-op-game invite hazard
+  removed from the known issues), ALPHA-TEST-SCRIPTS Script H steps 12 and 13. Not played.
+
 ## 1.4.0-rc5
 
 **The review of rc2 to rc4.** Three reviewers read the work since rc1's review (the hand-over within a faction, the

@@ -134,6 +134,7 @@ RcPerformanceRuntimeChecks.Run(assembly, Test);
 RcColonyRuntimeChecks.Run(assembly, Test);
 // The review of 1.4.0-rc2 to rc4 (design/review-1.4.0-rc4/).
 Rc5RuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Test);
+Rc6RuntimeChecks.Run(assembly, Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

@@ -12,6 +12,7 @@ namespace TimberNet
     public class ConnectionFailureException : Exception
     {
         public ConnectionFailureException() : base("Client connection timed out") { }
+        public ConnectionFailureException(string message) : base(message) { }
     }
 
     public class TimberClient : TimberNetBase
@@ -156,21 +157,25 @@ namespace TimberNet
             AddEventToHash(message);
         }
 
+        // How long a direct connection may take to be accepted.
+        public const int ConnectTimeoutMilliseconds = 3000;
+
         public override void Start()
         {
             base.Start();
-            // TODO: Handle async properly and cleanup
-            // TODO: Make wait configurable?
-            if (!client.ConnectAsync().Wait(3000))
-            {
-                throw new ConnectionFailureException();
-            }
-            // Connect a TCP socket at the address, then read from it until it closes, on a thread of its own (see
-            // StartNetworkThread).
+            // The connection is started here (a transport that can't even start throws to the caller) and waited for on
+            // the network thread, never on the game thread: a direct join to an address where nothing answered held the
+            // game's menu for up to 3 s (1.4.0-rc6). A failure is reported as any later one is (HandleConnectionFailure).
+            Task connecting = client.ConnectAsync();
+            // Then read from it until it closes, on a thread of its own (see StartNetworkThread).
             StartNetworkThread("BeaverBuddies receive from the host", () =>
             {
                 try
                 {
+                    bool connected;
+                    try { connected = connecting.Wait(ConnectTimeoutMilliseconds); }
+                    catch (AggregateException error) { throw new ConnectionFailureException((error.InnerException ?? error).Message); }
+                    if (!connected) throw new ConnectionFailureException();
                     // Transports that connect in the background finish before the handshake clock starts.
                     (client as IConnectionAwaitable)?.WaitForConnection(BackgroundConnectTimeoutMilliseconds);
                     if (CompatibilityIdentity != null) RunCompatibilityHandshake(client, false);

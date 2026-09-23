@@ -108,7 +108,7 @@ namespace BeaverBuddies.Connect
                 else
                 {
                     // A rejoin's quiet try says nothing: the next try comes (1.4.0-rc5 review, A6).
-                if (!quietJoin) ShowError("BeaverBuddies.JoinCoopGame.Error.InvalidAddress");
+                    if (!quietJoin) ShowError("BeaverBuddies.JoinCoopGame.Error.InvalidAddress");
                     return false;
                 }
             }

@@ -82,7 +82,9 @@ a number of days for a group where someone may not come back (see
   can join after Start (a **Save and Rehost** lets someone in later).
 - **Guests**, **from the main menu**: **Join co-op game** lists your Steam friends' co-op games; pick the host's
   and press **Join**. Or accept the Steam invite, or type the host's IP under the list. A short
-  *Connecting* box, then the same page with **Ready** and **Leave**.
+  *Connecting* box, then the same page with **Ready** and **Leave**. An invite accepted while you play alone asks
+  first: **Save and join** saves your game and goes to the main menu, which joins the page by itself. In a co-op game,
+  or while hosting a page of your own, the invite waits: leave first, then accept it again.
   A game that has started may drop off the list instead of showing *Already started* (Steam may stop reporting a
   lobby nobody can join). A friend with the same version number but another build (one they built themselves) lists
   as joinable and is then refused with *Multiplayer build mismatch*: everyone installs the same zip.
@@ -392,9 +394,8 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   chooses **Save and Rehost** in the game menu: everyone meets on the Co-op Game page, and Start Game carries on.
 - **A guest's game failed to load after the waiting room's Start:** nobody can join a started game; the host uses
   **Save and Rehost**, and the guest joins that.
-- **"… is waiting for you in a co-op waiting room":** you accepted an invite while in a game, and the
-  host is in a waiting room (a new game, or a save hosted from the main menu). Go back to the main
-  menu, then accept the invite again or join from there.
+- **"… invited you to their co-op game. You are in a co-op game now":** a co-op game is not ended for an invite.
+  Leave it from the game menu (Esc), then accept the invite again, or join from **Join co-op game**.
 - **Ctrl+K says this is one shared colony:** the save is a shared game. A player other than the host splits it from
   the game menu (Esc → **Found your own colony**); that makes it separate for good.
 - **A desync dialog with `Colony state differs` in the log:** the every-tick colony check disagreed. It

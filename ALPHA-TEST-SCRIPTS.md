@@ -795,4 +795,13 @@ Screenshots help for every box and page here: nothing may overlap or run off.
 10. **After a desync** (if one happens): the desync dialog's **Save and Rehost** and **Reconnect (wait for Rehost)** do
     the same as step 8.
 11. **Both ways of joining.** Do step 8 once with the guest joined over Steam and once by IP address.
-12. Send both `Player.log` files. Lines start with `[Lobby]` and `[Colony]`.
+12. **An invite in a game** *(rc6)*. The guest plays a save alone; the host opens a Co-op Game page and invites them
+    over Steam. The guest accepts (Shift+Tab): once the overlay closes, a box asks *… Co-op games are joined from the
+    main menu: save this game and go there to join them?* **Stay here**: nothing happens, and the game plays on.
+    Invite again, **Save and join**: an autosave of the guest's game appears in Load game later, and the main menu
+    lands on the host's page by itself (a *Connecting* box first). Once more while the guest is in a co-op game with
+    someone else: a box says to leave that game first, and that game carries on undisturbed.
+13. **A direct join that finds nobody** *(rc6)*. Main menu → Join co-op game → an address where nothing hosts (for
+    example a friend's IP while they are in the main menu): the *Connecting* box shows at once, the menu stays smooth,
+    and after about 3 seconds it says the connection failed.
+14. Send both `Player.log` files. Lines start with `[Lobby]`, `[Join]` and `[Colony]`.

@@ -1,3 +1,8 @@
+v1.4.0-rc6 (BeaverBuddies MultiColony)
+* Accept a friend's invite while playing alone: Save and join saves your game and takes you to their Co-op Game page. In a co-op game the invite waits until you leave it.
+* Joining by IP address no longer freezes the menu while it connects.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc5 (BeaverBuddies MultiColony)
 * Playing alone, the game menu's Host co-op game is there now (it was missing in rc4).
 * Rejoining a rehost is steadier: over Steam you join the host's new Co-op Game page, not the old game; by IP the menu no longer stalls while you wait; the waiting box always goes away and its Cancel always works.

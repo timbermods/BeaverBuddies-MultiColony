@@ -524,12 +524,13 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   a player can still switch an untouched colony.
 - Every game is hosted through the waiting room, from the main menu (a new game; a save, from Host co-op game); a game
   hosts itself by going there (the game menu's Host co-op game, Save and Rehost). It holds at most seven guests (the Steam lobby's eight), and
-  is joined from the main menu only: a guest who accepts its invite while in a game is told to go back to the menu
-  (before beta19 a hosted save could be joined from a game). It has no chat, map preview or mod-list
+  is joined from the main menu only. An invite accepted in a game never connects from it (1.4.0-rc6,
+  `InviteRules`): playing alone, the player is asked, and **Save and join** makes the game's own exit save and goes to
+  the main menu, which joins the host's page by itself (the player stays in the host's Steam lobby meanwhile, so the
+  host lets them in); in a co-op game, or while hosting a page, the invite is set aside with a message and the lobby
+  left, so the running session is never taken over. It has no chat, map preview or mod-list
   comparison (mismatch warnings still show in the game). Its settlement-name box has no *Change start location*.
   Anyone who can reach the direct-IP port can come into the room; the host can remove them.
-- Accepting a waiting room's invite while in **someone else's co-op game** ends your part in that game before the box
-  says to go back to the main menu (the connection is replaced as the join starts). Leave the game first.
 - Over Steam, a guest who leaves a waiting room stays in the host's Steam lobby (eight places). After many leaves and
   rejoins a friend may find it full while the room still shows free places; the host re-opening the room clears it.
 - If the host's game stops while it makes a waiting room's world, the guests wait on *Creating the world…* until they
