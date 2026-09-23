@@ -450,19 +450,11 @@ namespace BeaverBuddies.Colonies
         private static string Workers(DistrictCrossing half) =>
             half.GetComponent<Workplace>() is Workplace workplace ? $"{workplace.NumberOfAssignedWorkers}/{workplace.MaxWorkers}" : "-";
 
-        /// <summary>Why one side of a running exchange is not in yet, if it can tell.</summary>
+        /// <summary>Why one side of a running exchange is not in yet, as the trading post's panel says it (ColonyExchangeService.WhyNotIn).</summary>
         private static string Stall(DistrictCrossing half, CrossingExchange side, ColonyExchangeService exchanges)
         {
-            if (side.Total <= 0 || side.GoodId == null || exchanges.IsIn(half, side)) return "";
-            string who = $" [{ColonyExchangeService.ColonyName(ColonyExchangeService.OwnerOf(half))}]";
-            if (side.GoodId == ExchangeTerms.Science)
-                return who + $" has {ColonyExchangeService.ScienceToSpare(ColonyExchangeService.OwnerOf(half))} of {side.Total} science";
-            if (side.GoodId == ExchangeTerms.Beavers) return who + $" can spare {exchanges.BeaversToSpare(half)} of {side.Total} beavers";
-            if (half.GetComponent<Workplace>()?.NumberOfAssignedWorkers == 0) return who + " no workers on its half";
-            Inventory inventory = half.GetComponent<DistrictCrossingInventory>()?.Inventory;
-            if (inventory != null && inventory.UnreservedCapacity(side.GoodId) == 0)
-                return who + " no room on its half (the other colony's goods are not being hauled away)";
-            return who + $" {side.Held} of {side.Total} delivered";
+            string why = exchanges.WhyNotIn(half, side);
+            return why.Length == 0 ? "" : $" [{ColonyExchangeService.ColonyName(ColonyExchangeService.OwnerOf(half))}] {why}";
         }
 
         private static string On(bool value) => value ? "on" : "off";

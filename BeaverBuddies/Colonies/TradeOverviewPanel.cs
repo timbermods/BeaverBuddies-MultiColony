@@ -376,9 +376,12 @@ namespace BeaverBuddies.Colonies
             int me = ColonySession.LocalSlot;
             ColonyExchangeService exchanges = ColonyExchangeService.Instance;
 
-            // Trading Posts with a half in this player's colony (trading or not yet), each seen from that half.
+            // Trading Posts with a half in this player's colony (trading or not yet), each seen from that half; and a half
+            // whose road was removed while this colony's exchange is open there (in no colony now, so found by the exchange),
+            // which shows as paused rather than vanishing from the list.
             var posts = _entityComponentRegistry.GetEnabled<DistrictCrossing>()
-                .Where(half => TradingPosts.IsTradingPostBuilding(half) && ColonyExchangeService.OwnerOf(half) == me)
+                .Where(half => TradingPosts.IsTradingPostBuilding(half) && (ColonyExchangeService.OwnerOf(half) == me
+                    || (ColonyExchangeService.OwnerOf(half) < 0 && ColonyExchangeService.Of(half) is CrossingExchange open && open.IsOpen && open.Colony == me)))
                 .Select(half => (key: ReplayEvent.GetEntityID(half), half))
                 .Where(p => p.key != null).OrderBy(p => p.key, StringComparer.Ordinal).ToList();
             NativeElements.SetText(postsTitle, string.Format(T("BeaverBuddies.Colony.Overview.Posts"), posts.Count));
@@ -741,16 +744,19 @@ namespace BeaverBuddies.Colonies
         /// <summary>"With {colony}" and one line on its exchange: the terms and the round's progress, or why it is idle.</summary>
         private void Describe(DistrictCrossing half, ColonyExchangeService exchanges, out string title, out string detail)
         {
+            DistrictCrossing partner = TradingPosts.Partner(half);
+            CrossingExchange mine = ColonyExchangeService.Of(half), theirs = ColonyExchangeService.Of(partner);
             if (!TradingPosts.IsTradingPost(half))
             {
-                title = T("BeaverBuddies.Colony.Trade.NotTradingTitle");
-                detail = T("BeaverBuddies.Colony.Overview.NotTrading");
+                // An exchange open at a post that no longer joins the two colonies waits for its road (T7: among many posts,
+                // one paused mid-round must not read as one not trading yet).
+                bool paused = mine != null && mine.IsOpen && theirs != null && theirs.IsOpen;
+                title = T(paused ? "BeaverBuddies.Colony.Trade.PausedTitle" : "BeaverBuddies.Colony.Trade.NotTradingTitle");
+                detail = T(paused ? "BeaverBuddies.Colony.Trade.PausedStatus" : "BeaverBuddies.Colony.Overview.NotTrading");
                 return;
             }
-            DistrictCrossing partner = TradingPosts.Partner(half);
             int them = ColonyExchangeService.OwnerOf(partner);
             title = string.Format(T("BeaverBuddies.Colony.Overview.With"), ColoredName(them));
-            CrossingExchange mine = ColonyExchangeService.Of(half), theirs = ColonyExchangeService.Of(partner);
             if (exchanges == null || mine == null || theirs == null || !mine.IsOpen)
             {
                 detail = T("BeaverBuddies.Colony.Overview.Idle");
@@ -767,7 +773,15 @@ namespace BeaverBuddies.Colonies
                 : string.Format(T("BeaverBuddies.Colony.Trade.RoundOf"), mine.Done + 1, mine.Rounds);
             string progress = string.Format(T("BeaverBuddies.Colony.Overview.Progress"), Side(half, mine, exchanges), Side(partner, theirs, exchanges));
             string asked = mine.CancelAsked || theirs.CancelAsked ? " " + T("BeaverBuddies.Colony.Overview.CancelAsked") : "";
-            detail = string.Format(T("BeaverBuddies.Colony.Overview.Running"), give, get) + " " + round + ". " + progress + asked;
+            // A round held up says why, as the post's own panel does (T5, T7: which of many posts waits, and for what).
+            string heldUp = "";
+            if (asked.Length == 0)
+            {
+                bool mineIn = exchanges.IsIn(half, mine), theirsIn = exchanges.IsIn(partner, theirs);
+                if (!mineIn || !theirsIn)
+                    heldUp = " " + TradingPostFragment.StatusLine(half, mine, theirs, mineIn, theirsIn, ColonyExchangeService.OwnerOf(half), them, exchanges);
+            }
+            detail = string.Format(T("BeaverBuddies.Colony.Overview.Running"), give, get) + " " + round + ". " + progress + asked + heldUp;
         }
 
         /// <summary>A side's part of the round: "60/100", or "ready" for science and beavers that can be paid.</summary>
