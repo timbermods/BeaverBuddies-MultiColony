@@ -238,22 +238,29 @@ namespace BeaverBuddies
 
             /// <summary>
             /// Patches TickableEntity.Tick, once per program run, between ticks. Should it fail, the traces only lose the
-            /// ticking entity's name.
+            /// ticking entity's name. Patching happens on this computer alone, in a session: Harmony's patcher asks for new
+            /// GUIDs (MonoMod names what it makes with them), which a session draws from the game's random state
+            /// (GuidPatcher), so it gets real ones here, and the random state is put back whatever else it drew.
             /// </summary>
             public static void EnsurePatched()
             {
                 if (patched) return;
                 patched = true;
+                UnityEngine.Random.State randomState = UnityEngine.Random.state;
                 try
                 {
-                    new Harmony(Plugin.ID).Patch(AccessTools.Method(typeof(TickableEntity), nameof(TickableEntity.Tick)),
+                    GuidPatcher.WithRealGuids(() => new Harmony(Plugin.ID).Patch(AccessTools.Method(typeof(TickableEntity), nameof(TickableEntity.Tick)),
                         prefix: new HarmonyMethod(AccessTools.Method(typeof(TickableEntityTickPatcher), nameof(Prefix))),
-                        postfix: new HarmonyMethod(AccessTools.Method(typeof(TickableEntityTickPatcher), nameof(Postfix))));
+                        postfix: new HarmonyMethod(AccessTools.Method(typeof(TickableEntityTickPatcher), nameof(Postfix)))));
                     Plugin.Log("Detailed logging: the ticking entity is now named in random-draw traces");
                 }
                 catch (Exception error)
                 {
                     Plugin.LogWarning("Detailed logging cannot name the ticking entity: " + error.Message);
+                }
+                finally
+                {
+                    UnityEngine.Random.state = randomState;
                 }
             }
 
@@ -850,6 +857,15 @@ namespace BeaverBuddies
             Guid guid = Guid.NewGuid();
             makeRealGuid = false;
             return guid;
+        }
+
+        /// <summary>Runs <paramref name="action"/> with real GUIDs on this thread (work done on this computer alone).</summary>
+        public static void WithRealGuids(Action action)
+        {
+            bool was = makeRealGuid;
+            makeRealGuid = true;
+            try { action(); }
+            finally { makeRealGuid = was; }
         }
 
         static bool Prefix(ref Guid __result)

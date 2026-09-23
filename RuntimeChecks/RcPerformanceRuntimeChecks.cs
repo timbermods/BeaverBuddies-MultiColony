@@ -82,13 +82,31 @@ internal static class RcPerformanceRuntimeChecks
             if (always.Count > 0) throw new Exception("patched in every game by " + string.Join(", ", always));
             Type patcher = Mod("BeaverBuddies.DeterminismService+TickableEntityTickPatcher");
             var ensure = IlScan.Instructions(Only(patcher, "EnsurePatched"));
-            if (!ensure.Any(i => i.Calls && i.Member?.Name == "Patch")) throw new Exception("EnsurePatched no longer patches TickableEntity.Tick");
+            if (!IlScan.Of(patcher).Values.SelectMany(m => m).Any(m => m.Name == "Patch")) throw new Exception("EnsurePatched no longer patches TickableEntity.Tick");
+            // Patched in a session on this computer alone: Harmony's patcher asks for GUIDs, which a session draws from the
+            // game's random state, so the patch runs with real GUIDs and the random state is put back.
+            if (!ensure.Any(i => i.Calls && i.Is("BeaverBuddies.GuidPatcher", "WithRealGuids"))) throw new Exception("the patch can draw GUIDs from the game's random state");
+            if (!ensure.Any(i => i.Calls && i.Member?.Name == "get_state") || !ensure.Any(i => i.Calls && i.Member?.Name == "set_state"))
+                throw new Exception("the patch does not put the game's random state back");
             var tick = IlScan.Instructions(Only(Mod("BeaverBuddies.ReplayService"), "DoTick"));
             int call = tick.FindIndex(i => i.Calls && i.Member?.Name == "EnsurePatched");
             if (call < 0) throw new Exception("ReplayService.DoTick never patches it, so detailed logging would not name the ticking entity");
             int debug = tick.FindLastIndex(call, i => i.Calls && i.Is("BeaverBuddies.Settings", "get_Debug"));
             if (debug < 0 || !tick.Skip(debug + 1).Take(call - debug).Any(i => i.Op.FlowControl == FlowControl.Cond_Branch))
                 throw new Exception("DoTick patches it without detailed logging on");
+        });
+
+        test("D-S10: in a session, a GUID asked for inside WithRealGuids (the on-demand patch) is a real one", () =>
+        {
+            Type guids = Mod("BeaverBuddies.GuidPatcher");
+            MethodInfo prefix = Only(guids, "Prefix");
+            using var session = ScopeChecks.Multiplayer(mod);
+            bool? inside = null;
+            Only(guids, "WithRealGuids").Invoke(null, new object[] { (Action)(() => inside = (bool)prefix.Invoke(null, new object[] { Guid.Empty })!) });
+            if (inside != true) throw new Exception("the patcher's GUIDs came from the game's random state");
+            // Outside it, a session's GUID is drawn from Unity's random state (native here, so it throws).
+            try { prefix.Invoke(null, new object[] { Guid.Empty }); throw new Exception("outside WithRealGuids a session's GUID was a real one"); }
+            catch (TargetInvocationException) { }
         });
 
         test("D-S10: the dead code is gone: TickWathcerService, DeterminismPatcher, GameSaveHelper and the process-wide DateTime.ToString prefix", () =>
