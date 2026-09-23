@@ -34,8 +34,9 @@ namespace BeaverBuddies.Colonies
     /// BeaverBuddies-Reports, and copied to the clipboard, ready to paste into a bug report.
     ///
     /// Once a day, every computer also logs a one-line fingerprint of the colony state (owners, marks, science,
-    /// exchanges, population...). The simulation is the same everywhere, so two players' fingerprints for the same day
-    /// must match; the first part that differs shows where their computers stopped agreeing.
+    /// exchanges, population...), as the host's day plays (ColonyPresenceEvent, which compares it). The simulation is the
+    /// same everywhere, so two players' fingerprints for the same day must match; the first part that differs shows where
+    /// their computers stopped agreeing.
     ///
     /// Reads only: nothing here changes the game.
     /// </summary>
@@ -60,7 +61,7 @@ namespace BeaverBuddies.Colonies
         private readonly float[] tickRates = new float[TickSamples];
         private int tickRateCount, ticksThisSecond;
         private float secondStart;
-        private int ticks, checkedDay = int.MinValue;
+        private int ticks;
         private readonly Queue<string> fingerprints = new Queue<string>();
         private bool desyncReported;
         // The session ends as a desync is found, before the report is written: what this computer was, and whether dev
@@ -135,38 +136,54 @@ namespace BeaverBuddies.Colonies
         {
             ticks++;
             ticksThisSecond++;
-            // In a separate-colonies co-op game: a shared game has no colony state to check.
-            if (EventIO.IsNull || !ColonyModeService.IsSeparateColonies) return;
-            int day = _dayNightCycle.DayNumber;
-            if (day == checkedDay) return;
-            bool first = checkedDay == int.MinValue;
-            checkedDay = day;
-            // Only at the turn of a day, so every computer's line for a day is taken at the same moment (not when each
-            // happened to load).
-            if (first) return;
+        }
+
+        private static readonly ColonyProfiler.Spot DailyFingerprint = ColonyProfiler.Declare("Daily colony check (every entity)");
+
+        /// <summary>
+        /// The day's colony check on this computer: taken once, as the host's day (ColonyPresenceEvent) plays, at the same
+        /// point of the same tick on every computer; logged, kept for the report, and returned for the comparison. Until
+        /// 1.4.0-rc1 every computer also took one of its own at the turn of the day, a second walk over every entity a
+        /// day in a separate tick (review D-S12).
+        /// </summary>
+        public string DailyCheck(int day)
+        {
+            long started = ColonyProfiler.Start();
+            string fingerprint = Fingerprint();
+            ColonyProfiler.Stop(DailyFingerprint, started);
             try
             {
-                string line = $"day {day} tick {ticks}: {Fingerprint()}";
+                string line = $"day {day} tick {ticks}: {fingerprint}";
                 fingerprints.Enqueue(line);
                 while (fingerprints.Count > Fingerprints) fingerprints.Dequeue();
                 Plugin.Log("[Colony] Check " + line);
             }
             catch (Exception error)
             {
-                Plugin.LogWarning("[Colony] Could not take the daily colony check: " + error.Message);
+                Plugin.LogWarning("[Colony] Could not log the daily colony check: " + error.Message);
             }
+            return fingerprint;
         }
 
         /// <summary>
         /// The colony state in a few short numbers, each the same on every computer that agrees. Sums over entities,
         /// so the order things are found in does not matter. Reads saved and tick-aligned state only, never anything
         /// of this computer's own (its slot, its view), so it may be compared between computers (ColonyPresenceEvent).
+        /// One pass over every entity with two component lookups each; the few crossings are read from the game's registry
+        /// of them, and each district is hashed once (1.4.0-rc1 review, D-S12).
         /// </summary>
         public string Fingerprint()
         {
             long owners = 0, stamps = 0, exchanges = 0, districts = 0, stock = 0, characters = 0;
             bool mixed = BeaverBuddies.Factions.MixedFactions.IsOn;
             var population = new int[ColonySlotTable.MaxSlots];
+            var districtHashes = new Dictionary<DistrictCenter, long>();
+            long DistrictHash(DistrictCenter center)
+            {
+                if (center == null) return 0;
+                if (!districtHashes.TryGetValue(center, out long hash)) districtHashes[center] = hash = Hash(center);
+                return hash;
+            }
             foreach (DistrictCenter districtCenter in _districtCenterRegistry.AllDistrictCenters)
             {
                 int slot = DistrictOwner.OwnerOfDistrict(districtCenter) ?? -1;
@@ -178,29 +195,34 @@ namespace BeaverBuddies.Colonies
             foreach (EntityComponent entity in _entityRegistry.Entities)
             {
                 ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
-                if (stamp != null) stamps += Hash(entity) * (stamp.Slot + 2);
+                if (stamp != null) stamps += IdHash(entity) * (stamp.Slot + 2);
                 // Mixed factions: each character's faction and how many needs it has (a beaver's is fixed when it is made).
                 if (mixed)
                 {
                     Timberborn.NeedSystem.NeedManager needs = entity.GetComponent<Timberborn.NeedSystem.NeedManager>();
                     if (needs != null)
-                        characters += Hash(entity) * (ColonyDigest.Of(BeaverBuddies.Factions.ColonyFactionService.SimFactionOf(entity)) * 31
+                        characters += IdHash(entity) * (ColonyDigest.Of(BeaverBuddies.Factions.ColonyFactionService.SimFactionOf(entity)) * 31
                             + needs.NeedSpecs.Length + 1);
                 }
                 // Which district each building and construction site is joined to (what haulers and builders go by).
                 DistrictBuilding districtBuilding = entity.GetComponent<DistrictBuilding>();
                 if (districtBuilding != null)
-                    districts += Hash(entity) * (3 * Hash(districtBuilding.ConstructionDistrict) + 5 * Hash(districtBuilding.InstantDistrict)
-                        + 7 * Hash(districtBuilding.District) + 1);
+                    districts += IdHash(entity) * (3 * DistrictHash(districtBuilding.ConstructionDistrict)
+                        + 5 * DistrictHash(districtBuilding.InstantDistrict) + 7 * DistrictHash(districtBuilding.District) + 1);
+            }
+            // Both components below come only with a District Crossing (their decorators), which the game registers.
+            foreach (DistrictCrossing crossing in _entityComponentRegistry.GetAll<DistrictCrossing>())
+            {
+                long entity = Hash(crossing);
                 // Every exchange, open or closed (a closed one keeps its serial and ledger), with every field.
-                CrossingExchange exchange = entity.GetComponent<CrossingExchange>();
-                if (exchange != null) exchanges += Hash(entity) * exchange.Fingerprint();
+                CrossingExchange exchange = crossing.GetComponent<CrossingExchange>();
+                if (exchange != null) exchanges += entity * exchange.Fingerprint();
                 // What waits on each half of a crossing.
-                DistrictCrossingInventory crossingInventory = entity.GetComponent<DistrictCrossingInventory>();
+                DistrictCrossingInventory crossingInventory = crossing.GetComponent<DistrictCrossingInventory>();
                 if (crossingInventory != null && crossingInventory.Inventory != null)
                 {
                     foreach (GoodAmount good in crossingInventory.Inventory.Stock)
-                        stock += Hash(entity) * (ColonyDigest.Of(good.GoodId) * 7 + good.Amount);
+                        stock += entity * (ColonyDigest.Of(good.GoodId) * 7 + good.Amount);
                 }
             }
             ColonyModeService mode = ColonyModeService.Instance;
@@ -228,6 +250,9 @@ namespace BeaverBuddies.Colonies
             EntityComponent entity = component.GetComponent<EntityComponent>();
             return entity == null ? 0 : entity.EntityId.GetHashCode();
         }
+
+        // Hash of an entity from the registry, which is its own EntityComponent: what Hash gives, without the lookup.
+        private static long IdHash(EntityComponent entity) => !entity ? 0 : entity.EntityId.GetHashCode();
 
         // ---- the report ----
 

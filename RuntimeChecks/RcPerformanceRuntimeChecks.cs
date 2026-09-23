@@ -131,7 +131,8 @@ internal static class RcPerformanceRuntimeChecks
             setPath.Invoke(follower, new[] { path });
             return follower;
         }
-        MethodInfo resume = Only(Mod("BeaverBuddies.Fixes.AnimatedPathFollowerUpdatePathcer"), "ResumeSearch");
+        // Looked up inside each check, so a build without it fails the check instead of the run.
+        MethodInfo Resume() => Only(Mod("BeaverBuddies.Fixes.AnimatedPathFollowerUpdatePathcer"), "ResumeSearch");
 
         test("D-S9: on the game's own AnimatedPathFollower, going on from the cached corner draws what a search from the first draws", () =>
         {
@@ -150,7 +151,7 @@ internal static class RcPerformanceRuntimeChecks
                     clock += random.NextDouble() < .15 ? -(float)random.NextDouble() * .3f : (float)random.NextDouble() * .05f;
                     nextCorner.SetValue(before, 0);
                     update.Invoke(before, new object[] { clock });
-                    resume.Invoke(null, new[] { after, clock });
+                    Resume().Invoke(null, new[] { after, clock });
                     update.Invoke(after, new object[] { clock });
                     if (!Equals(nextCorner.GetValue(before), nextCorner.GetValue(after)) || !Equals(group.GetValue(before), group.GetValue(after))
                         || !Equals(speed.GetValue(before), speed.GetValue(after)))
@@ -174,7 +175,7 @@ internal static class RcPerformanceRuntimeChecks
             var reset = System.Linq.Expressions.Expression.Lambda<Action<object, float>>(System.Linq.Expressions.Expression.Assign(
                 System.Linq.Expressions.Expression.Field(typed, nextCorner), System.Linq.Expressions.Expression.Constant(0)), f, t).Compile();
             var goOn = System.Linq.Expressions.Expression.Lambda<Action<object, float>>(
-                System.Linq.Expressions.Expression.Call(resume, typed, t), f, t).Compile();
+                System.Linq.Expressions.Expression.Call(Resume(), typed, t), f, t).Compile();
             var move = System.Linq.Expressions.Expression.Lambda<Action<object, float>>(
                 System.Linq.Expressions.Expression.Call(typed, update, t), f, t).Compile();
             double Run(List<object> followers, Action<object, float> before)
@@ -296,5 +297,132 @@ internal static class RcPerformanceRuntimeChecks
             Console.WriteLine($"  one walk over {nodes} road nodes in {districts} districts: {ms:0.00} ms (.NET 8; the game's Mono is slower). " +
                 "It ran on every regular navigation update in separate colonies; now only on those that changed a road");
         });
+
+        // ---- D-S12: the daily colony check ----
+
+        test("D-S12: each computer walks every entity once a day for the colony check, as the host's day plays", () =>
+        {
+            Type diagnostics = Mod("BeaverBuddies.Colonies.ColonyDiagnostics");
+            MethodInfo fingerprint = Only(diagnostics, "Fingerprint");
+            bool Takes(MethodBase method) => IlScan.Instructions(method).Any(i => i.Calls && i.Member == fingerprint);
+            if (Takes(Only(diagnostics, "Tick"))) throw new Exception("ColonyDiagnostics.Tick still takes its own check at the turn of the day");
+            MethodInfo compare = Only(Mod("BeaverBuddies.Colonies.ColonyPresenceEvent"), "Compare");
+            if (Takes(compare)) throw new Exception("the presence event takes a second check instead of the day's one");
+            if (!IlScan.Instructions(compare).Any(i => i.Calls && i.Member?.Name == "DailyCheck")) throw new Exception("the presence event does not compare the day's check");
+            var daily = IlScan.Instructions(Only(diagnostics, "DailyCheck"));
+            if (daily.Count(i => i.Calls && i.Member == fingerprint) != 1) throw new Exception("DailyCheck does not take exactly one check");
+            if (!daily.Any(i => i.Calls && i.Member?.Name == "Log")) throw new Exception("DailyCheck does not log the day's line");
+        });
+
+        test("D-S12: micro-benchmark, the daily colony check over 20,000 entities (the game's own component lookups)", () =>
+        {
+            object world = FakeWorld(mod, Game, 12000, 5000, 600, 40, out int entities);
+            MethodInfo fingerprint = Only(Mod("BeaverBuddies.Colonies.ColonyDiagnostics"), "Fingerprint");
+            // DailyCheck (1.4.0-rc1) takes one a day; beta24 took two (the turn of the day, and the presence event).
+            int walks = Mod("BeaverBuddies.Colonies.ColonyDiagnostics").GetMethod("DailyCheck", All) != null ? 1 : 2;
+            fingerprint.Invoke(world, null);
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            const int runs = 20;
+            for (int r = 0; r < runs; r++) fingerprint.Invoke(world, null);
+            double ms = watch.Elapsed.TotalMilliseconds / runs;
+            Console.WriteLine($"  one check over {entities} entities: {ms:0.00} ms, {walks} a day: {ms * walks:0.00} ms a day (.NET 8, and without the " +
+                "entity-ID lookups beta24 also made per building, which need a live Unity object; the game's Mono is slower)");
+        });
+    }
+
+    /// <summary>
+    /// A ColonyDiagnostics over a made-up world whose entities hold the game's own component caches: natural resources,
+    /// buildings (stamped, in one of 12 districts), characters, and District Crossings registered as the game registers
+    /// them. Nothing in it is alive to Unity, so the checks' "is it destroyed" tests say yes and hash 0: only the walk and
+    /// its component lookups are measured.
+    /// </summary>
+    static object FakeWorld(Assembly mod, Func<string, string, Type> game, int resources, int buildings, int characters, int crossings, out int count)
+    {
+        object Blank(Type type) => System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(type);
+        void Set(object target, string field, object? value)
+        {
+            for (Type? type = target.GetType(); type != null; type = type.BaseType)
+            {
+                FieldInfo? info = type.GetField(field, All);
+                if (info != null) { info.SetValue(target, value); return; }
+            }
+            throw new Exception($"{target.GetType().Name}.{field} is gone");
+        }
+        Type entityType = game("Timberborn.EntitySystem", "Timberborn.EntitySystem.EntityComponent");
+        Type cacheType = game("Timberborn.BaseComponentSystem", "Timberborn.BaseComponentSystem.ComponentCache");
+        Type mapType = game("Timberborn.BaseComponentSystem", "Timberborn.BaseComponentSystem.TypeIndexMap");
+        Type centerType = game("Timberborn.GameDistricts", "Timberborn.GameDistricts.DistrictCenter");
+        Type buildingType = game("Timberborn.GameDistricts", "Timberborn.GameDistricts.DistrictBuilding");
+        Type crossingType = game("Timberborn.DistributionSystem", "Timberborn.DistributionSystem.DistrictCrossing");
+        Type stampType = mod.GetType("BeaverBuddies.Colonies.ColonyStamp", true)!;
+        Type readOnly = game("Timberborn.Common", "Timberborn.Common.ReadOnlyList`1").MakeGenericType(typeof(object));
+        // Every type the check asks an entity for, cached in each template's map as the game caches it on first ask.
+        Type[] asked = { entityType, stampType, buildingType, crossingType, mod.GetType("BeaverBuddies.Colonies.CrossingExchange", true)!,
+            game("Timberborn.DistributionSystem", "Timberborn.DistributionSystem.DistrictCrossingInventory"),
+            game("Timberborn.NeedSystem", "Timberborn.NeedSystem.NeedManager") };
+        var maps = new Dictionary<string, object>();
+        var centers = new List<object>();
+        var all = new List<object>();
+        var registeredCrossings = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(
+            game("Timberborn.EntitySystem", "Timberborn.EntitySystem.IRegisteredComponent")))!;
+        object Entity(string template, params object[] parts)
+        {
+            object entity = Blank(entityType), cache = Blank(cacheType);
+            var components = new List<object> { entity };
+            components.AddRange(parts);
+            if (!maps.TryGetValue(template, out object? map))
+            {
+                map = Activator.CreateInstance(mapType, true)!;
+                object list = readOnly.GetConstructors(All).Single().Invoke(new object[] { components });
+                foreach (Type type in asked) mapType.GetMethod("CacheType")!.MakeGenericMethod(type).Invoke(map, new[] { list });
+                maps[template] = map;
+            }
+            Set(cache, "_typeIndexMap", map);
+            Set(cache, "_components", components);
+            foreach (object part in components) Set(part, "_componentCache", cache);
+            all.Add(entity);
+            return entity;
+        }
+        for (int i = 0; i < 12; i++)
+        {
+            object center = Blank(centerType);
+            Entity("center", center);
+            centers.Add(center);
+        }
+        var random = new Random(12);
+        object Building()
+        {
+            object building = Blank(buildingType);
+            object center = centers[random.Next(centers.Count)];
+            Set(building, "<District>k__BackingField", center);
+            Set(building, "<InstantDistrict>k__BackingField", center);
+            Set(building, "<ConstructionDistrict>k__BackingField", center);
+            return building;
+        }
+        for (int i = 0; i < resources; i++) Entity("tree");
+        for (int i = 0; i < buildings; i++) Entity("building", Blank(stampType), Building());
+        for (int i = 0; i < characters; i++) Entity("beaver");
+        for (int i = 0; i < crossings; i++)
+        {
+            object crossing = Blank(crossingType);
+            Entity("crossing", Blank(stampType), Building(), crossing);
+            registeredCrossings.Add(crossing);
+        }
+        count = all.Count;
+
+        object registry = Activator.CreateInstance(game("Timberborn.EntitySystem", "Timberborn.EntitySystem.EntityRegistry"))!;
+        var order = (IList)registry.GetType().GetField("_entitiesInInstantiationOrder", All)!.GetValue(registry)!;
+        foreach (object entity in all) order.Add(entity);
+        object components = Blank(game("Timberborn.EntitySystem", "Timberborn.EntitySystem.EntityComponentRegistry"));
+        var byType = (IDictionary)Activator.CreateInstance(components.GetType().GetField("_registeredComponents", All)!.FieldType)!;
+        byType[crossingType] = registeredCrossings;
+        Set(components, "_registeredComponents", byType);
+        object districts = Blank(game("Timberborn.GameDistricts", "Timberborn.GameDistricts.DistrictCenterRegistry"));
+        Set(districts, "_allDistrictCenters", Activator.CreateInstance(typeof(List<>).MakeGenericType(centerType)));
+        object diagnostics = Blank(mod.GetType("BeaverBuddies.Colonies.ColonyDiagnostics", true)!);
+        Set(diagnostics, "_entityRegistry", registry);
+        Set(diagnostics, "_entityComponentRegistry", components);
+        Set(diagnostics, "_districtCenterRegistry", districts);
+        return diagnostics;
     }
 }

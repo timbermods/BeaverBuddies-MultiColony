@@ -448,7 +448,8 @@ namespace BeaverBuddies.Colonies
             string here;
             try
             {
-                here = ColonyDiagnostics.Instance?.Fingerprint();
+                // The day's only walk over every entity on each computer, logged there too (1.4.0-rc1 review, D-S12).
+                here = ColonyDiagnostics.Instance?.DailyCheck(day);
             }
             catch (Exception error)
             {
