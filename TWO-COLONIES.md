@@ -13,7 +13,11 @@ waiting room (beta18 for new games, beta19 for saves), and most of the desync re
 covered by automated checks only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
 in that check would stop a healthy game too; the log line says which. The waiting room first opened in 1.4.0-beta23
 (until then **Next** crashed the game; until beta21 no guest could have got from it into the game): its pages have
-been seen, a game started from it has not yet. Play on a copy of your save and keep backups.
+been seen, a game started from it has not yet. **The late game** (automation and the HTTP API, water automation, power,
+dynamite and tunnels, both Wonders, bots), **Folktails and Iron Teeth together**, and **Trading Posts at scale** have
+not been played either: the 1.4.0-rc1 review read each of them against the game's own code, fixed what it found and
+added checks (`design/REVIEW-FINDINGS-1.4.0-beta24.md`), and a two-player late-game playtest (ALPHA-TEST-SCRIPTS,
+Scripts L, M and T) is what comes next. Play on a copy of your save and keep backups.
 
 ## The rules in one minute
 
@@ -100,8 +104,10 @@ centers already there are the host's colony's. Every other player **founds** the
    the host writes them into the founding, so a mod changing the difficulty on one computer changes nothing).
 3. A shared save (one colony: made with *Separate colonies for new games* off, or in the Stability Fork) stays
    shared unless the host ticks **Allow founding colonies in a shared game** before hosting. Then the first founding
-   in it makes it a separate-colonies game for good: every building already there becomes the host's colony's, on
-   every computer at that tick.
+   in it makes it a separate-colonies game for good: every building already there, and every planting and cutting
+   mark, becomes the host's colony's, on every computer at that tick (the marks since 1.4.0-rc1: before, the new
+   colony's workers could take the first colony's fields). Other players who played the shared colony have no colony
+   then: they found their own (Ctrl+K), or the host asks them to look after the first colony (Ctrl+T).
 
 ## Mixed factions (beta)
 
@@ -160,7 +166,15 @@ what it may receive. Two colonies of one faction trade as before.
 
 **Handovers.** A colony handed over goes to the nearest living colony *of its faction* first, then the nearest. The
 receiver keeps its own faction for its toolbar. It can still run the buildings and beavers it received, and a beaver
-crosses a Trading Post only into a colony of its own faction.
+crosses a Trading Post only into a colony of its own faction. What it received keeps its faction: its bots need
+Biofuel (Folktails) or Energy (Iron Teeth), and its beavers their own foods, which only the buildings they came with
+make, since the receiver builds only its own faction's. A Folktails bot can fly an Iron Teeth Earth Repopulator's plane
+(it flies without the piloting pose; until 1.4.0-rc1 this stopped the session for everyone).
+
+**Wonders.** Each colony builds its own faction's: the Folktails Earth Recultivator, the Iron Teeth Earth Repopulator.
+A Wonder's effect helps the beavers of its own faction in its range, whichever colony they belong to; the other
+faction's beavers get nothing from it (the need is their faction's alone). The first Wonder of any colony to finish
+completes the map for everyone, and each player's profile records the map for their own colony's faction.
 
 ## A shared-colony game
 
@@ -214,10 +228,16 @@ says whose it is, with **Select your half**.
    **Make offer**.
 3. **Each round.** Each colony's Trading Post workers fetch its goods from its storage and bring them to **its own
    half**, where they wait, held for the round (no other beaver takes them). Each side's bar shows how much waits on
-   its half. Science and beavers are not carried: their bar shows how much the colony can give now.
+   its half. Science and beavers are not carried: their bar shows how much the colony can give now. Goods of the
+   exchange's item already waiting on your half (sent back by an exchange that ended, or received earlier) count
+   toward the round. When a round waits, the line under the bars says why: your half or theirs is paused or flooded,
+   has no workers, has no room because last round's goods still wait on the other half to be hauled away (the post's
+   room for a good is shared by its halves), or the colony has none left to bring. The Ctrl+T list says the same
+   for each post, and shows an exchange whose post lost a road as paused.
 4. **Crossing.** When both sides are in, the round crosses **all at once**: the goods pass to the other half and that
    colony's workers haul them away into their storage; science passes from pool to pool (only with separate science);
-   adult beavers move to the other colony's district (never the last adult), each with a line in the other colony's
+   adult beavers move to the other colony's district: only those free to go (carrying nothing, and able to walk
+   there), never the last adult, and a round of beavers waits until enough are free. Each has a line in the other colony's
    notification journal (*Pip joined the colony from Colony 2 through a Trading Post.*). So nothing is ever given
    before what it was exchanged for is in. The round goes in both halves' **ledger**, and the next round starts.
 5. **Done.** After the last round both players get a notice and the trading post is free for the next exchange.
@@ -227,7 +247,9 @@ nothing crosses while it is asked. The other player chooses **Agree to cancel** 
 player may take the request back (**Keep trading**). Once both agree, what waits on each half goes back into its own
 colony's storage; rounds that crossed stay crossed. If the post stops joining the two colonies (a road removed), its
 exchange pauses, and its colony may **End exchange** alone. When a colony is handed over, or a post ends up joining
-other colonies than the two that agreed, its exchange ends by itself, and what waits on each half goes back home.
+other colonies than the two that agreed, its exchange ends by itself, and what waits on each half goes back home. A
+Trading Post removed with an exchange open (by a player, a blast or the ground taken from under it) ends it: both
+players are told, and what waited on its halves is left there as goods any colony's workers may pick up.
 
 **Offering again.** Each half remembers the last exchange offered or accepted there, from its own side; a line above
 the form (*Last exchange here: 100 Logs for 25 Gears. 4 rounds…*) has **Offer again**, and a click on a row of the
@@ -312,9 +334,10 @@ unlocks too.
   and the host hands their old colony to it.
 
 The host tells every computer its limit with the day's presence, so the Ctrl+T window shows *missed 6 of 7 days*
-everywhere, and the day the count reaches the limit every player in the game is warned that the colony is handed
-over the next day unless its player is back (a colony looked after by a present steward gets no warning, as it is
-not handed over). The player who lost their colony gets a notice and may **found a new one** (Ctrl+K). A trading
+everywhere. A hand-over for absence is always announced the day before, to every player in the game: the day the
+count reaches the limit, or, for a colony a steward looked after past it, the first day nobody keeps it (and, after a
+load, the first day counted). It happens the next day unless its player or its steward is back (until 1.4.0-rc1 a
+steward's colony could go unwarned on the first day nobody kept it). The player who lost their colony gets a notice and may **found a new one** (Ctrl+K). A trading
 post between the two colonies then stands within one colony: its exchange ends (what waits on each half goes back
 home), and it trades again only if another colony's roads reach its other half.
 
@@ -353,15 +376,23 @@ places. So in a separate-colonies game:
 | Names | Only the owner renames |
 | Other mods' building settings | Only the owner changes them: another mod's action for one building (MixedStorage's warehouse and pile goods) is judged like this mod's own |
 | Stockpiles, planting, gathering (mixed factions) | A building keeps to its own faction: its goods, crops and trees, and the common ones |
+| Water buildings kept in step (floodgates, fill valves, throttling valves) | Only with their own colony's: synchronising stops at another colony's building, which keeps its heights and its wiring (1.4.0-rc1) |
+| Population Counters set to count everywhere | Their own colony's districts (1.4.0-rc1; the Science Counter already read its own colony's science) |
+| Indicator warnings | Shown to their own colony's player, as the journal entry already was (1.4.0-rc1) |
+| Beavers and bots without a district | The nearest district center of their own colony they can walk to, never another colony's; with none in reach they wait, as in the game, until their player founds again or the colony is handed over (1.4.0-rc1) |
 | Migration | Only between a colony's own districts; beavers change colony only through a Trading Post, and a traded beaver must be able to walk to its new district and carry nothing. In the Migration tab (F7), another colony's district's automatic migration settings, and the manual buttons between it and yours, are greyed out |
 
 Marks work per tile: a tile marked by one colony (for planting or cutting) can't be marked or unmarked by another.
 Unmarking an area removes only your own marks in it.
 
 **What still reaches across:** the map is one world. Water, droughts and badwater reach everyone, so a dam or a
-badwater pump near another colony can still change what flows to it. Decorations and other buildings
-with an area effect help any beaver standing in their area, whoever's it is. Game speed and pause are one clock for
-everyone.
+badwater pump near another colony can still change what flows to it. **Blasts** of dynamite and unstable cores
+destroy whatever they reach, the other colony's buildings and beavers included. **Power:** shafts of two colonies that
+touch make one network: both colonies' engines and batteries feed it, a clutch of either colony cuts it, and a Power
+Meter reads all of it. Decorations, monuments, Wonders, the Iron Teeth Control Tower and other buildings with an area
+effect help any beaver or bot standing in their area, whoever's it is (in a mixed game only those of their faction,
+the only ones with that need); a Beehive stings Folktails beavers of any colony and speeds up any crop in its range.
+Game speed and pause are one clock for everyone.
 
 ## What you see
 
@@ -482,7 +513,34 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - A guest's planting tools follow the first colony's unlocks (the game builds that list before the guest is seated).
 - Dev mode's tools, apart from its instant unlock, *Finish now* and *Add 1000 Science*, are not shared: using them
   desyncs a co-op game.
-  (Its "place finished" and "don't recover goods" keys, both Ctrl, are off in co-op.)
+  (Its "place finished", "don't recover goods" and plant-spawning keys, all Ctrl, are off in co-op. The dev power
+  generator, which any player can adjust once it stands, is shared since 1.4.0-rc1.)
+- **Automation in co-op runs on the game's ticks:** a change shows up to one tick later than in single player, and a
+  spring-return lever gives a pulse of one tick (it can't be held on). A Detonator never takes back an arming in
+  co-op, so that pulse sets it off, as a click does in single player (until 1.4.0-rc1 it didn't). Two opposite actions
+  played in one tick (on, then off, from the HTTP API) lose the pulse.
+- **The HTTP API** works in co-op: each player's computer runs its own server (start it from the HTTP Lever's panel),
+  and a request to switch an HTTP lever is that player's action, shared with everyone and refused for another
+  colony's lever. Requests to colour a lever are ignored in co-op. An HTTP Adapter's webhooks are called by each
+  player's computer with the settings made there.
+- A light's colour, a decal, a bell's sound, a stream gauge's marker and an HTTP Adapter's webhook settings are each
+  player's own until a rehost, which keeps the host's. Nothing simulated reads them.
+- Demolishing a platform that holds up dirt from terrain blocks leaves the dirt floating in co-op (single player
+  removes it with the platform). Remove the dirt first.
+- An action naming a building, crop, good or recipe that the host's game doesn't have (a guest's content mod) is
+  refused by the host; a guest missing one the host used leaves the game quietly. Until 1.4.0-rc1 a crop, a good's
+  distribution setting or a workshop recipe from such a mod stopped the session for everyone.
+- A district center, a Wonder, and a tubeway or zipline station count as road on every tile: they can't stand beside
+  another colony's road on any side, even where they have no door. A vertical tubeway is judged on its own level: one
+  joining another colony's unfinished tubeway above or below is caught by the joined-roads warning.
+- A round of heavy goods takes many trips (a beaver carries one Bot Chassis at a time): give busy Trading Posts more
+  workers (up to 10).
+- With detailed logging on, the log has one trade line a day: the exchanges, the goods held and waiting to be hauled
+  away, what crossed since yesterday and each colony's stock of it. A line `[Colony] Trade check:` is a bug: please
+  send the log.
+- **A Timberborn update** that changes a part of the game MultiColony corrects for co-op no longer stops the mod from
+  starting: single player carries on, and a co-op game is stopped at load with a message naming what is missing,
+  instead of going out of step. Update MultiColony then.
 - While a co-op game is paused, what was just built or removed updates its district (the district badge and highlight,
   and which district's builders a new construction site waits for) when the game resumes, at the same moment on every
   computer. Gates open and close, and automation reacts to a changed input, at the tick rather than the frame, for
