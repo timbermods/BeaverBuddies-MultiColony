@@ -96,6 +96,7 @@ namespace BeaverBuddies.Factions
         {
             if (!MixedFactions.IsOn || FactionCatalog.Instance == null) return true;
             HashSet<string> goods = FactionCatalog.Instance.GoodsOf(ColonyFactionService.DisplayFactionOf(districtDistributionSetting));
+            if (goods == null) return true;
             var list = new List<GoodDistributionSettingItem>();
             DistrictDistributableGoodProvider provider = districtDistributionSetting.GetComponent<DistrictDistributableGoodProvider>();
             foreach (GoodDistributionSetting setting in districtDistributionSetting.GetGoodDistributionSettingsForGroup(groupId))
@@ -134,6 +135,7 @@ namespace BeaverBuddies.Factions
         {
             if (!MixedFactions.IsOn || FactionCatalog.Instance == null || entity == null) return;
             HashSet<string> goods = FactionCatalog.Instance.GoodsOf(ColonyFactionService.DisplayFactionOf(entity));
+            if (goods == null) return;
             foreach (ImportGoodIcon icon in __instance._importGoodIcons)
             {
                 if (FactionImportIconPatcher.Roots.TryGetValue(icon, out VisualElement root))
@@ -208,6 +210,7 @@ namespace BeaverBuddies.Factions
         {
             if (!MixedFactions.IsOn || FactionCatalog.Instance == null) return;
             HashSet<string> goods = FactionCatalog.Instance.GoodsOf(ColonyFactionService.DisplayFactionOf(__instance));
+            if (goods == null) return;
             AccessTools.PropertySetter(typeof(ResourceCounterGoodsDropdownProvider), nameof(ResourceCounterGoodsDropdownProvider.Items))
                 ?.Invoke(__instance, new object[] { __instance.Items.Where(goods.Contains).ToImmutableArray() });
         }

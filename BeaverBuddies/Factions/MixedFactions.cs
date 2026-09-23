@@ -72,6 +72,7 @@ namespace BeaverBuddies.Factions
             FactionDisplay.Reset();
             FactionModels.Reset();
             FactionCreationContext.Reset();
+            FactionAnimation.Reset();
         }
 
         internal static void Decide(FactionService service)
@@ -154,11 +155,24 @@ namespace BeaverBuddies.Factions
             }
         }
 
-        internal static bool IsKnown(string factionId) =>
-            !string.IsNullOrEmpty(factionId) && AllFactions.Any(f => f.Id == factionId);
+        internal static bool IsKnown(string factionId) => !string.IsNullOrEmpty(factionId) && Find(factionId) != null;
 
-        internal static FactionSpec Spec(string factionId) =>
-            AllFactions.FirstOrDefault(f => f.Id == factionId) ?? AllFactions.FirstOrDefault(f => f.Id == BaseFaction);
+        /// <summary>
+        /// A faction's spec, else the base faction's. Asked for every beaver made (its fur), every path painted and every
+        /// avatar shown: a plain loop over the two or three factions, with no closure or enumerator made per call.
+        /// </summary>
+        internal static FactionSpec Spec(string factionId) => Find(factionId) ?? Find(BaseFaction);
+
+        private static FactionSpec Find(string factionId)
+        {
+            if (factionId == null) return null;
+            ImmutableArray<FactionSpec> factions = AllFactions;
+            for (int i = 0; i < factions.Length; i++)
+            {
+                if (factions[i].Id == factionId) return factions[i];
+            }
+            return null;
+        }
 
         /// <summary>The base faction is known once FactionService has loaded.</summary>
         internal static void SetBase(string factionId)

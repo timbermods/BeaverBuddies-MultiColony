@@ -25,7 +25,7 @@ namespace BeaverBuddies.Factions
     /// game and mod files, which the join handshake checks), so simulation rules may read it. Built once, when first
     /// asked; empty outside a mixed game.
     /// </summary>
-    public class FactionCatalog : RegisteredSingleton, ILoadableSingleton
+    public class FactionCatalog : RegisteredSingleton, ILoadableSingleton, IPostLoadableSingleton
     {
         public const string CommonCollectionId = "Common";
 
@@ -36,6 +36,8 @@ namespace BeaverBuddies.Factions
 
         private bool built;
         private bool failed;
+        // Set once the game has loaded and the catalog still can't be read: no call tries again.
+        private bool gaveUp;
         private FactionSets templates;
         private FactionSets goods;
         private FactionSets needs;
@@ -78,34 +80,50 @@ namespace BeaverBuddies.Factions
             }
         }
 
+        public void PostLoad()
+        {
+            if (!MixedFactions.IsOn) return;
+            // Everything the catalog reads has loaded by now. One that still can't be read never will be: from here on
+            // every answer falls back at once, instead of trying (and throwing and catching) again on each call, which the
+            // game makes for every character, yield and building.
+            if (!EnsureBuilt()) gaveUp = true;
+        }
+
         /// <summary>The faction whose collections alone list this template (null: common, or not a mixed game).</summary>
         public string FactionOfTemplate(string templateName)
         {
-            if (!MixedFactions.IsOn || string.IsNullOrEmpty(templateName)) return null;
-            EnsureBuilt();
+            if (!MixedFactions.IsOn || string.IsNullOrEmpty(templateName) || !EnsureBuilt()) return null;
             return templates.SoleFaction(templateName);
         }
 
         /// <summary>The faction whose collections alone list this blueprint (a template without a TemplateSpec included).</summary>
         public string FactionOfBlueprint(Blueprint blueprint)
         {
-            if (!MixedFactions.IsOn || blueprint == null) return null;
-            EnsureBuilt();
+            if (!MixedFactions.IsOn || blueprint == null || !EnsureBuilt()) return null;
             return blueprintFactions.TryGetValue(blueprint, out string faction) ? faction : null;
         }
 
         /// <summary>A faction has this good: common, or in its own collections.</summary>
         public bool HasGood(string faction, string goodId)
         {
-            if (!MixedFactions.IsOn) return true;
-            EnsureBuilt();
+            if (!MixedFactions.IsOn || !EnsureBuilt()) return true;
             return goods.Has(faction ?? MixedFactions.BaseFaction, goodId);
         }
 
-        /// <summary>The goods a faction has, as a set (for filters on hot paths).</summary>
+        /// <summary>
+        /// A good of the common collections (logs, berries, scrap metal: most of what yields give): every faction has it,
+        /// so whose building asks does not matter. False for any other good, and outside a mixed game.
+        /// </summary>
+        public bool IsCommonGood(string goodId)
+        {
+            if (!MixedFactions.IsOn || !EnsureBuilt()) return false;
+            return goods.InCommon(goodId);
+        }
+
+        /// <summary>The goods a faction has, as a set (for filters on hot paths); null when the catalog could not be read.</summary>
         public HashSet<string> GoodsOf(string faction)
         {
-            EnsureBuilt();
+            if (!EnsureBuilt()) return null;
             faction ??= MixedFactions.BaseFaction;
             if (!goodSets.TryGetValue(faction, out HashSet<string> set))
                 goodSets[faction] = set = new HashSet<string>(goods.ItemsOf(faction), StringComparer.Ordinal);
@@ -115,25 +133,25 @@ namespace BeaverBuddies.Factions
         /// <summary>The goods two factions both have (what may cross a Trading Post between them).</summary>
         public IEnumerable<string> SharedGoods(string a, string b)
         {
-            EnsureBuilt();
+            if (!EnsureBuilt()) return Enumerable.Empty<string>();
             return goods.Shared(a, b);
         }
 
         /// <summary>A faction has this need: common, or in its own collections.</summary>
         public bool HasNeed(string faction, string needId)
         {
-            if (!MixedFactions.IsOn) return true;
-            EnsureBuilt();
+            if (!MixedFactions.IsOn || !EnsureBuilt()) return true;
             return needs.Has(faction ?? MixedFactions.BaseFaction, needId);
         }
 
         /// <summary>
         /// A character's needs: the game's loaded needs (already scaled by the difficulty) that its faction has, for a bot
-        /// or a beaver, in the game's order. The same list vanilla gives a character of that faction.
+        /// or a beaver, in the game's order. The same list vanilla gives a character of that faction. If the catalog could
+        /// not be read (logged once), the game's own list: every faction's needs, as the game would give them.
         /// </summary>
         public ImmutableArray<NeedSpec> NeedsFor(string faction, bool bot)
         {
-            EnsureBuilt();
+            if (!EnsureBuilt()) return (bot ? _factionNeedService.GetBotNeeds() : _factionNeedService.GetBeaverNeeds()).ToImmutableArray();
             faction ??= MixedFactions.BaseFaction;
             if (needsFor.TryGetValue((faction, bot), out ImmutableArray<NeedSpec> list)) return list;
             IEnumerable<NeedSpec> source = bot ? _factionNeedService.GetBotNeeds() : _factionNeedService.GetBeaverNeeds();
@@ -179,11 +197,16 @@ namespace BeaverBuddies.Factions
 
         private static string OutfitKey(string faction, string id, string workerType) => faction + "|" + id + "|" + workerType;
 
-        private void EnsureBuilt()
+        /// <summary>
+        /// Whether the catalog could be read. Kept unbuilt on a failure, so a later call tries again (the first callers are
+        /// other services' Load), until the game has loaded (PostLoad); the error is logged once. Every answer above then
+        /// falls back to the game's own (no faction filter) instead of throwing: a character is made, a stockpile filled,
+        /// a yield taken and a building placed as the game would, inside a tick or a replay.
+        /// </summary>
+        private bool EnsureBuilt()
         {
-            if (built) return;
-            // Kept unbuilt on a failure, so a later call tries again (the first callers are other services' Load);
-            // the error is logged once.
+            if (built) return true;
+            if (gaveUp) return false;
             try
             {
                 Build();
@@ -194,6 +217,7 @@ namespace BeaverBuddies.Factions
                 if (!failed) Plugin.LogError("[Factions] Could not read the factions' collections: " + error);
                 failed = true;
             }
+            return built;
         }
 
         private void Build()

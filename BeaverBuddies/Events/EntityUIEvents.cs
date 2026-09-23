@@ -1295,6 +1295,11 @@ namespace BeaverBuddies.Events
             WonderActivationFollowsHostPatcher.HostSaidYes = true;
             try { wonder.Activate(); }
             finally { WonderActivationFollowsHostPatcher.HostSaidYes = false; }
+            // The launch sound the game plays for the player who clicked (WonderFragment.ActivateWonder, which is recorded
+            // instead of run, so in co-op it never played). This computer's player only; display, never the simulation.
+            if (player != Colonies.ColonySession.LocalPlayer) return;
+            try { context.GetSingleton<Timberborn.GameSound.GameUISoundController>()?.PlayWonderLaunchSound(); }
+            catch (Exception error) { Plugin.LogWarning("Could not play the Wonder's launch sound: " + error.Message); }
         }
 
         public override string ToActionString()

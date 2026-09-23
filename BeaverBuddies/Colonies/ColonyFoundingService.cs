@@ -446,18 +446,37 @@ namespace BeaverBuddies.Colonies
             return new UntouchedFacts(centers, others, marks: 0, tradeOpen: tradeOpen, unlocks: 0);
         }
 
-        /// <summary>Display: whether a colony is untouched, stopping at the first building of its own faction.</summary>
+        /// <summary>
+        /// Display: whether a colony is untouched, stopping at the first building of its own faction. The Ctrl+T window
+        /// asks once a second while it is open; a late game's colony is touched, and the building that showed it last
+        /// time is looked at first, so the walk over every entity is made only while the answer may be yes.
+        /// </summary>
         public bool IsUntouched(int slot)
         {
             if (ColonyExchangeService.Instance?.HasOpenExchange(slot) ?? false) return false;
             FactionCatalog catalog = FactionCatalog.Instance;
+            bool remembered = slot >= 0 && slot < touchedBy.Length;
+            if (remembered && Touches(touchedBy[slot], slot, catalog)) return false;
             foreach (EntityComponent entity in _entityRegistry.Entities)
             {
-                ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
-                if (stamp == null || stamp.Slot != slot || entity.GetComponent<DistrictCenter>() != null) continue;
-                if (catalog?.FactionOfTemplate(entity.GetComponent<TemplateSpec>()?.TemplateName) != null) return false;
+                if (!Touches(entity, slot, catalog)) continue;
+                if (remembered) touchedBy[slot] = entity;
+                return false;
             }
+            if (remembered) touchedBy[slot] = null;
             return true;
+        }
+
+        // Display only (IsUntouched): the building that last showed each colony touched.
+        private readonly EntityComponent[] touchedBy = new EntityComponent[ColonySlotTable.MaxSlots];
+
+        // A building (finished or not) of a faction of its own that the colony owns, its district centers left out.
+        private static bool Touches(EntityComponent entity, int slot, FactionCatalog catalog)
+        {
+            if (entity == null || entity.Deleted) return false;
+            ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
+            if (stamp == null || stamp.Slot != slot || entity.GetComponent<DistrictCenter>() != null) return false;
+            return catalog?.FactionOfTemplate(entity.GetComponent<TemplateSpec>()?.TemplateName) != null;
         }
 
         /// <summary>

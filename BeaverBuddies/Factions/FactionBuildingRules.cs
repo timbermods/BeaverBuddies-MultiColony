@@ -49,6 +49,7 @@ namespace BeaverBuddies.Factions
             FactionCatalog catalog = FactionCatalog.Instance;
             if (faction == null || catalog == null) return;
             HashSet<string> goods = catalog.GoodsOf(faction);
+            if (goods == null) return;
             __result = __result.Where(goods.Contains).ToList();
         }
     }
@@ -79,7 +80,9 @@ namespace BeaverBuddies.Factions
      * 2026-09-22, Timberborn 1.1.2.4, Yielding: YieldRemovingBuilding.IsAllowed(YielderSpec)
         _goodService.GetGoodOrNull(yielderSpec.Yield.Id) != null && yielderSpec.ResourceGroup == _spec.ResourceGroup
      * A faction's gatherer, lumberjack or scavenger takes only yields whose good its faction has (logs are common, so
-     * every lumberjack still cuts every tree).
+     * every lumberjack still cuts every tree). Asked for every yielder a building's range takes in, and again for each
+     * one planted or grown in it: a common good (logs, berries, scrap metal, most yields) is every faction's, so the
+     * building's own faction is looked up only for the others.
      */
     [HarmonyPatch(typeof(YieldRemovingBuilding), nameof(YieldRemovingBuilding.IsAllowed))]
     static class FactionYieldRemoverPatcher
@@ -88,9 +91,12 @@ namespace BeaverBuddies.Factions
         {
             if (!__result || !MixedFactions.IsOn) return;
             FactionCatalog catalog = FactionCatalog.Instance;
+            if (catalog == null) return;
+            string good = yielderSpec.Yield.Id;
+            if (catalog.IsCommonGood(good)) return;
             string faction = ColonyFactionService.SimFactionOf(__instance);
-            if (faction == null || catalog == null) return;
-            __result = catalog.HasGood(faction, yielderSpec.Yield.Id);
+            if (faction == null) return;
+            __result = catalog.HasGood(faction, good);
         }
     }
 }
