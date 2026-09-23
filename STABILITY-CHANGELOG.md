@@ -5,6 +5,39 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc2
+
+**Hand-overs are a last resort; stewardship is how a friend's colony is kept.** Two changes after 1.4.0-rc1, decided by
+Kyler: a colony whose player steps away is no longer handed over unless the host asks for it, and in a
+mixed-factions game it never goes to the other faction for absence. No wire change and no save change.
+
+- **The absence hand-over is off by default.** *Hand over a colony after its player is away* now defaults to 0 (never;
+  it was 7). A player stepping away asks a friend to look after their colony (Ctrl+T), and the host can still set a
+  number of days for a group where someone may not come back. The setting's tooltip says so (`Settings.cs`,
+  `BeaverBuddies.Settings.AbandonedColonyDays.Tooltip`).
+- **In a mixed-factions game, an absent player's colony goes only to a colony of its own faction** whose player is in
+  the game (`ColonyLifecycle.AbsenceReceiver`, `FactionRules.PreferSameFaction(..., sameFactionOnly)`). The other
+  faction's colony could run what it received but not build for, fuel or feed it (the beavers' foods, Biofuel or
+  Energy for the bots). With none of its faction in the game the colony waits:
+  - **no warning:** the day's presence announces a hand-over only when a colony is there to take it
+    (`ColonyAbsence.IsAnnounced(..., hasReceiver)`), so the warning still always comes the day before, and never for a
+    hand-over that can't come;
+  - **Ctrl+T says why:** *player away (missed 9 of 7 days; not handed over: no colony of its faction is in the game)*.
+
+  In a two-player mixed game that means never. Both steps are deterministic: the factions, populations and district
+  centers they read are the same on every computer, and the presence is the host's, played on every computer.
+- **Unchanged, and still crossing factions:**
+  - a colony with no beavers or bots left for a whole day still goes to the nearest living colony of any faction. Only
+    buildings and stock move, and it frees its player to found again (Ctrl+K needs a player with no district center);
+  - the host's **Hand to …** in Ctrl+T. Across factions its tooltip now says what the receiver can't do with the colony.
+- **Checks:** StabilityTests 445 → **447** (the rule, a day loop with a receiver that comes and goes, the wiring, the
+  default and its tooltip), RuntimeChecks 426 → **427** on both builds (the compiled rule, the host's check and the
+  presence asking for the receiver, the setting's default in Settings' IL; fails on 1.4.0-rc1's DLL). Both builds have
+  0 warnings.
+- **Docs:** TWO-COLONIES (*When a colony is handed over*, mixed-faction handovers) and the README (the setting, hand-overs).
+  ALPHA-TEST-SCRIPTS: B 8f and C 4 set the limit they need, and two new lines, L 12a (off by default) and M 11a (away in
+  a mixed game). Not played.
+
 ## 1.4.0-rc1
 
 **The release candidate for 1.4.0.** Until now only the early game had been played. This release comes from a review of

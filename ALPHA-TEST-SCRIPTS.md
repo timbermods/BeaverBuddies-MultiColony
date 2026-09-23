@@ -307,8 +307,8 @@ existing save, or a new multi-start map game. The friend joins over a Steam invi
     presses it: their connection panel row shows the host's colony number, their toolbar and top bar are the host's
     colony's, and a building they place is the host's colony's (the host can change it). **Back to your colony**
     restores their own. The host presses **Take it back**: the friend, if still running it, is put back to their own
-    colony with a notice. Then the friend leaves while looking after the host's colony (grant it again first) and
-    the host plays past the limit: the host's colony is **not** handed over while the friend is in the game; once the
+    colony with a notice. Then the friend leaves while looking after the host's colony (grant it again first) and,
+    with the host's limit set to 2 (0, never, is the default since 1.4.0-rc2), the host plays past the limit: the host's colony is **not** handed over while the friend is in the game; once the
     friend has left too, it is (from the next day's check).
 8g. **The warning before a hand-over (beta2).** With the host's setting at 2 and the friend away, the day the window
     shows *missed 2 of 2 days* the host gets the warning notice; the next day the colony is handed over.
@@ -352,8 +352,8 @@ per colony: population, exchanges).
 2. Play at least two hours at your usual speed, with repeating exchanges running and colonies growing to 100+
    beavers. Note the tick rate and each player's frame rate from the connection panel every half hour.
 3. A player joins after the game has started (the host saves and hosts again with them). Then **swap hosts**.
-4. A player leaves for the rest of the evening: from the next day their colony shows as away in Ctrl+T, and it is
-   handed over after the set number of days, with the host's detailed logging on or off (only a host testing alone,
+4. A player leaves for the rest of the evening: from the next day their colony shows as away in Ctrl+T, and, with the
+   host's limit set to 2 (the default, 0, never hands over since 1.4.0-rc2), it is handed over after 2 days, with the host's detailed logging on or off (only a host testing alone,
    with nobody connected, plays every colony).
 4a. **A Trading Post between two others.** A third player tries to remove a post between colony 1 and colony 2:
     refused.
@@ -557,6 +557,9 @@ happen and, in brackets, the review finding it checks (`design/REVIEW-FINDINGS-1
 12. **A steward's colony** (E-3). Host setting *Hand over a colony after its player is away* = 1. The guest asks the
     host to look after their colony (Ctrl+T), then leaves. Play three days; the host ends the stewardship. The next
     day brings the warning (*… unless they are in the game tomorrow*), and the hand-over comes the day after.
+12a. **Off by default** *(1.4.0-rc2)*. On a fresh install, Mod Settings shows *Hand over a colony after its player is
+    away* at 0. With it at 0, the guest leaves for three in-game days: no warning and no hand-over; the host's Ctrl+T
+    says *the host hands no colony over for absence* on the guest's colony.
 13. **Save and Rehost.** Options → Save and Rehost; the guest rejoins: everything as before, no desync. Both players
     press Ctrl+Shift+J and compare the `day N tick T:` check lines: equal.
 14. Send both `Player.log` files and reports.
@@ -607,6 +610,11 @@ happen and, in brackets, the review finding it checks (`design/REVIEW-FINDINGS-1
 10. **Ctrl+T at scale** (B4). In the late game, keep Ctrl+T open for two minutes: no hitch every second.
 11. **Save and rehost mid-flight** (F9). Save while a plane is on the runway, rehost, the guest joins: the plane and its
     pilot carry on; the census and `chars:` of the next daily check are equal on both.
+11a. **Away in a mixed game** *(1.4.0-rc2)*. Host setting *Hand over a colony after its player is away* = 1. The guest
+    (colony 2, Iron Teeth) leaves; nobody else plays Iron Teeth. Play three days: no warning and no hand-over, and the
+    host's Ctrl+T says *not handed over: no colony of its faction is in the game* on colony 2. Hover the host's **Hand
+    to …** button there: its tooltip says the two are different factions and what the receiver can't do. Don't press
+    it. Set the setting back to 0; the host saves and rehosts, and the guest joins again.
 12. Send both `Player.log` files and reports.
 
 ## Script T: Trading Posts at scale (two players, about 90 minutes) *(1.4.0-rc1)*

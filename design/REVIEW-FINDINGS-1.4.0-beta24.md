@@ -598,3 +598,22 @@ every player on the same versions and settings, none desyncs except as noted.
   Only deletions do.
 - **The daily check's cost** was about 1 ms on .NET 8, not the planning note's 50 to 80 ms.
 - **The walking animation's path** is one tick's, not the whole route (D-S9).
+
+---
+
+## 12. After rc1: 1.4.0-rc2 (Kyler's decisions, 2026-09-23)
+
+Talking through hand-overs and stewardship after rc1, Kyler decided that a friend's colony is kept by stewardship,
+and a hand-over is a last resort:
+- **The absence hand-over is off by default** (the setting's default is 0, never; it was 7).
+- **In a mixed game, an absent player's colony goes only to a colony of its own faction** whose player is in the game.
+  With none, it waits, unwarned, and Ctrl+T says so. In a two-player mixed game that means never. This removes the
+  cross-faction hand-over of living beavers and bots that the receiver can't build for, fuel or feed (§5, D21 in
+  B's report), and with it the most likely way to reach B1.
+- **Kept as they were:**
+  - a colony with nobody left still goes to the nearest living colony of any faction. Only buildings and stock move,
+    and it lets its player found again;
+  - the host's hand-over by hand, whose button now says what a receiver of the other faction can't do.
+
+Checks: StabilityTests 447, RuntimeChecks 427 on both builds; the new RuntimeChecks check fails on rc1's DLL. New
+script lines: L 12a and M 11a. Not played.

@@ -164,7 +164,10 @@ between factions.** The goods grid lists only what may cross that way. The form 
 can't, a Trading Post between factions says what may cross under its header, and each colony's wishes list only
 what it may receive. Two colonies of one faction trade as before.
 
-**Handovers.** A colony handed over goes to the nearest living colony *of its faction* first, then the nearest. The
+**Handovers.** A colony handed over goes to the nearest living colony *of its faction* first, then the nearest; a
+colony whose player is away goes **only** to one of its faction, and with none it waits (1.4.0-rc2). So in a
+two-player mixed game only a colony with nobody left, or the host's choice in Ctrl+T (whose button says what the
+receiver can't do), crosses factions; to keep an away friend's colony going, look after it. The
 receiver keeps its own faction for its toolbar. It can still run the buildings and beavers it received, and a beaver
 crosses a Trading Post only into a colony of its own faction. What it received keeps its faction: its bots need
 Biofuel (Folktails) or Energy (Iron Teeth), and its beavers their own foods, which only the buildings they came with
@@ -260,7 +263,7 @@ offered until **Make offer**.
 Trading Post opens the **trading posts and colonies** window (drag it by its title or frame to move it; it opens
 where it was left), drawn as the game's own boxes are: each of your Trading
 Posts with its exchange and round (or *not trading yet*) and a **Go to** button, and each colony with its population,
-whether its player is playing (an absent player: *missed 6 of 7 days*, the host's limit), its **food and water** (the
+whether its player is playing (an absent player: *missed 6 of 7 days*, when the host has set a limit), its **food and water** (the
 top bar's icons, the stock, and the days it lasts at the rate the colony used yesterday, from the game's own daily
 samples; red under a day), what it is **looking for**, and who looks after it. Its close button, Esc, Ctrl+T or the
 Trade button close it. It does not pause the game.
@@ -322,9 +325,12 @@ unlocks too.
 
 - **No beavers or bots left** for a whole in-game day: to the nearest living colony (district center to district
   center). Every computer decides this the same way.
-- **Its player away:** once they have missed the number of in-game days of hosted co-op play the host set (**Hand
-  over a colony after its player is away**, 7 by default, 0 for never) in a row: to the nearest colony whose player
-  is playing. Days the host plays alone in single player, and the first day after loading (players are still
+- **Its player away**, only if the host has set a limit (**Hand over a colony after its player is away**: 0, never,
+  by default since 1.4.0-rc2; a friend stepping away asks another player to look after their colony instead, see
+  *Looking after a colony*): once they have missed that many in-game days of hosted co-op play in a row, to the
+  nearest colony whose player is playing. **In a mixed-factions game only to a colony of its own faction**
+  (1.4.0-rc2): with none in the game, the colony waits, and nobody is warned. A colony of the other faction could run
+  what it received but not build for, fuel or feed it. Days the host plays alone in single player, and the first day after loading (players are still
   joining), don't count; a day the player is in the game starts the count again. A guest who leaves is away from
   the next day on. The host decides and every computer plays it. Not while the host tests alone with detailed
   logging on and nobody connected, where the host plays every colony; with a guest connected, logging changes
@@ -334,7 +340,8 @@ unlocks too.
   and the host hands their old colony to it.
 
 The host tells every computer its limit with the day's presence, so the Ctrl+T window shows *missed 6 of 7 days*
-everywhere. A hand-over for absence is always announced the day before, to every player in the game: the day the
+everywhere (in a mixed game with no colony of its faction in the game: *not handed over: no colony of its faction is in
+the game*). A hand-over for absence is always announced the day before, to every player in the game: the day the
 count reaches the limit, or, for a colony a steward looked after past it, the first day nobody keeps it (and, after a
 load, the first day counted). It happens the next day unless its player or its steward is back (until 1.4.0-rc1 a
 steward's colony could go unwarned on the first day nobody kept it). The player who lost their colony gets a notice and may **found a new one** (Ctrl+K). A trading

@@ -138,7 +138,7 @@ namespace BeaverBuddies.Colonies
         /// The living colony nearest to <paramref name="from"/> (district center to district center), among
         /// <paramref name="candidates"/>; the lowest numbered on a tie. Null when none.
         /// </summary>
-        public int? NearestLiving(int from, IEnumerable<int> candidates)
+        public int? NearestLiving(int from, IEnumerable<int> candidates, bool sameFactionOnly = false)
         {
             var mine = CentersOf(from);
             int? best = null;
@@ -164,12 +164,21 @@ namespace BeaverBuddies.Colonies
                 }
             }
             // A mixed-factions game: the nearest colony of the same faction first (D21), whose beavers and buildings are
-            // that faction's; else the nearest. Each colony's faction is saved state, the same on every computer.
+            // that faction's; else the nearest, or none with sameFactionOnly. Each colony's faction is saved state, the same
+            // on every computer.
             if (BeaverBuddies.Factions.MixedFactions.IsOn)
                 return BeaverBuddies.Factions.FactionRules.PreferSameFaction(living, BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot,
-                    BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot(from));
+                    BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot(from), sameFactionOnly);
             return best;
         }
+
+        /// <summary>
+        /// The colony an absent player's colony goes to: the nearest living colony among <paramref name="present"/>. In a
+        /// mixed-factions game only one of its own faction (1.4.0-rc2): the other faction's colony could run what it
+        /// received but not build for, fuel or feed it, so with none of its faction in the game the colony waits, and
+        /// nobody is warned. A colony with nobody left, and the host's hand-over by hand, still cross factions.
+        /// </summary>
+        public int? AbsenceReceiver(int from, IEnumerable<int> present) => NearestLiving(from, present, sameFactionOnly: true);
 
         private List<Vector3Int> CentersOf(int slot) =>
             _districtCenterRegistry.AllDistrictCenters.Where(dc => DistrictOwner.OwnerOfDistrict(dc) == slot)
@@ -262,7 +271,8 @@ namespace BeaverBuddies.Colonies
                 // Only a colony the last day's presence announced (E-3): a steward's colony whose count passed the limit
                 // while they looked after it used to go, unwarned, on the first day they did not play.
                 if (away == null || !ColonyAbsence.IsHandedOver(away.Value, limit, keptBySteward, announced[slot])) continue;
-                int? to = NearestLiving(slot, present);
+                // In a mixed game only to a colony of its faction whose player is here (1.4.0-rc2); with none it waits.
+                int? to = AbsenceReceiver(slot, present);
                 if (to == null) continue;
                 Plugin.Log($"[Colony] Slot {slot}'s player has missed {away} days: handing the colony to slot {to}");
                 int from = slot, target = to.Value;
@@ -319,7 +329,10 @@ namespace BeaverBuddies.Colonies
             for (int slot = 0; slot < announced.Length; slot++)
             {
                 bool kept = present.Contains(slot) || ColonyStewards.Instance?.IsLookedAfter(slot) == true;
-                bool now = OwnsDistrict(slot) && PopulationOf(slot) > 0 && ColonyAbsence.IsAnnounced(awayDays[slot], limit, kept);
+                // Only with a colony here to take it (in a mixed game, one of its faction: 1.4.0-rc2), else the warning
+                // would announce a hand-over that can't come. Simulation state only, the same on every computer.
+                bool now = OwnsDistrict(slot) && PopulationOf(slot) > 0 && ColonyAbsence.IsDue(awayDays[slot], limit)
+                    && ColonyAbsence.IsAnnounced(awayDays[slot], limit, kept, hasReceiver: AbsenceReceiver(slot, present) != null);
                 newlyAnnounced[slot] = now && !announced[slot];
                 announced[slot] = now;
             }

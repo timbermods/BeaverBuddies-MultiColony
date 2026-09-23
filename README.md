@@ -22,7 +22,9 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > and the HTTP API, water automation, power, dynamite and tunnels, both Wonders, bots), Folktails and Iron Teeth
 > together and Trading Posts at scale against the game's own code, fixed what it found (desyncs, a crash, and rules
 > between colonies) and added checks; none of that has been played yet, and a two-player late-game playtest is next
-> ([ALPHA-TEST-SCRIPTS](ALPHA-TEST-SCRIPTS.md), Scripts L, M and T). Play on a copy of your save,
+> ([ALPHA-TEST-SCRIPTS](ALPHA-TEST-SCRIPTS.md), Scripts L, M and T). **1.4.0-rc2** makes hand-overs a last resort: a
+> colony whose player steps away is kept for them by default (ask a friend to look after it), and in a mixed game never
+> goes to the other faction for absence. Play on a copy of your save,
 > keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
 
@@ -65,8 +67,9 @@ build cannot join.
   save into separate colonies for good. Off, shared saves stay shared.
 - **Separate science and unlocks per colony (beta)**, on: each colony earns its own science and unlocks its own
   buildings. Chosen when a separate-colonies game begins, then fixed for the save.
-- **Hand over a colony after its player is away (days)**: 7 by default, 0 for never (see
-  [when a colony is handed over](#when-a-colony-is-handed-over)).
+- **Hand over a colony after its player is away (days)**: 0 (never) by default since 1.4.0-rc2. A player stepping
+  away asks a friend to look after their colony instead (Ctrl+T). Set a number of days for a group where someone may
+  not come back (see [when a colony is handed over](#when-a-colony-is-handed-over)).
 - **Mixed factions for new games (beta)**, off (1.4.0-beta20; not played yet): on, with separate colonies and every
   faction unlocked on your computer, each player picks **Folktails or Iron Teeth** for their own colony, in the
   waiting room (see [Folktails and Iron Teeth together](#folktails-and-iron-teeth-together)). It is made for the
@@ -258,13 +261,15 @@ look after the colony of a player who is away, and may end any stewardship. The 
 A colony whose player can't run it goes to another player, with its buildings, stock and science:
 
 - **No beavers or bots left** for a whole day: to the nearest living colony.
-- **Its player away:** once they have missed the number of in-game days of hosted co-op play set by the host (7 by
-  default, changeable during the game; days the host plays alone in single player, and the first day after loading,
-  don't count): to the nearest colony whose player is playing. A guest who leaves is away from the next day on.
+- **Its player away**, only if the host has set a number of days (the default is 0, never): once they have missed
+  that many in-game days of hosted co-op play (changeable during the game; days the host plays alone in single
+  player, and the first day after loading, don't count), to the nearest colony whose player is playing. In a
+  mixed-factions game only to a colony of its own faction; with none, it waits. A guest who leaves is away from the
+  next day on. To keep a friend's colony going while they are away, look after it (above).
 - **By the host**, from the Ctrl+T window, once the game has started: any colony whose player is away, or that has
   no beavers (for example to a player whose Steam account changed).
 
-The Ctrl+T window shows how close an absent player is (*missed 6 of 7 days*), and the day the count reaches the
+With a limit set, the Ctrl+T window shows how close an absent player is (*missed 6 of 7 days*), and the day the count reaches the
 limit every player in the game gets a warning: unless the absent player is in the game the next day, the colony is
 handed over then. The player who lost their colony gets a notice and may **found a new one** with **Ctrl+K**.
 

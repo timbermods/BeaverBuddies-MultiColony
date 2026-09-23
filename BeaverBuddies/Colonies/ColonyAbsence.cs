@@ -18,17 +18,20 @@ namespace BeaverBuddies.Colonies
 
         /// <summary>
         /// Whether today's check announces the colony's hand-over for the next one: its player has missed at least the
-        /// host's limit of days, and nobody keeps it today (its player, or its steward, in the game). A colony whose count
-        /// passed the limit while a steward kept it is announced on the first day nobody does, not handed over unwarned.
+        /// host's limit of days, nobody keeps it today (its player, or its steward, in the game), and a colony is there to
+        /// take it (<paramref name="hasReceiver"/>: in a mixed game only one of its own faction, since 1.4.0-rc2; with
+        /// none it waits, and nobody is warned of a hand-over that could not come). A colony whose count passed the limit
+        /// while a steward kept it is announced on the first day nobody does, not handed over unwarned.
         /// </summary>
-        public static bool IsAnnounced(int daysAway, int limit, bool kept) => IsDue(daysAway, limit) && !kept;
+        public static bool IsAnnounced(int daysAway, int limit, bool kept, bool hasReceiver = true) =>
+            IsDue(daysAway, limit) && !kept && hasReceiver;
 
         /// <summary>
-        /// Whether today's check hands the colony over: the last check announced it, and it is still due and kept by
-        /// nobody. So a hand-over for absence always comes the day after its warning, in the same session (the first
-        /// check after a load announces; E-3 of the 1.4.0-rc1 review).
+        /// Whether today's check hands the colony over: the last check announced it, and it is still due, kept by nobody,
+        /// with a colony to take it. So a hand-over for absence always comes the day after its warning, in the same session
+        /// (the first check after a load announces; E-3 of the 1.4.0-rc1 review).
         /// </summary>
-        public static bool IsHandedOver(int daysAway, int limit, bool kept, bool announcedAtLastCheck) =>
-            announcedAtLastCheck && IsAnnounced(daysAway, limit, kept);
+        public static bool IsHandedOver(int daysAway, int limit, bool kept, bool announcedAtLastCheck, bool hasReceiver = true) =>
+            announcedAtLastCheck && IsAnnounced(daysAway, limit, kept, hasReceiver);
     }
 }

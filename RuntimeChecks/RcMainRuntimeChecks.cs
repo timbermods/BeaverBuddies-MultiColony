@@ -59,5 +59,35 @@ internal static class RcMainRuntimeChecks
             if (none != null) throw new Exception("a game with everything applied is stopped: " + none);
             if (one == null || !one.Contains("BeaverBuddies.Fixes.Example")) throw new Exception("a game with a patch left out is not stopped, or the message doesn't name it");
         });
+
+        // ---- 1.4.0-rc2: hand-overs ----
+
+        test("rc2: an absent player's colony is handed over only within its faction in a mixed game, and not at all by default", () =>
+        {
+            // The compiled rule: its own faction or none (the flag is new in rc2).
+            Type rules = mod.GetType("BeaverBuddies.Factions.FactionRules", true)!;
+            MethodInfo prefer = rules.GetMethod("PreferSameFaction", All) ?? throw new Exception("FactionRules.PreferSameFaction is gone");
+            if (prefer.GetParameters().Length != 4) throw new Exception("PreferSameFaction has no same-faction-only choice");
+            Func<int, string> factionOf = slot => slot == 1 ? "IronTeeth" : "Folktails";
+            var otherOnly = new List<(int, long)> { (1, 10) };
+            if (prefer.Invoke(null, new object?[] { otherOnly, factionOf, "Folktails", true }) != null)
+                throw new Exception("an absent Folktails colony would go to an Iron Teeth one");
+            if ((int?)prefer.Invoke(null, new object?[] { otherOnly, factionOf, "Folktails", false }) != 1)
+                throw new Exception("a colony with nobody left no longer goes to the nearest of any faction");
+            // The host's check and the day's presence use the absence receiver; AbsenceReceiver asks for the same faction only.
+            Type lifecycle = mod.GetType("BeaverBuddies.Colonies.ColonyLifecycle", true)!;
+            bool CallsReceiver(string method) => IlScan.Instructions(Only(lifecycle, method)).Any(i => i.Calls && i.Member?.Name == "AbsenceReceiver");
+            if (!CallsReceiver("HostDaily")) throw new Exception("the host's daily check does not hand over to the absence receiver");
+            if (!CallsReceiver("Seen")) throw new Exception("the day's presence warns without asking for a receiver");
+            var receiver = IlScan.Instructions(Only(lifecycle, "AbsenceReceiver"));
+            int nearest = receiver.FindIndex(i => i.Calls && i.Member?.Name == "NearestLiving");
+            if (nearest < 1 || receiver[nearest - 1].Op != OpCodes.Ldc_I4_1) throw new Exception("AbsenceReceiver must ask NearestLiving for the same faction only");
+            // The setting's default: the constant pushed just before its name, in Settings' constructor.
+            Type settings = mod.GetType("BeaverBuddies.Settings", true)!;
+            var init = settings.GetConstructors(All).SelectMany(c => IlScan.Instructions(c)).ToList();
+            int name = init.FindIndex(i => i.Op == OpCodes.Ldstr && i.Text == "BeaverBuddies.Settings.AbandonedColonyDays");
+            if (name < 1) throw new Exception("the absence setting is no longer made in Settings' constructor");
+            if (init[name - 1].Op != OpCodes.Ldc_I4_0) throw new Exception($"the absence setting's default is not 0 ({init[name - 1].Op} {init[name - 1].Number})");
+        });
     }
 }

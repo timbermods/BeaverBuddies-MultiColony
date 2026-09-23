@@ -1,4 +1,6 @@
+using BeaverBuddies.Colonies;
 using BeaverBuddies.Connect;
+using BeaverBuddies.Factions;
 
 /// <summary>
 /// The 1.4.0-rc1 review (design/REVIEW-PLAN-1.4.0-beta24.md, findings in design/REVIEW-FINDINGS-1.4.0-beta24.md), checks
@@ -122,6 +124,70 @@ static class RcMainChecks
             int typing = confirmed.IndexOf("Typing()", StringComparison.Ordinal);
             int join = confirmed.IndexOf("Join()", StringComparison.Ordinal);
             Check(typing >= 0 && join > typing, "the box must look at the address field's focus before joining the selected friend");
+        });
+
+        // ---- 1.4.0-rc2: hand-overs (Kyler, 2026-09-23: stewardship is the way to keep a friend's colony; a hand-over is a last resort) ----
+
+        yield return ("rc2: in a mixed game an absent player's colony goes only to a colony of its own faction; with none it waits, unwarned", () =>
+        {
+            const string Folktails = "Folktails", IronTeeth = "IronTeeth";
+            string FactionOf(int slot) => slot == 1 || slot == 3 ? IronTeeth : Folktails;
+            var candidates = new List<(int, long)> { (1, 10), (2, 40), (3, 90) };
+            // The absence rule: its own faction or none. The other hand-overs (nobody left, by the host) still cross.
+            Check(FactionRules.PreferSameFaction(candidates, FactionOf, Folktails, sameFactionOnly: true) == 2, "the nearest of its faction");
+            Check(FactionRules.PreferSameFaction(new List<(int, long)> { (1, 10), (3, 5) }, FactionOf, Folktails, sameFactionOnly: true) == null,
+                "none of its faction: none, not the other faction's");
+            Check(FactionRules.PreferSameFaction(new List<(int, long)> { (1, 10), (3, 5) }, FactionOf, Folktails) == 3,
+                "without the flag the nearest of any faction, as before (a colony with nobody left)");
+            Check(!ColonyAbsence.IsAnnounced(30, 7, kept: false, hasReceiver: false), "no warning without a colony to take it");
+            Check(!ColonyAbsence.IsHandedOver(30, 7, kept: false, announcedAtLastCheck: true, hasReceiver: false), "no hand-over without one");
+
+            // The day loop (as RcColonyChecks' E-3 one), with a receiver that comes and goes: the warning still always
+            // comes the day before, and never for a hand-over that can't come.
+            (int? handedOver, int? warned) Days(int limit, Func<int, bool> receiver, int days)
+            {
+                int away = 0;
+                bool announced = false;
+                int? warned = null;
+                for (int day = 1; day <= days; day++)
+                {
+                    if (ColonyAbsence.IsHandedOver(away, limit, false, announced) && receiver(day)) return (day, warned);
+                    away++;
+                    bool now = ColonyAbsence.IsAnnounced(away, limit, false, receiver(day));
+                    if (now && !announced) warned = day;
+                    announced = now;
+                }
+                return (null, warned);
+            }
+            var twoPlayers = Days(7, day => false, 60);
+            Check(twoPlayers.warned == null && twoPlayers.handedOver == null, "a two-player mixed game: never warned, never handed over");
+            var later = Days(7, day => day >= 12, 60);
+            Check(later.warned == 12 && later.handedOver == 13, $"a colony of its faction joins on day 12: warned {later.warned}, handed over {later.handedOver}");
+            var gone = Days(7, day => day == 12 || day >= 20, 60);
+            Check(gone.warned == 20 && gone.handedOver == 21, $"its receiver left the day after the warning: warned again when it is back ({gone.warned}), handed over the day after ({gone.handedOver})");
+
+            // The game's side: the host's check and the day's presence ask for a receiver of the same faction; nobody left still crosses.
+            string lifecycle = Source("BeaverBuddies", "Colonies", "ColonyHandover.cs");
+            Check(lifecycle.Contains("public int? AbsenceReceiver(int from, IEnumerable<int> present) => NearestLiving(from, present, sameFactionOnly: true);"),
+                "an absent player's colony must go only to a colony of its faction (in a mixed game)");
+            Check(Body(lifecycle, "public int? NearestLiving(").Contains("FactionOfSlot(from), sameFactionOnly)"), "NearestLiving must pass the rule on");
+            Check(Body(lifecycle, "private void HostDaily(int day)").Contains("AbsenceReceiver(slot, present)"), "the host must hand over only to the absence receiver");
+            Check(Body(lifecycle, "public void Seen(").Contains("hasReceiver: AbsenceReceiver(slot, present) != null"),
+                "the day's presence must warn only of a hand-over that has a colony to go to");
+            Check(Body(lifecycle, "private void HandOverDeadColonies(int day)").Contains("NearestLiving(slot, Enumerable.Range(0, ColonySlotTable.MaxSlots));"),
+                "a colony with nobody left still goes to the nearest living colony, of any faction");
+        });
+
+        yield return ("rc2: the absence hand-over is off by default (0 days), and its tooltip says so", () =>
+        {
+            string settings = Source("BeaverBuddies", "Settings.cs");
+            Check(settings.Contains("new(0, ModSettingDescriptor.CreateLocalized(\"BeaverBuddies.Settings.AbandonedColonyDays\")"), "the setting's default must be 0");
+            Check(settings.Contains("AbandonedColonyDays.Value ?? 0;"), "without settings, no colony is handed over for absence");
+            string csv = Source("BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv").Replace("\r\n", "\n");
+            int at = csv.IndexOf("BeaverBuddies.Settings.AbandonedColonyDays.Tooltip,", StringComparison.Ordinal);
+            Check(at >= 0 && csv.Substring(at, 300).Contains("0 (default): never"), "the tooltip must say 0 is the default");
+            foreach (string key in new[] { "BeaverBuddies.Colony.Overview.AwayNoSameFaction", "BeaverBuddies.Colony.Overview.HandToOtherFactionTooltip" })
+                Check(csv.Contains("\n" + key + ",\""), "no English line for " + key);
         });
     }
 }

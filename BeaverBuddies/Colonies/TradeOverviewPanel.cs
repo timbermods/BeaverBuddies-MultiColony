@@ -444,8 +444,16 @@ namespace BeaverBuddies.Colonies
                 {
                     var buttons = new List<Button>();
                     foreach (var h in handovers.Where(h => h.from == slot))
-                        buttons.Add(SmallButton(string.Format(T("BeaverBuddies.Colony.Overview.HandTo"), NativeElements.Plain(ColonyExchangeService.ColonyName(h.to))),
-                            () => HandOver(h.from, h.to)));
+                    {
+                        Button hand = SmallButton(string.Format(T("BeaverBuddies.Colony.Overview.HandTo"), NativeElements.Plain(ColonyExchangeService.ColonyName(h.to))),
+                            () => HandOver(h.from, h.to));
+                        // Across factions (the host's choice, kept as a last resort): say what the receiver can't do with it.
+                        if (BeaverBuddies.Factions.MixedFactions.IsOn && BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot(h.from)
+                            != BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot(h.to))
+                            _tooltipRegistrar.Register(hand, string.Format(T("BeaverBuddies.Colony.Overview.HandToOtherFactionTooltip"),
+                                NativeElements.Plain(ColonyExchangeService.ColonyName(h.from)), NativeElements.Plain(ColonyExchangeService.ColonyName(h.to))));
+                        buttons.Add(hand);
+                    }
                     if (started) buttons.AddRange(StewardButtons(slot, seat, me, myId, host, present, others, stewards, lifecycle));
                     if (started && slot == seat && slot == me) buttons.AddRange(FactionSwitchButtons(slot));
                     ColonyCard card = BuildColonyCard(buttons.ToArray());
@@ -564,6 +572,9 @@ namespace BeaverBuddies.Colonies
                 int? away = lifecycle.DaysAway(slot);
                 int limit = lifecycle.HandoverLimit;
                 if (away == null) status = T("BeaverBuddies.Colony.Overview.AwayUnknown");
+                // A mixed game with no colony of its faction here: the absence limit never hands it over (1.4.0-rc2).
+                else if (limit > 0 && BeaverBuddies.Factions.MixedFactions.IsOn && lifecycle.AbsenceReceiver(slot, present) == null)
+                    status = string.Format(T("BeaverBuddies.Colony.Overview.AwayNoSameFaction"), away.Value, limit);
                 else if (limit > 0) status = string.Format(T("BeaverBuddies.Colony.Overview.AwayOf"), away.Value, limit);
                 else if (limit == 0) status = string.Format(T("BeaverBuddies.Colony.Overview.AwayNoLimit"), away.Value);
                 else status = string.Format(T("BeaverBuddies.Colony.Overview.Away"), away.Value);

@@ -1,3 +1,9 @@
+v1.4.0-rc2 (BeaverBuddies MultiColony)
+* A colony whose player steps away is no longer handed to someone else by default: Hand over a colony after its player is away now starts at 0 (never). Ask a friend to look after your colony instead (Ctrl+T, Let ... look after it).
+* In a Folktails and Iron Teeth game, an away player's colony only ever goes to a colony of its own faction; with none in the game it waits, and nobody is warned.
+* A colony with no beavers left, and the host's Hand to ... button, work as before. Across factions, the button's tooltip says what the receiver can't do.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc1 (BeaverBuddies MultiColony)
 * The release candidate for 1.4.0: a review read the late game (automation and the HTTP API, water automation, power, dynamite, both Wonders, bots), Folktails and Iron Teeth together and Trading Posts at scale against the game's own code, and fixed what it found. Not played yet: a two-player late-game playtest comes next.
 * Desyncs fixed: a pump's flow rate, a throttling valve's limit switched on or off by its slider, and the dev power generator's panel now change every computer's game.

@@ -114,8 +114,10 @@ namespace BeaverBuddies
             new(false, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.MixedFactions")
                 .SetLocalizedTooltip("BeaverBuddies.Settings.MixedFactions.Tooltip"));
 
+        // 0 (never) by default since 1.4.0-rc2: a colony whose player steps away is kept for them (a steward runs it);
+        // the host sets a number of days for groups where a player may not come back.
         public ModSetting<int> AbandonedColonyDays { get; } =
-            new(7, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.AbandonedColonyDays")
+            new(0, ModSettingDescriptor.CreateLocalized("BeaverBuddies.Settings.AbandonedColonyDays")
                 .SetLocalizedTooltip("BeaverBuddies.Settings.AbandonedColonyDays.Tooltip"));
 
         // ---- Connection Panel ----
@@ -231,8 +233,8 @@ namespace BeaverBuddies
         /// </summary>
         public static bool MixedFactionsForNewGames => instance?.MixedFactions.Value ?? false;
 
-        /// <summary>Host: days a colony's player may be away before the colony is handed to another (0: never).</summary>
-        public static int AbandonedColonyDaysValue => instance?.AbandonedColonyDays.Value ?? 7;
+        /// <summary>Host: days a colony's player may be away before the colony is handed to another (0, the default: never).</summary>
+        public static int AbandonedColonyDaysValue => instance?.AbandonedColonyDays.Value ?? 0;
 
 
         // Both are read every frame by the connection panel: parsed again only when the stored text changes.
