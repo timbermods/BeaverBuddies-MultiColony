@@ -109,5 +109,33 @@ internal static class PlaytestFixChecks
                     && i.Member.DeclaringType?.Name.StartsWith("BaseField") == true && i.Member.DeclaringType.GetGenericArguments().FirstOrDefault() == typeof(bool)))
                 Console.WriteLine("      (the game's row now sets its toggles itself; the colony patch only repeats it)");
         });
+    
+        test("Construction sites: one only another colony's roads reach gets the game's own \"cannot be reached\" status", () =>
+        {
+            // The game's status and preview warning both ask ReachableConstructionSite.IsUnreachable, which asks
+            // IsReachableByBuilders: the colony patch is on that, so both follow it.
+            var reachability = Assembly.Load("Timberborn.BuildingsReachability");
+            Type site = reachability.GetType("Timberborn.BuildingsReachability.ReachableConstructionSite", true)!;
+            if (!Calls(new[] { site.GetMethod("IsUnreachable", all)! }, site.FullName!, "IsReachableByBuilders"))
+                throw new Exception("the game's IsUnreachable no longer asks IsReachableByBuilders");
+            foreach (string reader in new[] { "EntityReachabilityStatus", "ReachabilityPreviewValidator" })
+            {
+                Type type = reachability.GetType("Timberborn.BuildingsReachability." + reader, true)!;
+                if (!Methods(type).Any(m => IlScan.Instructions(m).Any(i => i.Calls && i.Member?.Name == "IsUnreachable")))
+                    throw new Exception(reader + " no longer asks whether a site is unreachable");
+            }
+            var attribute = mod.GetType("BeaverBuddies.Colonies.ColonyConstructionSiteReachabilityPatcher", true)!
+                .GetCustomAttributesData().First(a => a.AttributeType.Name == "HarmonyPatch");
+            if (((Type)attribute.ConstructorArguments[0].Value!).FullName != site.FullName || (string)attribute.ConstructorArguments[1].Value! != "IsReachableByBuilders")
+                throw new Exception("the colony patch is not on IsReachableByBuilders");
+            // Whose roads reach it: each of the colony's districts' road spill on the game's instant map.
+            Type world = mod.GetType("BeaverBuddies.Colonies.ColonyGameWorld", true)!;
+            var reaches = new[] { world.GetMethod("ColonyReaches", all)! };
+            if (!Calls(reaches, "Timberborn.Navigation.DistrictMap", "TryGetParentRoadNode") || !Calls(reaches, "Timberborn.Navigation.NodeIdService", "WorldToId"))
+                throw new Exception("ColonyReaches no longer reads each district's road spill");
+            Type service = Assembly.Load("Timberborn.Navigation").GetType("Timberborn.Navigation.DistrictService", true)!;
+            foreach (string field in new[] { "_nodeIdService", "_instantDistrictMap" })
+                if (service.GetField(field, all) == null) throw new Exception("the game's DistrictService has no " + field);
+        });
     }
 }

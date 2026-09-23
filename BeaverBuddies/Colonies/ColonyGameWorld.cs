@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Timberborn.BlockSystem;
+using Timberborn.Common;
 using Timberborn.Buildings;
 using Timberborn.Coordinates;
 using Timberborn.DistributionSystem;
@@ -171,6 +172,28 @@ namespace BeaverBuddies.Colonies
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// Whether one of <paramref name="slot"/>'s districts reaches a place by its roads: the ground its builders may
+        /// step onto from them (the game's road spill), on the game's instant map, which the game's own reachability
+        /// status reads. Display only.
+        /// </summary>
+        public bool ColonyReaches(int slot, Accessible accessible)
+        {
+            if (!(_districtService is DistrictService service)) return true;
+            ReadOnlyList<Vector3> accesses = accessible.Accesses;
+            foreach (DistrictCenter districtCenter in _districtCenterRegistry.FinishedDistrictCenters)
+            {
+                if (districtCenter.District == null || DistrictOwner.OwnerOfDistrict(districtCenter) != slot) continue;
+                for (int i = 0; i < accesses.Count; i++)
+                {
+                    if (!service._nodeIdService.Contains(accesses[i])) continue;
+                    int node = service._nodeIdService.WorldToId(accesses[i]);
+                    if (service._instantDistrictMap.TryGetParentRoadNode(districtCenter.District, node, out _)) return true;
+                }
+            }
+            return false;
         }
 
         public static Placement ToPlacement(ColonyPlacement placement) =>
