@@ -16,9 +16,9 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > this version's model (colony handover, most of the road rule), the **waiting room** (beta18 for new games, beta19
 > for saves) and most of the desync review's fixes (alpha11 onward) have **not been played yet**; they are covered by automated checks. Since
 > alpha13, in a separate-colonies game, a guest whose colony state differs from the host's stops the tick it happens,
-> so a bug in that check would also stop a healthy game; the log line says which it was. Until 1.4.0-beta21 no guest
-> could get from the waiting room into the game (its load failed at once; found by the beta18–20 review), so beta21 is
-> the first build whose waiting room can work at all. Play on a copy of your save,
+> so a bug in that check would also stop a healthy game; the log line says which it was. The waiting room first opened
+> in 1.4.0-beta23: until then **Next** crashed the game (the first playtest), and until beta21 no guest could have got
+> from it into the game. Play on a copy of your save,
 > keep backups, and please report what you find
 > ([how](#troubleshooting-and-reporting-problems)).
 

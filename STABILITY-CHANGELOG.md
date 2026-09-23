@@ -5,6 +5,40 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta23
+
+**The waiting room, as first seen in a game.** The first playtest of the waiting room (beta18 to beta21) found that it
+had never opened: the settlement's name box was drawn broken, and **Next** crashed the game. Both are fixed, the page
+seen, and cleaned up from the host's and a guest's screenshots. (1.4.0-beta22 was a local test build, not released.)
+No wire or save change.
+
+- **The name box** is the game's own text-input dialog (`Core/InputBox`, the box the game renames a beaver or a
+  building with), pushed as a dialog: its question, a field and **Next** / **Cancel**, with the game's messages for a
+  taken or invalid name, which keep it open. It was the in-game settlement box (`Game/SettlementNameBox`), whose frame and
+  layout need the Game scene's style sheets: in the main menu it drew without a frame, its text over the page.
+- **The page is built as the game's New Game pages are** (a `grow-centered` root holding `MainMenu/NewGameTemplate` as
+  an instance, content in its content slot). The template marks that slot `content-container="true"`, so the cloned
+  `TemplateContainer` forwarded `ElementAt(0)` to the empty slot and threw `ArgumentOutOfRangeException` as the room
+  opened: no waiting room had ever opened (beta18 to beta21). The review of beta18 to beta20 read this code and missed
+  it; nothing ran it.
+- **A guest who accepts in the Steam overlay** gets the whole page. The game keeps its `SteamOverlayInputBlocker` on
+  top of the main menu while the overlay is open, and `HideAndPush` hid that instead of the main menu: the page shared
+  the screen with the main menu, half its height, its buttons cut off. The guest's page now opens once a page is on top
+  (`LobbyGuestPanel.PageOnTop`), which is when the overlay closes.
+- **Cleaner page** (from the screenshots):
+  - The summary plate stands alone and centred, as on the Game Mode page (a logo ring beside it pushed it off
+    centre; each row shows its player's faction logo).
+  - Each row says **Ready** (with the game's green tick) or **Not ready** once, in a right-aligned column. The Mods
+    window's checkbox is hidden: with the state on the right as well, it said the same thing twice.
+  - The host's remove button has its own column, apart from the state.
+  - An empty room has no line under its list (it said *Invite friends, then start the game.* above the Invite button).
+- Checks: StabilityTests 412 (a guest's page waits for a page on top; rows hide the checkbox and the page takes no
+  template element by index), RuntimeChecks 360 (every template the mod takes as one element has no content slot, read
+  from the mod's IL: it fails on beta21 with `MainMenu/NewGameTemplate`; the input box's names and classes). Both builds,
+  0 warnings.
+- Seen in a game: the name box, the host's page alone and with a guest, the guest's page. Starting a game from the
+  room (Script D7, D7a) is next.
+
 ## 1.4.0-beta21
 
 **A review of beta18 to beta20, and its fixes.** The waiting room (beta18, beta19) changed how every co-op game

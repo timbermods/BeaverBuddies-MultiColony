@@ -165,7 +165,7 @@ namespace BeaverBuddies.Lobby
             page.Next.clicked += () => OnUIConfirmed();
             page.Invite.clicked += () => session?.IO.SteamListener?.ShowInviteFriendsPanel();
             page.RemoveClicked += ConfirmRemove;
-            page.SetSummary(setup.SummaryText, setup.Mixed && !setup.IsSave ? null : faction,
+            page.SetSummary(setup.SummaryText,
                 setup.IsSave ? LobbyPage.SaveLine(_timestampFormatter, setup.Save.SaveName, setup.Cycle, setup.Day) : setup.Settlement);
             page.SetFactionNote(factionNote);
             page.SetFactions(id => NewGameFactionCapture.Instance?.Spec(id));

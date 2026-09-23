@@ -26,8 +26,8 @@ namespace BeaverBuddies.Lobby
     {
         public static readonly string[] ClassesUsed =
         {
-            "new-game__main-content", "new-game__summary", "new-game__summary-text", "faction-item__logo-background",
-            "faction-item__logo", "content-centered", "text--yellow", "text--big", "text--centered", "load-box__list-title",
+            "new-game__main-content", "new-game__summary", "new-game__summary-text", "content-centered", "text--yellow",
+            "text--big", "text--centered", "load-box__list-title",
             "scroll--green-decorated", "mod-manager-box__list", "unlock-condition__text", "wide-menu-button", "map-item__icon",
             "map-selection__wide-button-label", "text--grey", "text--default", "checkmark-green", "button-square",
             "button-square--large", "button-cross",
@@ -48,8 +48,6 @@ namespace BeaverBuddies.Lobby
         public Label DirectIp { get; }
 
         private readonly Label header;
-        private readonly VisualElement ring;
-        private readonly VisualElement logo;
         private readonly Label summary;
         private readonly Label settlement;
         private readonly Label factionNote;
@@ -59,8 +57,6 @@ namespace BeaverBuddies.Lobby
         // A mixed-factions room: the faction of each id, for each row's logo and its tooltip.
         private Func<string, FactionSpec> factionOf;
 
-        /// <summary>A guest's own row checkbox was clicked (the host's page has none).</summary>
-        public event Action<bool> OwnReadyToggled;
         /// <summary>The host clicked a guest's remove button.</summary>
         public event Action<LobbyPlayer> RemoveClicked;
 
@@ -91,29 +87,15 @@ namespace BeaverBuddies.Lobby
             Next = template.Q<Button>("NextButton");
             VisualElement main = template.Q(className: "new-game__main-content") ?? template.contentContainer;
 
-            // The Game Mode page's summary plate, with the faction page's logo ring beside it.
-            var summaryRow = new VisualElement();
-            summaryRow.style.flexDirection = FlexDirection.Row;
-            summaryRow.style.alignItems = Align.Center;
-            summaryRow.style.justifyContent = Justify.Center;
-            ring = new VisualElement();
-            ring.AddToClassList("faction-item__logo-background");
-            ring.AddToClassList("content-centered");
-            ring.style.marginRight = 10;
-            ring.style.marginTop = 10;
-            ring.style.marginBottom = 20;
-            logo = new VisualElement();
-            logo.AddToClassList("faction-item__logo");
-            ring.Add(logo);
-            summaryRow.Add(ring);
+            // The Game Mode page's summary plate, alone and centred as that page shows it. (A logo ring beside it, until
+            // beta22, pushed it off centre; each player's row shows their faction's logo.)
             var plate = new VisualElement();
             plate.AddToClassList("new-game__summary");
             plate.AddToClassList("content-centered");
             summary = new Label();
             summary.AddToClassList("new-game__summary-text");
             plate.Add(summary);
-            summaryRow.Add(plate);
-            main.Add(summaryRow);
+            main.Add(plate);
 
             // The settlement's name, in the gold the game uses for a save's details.
             settlement = new Label();
@@ -181,7 +163,7 @@ namespace BeaverBuddies.Lobby
             main.Add(DirectIp);
 
             // Once, before any row: each pass over a ScrollView adds another set of scroll-bar decorations.
-            foreach (VisualElement element in new VisualElement[] { summaryRow, settlement, factionNote, listTitle, board, Status, Invite, DirectIp })
+            foreach (VisualElement element in new VisualElement[] { plate, settlement, factionNote, listTitle, board, Status, Invite, DirectIp })
                 initializer.InitializeVisualElement(element);
         }
 
@@ -218,15 +200,11 @@ namespace BeaverBuddies.Lobby
         }
 
         /// <summary>
-        /// The plate's text, the faction's logo ring (hidden without a faction: a save's metadata names none) and the gold
-        /// line under the plate (a new game's settlement, or a save's name and in-game date).
+        /// The plate's text and the gold line under the plate (a new game's settlement, or a save's name and in-game date).
         /// </summary>
-        public void SetSummary(string text, FactionSpec faction, string line)
+        public void SetSummary(string text, string line)
         {
             summary.text = text;
-            Sprite sprite = faction?.Logo.Asset;
-            if (sprite != null) logo.style.backgroundImage = new StyleBackground(sprite);
-            ring.ToggleDisplayStyle(sprite != null);
             settlement.text = line ?? "";
         }
 
@@ -244,7 +222,7 @@ namespace BeaverBuddies.Lobby
                 seen.Add(player.Number);
                 if (!rows.TryGetValue(player.Number, out Row row))
                 {
-                    row = new Row(this, player.Number, own: !hostPage && player.Number == you, removable: hostPage && !player.IsHost);
+                    row = new Row(this, hostPage, removable: hostPage && !player.IsHost);
                     rows[player.Number] = row;
                 }
                 // Kept in the room's order.
@@ -264,7 +242,9 @@ namespace BeaverBuddies.Lobby
             }
         }
 
-        public void SetStatus(LobbyText text) => Status.text = RegisteredLocalizationService.T(text.Key, text.Args);
+        /// <summary>The line under the players; a text with no key shows nothing (the line keeps its height).</summary>
+        public void SetStatus(LobbyText text) =>
+            Status.text = string.IsNullOrEmpty(text.Key) ? "" : RegisteredLocalizationService.T(text.Key, text.Args);
 
         private static Sprite LoadSprite(string path)
         {
@@ -276,12 +256,20 @@ namespace BeaverBuddies.Lobby
             }
         }
 
-        /// <summary>One player: the Mods window's row (checkbox, icon, name, gold tag), then the ready state and remove.</summary>
+        /// <summary>
+        /// One player: the Mods window's row (the faction's logo, the name, the gold tag), then two columns on the right:
+        /// Ready or Not ready, and on the host's page a guest's remove button, set apart from it. The Mods window's checkbox
+        /// is hidden: a row says whether its player is ready once, on its right (a guest readies with the page's button).
+        /// The columns have fixed widths, so every row's state lines up.
+        /// </summary>
         private sealed class Row
         {
+            private const float StateWidth = 110;
+            private const float RemoveWidth = 28;
+            private const float RemoveGap = 16;
+
             public VisualElement Root { get; }
             private readonly LobbyPage page;
-            private readonly Toggle toggle;
             private readonly Image icon;
             private readonly Label name;
             private readonly Label tag;
@@ -290,18 +278,15 @@ namespace BeaverBuddies.Lobby
             private readonly Label state;
             private readonly Button remove;
             private LobbyPlayer player;
-            private bool own;
-            private bool canChange;
-            private bool shownReady;
             private string factionName;
 
-            public Row(LobbyPage page, int number, bool own, bool removable)
+            public Row(LobbyPage page, bool hostPage, bool removable)
             {
                 this.page = page;
                 Root = page._loader.LoadVisualElement("Modding/ModItem");
                 Root.Q("PriorityWrapper")?.ToggleDisplayStyle(false);
                 Root.Q("WarningIcon")?.ToggleDisplayStyle(false);
-                toggle = Root.Q<Toggle>("ModToggle");
+                Root.Q<Toggle>("ModToggle")?.ToggleDisplayStyle(false);
                 icon = Root.Q<Image>("ModIcon");
                 name = Root.Q<Label>("ModName");
                 tag = Root.Q<Label>("ModVersion");
@@ -316,34 +301,45 @@ namespace BeaverBuddies.Lobby
                 spacer.style.flexGrow = 1;
                 Root.Add(spacer);
 
-                // The game's own pairing of a green tick and a word (its zipline tooltip).
+                // The state: the game's own pairing of a green tick and a word (its zipline tooltip), right-aligned.
+                var stateColumn = new VisualElement();
+                stateColumn.style.flexDirection = FlexDirection.Row;
+                stateColumn.style.justifyContent = Justify.FlexEnd;
+                stateColumn.style.alignItems = Align.Center;
+                stateColumn.style.width = StateWidth;
+                stateColumn.style.flexShrink = 0;
                 check = new VisualElement();
                 check.AddToClassList("checkmark-green");
                 check.style.marginRight = 4;
                 check.style.flexShrink = 0;
-                Root.Add(check);
+                stateColumn.Add(check);
                 state = new Label();
-                state.style.marginRight = 8;
-                Root.Add(state);
+                state.style.unityTextAlign = TextAnchor.MiddleRight;
+                state.style.marginRight = 6;
+                stateColumn.Add(state);
+                Root.Add(stateColumn);
 
-                if (removable)
+                // The host's page: a column for removing a guest, apart from the state; the host's own row keeps it empty.
+                if (hostPage)
                 {
-                    remove = new Button();
-                    remove.AddToClassList("button-square");
-                    remove.AddToClassList("button-square--large");
-                    remove.AddToClassList("button-cross");
-                    remove.clicked += () => { if (player != null) page.RemoveClicked?.Invoke(player); };
-                    Root.Add(remove);
-                }
-                else
-                {
-                    // Keeps every row's state in line with the rows that have a remove button.
-                    var gap = new VisualElement();
-                    gap.style.width = 28;
-                    Root.Add(gap);
+                    var removeColumn = new VisualElement();
+                    removeColumn.style.width = RemoveWidth;
+                    removeColumn.style.marginLeft = RemoveGap;
+                    removeColumn.style.flexShrink = 0;
+                    removeColumn.style.alignItems = Align.Center;
+                    if (removable)
+                    {
+                        remove = new Button();
+                        remove.AddToClassList("button-square");
+                        remove.AddToClassList("button-square--large");
+                        remove.AddToClassList("button-cross");
+                        remove.clicked += () => { if (player != null) page.RemoveClicked?.Invoke(player); };
+                        removeColumn.Add(remove);
+                    }
+                    Root.Add(removeColumn);
                 }
 
-                foreach (VisualElement element in new VisualElement[] { you, spacer, check, state }) page._initializer.InitializeVisualElement(element);
+                foreach (VisualElement element in new VisualElement[] { you, spacer, stateColumn }) page._initializer.InitializeVisualElement(element);
                 // The row's faction, named when its logo is hovered (a mixed room, or a save's colony).
                 page._tooltipRegistrar.Register(icon, () => factionName ?? "");
                 if (remove != null)
@@ -351,25 +347,13 @@ namespace BeaverBuddies.Lobby
                     page._initializer.InitializeVisualElement(remove);
                     page._tooltipRegistrar.Register(remove, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Remove.Tooltip"));
                 }
-
-                toggle.RegisterValueChangedCallback(changed =>
-                {
-                    if (this.own && canChange) page.OwnReadyToggled?.Invoke(changed.newValue);
-                    else toggle.SetValueWithoutNotify(shownReady);
-                });
-                SetLive(own);
             }
 
             public void Show(LobbyPlayer shown, bool own, bool canChange, Sprite factionLogo, string faction = null)
             {
                 factionName = faction;
                 player = shown;
-                this.canChange = canChange;
-                if (this.own != own) SetLive(own);
                 bool ready = shown.IsHost || (shown.Ready && !shown.Joining);
-                shownReady = ready;
-                toggle.SetValueWithoutNotify(ready);
-                toggle.SetEnabled(!own || canChange);
                 if (factionLogo != null) icon.sprite = factionLogo;
                 name.text = shown.Joining ? RegisteredLocalizationService.T("BeaverBuddies.Lobby.Joining") : shown.Name;
                 name.EnableInClassList("text--grey", shown.Joining);
@@ -382,15 +366,6 @@ namespace BeaverBuddies.Lobby
                 state.EnableInClassList("text--default", ready);
                 state.EnableInClassList("text--grey", !ready);
                 remove?.SetEnabled(canChange);
-            }
-
-            // Only a guest's own checkbox takes clicks; everyone else's is a read-only mark (no hover either).
-            private void SetLive(bool live)
-            {
-                own = live;
-                PickingMode mode = live ? PickingMode.Position : PickingMode.Ignore;
-                toggle.pickingMode = mode;
-                foreach (VisualElement child in toggle.Query<VisualElement>().ToList()) child.pickingMode = mode;
             }
         }
     }

@@ -94,6 +94,24 @@ static class ReviewBeta21Checks
             Check(Source("BeaverBuddies", "Lobby", "LobbyHostPanel.cs").Contains("BeaverBuddies.Lobby.Faction.NotTwo"), "the room no longer says why it is one faction");
         });
 
+        yield return ("Playtest (beta23): a guest's waiting room opens only once a page is on top, never over the Steam overlay's blocker", () =>
+        {
+            // HideAndPush hides only the top panel. With the game's SteamOverlayInputBlocker on top (an invite accepted in
+            // the overlay), the page hid the blocker and shared the screen with the main menu, half height each.
+            string pump = Body(Source("BeaverBuddies", "Lobby", "LobbyGuestPanel.cs"), "private void Pump(");
+            int wait = pump.IndexOf("PageOnTop()", StringComparison.Ordinal), open = pump.IndexOf("Open(current", StringComparison.Ordinal);
+            Check(wait > 0 && open > wait, "the guest's page opens without waiting for a page on top");
+            Check(Body(Source("BeaverBuddies", "Lobby", "LobbyGuestPanel.cs"), "private bool PageOnTop(").Contains("IsOverlay"),
+                "PageOnTop no longer asks whether the top panel is an overlay");
+        });
+
+        yield return ("Playtest (beta23): each row says ready once, on its right; the Mods window's checkbox stays hidden", () =>
+        {
+            string page = Source("BeaverBuddies", "Lobby", "LobbyPage.cs");
+            Check(page.Contains("Root.Q<Toggle>(\"ModToggle\")?.ToggleDisplayStyle(false)"), "a row shows the Mods window's checkbox again");
+            Check(!page.Contains(".ElementAt("), "LobbyPage takes a template's element by index again (NewGameTemplate forwards to its content slot)");
+        });
+
         yield return ("J11a: a Steam lobby made after the host pressed Start opens closed", () =>
         {
             string created = Body(Source("BeaverBuddies", "Steam", "SteamListener.cs"), "private void OnLobbyCreated(");

@@ -261,7 +261,22 @@ Timberborn 1.1.2.4. The review followed [REVIEW-PLAN-1.4.0-beta18-20.md](REVIEW-
 
 ---
 
-## 5. New test-script lines (ALPHA-TEST-SCRIPTS)
+## 5. After the release: what the first playtest found (1.4.0-beta23)
+
+The first time the waiting room ran in a game (beta21), it had never opened at all:
+
+- **The page's constructor threw.** `MainMenu/NewGameTemplate` marks its content slot `content-container="true"`, so
+  `CloneTree().ElementAt(0)` reached the empty slot. The plan's §14 had settled on that call, and this review read it
+  (A's J8 and E4 traced the page's logic, not its construction). **The lesson:** a UI Toolkit call that a static read
+  takes for granted needs a check against the game's own files. RuntimeChecks now reads every template the mod takes
+  as one element and fails on a content slot.
+- **The name box drew broken** in the main menu. It was the in-game settlement box, whose style sheets are the Game
+  scene's.
+- **A guest accepting in the Steam overlay** got the page on half the screen, under the main menu.
+
+All three are fixed in 1.4.0-beta23. See the changelog.
+
+## 6. New test-script lines (ALPHA-TEST-SCRIPTS)
 
 - **D6b:** a guest leaves and rejoins by invite five times; each rejoin works.
 - **D7a:** the guest's game loads after Start, which no guest's did in beta18 to beta20.

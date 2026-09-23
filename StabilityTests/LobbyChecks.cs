@@ -246,7 +246,7 @@ static class LobbyChecks
             Check(BeaverBuddies.Lobby.LobbyRules.StartConfirm(new[] { host, readyButJoining }) == BeaverBuddies.Lobby.StartQuestion.NotReady);
             string Key(IReadOnlyList<LobbyPlayer> players, LobbyStage stage = LobbyStage.Open) =>
                 BeaverBuddies.Lobby.LobbyRules.HostStatus(players, stage).Key.Replace(BeaverBuddies.Lobby.LobbyRules.KeyPrefix, "");
-            Check(Key(new[] { host }) == "Status.Empty");
+            Check(Key(new[] { host }) == "", "an empty room says nothing under its list");
             Check(Key(new[] { host, anna }) == "Status.AllReady");
             var one = BeaverBuddies.Lobby.LobbyRules.HostStatus(new[] { host, anna, bob }, LobbyStage.Open);
             Check(one.Key.EndsWith("Status.OneNotReady") && (string)one.Args[0] == "Bob");

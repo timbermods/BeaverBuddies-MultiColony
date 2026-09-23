@@ -366,18 +366,23 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
 1. **The button.** Host: **New Game** → Folktails → a standard map → Normal. **Host co-op game** sits beside
    **Start** and looks like it. Choose **Customize**, set a starting value out of range: both buttons grey out.
    Set it back.
-2. **The settlement's name.** **Host co-op game** shows the game's own "name your settlement" box, with **Cancel**
-   and **Next**. Cancel goes back. A name already used shows the game's own message. Name it and go on.
-3. **The host's page.** A **Co-op Game** page like the New Game pages: the banner and title, the faction logo and
-   "Folktails - map - Normal" plate, the settlement's name in gold, **Players (1)** with your row (ticked, *Host ·
-   Colony 1*, **Ready**), a yellow line *Invite friends, then start the game.*, **Invite Friends** (usable after a
-   moment), the IP line, **Cancel** and **Start Game**. Screenshot it at your usual resolution and at the smallest
-   window you use.
+2. **The settlement's name.** **Host co-op game** shows the game's own naming box (as for renaming a beaver) asking
+   *What would you like to call your settlement?*, with **Next** and **Cancel** *(beta23: seen)*. Cancel goes back. A
+   name already used shows the game's own message and the box stays. Name it and go on.
+3. **The host's page.** A **Co-op Game** page like the New Game pages: the banner and title, the "Folktails - map -
+   Normal" plate centred, the settlement's name in gold, **Players (1)** with your row (your faction's logo, *Host ·
+   Colony 1*, a green tick and **Ready** on the right), **Invite Friends** (usable after a moment), the IP line,
+   **Cancel** and **Start Game** *(beta23: seen)*. Screenshot it at your usual resolution and at the smallest window
+   you use.
 4. **Joining.** Guest, from the main menu: accept the invite. A *Connecting to …* box, then the **Kyler's Game** page:
    the same plate and players, your row marked *(you)*, **I'm ready** and **Leave**. The host's row for you shows
-   *Joining…*, then your name, *Colony 2* and **Not ready**, within a second.
-5. **Ready.** Guest: **I'm ready** (the button then reads **Not ready**), then untick your row's checkbox, then tick
-   it: the host's row follows each time, and the host's line says who is not ready.
+   *Joining…*, then your name, *Colony 2* and **Not ready**, within a second. The host's page has a red cross for your
+   row, in a column of its own to the right of *Not ready*.
+4b. **Accepted in the Steam overlay (beta23).** Guest accepts the invite inside the Steam overlay (Shift+Tab) and
+   closes the overlay: the whole screen is the **Kyler's Game** page, with **Leave** and **I'm ready** at the bottom,
+   and no main menu showing. (In beta22 the page shared the screen with the main menu.)
+5. **Ready.** Guest: **I'm ready** (the button then reads **Not ready**), then **Not ready**, then **I'm ready**
+   again: your row's state and the host's row follow each time, and the host's line says who is not ready.
 6. **Remove and leave.** Host: the red cross on the guest's row → confirm: the guest's page closes with *Kyler removed
    you from the waiting room.* Guest joins again by IP (**Join co-op game**). Guest: **Leave** → confirm: back to the
    main menu, and the host's list drops the row.

@@ -11,9 +11,9 @@ science, was fixed in beta14), and in beta15 trading posts with exchanges of goo
 version's model has not been seen in a game yet**: colony handover, the road rule that replaced land in beta15, the
 waiting room (beta18 for new games, beta19 for saves), and most of the desync review's fixes (alpha11 onward) are
 covered by automated checks only. Since alpha13 a guest whose colony state differs from the host's stops the tick it happens (see *Known limits*), so a bug
-in that check would stop a healthy game too; the log line says which. Until 1.4.0-beta21 no guest could get from a
-waiting room into the game at all (its load failed at once; found by the review of beta18 to beta20). Play on a copy
-of your save and keep backups.
+in that check would stop a healthy game too; the log line says which. The waiting room first opened in 1.4.0-beta23
+(until then **Next** crashed the game; until beta21 no guest could have got from it into the game): its pages have
+been seen, a game started from it has not yet. Play on a copy of your save and keep backups.
 
 ## The rules in one minute
 

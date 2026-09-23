@@ -61,7 +61,8 @@ namespace BeaverBuddies.Lobby
         public static LobbyText HostStatus(IReadOnlyList<LobbyPlayer> players, LobbyStage stage)
         {
             if (stage != LobbyStage.Open) return new LobbyText(KeyPrefix + "Status.Starting");
-            if (!players.Any(p => !p.IsHost)) return new LobbyText(KeyPrefix + "Status.Empty");
+            // Nobody in the room yet: nothing to say (the Invite button under it says it all).
+            if (!players.Any(p => !p.IsHost)) return new LobbyText("");
             List<LobbyPlayer> notReady = NotReady(players);
             if (notReady.Count == 0) return new LobbyText(KeyPrefix + "Status.AllReady");
             if (notReady.Count > 1) return new LobbyText(KeyPrefix + "Status.SomeNotReady", notReady.Count);

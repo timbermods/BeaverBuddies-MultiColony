@@ -93,7 +93,11 @@ namespace BeaverBuddies.Lobby
                 if (popWhenOnTop) return;
                 if (!(EventIO.Get() is ClientEventIO current) || current.NetBase == null || current.NetBase.IsStopped) return;
                 LobbyView welcome = current.NetBase.Lobby.View();
-                if (welcome.Welcomed && !welcome.Ended) Open(current, welcome);
+                if (!welcome.Welcomed || welcome.Ended) return;
+                // The Connecting box goes first; then the page takes the place of the page under it (the main menu).
+                _clientConnectionService.CloseConnectingBox();
+                if (!PageOnTop()) return;
+                Open(current, welcome);
                 return;
             }
 
@@ -124,6 +128,15 @@ namespace BeaverBuddies.Lobby
             if (!asking && LobbyRules.WatchdogDue(Math.Max(view.LastFrameAtMs, watchdogFromMs), now, view.Stage)) AskToKeepWaiting();
         }
 
+        /// <summary>
+        /// Whether a page (not an overlay or a dialog) is on top of the main menu's panel stack. HideAndPush hides only the
+        /// top panel: an invite accepted in the Steam overlay leaves the game's SteamOverlayInputBlocker on top while the
+        /// overlay is open, and a page pushed then hid the blocker, left the main menu showing, and shared the screen with
+        /// it (each half its height, the page's buttons cut off: the first playtest). The game pops the blocker as the
+        /// overlay closes, if it is still on top; the page waits for that.
+        /// </summary>
+        private bool PageOnTop() => _panelStack._stack.Count == 0 || !_panelStack.TopPanel.IsOverlay;
+
         private void Open(ClientEventIO current, LobbyView view)
         {
             io = current;
@@ -136,7 +149,7 @@ namespace BeaverBuddies.Lobby
             _clientConnectionService.CloseConnectingBox();
             net.SendLobbyHello(LocalPlayerIdentity.Id, LocalPlayerIdentity.Name);
 
-            // The room's faction (a new game's, or a save's own): its logo ring. A mixed new game has none of its own.
+            // The room's faction (a new game's, or a save's own): the logo of a row whose player has none of their own.
             faction = view.Summary == null || string.IsNullOrEmpty(view.Summary.FactionId) ? null : FactionOrNull(view.Summary.FactionId);
             LocalFactionPick.Clear();
             picker = null;
@@ -147,12 +160,10 @@ namespace BeaverBuddies.Lobby
             page.Next.text = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Button.Ready");
             page.Back.clicked += AskToLeave;
             page.Next.clicked += () => SetReady(!ready);
-            page.OwnReadyToggled += SetReady;
             page.Invite.ToggleDisplayStyle(false);
             page.DirectIp.ToggleDisplayStyle(false);
             LobbySummary summary = view.Summary;
-            bool mixedNewGame = summary != null && summary.Mixed && !summary.IsSave;
-            page.SetSummary(Summary(summary), mixedNewGame ? null : faction, summary != null && summary.IsSave
+            page.SetSummary(Summary(summary), summary != null && summary.IsSave
                 ? LobbyPage.SaveLine(_timestampFormatter, summary.SaveName, summary.Cycle, summary.Day)
                 : summary?.Settlement);
             page.SetFactions(FactionOrNull);
