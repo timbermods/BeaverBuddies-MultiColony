@@ -1,3 +1,8 @@
+v1.4.0-beta20 (BeaverBuddies MultiColony)
+* Folktails and Iron Teeth together: turn on Mixed factions for new games (Mod Settings, host) and each player picks their faction in the waiting room, with the game's own faction arrows. Each colony gets its faction's toolbar, beavers, bots, buildings and storage. Colonies of different factions trade the goods both factions use, and science, but not beavers. Needs every faction unlocked on the host's computer. Not played yet.
+* A save hosted from the main menu now shows each player's colony and its faction in the waiting room.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta19 (BeaverBuddies MultiColony)
 * The waiting room for saves too: in the main menu, Load Game -> Host co-op game opens the same Co-op Game page for the save. Friends join and ready up, and Start Game loads the save for everyone at once. Each player keeps the colony the save remembers. Hosting from inside a game (Options -> Load, Save and Rehost) works as before. Not played yet.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.

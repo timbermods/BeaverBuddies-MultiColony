@@ -37,6 +37,7 @@ in that check would stop a healthy game too; the log line says which. Play on a 
 | **Separate colonies for new games (beta)** | on | Only read when a new game is made. On: each player gets their own colony. Off: all players share one colony, as in the Stability Fork (see *A shared-colony game*). A save keeps the mode it started with. For a new game with a colony each, this is all you need. |
 | **Allow founding colonies in a shared game (beta)** | off | Only for a shared save (one colony for all players), read when hosting starts: a player without a colony may found their own, which makes the save a separate-colonies game for good (step 3 below). Off: a shared save stays shared. It changes nothing in a separate-colonies game, where founding is always on. |
 | **Separate science and unlocks per colony (beta)** | on | Each colony earns and spends its own science and unlocks its own buildings. Chosen when a separate-colonies game begins (or a shared one is split) and kept for the life of the save. |
+| **Mixed factions for new games (beta)** | off | Only read when a new game is made, with *Separate colonies* on and every faction unlocked on the host's computer: each colony plays Folktails or Iron Teeth, its player's pick (see *Mixed factions*). A save keeps the mode it started with. |
 
 The days before a hand-over (below) are read each day, so they can be changed during a game.
 
@@ -98,6 +99,61 @@ centers already there are the host's colony's. Every other player **founds** the
    shared unless the host ticks **Allow founding colonies in a shared game** before hosting. Then the first founding
    in it makes it a separate-colonies game for good: every building already there becomes the host's colony's, on
    every computer at that tick.
+
+## Mixed factions (beta)
+
+*1.4.0-beta20. Not played yet.* With **Mixed factions for new games** on, every colony plays a faction of its own:
+one player can run Folktails and another Iron Teeth on the same map, trading through Trading Posts.
+
+**Picking your faction.** It is part of the waiting room (the host's **Host co-op game**):
+
+- The **Co-op Game** page shows the faction page's own switcher, its logo ring, arrows and name plate, under the
+  settlement's name. Each player, the host included, picks with the arrows before Start. Each player's row shows
+  their faction's logo (hover it for the name), and the plate reads *map - difficulty*, since there is no one
+  faction.
+- On a **multi-start map** each start is placed in its player's faction: their district center, their beavers.
+- On a **standard map** the host's colony is the host's pick. Every other player's founding places their picked
+  faction's district center (*Place your Iron Teeth colony's district center*); **Another faction** changes it.
+- A player who did not pick (a game made alone and hosted later, or someone who joined a save) chooses in the
+  founding box: one card per faction, with the game's own logo, name and description.
+- A **mixed save** hosted from the main menu shows each player's colony and its faction in the room. Only a player
+  whose colony has no faction yet (they will found it) picks one there.
+
+**Which factions.** The host's unlocks count: Iron Teeth is there if it is unlocked on the hosting computer, whoever
+picks it. A new game becomes mixed only with every faction unlocked on the host's computer (otherwise the room says
+so and everyone plays the host's faction). When another player hosts the save later, their unlocks count from then on.
+
+**Changing your mind.** A colony that has built nothing of its own faction yet (only its district center, and common
+things like paths) can still switch: **Play Iron Teeth instead** on your colony in the Ctrl+T window. On a
+multi-start map a player whose start is not the faction they picked is asked once. The district center and beavers
+become the other faction's, in place (the same count, up to the starting numbers), and the stock stays. Not while
+the colony has an offer or exchange open at a Trading Post: end it first.
+
+**Each colony its own faction:**
+
+- **Toolbar**: your faction's buildings and crops, and the common ones (paths, stairs, dev buildings). A steward
+  sees the faction of the colony they run. A colony can't place the other faction's buildings (the host refuses them).
+- **Beavers and bots** look like their faction and have its needs: an Iron Teeth bot needs Energy, a Folktails bot
+  Biofuel. A beaver only eats its own faction's food (Berries and water are everyone's). Babies are born the faction
+  of the lodge or breeding pod they come from; a child grows up the faction it was.
+- **Buildings, paths and power shafts** look like their own faction. A path takes its colony's.
+- **Warehouses, piles and tanks** hold their own faction's goods and the common ones. Farmhouses and foresters plant
+  their faction's crops and trees and the common ones. Gatherers take what their faction uses (lumberjacks still cut
+  every tree: logs are everyone's).
+- **What you see** follows your colony's faction: the faction icon at the top left, the wellbeing box, the goods
+  lists (distribution, statistics, a resource counter's choice), the game-over and Wonder screens. Tutorials are off
+  in a mixed game (they are written for Folktails).
+
+**Trading between factions.** A good goes to a colony only if its faction can store it: between Folktails and Iron
+Teeth that is the 17 goods both use (Log, Plank, Treated Plank, Gear, Metal Block, Scrap Metal, Dirt, Pine Resin,
+Explosives, Fireworks, Berries, Water, Badwater, Extract and the three bot parts), plus science. **Beavers never cross
+between factions.** The goods grid lists only what may cross that way. The form says why when an offer from before
+can't, a Trading Post between factions says what may cross under its header, and each colony's wishes list only
+what it may receive. Two colonies of one faction trade as before.
+
+**Handovers.** A colony handed over goes to the nearest living colony *of its faction* first, then the nearest. The
+receiver keeps its own faction for its toolbar. It can still run the buildings and beavers it received, and a beaver
+crosses a Trading Post only into a colony of its own faction.
 
 ## A shared-colony game
 
@@ -289,6 +345,7 @@ places. So in a separate-colonies game:
 | Automation | A building, relay or memory cell may be wired only to its own colony's (copying settings from another colony's building, or placing a copy of it, is refused or placed plain: it would copy the links too) |
 | Names | Only the owner renames |
 | Other mods' building settings | Only the owner changes them: another mod's action for one building (MixedStorage's warehouse and pile goods) is judged like this mod's own |
+| Stockpiles, planting, gathering (mixed factions) | A building keeps to its own faction: its goods, crops and trees, and the common ones |
 | Migration | Only between a colony's own districts; beavers change colony only through a Trading Post, and a traded beaver must be able to walk to its new district and carry nothing. In the Migration tab (F7), another colony's district's automatic migration settings, and the manual buttons between it and yours, are greyed out |
 
 Marks work per tile: a tile marked by one colony (for planting or cutting) can't be marked or unmarked by another.
@@ -379,6 +436,15 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 ## Known limits
 
 - Up to four colonies; more players join as helpers of the host's colony.
+- **Mixed factions** (1.4.0-beta20) is only for new games; a save keeps its mode. A mixed save needs MultiColony:
+  opened in the plain game or the Stability Fork it loads one faction, and the other faction's buildings and
+  characters are dropped as the game's "loading issues" (and gone if that copy is saved).
+- Mixed factions loads both factions' models and data: more memory, a longer load.
+- In a mixed game both halves of a Trading Post show the placing colony's faction's model; achievements, the Iron
+  Teeth unlock goal and the save's own faction (the load menu) are the host's faction's; other mods that read the
+  game's faction see the host's.
+- A game made alone and hosted later, or a save hosted from inside a game, has no waiting room: players pick their
+  faction when founding, or switch an untouched colony.
 - The waiting room is used from the main menu (a new game, or Load Game → Host co-op game); hosting from inside a game
   (Options → Load, Save and Rehost) keeps the old dialog. It holds at most seven guests (the Steam lobby's eight), and
   is joined from the main menu only: a guest who accepts its invite while in a game is told to go back to the menu
@@ -436,6 +502,18 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   hand-over rule, not for its own player's days away.
 
 ## How it works
+
+- **Mixed factions** (`BeaverBuddies/Factions`). The mode is decided before any of the game's collections load
+  (`MixedFactions`: the waiting room that makes the world, the solo New Game's Start, or the save's
+  `BeaverBuddies.ColonyFactions`). A mixed game loads every faction's buildings, characters, goods, needs and
+  materials (`OtherFactionCollections`), de-duplicated.
+  - `FactionCatalog` says which faction lists what.
+  - Each colony's faction is saved (`ColonyFactionService`), and so is each beaver's (`CharacterFaction`, read from
+    the save before the beaver wakes). A building's is its template's.
+  - Needs, fur, avatars, outfits, the bot a bot assembler makes, and each building's goods and plants follow the
+    character's or building's own faction, the same on every computer. Only what you see follows your colony's.
+  - A founding carries its faction and the host checks it is unlocked; a switch is judged by the host and again as
+    it is played. Each colony's faction is in the daily colony check.
 
 - **The host decides.** Every action goes through the host. The host writes which connection it came from (a guest
   cannot claim another), seats players by their stable id, writes the actor's colony into the action, checks it

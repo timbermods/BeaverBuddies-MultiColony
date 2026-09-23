@@ -1043,3 +1043,34 @@ Phase 0 findings (2026-09-22, 1.1.2.4, base `ed31737`):
    MainMenuMiscStyle and CommonStyle, which the main menu loads.
 8. **Top bar.** It is already per colony (`ColonyViewResourceCountPatcher`), and rows show only goods in stock.
    Phase 6 step 7 needs nothing.
+
+Amendments made while building (1.4.0-beta20):
+
+- **D14, "untouched".** New games copy the game's starting unlocks into every colony, so "no unlocks" can't be part
+  of it. An untouched colony can't have a Trading Post (trading needs roads). Common buildings (paths, which a map may
+  already have) look right in either faction.
+  - So a colony is untouched until it owns a building, finished or not, of a faction of its own besides its district
+    centers (`ColonyFoundingService.UntouchedFacts` / `IsUntouched`). Marks don't count.
+  - The strings say "before it builds anything of its own faction".
+- **D17, placement.** It is judged on the host in `ColonyRulesService.JudgeFactions` next to the founding and switch
+  checks (with the pure `FactionRules.MayPlace`), not in `ColonyRules`' Placement scope through `IColonyWorld`. The
+  host is the only judge of a placement either way.
+- **D23 (Trading Post halves)** took its fallback: both halves show the placing colony's faction's model (Known
+  limits). Posts are usually placed before any road reaches their far half (beta16), so it would mostly have fallen
+  back anyway.
+- **The Wonder launch sound.** The mod already records `WonderFragment.ActivateWonder` as a synced action, and
+  RuntimeChecks forbids a second patch on it. So the sound takes the faction of the selected entity (the Wonder whose
+  panel launched it) instead.
+- **Lobby wire.**
+  - Picks travel as `LobbyFaction` frames. A row carries `faction` and `pick`; a summary carries `mixed` and
+    `factions`. A room that names no faction sends beta19's JSON.
+  - A save's room now always names the save's faction and colonies (read by `SaveColonyReader`), mixed or not. This
+    is a small display gain allowed by D8.
+- **The review before release** (all fixed): the births patch reached only one of the two spawn methods (two
+  `[HarmonyPatch]` names on one method merge into one target; now `TargetMethods`, and a source check forbids it);
+  the catalog finds district centers without `TemplateNameMapper`; the toolbar refreshes after `RefreshToolLocks`; an
+  open exchange makes a colony touched; the switch event carries the host's starting numbers; the Accept check on a
+  half that changed colony is mixed-only (D22).
+- **Order of loading.** `MixedFactions.Reset()` runs when each scene's container is configured. `ColonyFactionService`,
+  `FactionSelection` and `FactionToolbar` take `FactionService` in their constructors, so they load after the decision
+  and a previous game's answer can't leak.

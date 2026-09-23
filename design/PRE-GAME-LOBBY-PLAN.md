@@ -83,6 +83,8 @@ Done means all of this holds:
 - **D5: Folktails is the case to build and test.** Nothing here is faction-specific: the faction the host picked on the
   New Game panel goes into the save, and guests don't choose one. (A per-player faction choice belongs to the mixed
   factions work, `design/MIXED-FACTIONS-PLAN.md`; the waiting room is where it would go later. Not now.)
+  *Since 1.4.0-beta20 it does:* with Mixed factions on, each player picks a faction on this page with the faction
+  page's own switcher (`Lobby/LobbyFactionPicker.cs`; `design/MIXED-FACTIONS-PLAN.md` §6).
 - **D6: The look must be as close as possible to Timberborn's own UI.** Every frame, button, list, checkbox, icon and
   text style is the game's own (§5). Nothing hand-drawn where the game has a piece for it.
 

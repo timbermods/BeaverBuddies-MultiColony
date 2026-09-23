@@ -61,6 +61,9 @@ build cannot join.
   buildings. Chosen when a separate-colonies game begins, then fixed for the save.
 - **Hand over a colony after its player is away (days)**: 7 by default, 0 for never (see
   [when a colony is handed over](#when-a-colony-is-handed-over)).
+- **Mixed factions for new games (beta)**, off (1.4.0-beta20; not played yet): on, with separate colonies and every
+  faction unlocked on your computer, each player picks **Folktails or Iron Teeth** for their own colony, in the
+  waiting room (see [Folktails and Iron Teeth together](#folktails-and-iron-teeth-together)).
 
 **2. Host: a new game with a waiting room** (the easy way, 1.4.0-beta18; not played yet).
 
@@ -78,6 +81,9 @@ build cannot join.
   district center** as soon as they are in, even while the game is still paused (step 5). On a BeaverBuddies
   multi-start map each player gets a start, in the order they came into the room (only as many starts as players,
   at most the Players field); anyone beyond founds theirs.
+- **With Mixed factions on**, the page also shows the New Game faction page's own switcher: each player, you
+  included, picks Folktails or Iron Teeth with its arrows, and each row shows that player's faction. A multi-start
+  map places each start in its player's faction; on a standard map each guest founds their picked faction's colony.
 
 **Or host a save** (any save, new or old, on any map, including a new game you started alone):
 
@@ -92,8 +98,9 @@ build cannot join.
 select the save and choose **Host co-op game** (instead of Load). The **Co-op Game** page opens for that save (its
 settlement, name and in-game date): invite with **Invite Friends** (Steam) or your IP address (port **25565**),
 friends ready up, and **Start Game** loads the save for everyone at once. Each player gets the colony the save
-remembers for them (a new player the next free one), so the page shows no colony numbers. Guests join from the main
-menu, as for a new game.
+remembers for them (a new player the next free one); since 1.4.0-beta20 the page reads that from the save and shows
+each player's colony and its faction, and the save's faction ring. Guests join from the main menu, as for a new
+game.
 
 **4. Hosting from inside a game** (Options → **Load Game** → **Host co-op game**, or **Save and Rehost**) keeps the
 old way: guests join by the Steam invite (or **Join co-op game** → the host's IP) and load at once, and **the host
@@ -114,6 +121,20 @@ over.
 Steam): you get the same colony every time, whoever hosts. The connection panel shows each name with its colony.
 Over Steam the host checks that id; over a direct IP join it can't (see [Which joins are
 verified](#how-it-works)).
+
+### Folktails and Iron Teeth together
+
+*1.4.0-beta20, not played yet.* With **Mixed factions for new games** on, every colony plays its own faction:
+
+- **Pick in the waiting room**, with the game's own faction switcher. Otherwise pick when founding: one card per
+  faction.
+- **Your colony is your faction's.** Its toolbar, beavers and bots (their looks and needs), buildings, storage, crops
+  and goods lists are all its faction's.
+- **Trading between factions**: the 17 goods both factions use, and science. Never beavers.
+- **Changing your mind**: until your colony builds anything of its own faction, Ctrl+T offers **Play … instead**.
+- The host's unlocks decide whether Iron Teeth is there.
+
+See [TWO-COLONIES.md](TWO-COLONIES.md#mixed-factions-beta) for the details.
 
 ## Playing your colony
 

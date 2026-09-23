@@ -5,6 +5,84 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta20
+
+**Folktails and Iron Teeth together.** The maintainer's plan (`design/MIXED-FACTIONS-PLAN.md`, revision 2), built on
+beta19: with the new host setting **Mixed factions for new games (beta)** on, every colony of a separate-colonies
+game plays a faction of its own, its player's pick. The picking is part of the waiting room, with the New Game
+faction page's own switcher. The maintainer's decisions: the host's unlocks count (D1); beavers never cross between
+factions (D2); a good crosses only to a faction that can store it (D3); shared-colony games stay single faction (D4).
+Off, nothing changes: every patch returns at once outside a mixed game, and a room that is not mixed sends beta19's
+frames. **Wire change** (optional faction fields, a new lobby frame and a new event); **save change** only in a mixed
+game (a `BeaverBuddies.ColonyFactions` singleton and each beaver's `BeaverBuddies.CharacterFaction`).
+
+- **Loading both factions** (`Factions/`). `MixedFactions` decides the mode in a `FactionService.Load` prefix, before
+  any collection loads: from the waiting room that makes the world, the solo New Game's Start
+  (`NewGameFactionCapture`), or the save's singleton. `OtherFactionCollections` adds the other factions' template,
+  good, need and material collections, and the templates are de-duplicated. The crashes this would cause are fixed:
+  the bot factory, the power-shaft parts, the planting tool's building names, worker outfits.
+- **Each colony's faction** (`ColonyFactionService`, saved, noted in the colony digest, and in the daily check's
+  flags). Each beaver's is saved (`CharacterFaction`) and read from the save before the beaver wakes; births, growing
+  up, bot assembly, founding and starts give it through `FactionCreationContext`. A building's is its template's
+  (`FactionCatalog`).
+- **Per character and per building, the same on every computer**: needs (a Folktails bot needs Biofuel, an Iron Teeth
+  bot Energy), wellbeing maximum, fur, avatars, outfits, the bot a bot assembler makes; the goods a warehouse, pile or
+  tank may hold, the crops and trees a farmhouse or forester plants, what a gatherer takes; paths, driveways, decals
+  and power shafts. Only what you see follows your colony's faction: the toolbar, the faction icon, the goods lists,
+  the wellbeing box, the game-over and Wonder screens. Tutorials are off in a mixed game.
+- **Founding in a faction.** `FoundColonyEvent.faction`; the host checks the faction is known and unlocked on its
+  own computer (D1, latched on the main thread and told to guests in `InitializeClientEvent.hostFactions`). A mixed
+  multi-start game places each start's district center and beavers in its player's faction. The founding dialog
+  uses the waiting room's pick, or shows one card per faction (the game's logo, name and description).
+- **Changing your mind** (`ColonyFactionSwitchEvent`, on the reviewed Global list): a colony that owns no building of
+  its own faction besides its district centers can swap its district center and beavers for the other faction's, in
+  place, keeping its stock. The host judges it, and every computer judges it again as it is played. **Play … instead**
+  in the Ctrl+T window; offered once to a player whose start is not the faction they picked.
+- **Placement**: a colony places only its own faction's and common buildings (and Trading Posts of any faction); the
+  host refuses the rest (`OtherFactionBuilding`). New refusals `FactionUnavailable` and `FactionSwitchNotAllowed`.
+- **Trading between factions** (`FactionTrade`): a good goes to a colony only if its faction has it (between
+  Folktails and Iron Teeth, the 17 shared goods), science always, beavers only between colonies of one faction. The
+  offer form has two new verdicts; the goods picker lists only what may cross; the exchange's own checks, played on
+  every computer, refuse and end exchanges whose terms no longer pass; wishes keep to what a colony may receive. The
+  Trading Post header shows the partner's faction on the game's diamond. Only beavers of the receiving colony's
+  faction move or count as spare.
+- **Handovers** go to the nearest living colony of the same faction first (D21).
+- **The waiting rooms.** With Mixed factions on (and every faction unlocked on the host's computer) the Co-op Game
+  page shows the New Game faction page's own switcher (`LobbyFactionPicker`: logo ring, arrows, name plate); every
+  player, the host included, picks before Start, each row wears its player's logo, and a guest's pick travels as a
+  `LobbyFaction` frame. The host's pick is the new game's base faction. A save's room now reads the save
+  (`SaveColonyReader`): each row shows the colony its player will play and its faction, and the ring the save's
+  faction; in a mixed save only a player whose colony has no faction yet picks.
+- **Setting**: *Mixed factions for new games (beta)*, off; read only when a new game is made. A save keeps its mode.
+- Found while building and settled in the plan's §14: "untouched" can't mean "no unlocks" (new games copy the
+  starting unlocks into every colony); placement is judged in `ColonyRulesService.JudgeFactions`; both halves of a
+  Trading Post show the placer's model (D23's fallback); the Wonder launch sound takes the selected Wonder's faction;
+  every service that reads the mode loads after `FactionService`, and the mode resets with each scene.
+- Found in the review before release and fixed:
+  - Births: the lodge and breeding-pod patch named both spawn methods on one patch method, and Harmony patched only
+    one of them, so some newborns took the base faction (now `TargetMethods`). A beaver made with no faction in hand
+    now logs one warning.
+  - The catalog no longer reads `TemplateNameMapper`, which may not have loaded when the first service asks, and it
+    tries again after a failure.
+  - The toolbar and faction icon now follow a change of local colony (a hello, a steward, a handover).
+  - A colony with an offer or exchange open is no longer untouched, so it can't switch mid-trade.
+  - A switch carries the host's starting numbers in its event.
+  - Accepting after the other half changed colony is refused in a mixed game only; other games are as in beta19.
+  - A handover with no district center to measure from goes nowhere, as before.
+  - The wellbeing box only hides the other faction's needs, and keeps the game's own hiding.
+  - A guest who hasn't picked sees the faction the host has for them.
+  - A faction picked in an earlier waiting room is forgotten at the main menu.
+  - A room whose host turns separate colonies off makes a one-faction game.
+- Docs: README (settings, *Start a game*, *Folktails and Iron Teeth together*), TWO-COLONIES (*Mixed factions (beta)*,
+  settings, *Known limits*, *How it works*), ALPHA-TEST-SCRIPTS (Script F), the plans, the site.
+- Checks: StabilityTests 391 (18 new: the colony table, faction sets, founding, the switch, placement, what crosses
+  between factions, the form's verdicts, handovers, the switcher, the seating plan, the save reader, every patch
+  idle outside a mixed game, every string; the waiting room's faction frames over real connections; no patch stacks
+  two targets' names, in the whole mod), RuntimeChecks 349 (10 new: the facts about both factions the feature relies
+  on, in the game's own data; every member it hooks or reads; the switcher's classes in the menu's style sheets; the
+  new event fields, a switch's starting numbers included). Both builds, 0 warnings.
+- Not seen in a game. Script F is this release's.
+
 ## 1.4.0-beta19
 
 **The waiting room for saves.** Asked for right after beta18 (the maintainer's answer to the plan's question D1):

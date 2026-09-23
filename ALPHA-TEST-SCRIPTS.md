@@ -411,3 +411,47 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
 15b. **A player new to the save (beta19).** A third player who never played the save joins its waiting room: in the
     game they take the next free colony (or found one), as before.
 16. Send both `Player.log` files. Lines from the waiting room start with `[Lobby]`.
+
+## Script F: Folktails and Iron Teeth together (two players, about 40 minutes) *(beta20)*
+
+Mixed factions. **Not played yet**: every line is new. Both computers need the same mod version; the host needs
+Iron Teeth unlocked (reach 15 average wellbeing with Folktails once, or dev mode's unlock). Screenshots of the
+waiting room and of each colony help.
+
+1. **The setting.** Host: Mod Settings → BeaverBuddies → **Mixed factions for new games (beta)** on (Separate
+   colonies on). The tooltip fits on two lines.
+2. **The room.** New Game → Folktails → a BeaverBuddies multi-start map with 3 starts → Normal → **Host co-op game**.
+   The page shows the plate *map - Normal* (no faction), a gold line *Mixed factions: each player picks…*, then **Your
+   faction** with the faction page's arrows, ring and name plate reading *Folktails*. Log: `[Factions]` nothing yet.
+3. **Picking.** Guest joins from the main menu: the same switcher, showing Folktails. Guest presses the right arrow:
+   *Iron Teeth*, the Iron Teeth logo in the ring. Within a second the host's row for the guest shows the Iron Teeth
+   logo (hover: *Iron Teeth*). Host presses an arrow and back: the guest sees the host's row follow. After **Start
+   Game** the arrows grey out.
+4. **In the game.** Log (both): `[Factions] Mixed factions: on`, the catalog line (2 factions, 4 shared templates,
+   bots 2, shaft parts 2, district centers 2, Trading Posts 2, goods shared by all: 17). Start 2 is an **Iron Teeth**
+   district center with Iron Teeth beavers; start 1 Folktails. No error in `Player.log`.
+5. **Each toolbar.** Host: Folktails buildings and crops only (paths and stairs too). Guest: Iron Teeth's. The top-left
+   faction icon is each player's own. Ctrl+T: each colony has its faction's diamond.
+6. **Build both.** Guest builds Iron Teeth housing, a farmhouse, a warehouse, a bot assembler and a charging station.
+   The farmhouse lists Iron Teeth and common crops; the warehouse's good choice lists Iron Teeth and common goods. A
+   bot is made: Iron Teeth model, needs panel with **Energy**, not Biofuel. Host does the same with Folktails
+   buildings (a Folktails bot needs Biofuel).
+7. **Refused.** Host, dev mode on (Alt+Shift+Z), places an Iron Teeth building from the dev toolbar: refused, *That
+   building belongs to another faction.*
+8. **Trading.** A Trading Post between the two colonies. Its header shows the other colony's faction diamond and the
+   line *Between factions: goods both factions use, and science. No beavers.* The give grid lists only the 17 shared
+   goods (+ Science with separate science), no Beavers, no Carrots. Offer 50 Logs for 10 Gears: it runs.
+9. **Save, quit, load, rehost.** Everything as before: factions, fur, bot needs, models, toolbars. Desync checks stay
+   green for three days.
+10. **A standard map.** A new mixed room on a standard map: the guest picks Iron Teeth. In the game the guest's
+    founding box says *Place your Iron Teeth colony's district center*; **Another faction** shows one card per
+    faction. Found it: Iron Teeth district center and beavers.
+11. **The switch.** A third colony (or Ctrl+Shift+K alone, debug) founds Folktails, then before building anything Ctrl+T
+    → **Play Iron Teeth instead**: its district center and beavers become Iron Teeth in place. Build an Iron Teeth
+    warehouse: the button is gone (a path alone would not count).
+12. **The save's room.** Main menu → Load Game → that save → **Host co-op game**: the ring shows Folktails, the rows
+    *Host · Colony 1* with the Folktails logo and the guest's *Colony 2* with the Iron Teeth logo; nobody's switcher
+    shows (both colonies have their faction).
+13. **Locked.** On a computer without Iron Teeth unlocked, Mixed factions on, a new room: the gold line says Iron
+    Teeth is not unlocked and everyone plays one faction; no switcher.
+14. Send both `Player.log` files. Lines start with `[Factions]` and `[Lobby]`.
