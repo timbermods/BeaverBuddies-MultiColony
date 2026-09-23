@@ -85,6 +85,10 @@ namespace BeaverBuddies.Lobby
 
             Back = template.Q<Button>("BackButton");
             Next = template.Q<Button>("NextButton");
+            // Both buttons the size of the template's Back (menu-button--medium): its Next is the wizard's larger one, and
+            // here the two sit side by side as a pair (Cancel / Start Game, Leave / Ready).
+            Next.RemoveFromClassList("menu-button--large-text");
+            Next.AddToClassList("menu-button--medium");
             VisualElement main = template.Q(className: "new-game__main-content") ?? template.contentContainer;
 
             // The Game Mode page's summary plate, alone and centred as that page shows it. (A logo ring beside it, until

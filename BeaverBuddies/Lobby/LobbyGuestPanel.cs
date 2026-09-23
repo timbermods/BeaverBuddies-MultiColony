@@ -17,7 +17,7 @@ namespace BeaverBuddies.Lobby
 {
     /// <summary>
     /// A guest's page in a host's waiting room: the same page as the host's (LobbyPage), titled with the host's name,
-    /// with I'm ready / Not ready and Leave (D7). Opened when the host's welcome arrives on a join from the main menu
+    /// with Ready / Not ready and Leave (D7). Opened when the host's welcome arrives on a join from the main menu
     /// (ClientConnectionService keeps the connection); closed when the save arrives (the scene changes), when the guest
     /// leaves, or when the host ends the room, which says why in the game's own box. Main menu only (D20).
     /// </summary>

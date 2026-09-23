@@ -14,6 +14,19 @@ namespace BeaverBuddies.Steam
     {
         /// <summary>Lobby data: "1" while the host is still accepting players, "0" once the game has started.</summary>
         public const string OpenKey = "bb_open";
+        /// <summary>Lobby data (1.4.0-beta24): the host's mod version, so a friend's Join co-op game box can tell whether it can join.</summary>
+        public const string VersionKey = "bb_ver";
+        /// <summary>Lobby data (1.4.0-beta24): "1" for a waiting room, "0" for a game hosted from a save or a game.</summary>
+        public const string RoomKey = "bb_room";
+        /// <summary>Lobby data (1.4.0-beta24): what the host is playing, one line (a new game's plate, or a save's settlement).</summary>
+        public const string DescriptionKey = "bb_desc";
+        /// <summary>Lobby data (1.4.0-beta24): the host's Steam name (a friend who is a guest in the lobby shows the host's game).</summary>
+        public const string HostKey = "bb_host";
+        private const int DescriptionLimit = 120;
+
+        // What the lobby tells friends' Join co-op game boxes (SetDetails), written when the lobby exists.
+        private volatile bool waitingRoom;
+        private volatile string description = "";
 
         public CSteamID LobbyID { get; private set; }
 
@@ -75,6 +88,7 @@ namespace BeaverBuddies.Steam
             // would have left it. It used to open for friends after the game had started (review of beta20, J11a).
             SteamMatchmaking.SetLobbyData(LobbyID, OpenKey, closed ? "0" : "1");
             if (closed) SteamMatchmaking.SetLobbyJoinable(LobbyID, false);
+            WriteDetails();
             Plugin.Log($"Steam lobby created with ID {LobbyID}; joinable by friends={Settings.LobbyJoinable}{(closed ? "; closed, the game has started" : "")}");
         }
 
@@ -97,6 +111,26 @@ namespace BeaverBuddies.Steam
             ISocketStream socket = link.AcceptClient();
             Plugin.Log("New Steam client accepted!");
             return socket;
+        }
+
+        /// <summary>
+        /// What friends see of this game in their Join co-op game box: whether it is a waiting room, and a line saying what
+        /// it is. Kept until the lobby exists, and written at once if it does.
+        /// </summary>
+        public void SetDetails(bool isWaitingRoom, string what)
+        {
+            waitingRoom = isWaitingRoom;
+            string line = (what ?? "").Replace('\n', ' ').Trim();
+            description = line.Length > DescriptionLimit ? line.Substring(0, DescriptionLimit) : line;
+            SteamNet.RunOnMain(() => { if (!stopped && LobbyID.IsValid()) WriteDetails(); });
+        }
+
+        private void WriteDetails()
+        {
+            SteamMatchmaking.SetLobbyData(LobbyID, VersionKey, Plugin.Version);
+            SteamMatchmaking.SetLobbyData(LobbyID, RoomKey, waitingRoom ? "1" : "0");
+            SteamMatchmaking.SetLobbyData(LobbyID, DescriptionKey, description ?? "");
+            SteamMatchmaking.SetLobbyData(LobbyID, HostKey, SteamFriends.GetPersonaName() ?? "");
         }
 
         /// <summary>Called when the host starts the game: nobody new can join, so say so in the lobby.</summary>

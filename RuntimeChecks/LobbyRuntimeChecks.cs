@@ -96,6 +96,11 @@ internal static class LobbyRuntimeChecks
                 ["Views/Core/InputBox.uxml"] = new[] { "name=\"Message\"", "name=\"Input\"", "name=\"ConfirmButton\"", "name=\"CancelButton\"",
                     "CoreStyle.uss" },
                 ["Views/Core/DialogBox.uxml"] = new[] { "name=\"Message\"", "name=\"CancelButton\"", "name=\"InfoButton\"", "name=\"ConfirmButton\"" },
+                // The Join co-op game box (1.4.0-beta24): the Load Game box's named box and save rows.
+                ["Views/Common/NamedBoxTemplate.uxml"] = new[] { "name=\"Header\"", "name=\"CloseButton\"", "content-container=\"true\"" },
+                ["Views/Options/GameSaveItemElement.uxml"] = new[] { "name=\"DisplayName\"", "name=\"GameTime\"", "name=\"Timestamp\"",
+                    "list-view__item-background" },
+                ["Views/Options/LoadGameBox.uxml"] = new[] { "panel-list-view text--default scroll--green-decorated", "load-box__list-title", "box-buttons" },
             };
             foreach (var pair in wanted)
             {
@@ -156,6 +161,27 @@ internal static class LobbyRuntimeChecks
             var box = (string[])Mod("BeaverBuddies.Lobby.SettlementNamePanel").GetField("ClassesUsed", all)!.GetValue(null)!;
             var boxMissing = box.Where(c => !core.Contains(c)).ToList();
             if (boxMissing.Count > 0) throw new Exception("not in CoreStyle, which the input box brings: " + string.Join(", ", boxMissing));
+            // The Join co-op game box is a main-menu box too.
+            var join = (string[])Mod("BeaverBuddies.Connect.JoinCoopBox").GetField("ClassesUsed", all)!.GetValue(null)!;
+            var joinMissing = join.Where(c => !defined.Contains(c)).ToList();
+            if (joinMissing.Count > 0) throw new Exception("the Join box's classes, not in the main menu's style sheets: " + string.Join(", ", joinMissing));
+        });
+
+        test("Join co-op game box: the Steam calls it lists friends' games and joins them with are in the game's Steamworks", () =>
+        {
+            Assembly steam = Assembly.Load("com.rlabrecque.steamworks.net");
+            Type Steam(string type) => steam.GetType("Steamworks." + type, true)!;
+            foreach (var (type, member) in new[] { ("SteamFriends", "GetFriendCount"), ("SteamFriends", "GetFriendByIndex"),
+                ("SteamFriends", "GetFriendGamePlayed"), ("SteamFriends", "GetFriendPersonaName"), ("SteamMatchmaking", "RequestLobbyData"),
+                ("SteamMatchmaking", "GetLobbyData"), ("SteamMatchmaking", "JoinLobby"), ("SteamMatchmaking", "SetLobbyData"),
+                ("SteamUtils", "GetAppID"), ("FriendGameInfo_t", "m_steamIDLobby"), ("FriendGameInfo_t", "m_gameID"), ("CGameID", "AppID") })
+                Has(Steam(type), member, "the Join co-op game box");
+            // The keys a host writes and a friend's box reads are the same strings.
+            Type listener = Mod("BeaverBuddies.Steam.SteamListener");
+            var keys = new[] { "OpenKey", "VersionKey", "RoomKey", "DescriptionKey", "HostKey" }.Select(k => (string)listener.GetField(k, all)!.GetValue(null)!).ToList();
+            if (keys.Distinct().Count() != 5 || keys.Any(k => string.IsNullOrEmpty(k) || k.Length > 255))
+                throw new Exception("the lobby's keys are not five distinct Steam lobby keys: " + string.Join(", ", keys));
+            Has(Steam("SteamFriends"), "GetPersonaName", "the host's name in its lobby");
         });
 
         test("Waiting room for a save: Host co-op game opens it in the main menu, and keeps the dialog in a game", () =>

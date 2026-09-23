@@ -132,7 +132,8 @@ namespace BeaverBuddies.Lobby
                 room.Seating = ids => SeatSave(colonies, ids);
                 room.FactionOfColony = colony => colonies.FactionOfSlot(colony - 1);
             }
-            var io = new ServerEventIO();
+            // Friends' Join co-op game boxes show the page's plate (a save: its settlement).
+            var io = new ServerEventIO { SteamDescription = setup.IsSave ? setup.Settlement : setup.SummaryText };
             io.StartLobby(room);
             if (io.NetBase == null)
             {

@@ -5,6 +5,42 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-beta24
+
+**Join a friend from a list.** **Join co-op game** in the main menu opens a box listing the Steam friends who are
+hosting a co-op game: pick one and **Join** (or double-click it) to go straight into their waiting room, as accepting
+their invite does. The IP address is under the list, as a fallback. In the waiting room both buttons are now one size,
+and a guest's reads **Ready**. No wire or save change; the host's Steam lobby carries four more keys.
+
+- **The box** (`Connect/JoinCoopBox.cs`) is the game's Load Game box, piece by piece, all main-menu classes:
+  - the named box (`Common/NamedBoxTemplate`, used as an instance: its box is a content slot) with the title
+    *Join co-op game* and the close button;
+  - a list title, *Friends' games*, over a `ListView` of the Load Game box's save rows (`Options/GameSaveItemElement`),
+    with the game's own hover and selected art. Each row shows the host's name, what they are playing (a new game's
+    *Folktails - Plains - Normal*, or a save's settlement) and, on the right, *Waiting room*, *Open to join*,
+    *Already started* or *Version …*. Only the first two can be joined (greyed otherwise);
+  - a medium **Join** button;
+  - *Join by IP address*: the game's input box's message, field and a **Connect** button.
+
+  It takes the main menu's place (`HideAndPush`, as the Load Game box does) and refreshes every two seconds. With no
+  games, the list says so. In a game, or without Steam, **Join co-op game** keeps the address box.
+- **Finding the games** uses Steam alone. A friend playing Timberborn in a lobby (`GetFriendGamePlayed`; a host's
+  lobby is friends-only unless *Friends can join* is off) has its lobby data read (`RequestLobbyData`).
+  `Connect/FriendGameRules.cs` decides what a row is and orders the rows: games you can join first, then by name.
+  Joining is `SteamMatchmaking.JoinLobby`, then the invite's own path (`SteamOverlayConnectionService.OnLobbyEntered`:
+  the started check, the connection, *Connecting to …*, the waiting room).
+- **The host's lobby** also says its mod version (`bb_ver`), whether it is a waiting room (`bb_room`), a one-line
+  description (`bb_desc`: the waiting room's plate, or the hosted save's settlement) and the host's Steam name
+  (`bb_host`). A friend who is a guest in a lobby shows the host's game, and each lobby is listed once. A host from
+  before beta24 lists as *Older version*; it can't be joined from this build either.
+- **The waiting room's buttons:** **Start Game** / the guest's ready button take the template's Back size
+  (`menu-button--medium`, not the wizard's larger Next), so they pair with **Cancel** / **Leave**. The guest's button
+  reads **Ready** / **Not ready** (it said *I'm ready*), and the status line *Press Ready when you are.*
+- Checks: StabilityTests 417 (the friend-game rules and order, the wiring, the lobby's keys, the button sizes and
+  wording), RuntimeChecks 361 (the box's classes in the main menu's style sheets; its templates' names; the Steamworks
+  calls it uses, in the game's own Steamworks; five distinct lobby keys). Both builds, 0 warnings.
+- Not seen in a game yet: the box needs a friend hosting over Steam (Script D, 4c).
+
 ## 1.4.0-beta23
 
 **The waiting room, as first seen in a game.** The first playtest of the waiting room (beta18 to beta21) found that it

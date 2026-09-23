@@ -157,7 +157,8 @@ namespace BeaverBuddies.Connect
                 return;
             }
 
-            ServerEventIO io = new ServerEventIO();
+            // Friends' Join co-op game boxes show the save's settlement.
+            ServerEventIO io = new ServerEventIO { SteamDescription = saveReference.SettlementReference?.SettlementName };
             EventIO.Set(io);
             io.Start(data);
 

@@ -375,13 +375,18 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
    **Cancel** and **Start Game** *(beta23: seen)*. Screenshot it at your usual resolution and at the smallest window
    you use.
 4. **Joining.** Guest, from the main menu: accept the invite. A *Connecting to …* box, then the **Kyler's Game** page:
-   the same plate and players, your row marked *(you)*, **I'm ready** and **Leave**. The host's row for you shows
+   the same plate and players, your row marked *(you)*, **Ready** and **Leave**. The host's row for you shows
    *Joining…*, then your name, *Colony 2* and **Not ready**, within a second. The host's page has a red cross for your
    row, in a column of its own to the right of *Not ready*.
 4b. **Accepted in the Steam overlay (beta23).** Guest accepts the invite inside the Steam overlay (Shift+Tab) and
-   closes the overlay: the whole screen is the **Kyler's Game** page, with **Leave** and **I'm ready** at the bottom,
+   closes the overlay: the whole screen is the **Kyler's Game** page, with **Leave** and **Ready** at the bottom,
    and no main menu showing. (In beta22 the page shared the screen with the main menu.)
-5. **Ready.** Guest: **I'm ready** (the button then reads **Not ready**), then **Not ready**, then **I'm ready**
+4c. **From the list (beta24).** Guest, main menu → **Join co-op game**: a box like the Load Game box, titled *Join
+   co-op game*, lists *Friends' games* with the host's row (their name, *Folktails - map - Normal* in gold, *Waiting
+   room* on the right) and, under it, *Join by IP address* with the field and **Connect**. Select the row, **Join**: the
+   same *Connecting* box, then the waiting room. Also: a friend in a started game shows *Already started*, greyed; with
+   no friend hosting, the list says so. Screenshot the box.
+5. **Ready.** Guest: **Ready** (the button then reads **Not ready**), then **Not ready**, then **Ready**
    again: your row's state and the host's row follow each time, and the host's line says who is not ready.
 6. **Remove and leave.** Host: the red cross on the guest's row → confirm: the guest's page closes with *Kyler removed
    you from the waiting room.* Guest joins again by IP (**Join co-op game**). Guest: **Leave** → confirm: back to the

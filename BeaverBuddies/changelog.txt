@@ -1,3 +1,9 @@
+v1.4.0-beta24 (BeaverBuddies MultiColony)
+* Join co-op game in the main menu lists your Steam friends' co-op games: pick one and press Join (or double-click it) to go straight into their waiting room. The IP address is still there, under the list.
+* In the waiting room both buttons are one size (Cancel / Start Game, Leave / Ready), and a guest's button reads Ready.
+* Everyone needs this version: the list shows a friend on another version, but can't join them.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-beta23 (BeaverBuddies MultiColony)
 * The waiting room opens: Host co-op game names the settlement in the game's own naming box, and Next opens the Co-op Game page. In beta18 to beta21 the name box was drawn without its frame and Next crashed the game.
 * A friend who accepts the invite in the Steam overlay gets the whole page once the overlay closes (it shared the screen with the main menu).

@@ -73,13 +73,14 @@ build cannot join.
 - **New Game** → faction → map → difficulty, as usual. Then choose **Host co-op game** beside **Start**, and name
   your settlement (the game's own box).
 - The **Co-op Game** page opens. Invite with **Invite Friends** (Steam), or give your IP address (port **25565**).
-  Friends appear as they join: **Joining…**, then their name and colony, and **Ready** once they press **I'm ready**.
+  Friends appear as they join: **Joining…**, then their name and colony, and **Ready** once they press **Ready**.
   You can remove someone from the room.
 - Press **Start Game** whenever you like (if someone is not ready, or nobody came, you are asked first). Your
   computer makes the world behind the loading screen, and everyone loads it together, paused at the start. Nobody new
   can join after Start (a **Save and Rehost** lets someone in later).
-- **Guests** accept the Steam invite, or choose **Join co-op game** → the host's IP, **from the main menu**. A short
-  *Connecting* box, then the same page with **I'm ready** and **Leave**.
+- **Guests**, **from the main menu**: **Join co-op game** lists your Steam friends' co-op games; pick the host's
+  and press **Join** (1.4.0-beta24). Or accept the Steam invite, or type the host's IP under the list. A short
+  *Connecting* box, then the same page with **Ready** and **Leave**.
 - In the game, the host has the map's district center. On a standard map every other player is offered **Place your
   district center** as soon as they are in, even while the game is still paused (step 5). On a BeaverBuddies
   multi-start map each player gets a start, in the order they came into the room (only as many starts as players,

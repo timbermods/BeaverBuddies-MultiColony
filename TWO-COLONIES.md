@@ -57,7 +57,7 @@ co-op game** (beside Start) and names the settlement in the game's own box. The 
 game's New Game wizard, lists everyone in the room: the host (colony 1), then each guest in the order they came in
 (colonies 2 to 4, then helpers of colony 1; no colonies in a shared game), each **Ready** or **Not ready**
 (**Joining…** until the guest has said who it is). Guests join from the main menu, by Steam invite or **Join co-op
-game**, and press **I'm ready**; the host may remove a guest, and **Start Game** asks first if someone is not ready
+game**, and press **Ready**; the host may remove a guest, and **Start Game** asks first if someone is not ready
 or nobody came. At Start:
 
 - nobody new can join, for good (a **Save and Rehost** lets someone in later, as after any first tick);

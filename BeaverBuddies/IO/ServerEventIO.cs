@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BeaverBuddies.IO
 {
@@ -36,6 +37,12 @@ namespace BeaverBuddies.IO
         public override UserEventBehavior UserEventBehavior => UserEventBehavior.QueuePlay;
 
         public ISocketListener SocketListener { get; private set; }
+
+        /// <summary>
+        /// What Steam friends see of this game in their Join co-op game box (SteamListener.SetDetails): a one-line
+        /// description, set by whoever starts hosting before it does.
+        /// </summary>
+        public string SteamDescription { get; set; }
 
         // We only support a static map; see note above
         public void Start(byte[] mapBytes)
@@ -104,6 +111,7 @@ namespace BeaverBuddies.IO
                         Plugin.LogError("Steam invites are unavailable this session (direct IP still works): " + e.Message);
                     }
                 }
+                foreach (SteamListener steam in listeners.OfType<SteamListener>()) steam.SetDetails(room != null, SteamDescription);
                 SocketListener = new MultiSocketListener(listeners.ToArray());
                 NetBase = new TimberServer(SocketListener, mapProvider, CreateInitEvent());
                 if (room != null) NetBase.OpenLobby(room);

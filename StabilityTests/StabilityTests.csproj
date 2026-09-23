@@ -32,6 +32,7 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/DesyncDialogPlan.cs" Link="DesyncDialogPlan.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/ConnectionErrorPlanner.cs" Link="ConnectionErrorPlanner.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/JoinFlowRules.cs" Link="JoinFlowRules.cs" />
+    <Compile Include="$(SourceRoot)/BeaverBuddies/Connect/FriendGameRules.cs" Link="FriendGameRules.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Steam/OverlayBlockerPolicy.cs" Link="OverlayBlockerPolicy.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ColonyTerritory.cs" Link="ColonyTerritory.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ColonySlotTable.cs" Link="ColonySlotTable.cs" />
