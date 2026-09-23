@@ -665,7 +665,7 @@ internal static class ColonyRuntimeChecks
         {
             var decidedOtherwise = new Dictionary<string, string>
             {
-                ["ColonyModeService"] = "its own Enabled is the mode",
+                ["ColonyModeService"] = "its own Enabled is the mode; a shared game keeps only its starting settings (1.4.0-rc5, B1)",
                 ["ColonyScienceService"] = "on only in a separate-colonies game with separate science",
             };
             var savers = mod.GetTypes()

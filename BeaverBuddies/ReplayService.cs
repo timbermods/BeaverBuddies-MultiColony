@@ -158,6 +158,8 @@ namespace BeaverBuddies
         internal static void ResetSessionBoost() => sessionBoost = 0;
         public bool IsDesynced { get; private set; } = false;
         public static bool HasReplayFailure { get; private set; }
+        /// <summary>This game was loaded as its session's host (kept after the session ends: the game menu's Save and Rehost).</summary>
+        public bool LoadedAsHost { get; }
 
         private ConcurrentQueue<ReplayEvent> eventsToSend = new ConcurrentQueue<ReplayEvent>();
         private ConcurrentQueue<ReplayEvent> eventsToPlay = new ConcurrentQueue<ReplayEvent>();
@@ -230,6 +232,7 @@ namespace BeaverBuddies
         )
         {
             sessionBoost = 0;
+            LoadedAsHost = EventIO.Get() is ServerEventIO;
             //_tickWathcerService = AddSingleton(tickWathcerService);
             _eventBus = AddSingleton(eventBus);
             _speedManager = AddSingleton(speedManager);

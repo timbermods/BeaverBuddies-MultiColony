@@ -33,7 +33,6 @@ namespace BeaverBuddies.Connect
         private readonly GameSaver _gameSaver;
         private readonly GameSaveRepository _gameSaveRepository;
         private readonly SettlementReferenceService _settlementReferenceService;
-        private readonly ValidatingGameLoader _validatingGameLoader;
         private readonly DialogBoxShower _dialogBoxShower;
         private readonly Timberborn.MainMenuSceneLoading.MainMenuSceneLoader _mainMenuSceneLoader;
 
@@ -42,7 +41,6 @@ namespace BeaverBuddies.Connect
             GameSaver gameSaver, 
             GameSaveRepository gameSaveRepository,
             SettlementReferenceService settlementReferenceService,
-            ValidatingGameLoader validatingGameLoader,
             DialogBoxShower dialogBoxShower,
             Timberborn.MainMenuSceneLoading.MainMenuSceneLoader mainMenuSceneLoader
         ) 
@@ -52,7 +50,6 @@ namespace BeaverBuddies.Connect
             _gameSaver = gameSaver;
             _gameSaveRepository = gameSaveRepository;
             _settlementReferenceService = settlementReferenceService;
-            _validatingGameLoader = validatingGameLoader;
             _dialogBoxShower = dialogBoxShower;
         }
 

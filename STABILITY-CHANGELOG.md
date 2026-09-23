@@ -5,6 +5,64 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc5
+
+**The review of rc2 to rc4.** Three reviewers read the work since rc1's review (the hand-over within a faction, the
+New Game page's colony checkboxes and a guest's split, hosting through the Co-op Game page, rehost, rejoin, and a shared
+save made separate at Start) against the code and the decompiled game; every finding was checked again, and all but one
+fixed, each with a check. The reports and what came of each are in `design/review-1.4.0-rc4/` (`FINDINGS.md`). Nothing
+found was a desync. Wire and saves: a shared new game now saves its starting settings (below); everyone needs this
+build (the handshake checks).
+
+- **Hosting from a game played alone works.** rc4's **Host co-op game** in the game menu never appeared: the service
+  behind it was made only in co-op games (A1). It is now made in every game.
+- **The game menu's hosting button follows how the game was loaded**, not whether its session still runs: after a
+  lost connection or a desync a guest no longer gets **Host co-op game** for its possibly out-of-step copy, and the
+  host keeps **Save and Rehost** (`HostButtonRules`, A8). A game's menu has no **Join co-op game** any more: nothing
+  can be joined from a game (C6).
+- **The Host co-op game box** no longer leaks into the game: after hosting from it, the game's **Load game** did nothing
+  (A7). Its gold line comes back when the Co-op Game page closes over it (A9), and it reads the save's file off the
+  menu's thread (A10).
+- **Rejoining:**
+  - a box closed while the Steam overlay or a dialog covered it is taken away once it is on top, and a closed box's
+    Cancel always works (A2);
+  - a Steam guest enters the host's lobby only once its data says it is an open Co-op Game page of this build, instead
+    of the ended game's lobby, which refused it (A3), and leaves its previous host's lobby as it enters the next;
+  - a direct-IP guest asks the host's address off the main thread before joining, so the menu no longer stalls while
+    nobody listens (A4); a failed socket is closed (A4); a bad address says nothing while waiting (A6);
+  - the host is warned about the same mods difference with the same player once a session, not at every try (A5);
+  - the wait gives up and says why for another build of the mod or a full room (C5); a Steam guest's box says the
+    host's invite joins too.
+- **Colonies:**
+  - every new game keeps its starting settings, a shared one too, so a guest's split or a save made separate at Start
+    founds colonies on the game's difficulty, not the default (B1). The Stability Fork ignores the key;
+  - a guest's change waits (*Not yet: the game is still starting*) until a hosted save's conversion has been played, so
+    nothing a guest builds first becomes the host's (B3);
+  - a shared save made separate at Start keeps one pool of science unless **Separate science and unlocks** is ticked;
+    it now starts unticked, as a split keeps one pool (B5);
+  - on a guest, Ctrl+T's playing and hand-over status follow the host's last presence, as the warnings do (B2);
+  - **Found your own colony** pressed after another player's split says to found with Ctrl+K (B6).
+- **The look:**
+  - the main menu's band grows to fit its panel with Host co-op game and Join co-op game, which hung over its bottom
+    bar (C3);
+  - the mod's menu buttons click like the game's (C8);
+  - in a custom difficulty the colony checkboxes sit in the settings list under its Tutorial row, lined up with its
+    checkboxes (C9);
+  - an empty room no longer has a 6 px gap (C12).
+- **Texts:** the desync message asks about a bug report only with the report button; a failed rehost says what to do
+  now; the hand-over texts name the faction; the rejoin's and the lost connection's wording (C10).
+- **Removed:** `HostStartGate` and its *Start the game?* prompt, which no host could reach since rc4 (B7), with the
+  in-menu `ReconnectNow`, `PendingRehost`, an unused loader and three unused texts (A11). The refusals for a game
+  still open to joiners stay, as a guard.
+- **Not changed:** B4 (the split gives the shared colony to slot 0, which only a shared save from before beta7 could
+  give to someone else): the release candidates assume fresh games. The website still describes the settings and the
+  hosting dialog rc3 and rc4 removed.
+- **Checks:** StabilityTests 453 → **474** (22 new in `Rc5Checks.cs`; three older ones follow the change; the start
+  gate's is gone with it), RuntimeChecks 431 → **438** (7 new in `Rc5RuntimeChecks.cs`), on both builds; 0 warnings. The
+  new and changed runtime checks fail on rc4's DLL.
+- **Docs:** README, TWO-COLONIES and ALPHA-TEST-SCRIPTS (the steps rc4 made unreachable, Script S's custom difficulty,
+  Script H's rc5 steps). Not played; nothing here has been seen in a game.
+
 ## 1.4.0-rc4
 
 **Every game is hosted through a Co-op Game page.** A save is hosted from the main menu's new **Host co-op game**

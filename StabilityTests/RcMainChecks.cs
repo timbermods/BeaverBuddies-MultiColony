@@ -298,7 +298,7 @@ static class RcMainChecks
             string dress = Body(flow, "public void Dress(VisualElement root)");
             Check(dress.Contains("root.Q<Button>(\"LoadButton\")?.ToggleDisplayStyle(!HostMode)") && dress.Contains("ToggleDisplayStyle(HostMode)"),
                 "the box's Load and Host co-op game must swap with the mode");
-            Check(Body(hosting, "static bool Prefix(LoadGameBox __instance, ref bool __result)").Contains("if (!HostCoopMenu.HostMode) return true;"),
+            Check(Body(hosting, "static bool Prefix(LoadGameBox __instance, ref bool __result)").Contains("if (!HostCoopMenu.HostMode || HostCoopMenu.Instance == null) return true;"),
                 "Enter and a double-click must load in the Load Game box and host only in the Host co-op game box");
             Check(hosting.Contains("static void Postfix() => HostCoopMenu.BoxClosed();"), "closing the box must end its host mode");
             Check(hosting.Contains("else __result.Q<Button>(LoadGameBoxHostButton.Name)?.ToggleDisplayStyle(false);"),
@@ -313,7 +313,8 @@ static class RcMainChecks
             Check(add.Contains("DuplicateOrGetButton(__result, \"LoadGameButton\", HostButtonName,") && add.Contains("DuplicateOrGetButton(__result, HostButtonName, \"JoinButton\","),
                 "Host co-op game must come under Load game, and Join co-op game under it");
             string dressInGame = Body(ui, "private void DressHostInGame(Button host)");
-            Check(dressInGame.Contains("(alone || hosting)") && dressInGame.Contains("SaveAndRehostButton"),
+            // rc5 (A8): decided by how the game was loaded (HostButtonRules), so a session that ended changes nothing.
+            Check(dressInGame.Contains("HostKind()") && dressInGame.Contains("kind != HostButtonKind.Hidden") && dressInGame.Contains("SaveAndRehostButton"),
                 "in a game: Host co-op game alone, Save and Rehost when hosting, nothing for a guest");
             Check(Body(ui, "private void HostClicked(bool mainMenu)").Contains(".SetConfirmButton(") , "leaving the game must be asked first");
             // Both ways a game hosts itself: saved, then its page in the main menu.

@@ -67,11 +67,11 @@ namespace TimberNet
 
         public void Close()
         {
-            try
-            {
-                client.GetStream().Close();
-                client.Close();
-            }
+            // A socket that never connected has no stream (GetStream throws): it is still closed, or its pending connect
+            // would go on in the background (1.4.0-rc5 review, A4).
+            try { client.GetStream().Close(); }
+            catch { }
+            try { client.Close(); }
             catch { }
         }
 

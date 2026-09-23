@@ -119,9 +119,11 @@ namespace BeaverBuddies.Colonies
 
         public void Save(ISingletonSaver singletonSaver)
         {
-            // A shared-colony game saves nothing here, nor does any other colony service (see each Save): its save
-            // holds only what the Stability Fork's does.
-            if (!Enabled) return;
+            // A shared-colony game saves only the new game's starting settings here, which the Stability Fork ignores: a
+            // colony founded in it later (a player's split, or its host making it separate at Start) starts with the game's
+            // difficulty, not the default one (1.4.0-rc5 review, B1). No other colony service saves anything in it (see
+            // each Save).
+            if (!Enabled && StartingSettings == null) return;
             IObjectSaver saver = singletonSaver.GetSingleton(ColonyModeKey);
             saver.Set(EnabledKey, Enabled);
             if (StartingSettings != null)
@@ -135,6 +137,15 @@ namespace BeaverBuddies.Colonies
                 saver.Set(FoodKey, StartingSettings.Food);
                 saver.Set(WaterKey, StartingSettings.Water);
             }
+        }
+
+        /// <summary>
+        /// A new game's starting settings, whatever its mode (a shared game's, for a colony founded in it later). The first
+        /// recorded are kept.
+        /// </summary>
+        public void RecordStartingSettings(ColonyStartingSettings startingSettings)
+        {
+            StartingSettings ??= startingSettings;
         }
 
         /// <summary>

@@ -174,6 +174,9 @@ namespace BeaverBuddies.Steam
         }
 
 
+        // The last host's lobby this guest entered (static: it outlives the scene that joined).
+        private static CSteamID enteredLobby;
+
         private void OnLobbyEntered(LobbyEnter_t callback)
         {
             ClearWaitForSteamOverlay();
@@ -195,6 +198,14 @@ namespace BeaverBuddies.Steam
                     _clientConnectionService.ShowJoinError("BeaverBuddies.JoinCoopGame.Error.HostStarted");
                     return;
                 }
+                // One host's lobby at a time: the lobby of a game that ended is left as the next is entered, so this guest
+                // never stays in it, or inherits it when its host leaves (1.4.0-rc5 review, A3).
+                if (enteredLobby.IsValid() && enteredLobby != lobby)
+                {
+                    try { SteamMatchmaking.LeaveLobby(enteredLobby); }
+                    catch (Exception error) { Plugin.LogWarning("Could not leave the previous Steam lobby: " + error.Message); }
+                }
+                enteredLobby = lobby;
                 Plugin.Log("Joining another's lobby...");
                 bool success = _clientConnectionService.TryToConnect(owner);
                 try { _lastHostName = SteamFriends.GetFriendPersonaName(owner); }

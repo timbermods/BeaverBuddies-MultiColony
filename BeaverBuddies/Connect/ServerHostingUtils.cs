@@ -46,7 +46,7 @@ namespace BeaverBuddies.Connect
             {
                button.text = _loc.T("BeaverBuddies.Saving.HostCoopGame");
                button.clicked += () => HostSelectedGame(__instance);
-            });
+            }, __instance._visualElementLoader?._visualElementInitializer);
             // Null in a game (the main menu's alone): the box is the Load Game box there.
             HostCoopMenu menu = SingletonManager.GetSingleton<HostCoopMenu>();
             if (menu != null) menu.Dress(__result);
@@ -107,7 +107,8 @@ namespace BeaverBuddies.Connect
         [HarmonyPriority(Priority.Last)]
         static bool Prefix(LoadGameBox __instance, ref bool __result)
         {
-            if (!HostCoopMenu.HostMode) return true;
+            // Only the main menu's box hosts; a game's Load Game box always loads (1.4.0-rc5 review, A7).
+            if (!HostCoopMenu.HostMode || HostCoopMenu.Instance == null) return true;
             __result = __instance._saveList.TryGetSelectedSave(out _);
             LoadGameBoxGetPanelPatcher.HostSelectedGameFromBox(__instance);
             return false;
@@ -127,7 +128,7 @@ namespace BeaverBuddies.Connect
     {
         static void Postfix(LoadGameBox __instance)
         {
-            if (!HostCoopMenu.HostMode) return;
+            if (!HostCoopMenu.HostMode || HostCoopMenu.Instance == null) return;
             try
             {
                 bool selected = __instance._saveList.TryGetSelectedSave(out GameSaveItem save);

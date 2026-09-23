@@ -110,19 +110,22 @@ says what it is (separate colonies, with how many players it remembers, or one s
 opens its **Co-op Game** page (its settlement, name and in-game date): invite with **Invite Friends** (Steam) or your
 IP address (port **25565**), friends ready up, and **Start Game** loads the save for everyone at once. Each player
 gets the colony the save remembers for them (a new player the next free one); the page reads that from the save and
-shows each player's colony and its faction, and the save's faction ring. Guests join from the main menu, as for a new
-game.
+shows each player's colony and its faction. Guests join from the main menu, as for a new game.
 
 For a shared save the page also shows the New Game page's **Separate colonies** checkbox, unticked, with **Separate
-science and unlocks** under it. Ticked, the game becomes a separate-colonies game at Start, for good: everything built
-so far is your colony, and each friend founds their own. With separate science, each colony earns its own from then on
-(what was earned so far stays with yours); unticked, the colonies share it. Your friends' pages say which it will be.
+science and unlocks** under it, also unticked. Ticked, the game becomes a separate-colonies game at Start, for good:
+everything built so far is your colony, and each friend founds their own. The colonies go on sharing one pool of science
+and unlocks, as a split does, unless you tick **Separate science and unlocks**: then each colony earns its own from then
+on, what was earned so far stays with yours, and your friends' colonies start with none. Your friends' pages say which
+it will be.
 
 **4. From inside a game.** Playing alone, open the game menu (Esc) and choose **Host co-op game**: the game is saved,
 as a new save, and its **Co-op Game** page opens in the main menu, as in step 3. Hosting a co-op game, the same button
 reads **Save and Rehost**: everyone leaves the game, it is saved, and its page opens; the others choose **Rejoin** (or
 **Reconnect** after a desync), go to their main menu, and land on the page as soon as it opens; when everyone is ready,
-**Start Game** loads it for all of you. **Load game** only loads.
+**Start Game** loads it for all of you. A guest has no hosting button, also after the connection is lost: their copy
+of the game may be out of step. **Load game** only loads, and a game's menu has no **Join co-op game**: a Co-op Game
+page is joined from the main menu.
 
 **5. Guest without a colony: found yours.** As soon as you are in, a message offers to **place your district
 center** (or press **Ctrl+K** later, whenever you are ready). Place it **anywhere its roads won't join another colony's** (other colonies' roads show in their colors). It
@@ -269,8 +272,8 @@ A colony whose player can't run it goes to another player, with its buildings, s
   no beavers (for example to a player whose Steam account changed).
 
 With a limit set, the Ctrl+T window shows how close an absent player is (*missed 6 of 7 days*), and the day the count reaches the
-limit every player in the game gets a warning: unless the absent player is in the game the next day, the colony is
-handed over then. The player who lost their colony gets a notice and may **found a new one** with **Ctrl+K**.
+limit every player in the game gets a warning (in a mixed-factions game, the first such day a colony of its faction is
+being played): unless the absent player is in the game the next day, the colony is handed over then. The player who lost their colony gets a notice and may **found a new one** with **Ctrl+K**.
 
 ## Controls
 
@@ -389,7 +392,7 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   chooses **Save and Rehost** in the game menu: everyone meets on the Co-op Game page, and Start Game carries on.
 - **A guest's game failed to load after the waiting room's Start:** nobody can join a started game; the host uses
   **Save and Rehost**, and the guest joins that.
-- **"… is waiting for you in a co-op waiting room":** you accepted an invite (or used Join) while in a game, and the
+- **"… is waiting for you in a co-op waiting room":** you accepted an invite while in a game, and the
   host is in a waiting room (a new game, or a save hosted from the main menu). Go back to the main
   menu, then accept the invite again or join from there.
 - **Ctrl+K says this is one shared colony:** the save is a shared game. A player other than the host splits it from

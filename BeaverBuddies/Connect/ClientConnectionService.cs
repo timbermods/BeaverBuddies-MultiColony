@@ -84,7 +84,8 @@ namespace BeaverBuddies.Connect
             }
             else
             {
-                ShowError("BeaverBuddies.JoinCoopGame.Error.InvalidFormat");
+                // A rejoin's quiet try says nothing: the next try comes (1.4.0-rc5 review, A6).
+                if (!quietJoin) ShowError("BeaverBuddies.JoinCoopGame.Error.InvalidFormat");
                 return false;
             }
 
@@ -106,7 +107,8 @@ namespace BeaverBuddies.Connect
                 }
                 else
                 {
-                    ShowError("BeaverBuddies.JoinCoopGame.Error.InvalidAddress");
+                    // A rejoin's quiet try says nothing: the next try comes (1.4.0-rc5 review, A6).
+                if (!quietJoin) ShowError("BeaverBuddies.JoinCoopGame.Error.InvalidAddress");
                     return false;
                 }
             }
@@ -132,7 +134,18 @@ namespace BeaverBuddies.Connect
                 // A rejoin's try that found no host yet (its page not open): the next try comes, and nothing is said.
                 if (quiet && (net == null || !net.Lobby.View().Welcomed))
                 {
-                    Plugin.Log("[Lobby] Rejoin: the host is not hosting yet (" + error + ")");
+                    if (!JoinFlowRules.RejoinGivesUp(error))
+                    {
+                        Plugin.Log("[Lobby] Rejoin: the host is not hosting yet (" + error + ")");
+                        return;
+                    }
+                    // Waiting can't help (another build, a full room): the rejoin stops and says why (1.4.0-rc5 review, C5).
+                    Plugin.Log("[Lobby] Rejoin: the host can't take this player (" + error + ")");
+                    ShowSafely(() =>
+                    {
+                        StopRejoin(resetJoin: false);
+                        ShowError("BeaverBuddies.JoinCoopGame.Error.CouldNotConnect", error);
+                    });
                     return;
                 }
                 // Only reached while joining, before the host's game has loaded (see ClientEventIO): once a game
@@ -182,14 +195,9 @@ namespace BeaverBuddies.Connect
         /// </summary>
         public void Reconnect()
         {
-            if (SingletonManager.GetSingleton<LobbyGuestPanel>() == null)
-            {
-                Plugin.Log("[Lobby] Rejoin: going to the main menu to wait for the host's Co-op Game page");
-                rejoinPending = true;
-                _mainMenuSceneLoader.OpenMainMenu();
-                return;
-            }
-            ReconnectNow();
+            Plugin.Log("[Lobby] Rejoin: waiting for the host's Co-op Game page, in the main menu");
+            rejoinPending = true;
+            if (SingletonManager.GetSingleton<LobbyGuestPanel>() == null) _mainMenuSceneLoader.OpenMainMenu();
         }
 
         /// <summary>From a game whose session ended: <see cref="Reconnect"/>, from wherever this service is found.</summary>
@@ -201,12 +209,18 @@ namespace BeaverBuddies.Connect
         // page and joins it. Static: it crosses the scene change.
         private static bool rejoinPending;
         private const double RejoinEveryMs = 3000;
+        private const int ProbeTimeoutMs = 3000;
         private readonly Timberborn.MainMenuSceneLoading.MainMenuSceneLoader _mainMenuSceneLoader;
         private ConnectingBox rejoinBox;
         private double nextRejoinMs;
-        private ulong triedLobby;
         // The join under way is one of the rejoin's quiet tries: finding nobody there is not an error.
         private bool quietJoin;
+        // A direct rejoin first asks, off the menu's thread, whether anything listens at the host's address; only then does
+        // it join (whose connect waits on this thread). Nobody listening costs the menu nothing (1.4.0-rc5 review, A4).
+        private System.Threading.Tasks.Task<bool> probe;
+        private string probeAddress;
+        // Boxes closed while something covered them: taken away once they are on top again (1.4.0-rc5 review, A2).
+        private readonly System.Collections.Generic.List<ConnectingBox> closingBoxes = new System.Collections.Generic.List<ConnectingBox>();
 
         /// <summary>Every frame in the main menu: a rejoin waits for the host's page, trying every few seconds, until it is in.</summary>
         private void WatchRejoin()
@@ -224,11 +238,26 @@ namespace BeaverBuddies.Connect
             if (rejoinBox == null || rejoinBox.IsClosed)
             {
                 if (_panelStack._stack.Count == 0 || _panelStack.TopPanel.IsOverlay) return;
-                rejoinBox = ConnectingBox.Show(_visualElementLoader, _panelStack,
-                    RegisteredLocalizationService.T("BeaverBuddies.Rejoin.Waiting"), () => StopRejoin(resetJoin: true));
+                // A Steam guest can also come in by the host's invite (an invite-only lobby is not shown to friends).
+                string waiting = lastJoin?.SteamHost != null ? "BeaverBuddies.Rejoin.WaitingSteam" : "BeaverBuddies.Rejoin.Waiting";
+                rejoinBox = ConnectingBox.Show(_visualElementLoader, _panelStack, RegisteredLocalizationService.T(waiting),
+                    () => StopRejoin(resetJoin: true));
             }
             // A try under way.
             if (net != null && !net.IsStopped) return;
+            // The host's address, asked off this thread: joined once something listens there.
+            if (probe != null)
+            {
+                if (!probe.IsCompleted) return;
+                bool listening = probe.Status == System.Threading.Tasks.TaskStatus.RanToCompletion && probe.Result;
+                string address = probeAddress;
+                probe = null;
+                if (!listening) return;
+                quietJoin = true;
+                try { TryToConnect(address); }
+                finally { quietJoin = false; }
+                return;
+            }
             double now = RttTracker.NowMs;
             if (now < nextRejoinMs) return;
             nextRejoinMs = now + RejoinEveryMs;
@@ -236,36 +265,80 @@ namespace BeaverBuddies.Connect
             switch (plan.Step)
             {
                 case ReconnectStep.JoinSteamLobby:
-                    // The host's lobby is there: entering it joins as accepting an invite does, with its own Connecting box.
-                    if (plan.Lobby == triedLobby) return;
-                    triedLobby = plan.Lobby;
-                    Plugin.Log("[Lobby] Rejoin: the host's lobby is up; joining it");
+                    // The host's lobby, entered only once it is a Co-op Game page letting players in: until the host rehosts,
+                    // Steam shows the lobby of the game that ended, which refuses everyone (1.4.0-rc5 review, A3).
+                    if (!RejoinLobbyOpen(plan.Lobby)) return;
+                    Plugin.Log("[Lobby] Rejoin: the host's Co-op Game page is up; joining its Steam lobby");
+                    // Entering it joins as accepting an invite does, with its own Connecting box.
                     StopRejoin(resetJoin: false);
                     try { SteamMatchmaking.JoinLobby(new CSteamID(plan.Lobby)); }
                     catch (Exception error) { Plugin.LogWarning("[Lobby] Rejoin: could not join the host's Steam lobby: " + error.Message); }
                     break;
                 case ReconnectStep.WaitForSteamInvite:
-                    // Not visible yet (or the host's lobby is invite-only): keep looking; the host's invite joins too.
+                    // Not visible (or the host's lobby is invite-only): keep looking; the host's invite joins too.
                     break;
                 default:
-                    quietJoin = true;
-                    try { TryToConnect(plan.Address); }
-                    finally { quietJoin = false; }
+                    string typed = plan.Address;
+                    int port = _settings.DefaultPort.Value;
+                    probeAddress = typed;
+                    probe = System.Threading.Tasks.Task.Run(() => HostListening(typed, port));
                     break;
+            }
+        }
+
+        // What the host's Steam lobby says (Steam keeps a lobby's data once asked, as the Join co-op game box asks it).
+        private static bool RejoinLobbyOpen(ulong lobby)
+        {
+            try
+            {
+                var id = new CSteamID(lobby);
+                SteamMatchmaking.RequestLobbyData(id);
+                FriendGameState state = FriendGameRules.Classify(SteamMatchmaking.GetLobbyData(id, SteamListener.VersionKey),
+                    SteamMatchmaking.GetLobbyData(id, SteamListener.OpenKey), SteamMatchmaking.GetLobbyData(id, SteamListener.RoomKey),
+                    Plugin.Version);
+                return JoinFlowRules.RejoinEntersLobby(state);
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Lobby] Rejoin: could not read the host's Steam lobby: " + error.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Off the menu's thread: whether anything accepts a connection at the address a guest typed (host, host:port or
+        /// [IPv6]:port) within 3 s. Touches nothing of the game; the connection is closed at once.
+        /// </summary>
+        private static bool HostListening(string typed, int defaultPort)
+        {
+            try
+            {
+                if (!TryParseHostAndPort(typed, out string host, out int? port)) return false;
+                if (!IPAddress.TryParse(host, out IPAddress ip))
+                {
+                    IPAddress[] found = Dns.GetHostAddresses(host);
+                    if (found.Length == 0) return false;
+                    ip = found[0];
+                }
+                using (var socket = new TcpClient(ip.AddressFamily))
+                {
+                    return socket.ConnectAsync(ip, port ?? defaultPort).Wait(ProbeTimeoutMs) && socket.Connected;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
             }
         }
 
         private void StopRejoin(bool resetJoin)
         {
             rejoinPending = false;
-            triedLobby = 0;
+            // An address check still under way finishes on its own; its answer is not wanted any more.
+            probe = null;
             ConnectingBox box = rejoinBox;
             rejoinBox = null;
-            if (box != null && !box.IsClosed)
-            {
-                try { box.Close(); }
-                catch (Exception error) { Plugin.LogWarning("[Lobby] Could not close the rejoin box: " + error.Message); }
-            }
+            if (box != null && !box.IsClosed) CloseBox(box, "rejoin");
             if (!resetJoin) return;
             Plugin.Log("[Lobby] The player stopped waiting to rejoin");
             ClientEventIO joining = client;
@@ -273,39 +346,15 @@ namespace BeaverBuddies.Connect
             if (joining != null) EventIO.ResetIf(joining);
         }
 
-        private void ReconnectNow()
+        // Takes a Connecting box away: now, or, if something covers it, once it is on top again (polled every frame).
+        private void CloseBox(ConnectingBox box, string what)
         {
-            ReconnectPlan plan = DesyncDialogPlan.Reconnect(lastJoin, _settings.ClientConnectionAddress.Value, FindHostLobby);
-            Plugin.Log($"Reconnecting after a desync; joined by {lastJoin?.ToString() ?? "an unknown route"}: {plan.Step}");
-            switch (plan.Step)
+            try
             {
-                case ReconnectStep.JoinSteamLobby:
-                    try
-                    {
-                        // Entering the lobby connects to the host, as accepting an invite does
-                        // (SteamOverlayConnectionService.OnLobbyEntered, which also refuses a lobby whose game has started).
-                        SteamMatchmaking.JoinLobby(new CSteamID(plan.Lobby));
-                    }
-                    catch (Exception error)
-                    {
-                        Plugin.LogWarning("Could not join the host's Steam lobby: " + error.Message);
-                        ShowWaitForSteamInvite();
-                    }
-                    break;
-                case ReconnectStep.WaitForSteamInvite:
-                    ShowWaitForSteamInvite();
-                    break;
-                default:
-                    ConnectOrShowFailureMessage(plan.Address);
-                    break;
+                box.Close();
+                if (!box.IsClosed && !closingBoxes.Contains(box)) closingBoxes.Add(box);
             }
-        }
-
-        private void ShowWaitForSteamInvite()
-        {
-            ShowSafely(() => _dialogBoxShower.Create()
-                .SetLocalizedMessage("BeaverBuddies.ClientDesynced.WaitForSteamInvite")
-                .Show());
+            catch (Exception error) { Plugin.LogWarning($"Could not close the {what} box: " + error.Message); }
         }
 
         // The Steam lobby the host is in, when Steam shows it to this player: the host's lobby is friends-only when it
@@ -366,15 +415,10 @@ namespace BeaverBuddies.Connect
         public void CloseConnectingBox()
         {
             // A rejoin's box goes as the room's page comes (WatchRejoin sees it in, and stops).
-            if (rejoinBox != null && !rejoinBox.IsClosed)
-            {
-                try { rejoinBox.Close(); }
-                catch (Exception error) { Plugin.LogWarning("Could not close the rejoin box: " + error.Message); }
-            }
+            if (rejoinBox != null && !rejoinBox.IsClosed) CloseBox(rejoinBox, "rejoin");
             ConnectingBox box = connectingBox;
-            if (box == null) return;
-            try { box.Close(); }
-            catch (Exception error) { Plugin.LogWarning("Could not close the Connecting box: " + error.Message); }
+            if (box == null || box.IsClosed) return;
+            CloseBox(box, "Connecting");
         }
 
         // These are reached from Steam callbacks, which do not care which scene is loaded. A message that
@@ -495,6 +539,11 @@ namespace BeaverBuddies.Connect
         {
             connectingBox?.Poll();
             rejoinBox?.Poll();
+            for (int i = closingBoxes.Count - 1; i >= 0; i--)
+            {
+                closingBoxes[i].Poll();
+                if (closingBoxes[i].IsClosed) closingBoxes.RemoveAt(i);
+            }
             WatchRejoin();
             if (client == null) return;
             //Plugin.Log("Updating client!");

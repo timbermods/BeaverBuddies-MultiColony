@@ -30,11 +30,24 @@ namespace BeaverBuddies.Colonies
         /// <summary>Set by the host's waiting room as it starts; taken by the host's game once (null: nothing to do).</summary>
         public static PendingConversion Pending { get; set; }
 
+        // Sent, and not yet played on the host.
+        private static bool sent;
+
+        /// <summary>
+        /// Host: the conversion is still to come (not sent yet, or sent and not yet played). A guest's change is refused
+        /// until then: played first, in the still-shared game, it would become the host's colony's (1.4.0-rc5 review, B3).
+        /// </summary>
+        public static bool HostAwaitsConversion => Pending != null || sent;
+
+        /// <summary>The conversion was played on this computer.</summary>
+        internal static void Played() => sent = false;
+
         private readonly ColonyFoundingService _colonyFoundingService;
 
         public SaveConversion(ColonyFoundingService colonyFoundingService)
         {
             _colonyFoundingService = colonyFoundingService;
+            sent = false;
         }
 
         public void UpdateSingleton()
@@ -54,6 +67,7 @@ namespace BeaverBuddies.Colonies
             Plugin.Log($"[Colony] Making this hosted save separate colonies (separate science {(pending.SeparateScience ? "on" : "off")})");
             bool notRecorded = ReplayEvent.DoPrefix(() => new ColonyConversionEvent { separateScience = pending.SeparateScience, startingSettings = start });
             if (notRecorded) Plugin.LogWarning("[Colony] The hosted save could not be made separate colonies: the session was not ready");
+            else sent = true;
         }
     }
 
@@ -70,6 +84,7 @@ namespace BeaverBuddies.Colonies
 
         public override void Replay(IReplayContext context)
         {
+            SaveConversion.Played();
             ColonyModeService mode = ColonyModeService.Instance;
             if (mode == null || mode.Enabled) return;
             ColonyFoundingService founding = SingletonManager.GetSingleton<ColonyFoundingService>();

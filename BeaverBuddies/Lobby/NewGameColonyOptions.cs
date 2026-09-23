@@ -43,7 +43,9 @@ namespace BeaverBuddies.Lobby
     /// a new-game-mode-panel__setting-wrapper row holding a new-game-mode-panel__setting-toggle and a
     /// new-game-mode-panel__tutorial-label). They go in one column with the game's Tutorial row, so every checkbox lines
     /// up; the two choices that only mean something with separate colonies sit indented under it, shown only while it is
-    /// ticked. Remembered on this computer, as the Tutorial checkbox is.
+    /// ticked. In a custom difficulty the game hides that Tutorial row and shows its own in the settings list: the column
+    /// goes into the list then, under the list's Tutorial, and lines up with the list's checkboxes (1.4.0-rc5 review, C9).
+    /// Remembered on this computer, as the Tutorial checkbox is.
     /// </summary>
     public class NewGameColonyOptions : RegisteredSingleton
     {
@@ -65,6 +67,8 @@ namespace BeaverBuddies.Lobby
         private readonly ITooltipRegistrar _tooltipRegistrar;
 
         private VisualElement block;
+        // Where the column goes: the page's mode details (a predefined difficulty), or its custom settings list.
+        private VisualElement details, customSettings;
         private Toggle separate, science, mixed;
         private VisualElement scienceRow, mixedRow;
         private Label mixedLabel;
@@ -109,12 +113,13 @@ namespace BeaverBuddies.Lobby
         private void Build(VisualElement root)
         {
             VisualElement tutorial = root.Q("TutorialToggleWrapper");
-            VisualElement details = tutorial?.parent ?? root.Q("ModeDetails");
+            details = tutorial?.parent ?? root.Q("ModeDetails");
             if (details == null) throw new InvalidOperationException("the Game Mode page has no ModeDetails");
             // One column, centred as a whole and left-aligned inside: the page centres each of its rows on its own, so rows of
             // different lengths would not line up.
             block = CheckboxColumn(BlockName);
             VisualElement custom = details.Q("CustomModeSettings");
+            customSettings = custom;
             int at = tutorial != null ? details.IndexOf(tutorial) : custom != null && custom.parent == details ? details.IndexOf(custom) : details.childCount;
             details.Insert(at, block);
             // The game's own Tutorial row first (the game still shows and hides it: its controller holds the element).
@@ -182,9 +187,36 @@ namespace BeaverBuddies.Lobby
             return column;
         }
 
+        /// <summary>The page switched between a predefined and a custom difficulty (NewGameModePanel's buttons).</summary>
+        public void ModeChanged()
+        {
+            try { Place(); }
+            catch (Exception error) { Plugin.LogWarning("[Lobby] Could not place the colony choices: " + error.Message); }
+        }
+
+        // Above the list in a predefined difficulty (where the page's own Tutorial row is), in the list in a custom one.
+        private void Place()
+        {
+            if (block == null || details == null) return;
+            bool custom = customSettings != null && customSettings.style.display.value != DisplayStyle.None;
+            VisualElement list = customSettings?.contentContainer;
+            if (custom && list != null)
+            {
+                if (block.parent == list) return;
+                VisualElement tutorial = list.Q("TutorialToggleCustomWrapper");
+                list.Insert(tutorial != null && tutorial.parent == list ? list.IndexOf(tutorial) + 1 : 0, block);
+                block.style.alignSelf = Align.Stretch;
+                return;
+            }
+            if (block.parent == details) return;
+            details.Insert(customSettings != null && customSettings.parent == details ? details.IndexOf(customSettings) : details.childCount, block);
+            block.style.alignSelf = Align.Center;
+        }
+
         private void Refresh()
         {
             if (block == null) return;
+            Place();
             bool separated = NewGameColonyChoice.Separate;
             separate.SetValueWithoutNotify(separated);
             science.SetValueWithoutNotify(NewGameColonyChoice.SeparateScience);

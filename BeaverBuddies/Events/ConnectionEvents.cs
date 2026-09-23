@@ -263,6 +263,8 @@ namespace BeaverBuddies.Events
             // Detailed logging would stop a large game for everyone: it is not offered there (1.4.0-rc1 review, D-S11).
             bool largeGame = (Colonies.ColonyDiagnostics.Instance?.CharactersInDistricts() ?? 0) >= DesyncDialogPlan.LargeGameCharacters;
             string bugReportMessageKey = DesyncDialogPlan.ReportButtonKey(Settings.Debug, reportingService.HasAccessToken, largeGame);
+            // The question the report button answers, only with that button (1.4.0-rc5 review, C10).
+            if (bugReportMessageKey != null) reconnectMessage += " " + _loc.T("BeaverBuddies.ClientDesynced.ReportQuestion");
             if (DesyncDialogPlan.AsksToEnableLogging(Settings.Debug, reportingService.HasAccessToken, largeGame))
             {
                 reconnectMessage += "\n\n" + _loc.T("BeaverBuddies.ClientDesynced.NeedToEnableTracing");

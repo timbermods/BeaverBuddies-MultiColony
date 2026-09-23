@@ -113,6 +113,11 @@ namespace BeaverBuddies.Connect
         public List<KeyValuePair<ModEntry, ModEntry>> VersionsDiffer { get; } = new List<KeyValuePair<ModEntry, ModEntry>>();
 
         public bool IsEmpty => OnlyHere.Count == 0 && OnlyThere.Count == 0 && VersionsDiffer.Count == 0;
+
+        /// <summary>The difference as one line, the same for the same difference (ModWarnings warns about each once).</summary>
+        public string Fingerprint() =>
+            string.Join(",", OnlyHere.Select(m => m.Id + "@" + m.Version)) + "|" + string.Join(",", OnlyThere.Select(m => m.Id + "@" + m.Version))
+            + "|" + string.Join(",", VersionsDiffer.Select(p => p.Key.Id + "@" + p.Key.Version + ">" + p.Value.Version));
     }
 
     public static class ModListComparer
@@ -172,10 +177,23 @@ namespace BeaverBuddies.Connect
     public static class ModWarnings
     {
         static readonly ConcurrentQueue<PendingModWarning> queue = new ConcurrentQueue<PendingModWarning>();
+        // What this session has warned about already: a player whose connection is refused and who tries again (a rejoin
+        // waiting for the host's page tries every 3 s) is warned about once, not at every try (1.4.0-rc5 review, A5).
+        static readonly HashSet<string> warned = new HashSet<string>();
 
         public static bool HasPending => !queue.IsEmpty;
 
-        public static void Add(PendingModWarning warning) => queue.Enqueue(warning);
+        /// <summary>Queues the warning, unless this session already warned about the same difference with the same player.</summary>
+        public static bool Add(PendingModWarning warning)
+        {
+            string key = (warning.PeerName ?? "") + " | " + (warning.Difference?.Fingerprint() ?? "");
+            lock (warned)
+            {
+                if (!warned.Add(key)) return false;
+            }
+            queue.Enqueue(warning);
+            return true;
+        }
 
         public static List<PendingModWarning> TakeAll()
         {
@@ -184,9 +202,11 @@ namespace BeaverBuddies.Connect
             return taken;
         }
 
+        /// <summary>A new session (a server or a client starts): nothing warned about yet.</summary>
         public static void Clear()
         {
             while (queue.TryDequeue(out _)) { }
+            lock (warned) warned.Clear();
         }
     }
 

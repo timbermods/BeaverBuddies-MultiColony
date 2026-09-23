@@ -55,13 +55,14 @@ static class JoinBoxChecks
             Check(FriendGameRules.Order(null).Count == 0);
         });
 
-        yield return ("Join box: the main menu opens it with Steam, a game keeps the address box, and joining is the invite's own path", () =>
+        yield return ("Join box: the main menu opens it with Steam (a game has no Join since rc5), and joining is the invite's own path", () =>
         {
             string ui = Source("BeaverBuddies", "Connect", "ClientConnectionUI.cs");
             Check(ui.Contains("AddJoinButton(__result, mainMenu: true)") && ui.Contains("AddJoinButton(__result, mainMenu: false)"),
                 "the main menu's and the game's Join buttons are no longer told apart");
-            Check(ui.Contains("mainMenu && SteamOverlayConnectionService.IsSteamEnabled") && ui.Contains("SteamMatchmaking.JoinLobby"),
+            Check(ui.Contains("if (SteamOverlayConnectionService.IsSteamEnabled) ShowJoinBox();") && ui.Contains("SteamMatchmaking.JoinLobby"),
                 "the friends' box is shown without Steam, or joins another way than the lobby");
+            Check(ui.Contains("button.ToggleDisplayStyle(mainMenu);"), "a game's menu has Join co-op game again, which can join nothing (rc5, C6)");
             string box = Source("BeaverBuddies", "Connect", "JoinCoopBox.cs");
             Check(!box.Contains(".ElementAt(") && box.Contains("LoadVisualTreeAsset(\"Common/NamedBoxTemplate\").CloneTree()"),
                 "the named box must be used as an instance (its box is a content slot)");

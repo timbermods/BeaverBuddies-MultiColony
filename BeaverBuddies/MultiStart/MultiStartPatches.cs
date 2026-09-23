@@ -54,6 +54,8 @@ namespace BeaverBuddies.MultiStart
 				// exists) is slot 0's, and every other player founds their own colony later with the same settings.
 				// The Game Mode page's Separate colonies (a waiting room's, for its world: NewGameColonyChoice).
 				var (separateOne, scienceOne) = BeaverBuddies.Lobby.NewGameColonyChoice.ForNewWorld();
+				// Kept in every new game, shared too: a colony founded later starts with this difficulty (1.4.0-rc5 review, B1).
+				GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.RecordStartingSettings(ReadStartingSettings(startBuildingService));
 				if (separateOne)
 					GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Enable(ReadStartingSettings(startBuildingService), "new game with one start",
 						scienceOne, newGame: true);
@@ -74,6 +76,7 @@ namespace BeaverBuddies.MultiStart
 			// slot of its PlayerIndex; players without a start found theirs later. A shared game gives them no owner,
 			// as the Stability Fork.
 			var (separateColonies, separateScience) = BeaverBuddies.Lobby.NewGameColonyChoice.ForNewWorld();
+			GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.RecordStartingSettings(ReadStartingSettings(startBuildingService));
 			if (separateColonies)
 				GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Enable(ReadStartingSettings(startBuildingService), "new game with several starts",
 					separateScience, newGame: true);

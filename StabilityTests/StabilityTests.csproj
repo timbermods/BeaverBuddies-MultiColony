@@ -48,7 +48,6 @@
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/ColonyStewardRules.cs" Link="ColonyStewardRules.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/WishlistTerms.cs" Link="WishlistTerms.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/SupplyDays.cs" Link="SupplyDays.cs" />
-    <Compile Include="$(SourceRoot)/BeaverBuddies/Colonies/HostStartRules.cs" Link="HostStartRules.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Lobby/LobbyRules.cs" Link="LobbyRules.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Factions/FactionSets.cs" Link="FactionSets.cs" />
     <Compile Include="$(SourceRoot)/BeaverBuddies/Factions/FactionTable.cs" Link="FactionTable.cs" />
