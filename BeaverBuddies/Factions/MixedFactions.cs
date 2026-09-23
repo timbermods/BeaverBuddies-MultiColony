@@ -51,6 +51,19 @@ namespace BeaverBuddies.Factions
         /// <summary>The faction the power shafts' models are being built for (FactionModelPatches); null for the base.</summary>
         internal static string ShaftBuildFaction;
 
+        /// <summary>
+        /// A scene is being set up: nothing is mixed until this scene's FactionService decides (a previous game's answer
+        /// must never leak into what loads before it).
+        /// </summary>
+        public static void Reset()
+        {
+            IsOn = false;
+            BaseFaction = null;
+            LoadedTable = new FactionTable();
+            PlannedTable = new FactionTable();
+            ShaftBuildFaction = null;
+        }
+
         internal static void Decide(FactionService service)
         {
             IsOn = false;

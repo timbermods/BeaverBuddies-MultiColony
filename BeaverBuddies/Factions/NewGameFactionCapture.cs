@@ -32,6 +32,8 @@ namespace BeaverBuddies.Factions
         {
             _factionSpecService = factionSpecService;
             _factionUnlockingService = factionUnlockingService;
+            // The main menu: no game is loaded, so nothing is mixed.
+            MixedFactions.Reset();
         }
 
         /// <summary>Whether the host has asked for mixed factions in new games (whether or not it can have them).</summary>
@@ -55,6 +57,9 @@ namespace BeaverBuddies.Factions
         public List<string> OfferedFactions() => Factions().Select(f => f.Id).ToList();
 
         public FactionSpec Spec(string id) => Factions().FirstOrDefault(f => f.Id == id);
+
+        /// <summary>The factions unlocked on this computer's profile, in the game's order (a hosted save offers these, D1).</summary>
+        public List<string> UnlockedFactions() => Factions().Where(f => !_factionUnlockingService.IsLocked(f)).Select(f => f.Id).ToList();
 
         private IEnumerable<FactionSpec> Factions() => _factionSpecService.Factions.OrderBy(f => f.Order);
 

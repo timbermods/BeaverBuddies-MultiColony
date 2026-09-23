@@ -1,8 +1,10 @@
 using BeaverBuddies.Colonies;
 using BeaverBuddies.Connect;
+using BeaverBuddies.Factions;
 using BeaverBuddies.IO;
 using BeaverBuddies.Util;
 using System;
+using System.Linq;
 using Timberborn.CoreUI;
 using Timberborn.FactionSystem;
 using Timberborn.SingletonSystem;
@@ -41,6 +43,9 @@ namespace BeaverBuddies.Lobby
         private bool popWhenOnTop;
         private bool asking;
         private double watchdogFromMs;
+        // A mixed-factions room: this player's faction switcher, shown while they may pick.
+        private LobbyFactionPicker picker;
+        private bool pickerShown;
 
         public LobbyGuestPanel(VisualElementLoader loader, VisualElementInitializer initializer, PanelStack panelStack,
             DialogBoxShower dialogBoxShower, ITooltipRegistrar tooltipRegistrar, FactionSpecService factionSpecService,
@@ -110,6 +115,7 @@ namespace BeaverBuddies.Lobby
                 shownVersion = view.Version;
                 bool open = view.Stage == LobbyStage.Open;
                 page.SetPlayers(view.Players, view.You, hostPage: false, canChange: open, faction?.Logo.Asset);
+                RefreshPicker(view, open);
                 page.SetStatus(LobbyRules.GuestStatus(ready, view.Stage, hostName));
                 page.Next.SetEnabled(open);
                 page.Next.text = RegisteredLocalizationService.T(ready ? "BeaverBuddies.Lobby.Button.Unready" : "BeaverBuddies.Lobby.Button.Ready");
@@ -130,8 +136,11 @@ namespace BeaverBuddies.Lobby
             _clientConnectionService.CloseConnectingBox();
             net.SendLobbyHello(LocalPlayerIdentity.Id, LocalPlayerIdentity.Name);
 
-            try { faction = view.Summary == null || view.Summary.IsSave ? null : _factionSpecService.GetFaction(view.Summary.FactionId); }
-            catch (Exception) { faction = null; }
+            // The room's faction (a new game's, or a save's own): its logo ring. A mixed new game has none of its own.
+            faction = view.Summary == null || string.IsNullOrEmpty(view.Summary.FactionId) ? null : FactionOrNull(view.Summary.FactionId);
+            LocalFactionPick.Clear();
+            picker = null;
+            pickerShown = false;
             page = new LobbyPage(_loader, _initializer, _tooltipRegistrar, "BeaverBuddies.Lobby.Header.Guest");
             page.SetHeader(RegisteredLocalizationService.T("BeaverBuddies.Lobby.Header.Guest", hostName));
             page.Back.text = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Button.Leave");
@@ -142,9 +151,13 @@ namespace BeaverBuddies.Lobby
             page.Invite.ToggleDisplayStyle(false);
             page.DirectIp.ToggleDisplayStyle(false);
             LobbySummary summary = view.Summary;
-            page.SetSummary(Summary(summary), faction, summary != null && summary.IsSave
+            bool mixedNewGame = summary != null && summary.Mixed && !summary.IsSave;
+            page.SetSummary(Summary(summary), mixedNewGame ? null : faction, summary != null && summary.IsSave
                 ? LobbyPage.SaveLine(_timestampFormatter, summary.SaveName, summary.Cycle, summary.Day)
                 : summary?.Settlement);
+            page.SetFactions(FactionOrNull);
+            if (summary != null && summary.Mixed)
+                page.SetFactionNote(RegisteredLocalizationService.T(summary.IsSave ? "BeaverBuddies.Lobby.Faction.MixedSave" : "BeaverBuddies.Lobby.Faction.Mixed"));
             shown = true;
             popWhenOnTop = false;
             Plugin.Log($"[Lobby] In {hostName}'s waiting room as player {view.You}");
@@ -157,9 +170,49 @@ namespace BeaverBuddies.Lobby
         {
             if (summary == null) return "";
             if (summary.IsSave) return summary.Settlement;
-            string factionName = faction?.DisplayName.Value ?? summary.FactionId;
             string mode = RegisteredLocalizationService.T(summary.ModeLocKey ?? "NewGameConfigurationPanel.Custom");
+            // A mixed game has no one faction: each player picks theirs.
+            if (summary.Mixed) return summary.MapName + " - " + mode;
+            string factionName = faction?.DisplayName.Value ?? summary.FactionId;
             return factionName + " - " + summary.MapName + " - " + mode;
+        }
+
+        private FactionSpec FactionOrNull(string id)
+        {
+            try { return string.IsNullOrEmpty(id) ? null : _factionSpecService.GetFaction(id); }
+            catch (Exception) { return null; }
+        }
+
+        /// <summary>
+        /// A mixed room: the faction page's switcher while this player may pick (a new game; a save's player whose colony
+        /// has none yet), showing their own pick, else their row's faction. A pick goes to the host at once and is kept on
+        /// this computer for their founding (LocalFactionPick).
+        /// </summary>
+        private void RefreshPicker(LobbyView view, bool open)
+        {
+            LobbySummary summary = view.Summary;
+            LobbyPlayer own = view.Players.FirstOrDefault(p => p.Number == view.You);
+            bool mayPick = summary != null && summary.Mixed && own != null && own.MayPick;
+            if (!mayPick)
+            {
+                if (pickerShown) page.SetFactionPicker(null);
+                pickerShown = false;
+                return;
+            }
+            if (picker == null)
+            {
+                picker = new LobbyFactionPicker(_initializer);
+                picker.Changed += id =>
+                {
+                    LocalFactionPick.Set(id);
+                    net?.SendLobbyFaction(id);
+                    Plugin.Log($"[Lobby] Picked {id}");
+                };
+            }
+            if (!pickerShown) page.SetFactionPicker(picker);
+            pickerShown = true;
+            string shown = LocalFactionPick.Mine ?? own.Faction ?? summary.FactionId;
+            picker.Set(summary.Factions.Select(FactionOrNull).Where(f => f != null), shown, open);
         }
 
         private void SetReady(bool value)

@@ -52,8 +52,12 @@ namespace BeaverBuddies.Lobby
         private readonly VisualElement logo;
         private readonly Label summary;
         private readonly Label settlement;
+        private readonly Label factionNote;
+        private readonly VisualElement factionSlot;
         private readonly Label listTitle;
         private readonly ScrollView board;
+        // A mixed-factions room: the faction of each id, for each row's logo and its tooltip.
+        private Func<string, FactionSpec> factionOf;
 
         /// <summary>A guest's own row checkbox was clicked (the host's page has none).</summary>
         public event Action<bool> OwnReadyToggled;
@@ -111,6 +115,20 @@ namespace BeaverBuddies.Lobby
             settlement.style.marginBottom = 10;
             main.Add(settlement);
 
+            // A mixed-factions room: a second gold line ("Each player picks a faction"), then the faction page's switcher.
+            factionNote = new Label();
+            factionNote.AddToClassList("text--yellow");
+            factionNote.style.fontSize = 13;
+            factionNote.style.unityTextAlign = TextAnchor.MiddleCenter;
+            factionNote.style.whiteSpace = WhiteSpace.Normal;
+            factionNote.style.maxWidth = 600;
+            factionNote.style.marginBottom = 6;
+            factionNote.style.display = DisplayStyle.None;
+            main.Add(factionNote);
+            factionSlot = new VisualElement();
+            factionSlot.style.alignItems = Align.Center;
+            main.Add(factionSlot);
+
             // Load Game's list title, then the Mods window's board.
             listTitle = new Label();
             listTitle.AddToClassList("text--big");
@@ -154,11 +172,28 @@ namespace BeaverBuddies.Lobby
             main.Add(DirectIp);
 
             // Once, before any row: each pass over a ScrollView adds another set of scroll-bar decorations.
-            foreach (VisualElement element in new VisualElement[] { summaryRow, settlement, listTitle, board, Status, Invite, DirectIp })
+            foreach (VisualElement element in new VisualElement[] { summaryRow, settlement, factionNote, listTitle, board, Status, Invite, DirectIp })
                 initializer.InitializeVisualElement(element);
         }
 
         public void SetHeader(string text) => header.text = text;
+
+        /// <summary>A mixed-factions room: the gold line under the settlement (empty hides it).</summary>
+        public void SetFactionNote(string text)
+        {
+            factionNote.text = text ?? "";
+            factionNote.style.display = string.IsNullOrEmpty(text) ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
+        /// <summary>Puts the faction switcher on the page (null takes it away).</summary>
+        public void SetFactionPicker(LobbyFactionPicker picker)
+        {
+            factionSlot.Clear();
+            if (picker != null) factionSlot.Add(picker.Root);
+        }
+
+        /// <summary>How each row finds its faction's logo and name (a room whose rows name their faction).</summary>
+        public void SetFactions(Func<string, FactionSpec> lookup) => factionOf = lookup;
 
         /// <summary>
         /// A save's gold line: its name as the Load Game box shows it (an autosave is the game's own "Autosave", in each
@@ -209,7 +244,9 @@ namespace BeaverBuddies.Lobby
                     row.Root.RemoveFromHierarchy();
                     board.contentContainer.Insert(Math.Min(index, board.contentContainer.childCount), row.Root);
                 }
-                row.Show(player, own: !hostPage && player.Number == you, canChange, factionLogo);
+                // Each row's own faction when the room names one (a mixed room, or a save), else the room's.
+                FactionSpec rowFaction = player.Faction != null ? factionOf?.Invoke(player.Faction) : null;
+                row.Show(player, own: !hostPage && player.Number == you, canChange, rowFaction?.Logo.Asset ?? factionLogo, rowFaction?.DisplayName.Value);
             }
             foreach (int gone in rows.Keys.Where(n => !seen.Contains(n)).ToList())
             {
@@ -247,6 +284,7 @@ namespace BeaverBuddies.Lobby
             private bool own;
             private bool canChange;
             private bool shownReady;
+            private string factionName;
 
             public Row(LobbyPage page, int number, bool own, bool removable)
             {
@@ -297,6 +335,8 @@ namespace BeaverBuddies.Lobby
                 }
 
                 foreach (VisualElement element in new VisualElement[] { you, spacer, check, state }) page._initializer.InitializeVisualElement(element);
+                // The row's faction, named when its logo is hovered (a mixed room, or a save's colony).
+                page._tooltipRegistrar.Register(icon, () => factionName ?? "");
                 if (remove != null)
                 {
                     page._initializer.InitializeVisualElement(remove);
@@ -311,8 +351,9 @@ namespace BeaverBuddies.Lobby
                 SetLive(own);
             }
 
-            public void Show(LobbyPlayer shown, bool own, bool canChange, Sprite factionLogo)
+            public void Show(LobbyPlayer shown, bool own, bool canChange, Sprite factionLogo, string faction = null)
             {
+                factionName = faction;
                 player = shown;
                 this.canChange = canChange;
                 if (this.own != own) SetLive(own);

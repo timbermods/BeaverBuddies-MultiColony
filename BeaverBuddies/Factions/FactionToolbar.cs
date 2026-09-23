@@ -61,7 +61,9 @@ namespace BeaverBuddies.Factions
 
         public static FactionToolbar Instance => SingletonManager.GetSingleton<FactionToolbar>();
 
-        public FactionToolbar(ToolButtonService toolButtonService, ToolService toolService, ToolGroupService toolGroupService)
+        // FactionService: loaded first, and with it the decision whether this game is mixed.
+        public FactionToolbar(ToolButtonService toolButtonService, ToolService toolService, ToolGroupService toolGroupService,
+            Timberborn.GameFactionSystem.FactionService factionService)
         {
             _toolButtonService = toolButtonService;
             _toolService = toolService;

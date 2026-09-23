@@ -115,13 +115,23 @@ namespace BeaverBuddies.Lobby
         public static LobbySession Open(LobbySetup setup)
         {
             EndStale("a new waiting room opened");
-            // A save seats each player by who it remembers (the colony slot table in the save), which the menu can't read:
-            // its rows show no colony.
+            // A save seats each player by who it remembers (the colony slot table in the save): the menu reads that from the
+            // save's own data (SaveColonyReader) to show each row's colony and faction. A save it can't read shows none.
+            BeaverBuddies.Factions.SaveColonyInfo colonies = setup.SaveColonies;
             LobbySummary summary = setup.IsSave
-                ? LobbySummary.ForSave(setup.Settlement, setup.Save.SaveName, setup.Cycle, setup.Day, Settings.PingDisplayName)
+                ? colonies != null
+                    ? LobbySummary.ForSave(setup.Settlement, setup.Save.SaveName, setup.Cycle, setup.Day, Settings.PingDisplayName,
+                        colonies.BaseFaction, colonies.SeparateColonies, setup.Mixed, setup.Factions)
+                    : LobbySummary.ForSave(setup.Settlement, setup.Save.SaveName, setup.Cycle, setup.Day, Settings.PingDisplayName)
                 : new LobbySummary(setup.FactionId, setup.MapName, setup.ModeLocKey, setup.Settlement,
-                    Settings.PingDisplayName, Settings.SeparateColoniesForNewGames);
+                    Settings.PingDisplayName, Settings.SeparateColoniesForNewGames, setup.Mixed, setup.Factions);
             var room = new LobbyRoom(summary);
+            if (setup.IsSave && colonies != null && colonies.SeparateColonies)
+            {
+                room.HostStableId = BeaverBuddies.Colonies.LocalPlayerIdentity.Id;
+                room.Seating = ids => SeatSave(colonies, ids);
+                room.FactionOfColony = colony => colonies.FactionOfSlot(colony - 1);
+            }
             var io = new ServerEventIO();
             io.StartLobby(room);
             if (io.NetBase == null)
@@ -134,6 +144,28 @@ namespace BeaverBuddies.Lobby
                 ? $"[Lobby] Waiting room open for the save \"{setup.Save.SaveName}\" of \"{setup.Settlement}\" ({setup.SaveBytes?.Length ?? 0} bytes)"
                 : $"[Lobby] Waiting room open for a new game: {setup.SummaryText}, settlement \"{setup.Settlement}\"");
             return Current;
+        }
+
+        /// <summary>
+        /// Display only: the colony each row of a hosted save will play (1 to 4, 0 for a helper), as the game will seat them
+        /// when they say hello: the save's slot table, each id in the room's order getting its own slot or the lowest free.
+        /// </summary>
+        public static IReadOnlyList<int?> SeatSave(BeaverBuddies.Factions.SaveColonyInfo colonies, IReadOnlyList<string> ids)
+        {
+            var table = new BeaverBuddies.Colonies.ColonySlotTable();
+            table.Set(BeaverBuddies.Colonies.ColonySlotTable.Decode(colonies.SlotTable));
+            var result = new List<int?>();
+            foreach (string id in ids)
+            {
+                if (string.IsNullOrEmpty(id))
+                {
+                    result.Add(null);
+                    continue;
+                }
+                int? slot = table.Resolve(id, "");
+                result.Add(slot.HasValue ? slot.Value + 1 : 0);
+            }
+            return result;
         }
 
         /// <summary>

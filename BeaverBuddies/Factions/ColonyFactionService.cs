@@ -33,7 +33,8 @@ namespace BeaverBuddies.Factions
 
         public static ColonyFactionService Instance => SingletonManager.GetSingleton<ColonyFactionService>();
 
-        public ColonyFactionService(ISingletonLoader singletonLoader, ISceneLoader sceneLoader)
+        // FactionService: loaded first, and with it the decision whether this game is mixed (MixedFactions.Decide).
+        public ColonyFactionService(ISingletonLoader singletonLoader, ISceneLoader sceneLoader, Timberborn.GameFactionSystem.FactionService factionService)
         {
             _singletonLoader = singletonLoader;
             _sceneLoader = sceneLoader;
@@ -48,7 +49,12 @@ namespace BeaverBuddies.Factions
         public void Load()
         {
             table = new FactionTable();
-            if (!MixedFactions.IsOn) return;
+            if (!MixedFactions.IsOn)
+            {
+                // A pick from a waiting room means nothing in a game that is not mixed.
+                LocalFactionPick.Clear();
+                return;
+            }
             bool newGame = _sceneLoader.TryGetSceneParameters(out GameSceneParameters parameters) && parameters.NewGame;
             if (newGame)
             {

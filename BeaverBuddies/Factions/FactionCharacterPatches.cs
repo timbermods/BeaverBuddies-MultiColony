@@ -197,7 +197,8 @@ namespace BeaverBuddies.Factions
 
         public static string SelectedFaction { get; private set; }
 
-        public FactionSelection(EventBus eventBus)
+        // FactionService: loaded first, and with it the decision whether this game is mixed.
+        public FactionSelection(EventBus eventBus, Timberborn.GameFactionSystem.FactionService factionService)
         {
             _eventBus = eventBus;
         }

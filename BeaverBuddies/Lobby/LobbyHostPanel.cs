@@ -1,3 +1,4 @@
+using BeaverBuddies.Factions;
 using BeaverBuddies.Steam;
 using BeaverBuddies.Util;
 using System;
@@ -47,6 +48,9 @@ namespace BeaverBuddies.Lobby
         private int shownVersion = -1;
         private bool starting;
         private static string lastSettlementName;
+        // A mixed-factions room: the host's own faction switcher (a new game), and the line under the settlement.
+        private LobbyFactionPicker picker;
+        private string factionNote;
 
         public LobbyHostPanel(VisualElementLoader loader, VisualElementInitializer initializer, PanelStack panelStack,
             DialogBoxShower dialogBoxShower, ITooltipRegistrar tooltipRegistrar, ISceneLoader sceneLoader,
@@ -80,6 +84,20 @@ namespace BeaverBuddies.Lobby
                 ModeLocKey = modePanel._predefinedGameMode?.DisplayNameLocKey,
                 SummaryText = modePanel._summary.text,
             };
+            // Mixed factions for new games (D9): with every faction unlocked here, each player picks theirs in the room.
+            factionNote = null;
+            NewGameFactionCapture capture = NewGameFactionCapture.Instance;
+            string locked = null;
+            if (capture != null && capture.MixedAvailable(out locked))
+            {
+                setup.Mixed = true;
+                setup.Factions = capture.OfferedFactions();
+                // The Game Mode page's summary without the faction: each player has their own.
+                setup.SummaryText = modePanel._map.DisplayName + " - "
+                    + RegisteredLocalizationService.T(setup.ModeLocKey ?? "NewGameConfigurationPanel.Custom");
+                factionNote = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Faction.Mixed");
+            }
+            else if (locked != null) factionNote = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Faction.NotUnlocked", locked);
             SettlementNamePanel.Show(_panelStack, _gameSaveRepository, _dialogBoxShower, _loader, _initializer, _inputService,
                 lastSettlementName, name =>
                 {
@@ -109,6 +127,12 @@ namespace BeaverBuddies.Lobby
             }
             catch (Exception error) { Plugin.LogWarning("[Lobby] Could not read the save's date: " + error.Message); }
             string settlement = save.SettlementReference.SettlementName;
+            // The save's own colonies and factions, read from its bytes without loading it (display only).
+            SaveColonyInfo colonies = SaveColonyReader.Read(bytes);
+            if (colonies == null) Plugin.LogWarning("[Lobby] Could not read the save's colonies; its rows show none");
+            NewGameFactionCapture capture = NewGameFactionCapture.Instance;
+            faction = colonies != null ? capture?.Spec(colonies.BaseFaction) : null;
+            factionNote = colonies != null && colonies.Mixed ? RegisteredLocalizationService.T("BeaverBuddies.Lobby.Faction.MixedSave") : null;
             OpenRoom(new LobbySetup
             {
                 Save = save,
@@ -117,6 +141,10 @@ namespace BeaverBuddies.Lobby
                 Day = day,
                 Settlement = settlement,
                 SummaryText = settlement,
+                SaveColonies = colonies,
+                Mixed = colonies != null && colonies.Mixed,
+                Factions = colonies != null && colonies.Mixed ? capture?.UnlockedFactions() ?? new System.Collections.Generic.List<string>()
+                    : new System.Collections.Generic.List<string>(),
             });
         }
 
@@ -135,8 +163,28 @@ namespace BeaverBuddies.Lobby
             page.Next.clicked += () => OnUIConfirmed();
             page.Invite.clicked += () => session?.IO.SteamListener?.ShowInviteFriendsPanel();
             page.RemoveClicked += ConfirmRemove;
-            page.SetSummary(setup.SummaryText, faction,
+            page.SetSummary(setup.SummaryText, setup.Mixed && !setup.IsSave ? null : faction,
                 setup.IsSave ? LobbyPage.SaveLine(_timestampFormatter, setup.Save.SaveName, setup.Cycle, setup.Day) : setup.Settlement);
+            page.SetFactionNote(factionNote);
+            page.SetFactions(id => NewGameFactionCapture.Instance?.Spec(id));
+            LocalFactionPick.Clear();
+            picker = null;
+            if (setup.Mixed && !setup.IsSave)
+            {
+                // The host picks its own colony's faction here too (the new game's faction), with the game's own switcher.
+                picker = new LobbyFactionPicker(_initializer);
+                picker.Set(setup.Factions.Select(id => NewGameFactionCapture.Instance?.Spec(id)), setup.FactionId, true);
+                picker.Changed += id =>
+                {
+                    if (session == null || session.Setup != setup) return;
+                    setup.FactionId = id;
+                    faction = NewGameFactionCapture.Instance?.Spec(id);
+                    session.IO.NetBase?.SetLobbyHostFaction(id);
+                    Plugin.Log($"[Lobby] The host will play {id}");
+                    shownVersion = -1;
+                };
+                page.SetFactionPicker(picker);
+            }
             page.DirectIp.text = RegisteredLocalizationService.T("BeaverBuddies.Lobby.DirectIp", Settings.Port);
             shownVersion = -1;
             starting = false;
@@ -199,7 +247,9 @@ namespace BeaverBuddies.Lobby
             if (session.Room.Version == shownVersion) return;
             LobbySnapshot snapshot = session.Room.Snapshot();
             shownVersion = snapshot.Version;
-            page.SetPlayers(snapshot.Players, 0, hostPage: true, canChange: snapshot.Stage == LobbyStage.Open, faction?.Logo.Asset);
+            bool open = snapshot.Stage == LobbyStage.Open;
+            page.SetPlayers(snapshot.Players, 0, hostPage: true, canChange: open, faction?.Logo.Asset);
+            if (picker != null) picker.Set(session.Setup.Factions.Select(id => NewGameFactionCapture.Instance?.Spec(id)), session.Setup.FactionId, open);
             page.SetStatus(LobbyRules.HostStatus(snapshot.Players, snapshot.Stage));
         }
 

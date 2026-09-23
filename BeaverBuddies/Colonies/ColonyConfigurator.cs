@@ -58,6 +58,7 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public static void Configure(IContainerDefinition containerDefinition)
         {
+            MixedFactions.Reset();
             containerDefinition.Bind<DistrictOwner>().AsTransient();
             containerDefinition.Bind<CrossingExchange>().AsTransient();
             containerDefinition.Bind<ColonyStamp>().AsTransient();
