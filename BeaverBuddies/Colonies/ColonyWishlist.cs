@@ -56,7 +56,9 @@ namespace BeaverBuddies.Colonies
         {
             if (slot < 0 || slot >= wishes.Length) return;
             ColonyExchangeService exchanges = ColonyExchangeService.Instance;
-            wishes[slot] = WishlistTerms.Normalize(items, item => exchanges == null || exchanges.IsKnownItem(item));
+            // A mixed-factions game: only what the colony's faction may receive (the same answer on every computer).
+            wishes[slot] = WishlistTerms.Normalize(items, item => (exchanges == null || exchanges.IsKnownItem(item))
+                && BeaverBuddies.Factions.ColonyWishes.MayWish(slot, item));
             ColonyDigest.Note("wishlist", slot, ColonyDigest.Of(string.Join(",", wishes[slot])));
             Plugin.Log($"[Colony] Slot {slot} is looking for: {(wishes[slot].Count == 0 ? "nothing" : string.Join(", ", wishes[slot]))}");
         }

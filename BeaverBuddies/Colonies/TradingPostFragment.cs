@@ -172,6 +172,12 @@ namespace BeaverBuddies.Colonies
             // Room for the All Posts button's wooden frame, which drew over the top of the scrolling part below it.
             header.style.minHeight = 30;
             header.style.marginBottom = 6;
+            // A mixed-factions game: the other colony's faction, on the game's own faction diamond.
+            partnerFactionIcon = new VisualElement();
+            partnerFactionIcon.style.marginRight = 6;
+            partnerFactionIcon.style.flexShrink = 0;
+            NativeElements.Show(partnerFactionIcon, false);
+            header.Add(partnerFactionIcon);
             headerText = RichText(13);
             headerText.style.flexGrow = 1;
             headerText.style.flexShrink = 1;
@@ -181,6 +187,12 @@ namespace BeaverBuddies.Colonies
             _tooltipRegistrar.RegisterWithKeyBinding(allPostsButton, T("BeaverBuddies.Colony.Trade.AllPostsTooltip"), TradeOverviewPanel.KeyBindingId);
             header.Add(allPostsButton);
             root.Add(header);
+            betweenFactionsLabel = NativeElements.MutedText(T("BeaverBuddies.Colony.Trade.BetweenFactions"), 12);
+            betweenFactionsLabel.style.whiteSpace = WhiteSpace.Normal;
+            betweenFactionsLabel.style.marginTop = -2;
+            betweenFactionsLabel.style.marginBottom = 6;
+            NativeElements.Show(betweenFactionsLabel, false);
+            root.Add(betweenFactionsLabel);
 
             body = new ScrollView(ScrollViewMode.Vertical);
             body.AddToClassList("scroll--green-decorated");
@@ -764,6 +776,8 @@ namespace BeaverBuddies.Colonies
             {
                 foreach (VisualElement section in new[] { compose, dockRow.Root, ledgerSection, historySection, wantsRow.Root })
                     NativeElements.Show(section, false);
+                NativeElements.Show(partnerFactionIcon, false);
+                NativeElements.Show(betweenFactionsLabel, false);
                 picker.Close();
                 StopTyping();
                 NativeElements.Show(noticeLabel, true);
@@ -782,6 +796,7 @@ namespace BeaverBuddies.Colonies
 
             NativeElements.Show(noticeLabel, false);
             NativeElements.SetText(headerText, string.Format(T("BeaverBuddies.Colony.Trade.TradingWith"), ColoredName(partnerSlot)));
+            ShowPartnerFaction(OwnerOf(crossing), partnerSlot);
             RefreshWants(partnerSlot);
             Remember(state, ax, bx);
             bool composing = state == ExchangeState.None;
@@ -857,15 +872,53 @@ namespace BeaverBuddies.Colonies
             shownRepeat = ax.Repeat;
         }
 
+        // ---- mixed factions ----
+
+        private VisualElement partnerFactionIcon;
+        private Label betweenFactionsLabel;
+        private string shownPartnerFaction;
+
+        // The other colony's faction beside its name, and what may cross between two factions (a mixed game only).
+        private void ShowPartnerFaction(int me, int them)
+        {
+            bool mixed = BeaverBuddies.Factions.MixedFactions.IsOn && them >= 0;
+            string faction = mixed ? BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot(them) : null;
+            if (faction != shownPartnerFaction)
+            {
+                shownPartnerFaction = faction;
+                partnerFactionIcon.Clear();
+                if (faction != null) partnerFactionIcon.Add(BeaverBuddies.Factions.FactionIcons.Diamond(BeaverBuddies.Factions.MixedFactions.Spec(faction), 26));
+            }
+            NativeElements.Show(partnerFactionIcon, faction != null);
+            NativeElements.Show(betweenFactionsLabel, BeaverBuddies.Factions.FactionTrade.BetweenFactions(me, them));
+        }
+
+        /// <summary>What may go from this colony to the other (give) and come back (get): FactionTrade, by colony.</summary>
+        private Func<string, bool> GiveAllowed()
+        {
+            int me = OwnerOf(MyHalf()), them = partnerSlot;
+            return BeaverBuddies.Factions.MixedFactions.IsOn ? item => BeaverBuddies.Factions.FactionTrade.Allows(item, me, them) : (Func<string, bool>)null;
+        }
+
+        private Func<string, bool> GetAllowed()
+        {
+            int me = OwnerOf(MyHalf()), them = partnerSlot;
+            return BeaverBuddies.Factions.MixedFactions.IsOn ? item => BeaverBuddies.Factions.FactionTrade.Allows(item, them, me) : (Func<string, bool>)null;
+        }
+
         // ---- making an offer ----
 
         private void RefreshCompose(DistrictCrossing mine, DistrictCrossing theirs, int me, int them, CrossingExchange ax)
         {
             // Terms left for the form (a declined offer, a ledger row, the last exchange) go in before anything else.
             if (prefillPending) ApplyPrefill();
-            // A new form starts on goods (what each colony has most of), never on science or beavers.
-            if (giveItem == null || !_items.IsOffered(giveItem)) giveItem = _items.MostStocked(mine, me, getItem);
-            if (getItem == null || !_items.IsOffered(getItem) || getItem == giveItem) getItem = _items.MostStocked(theirs, them, giveItem);
+            // A new form starts on goods (what each colony has most of), never on science or beavers; in a mixed-factions
+            // game only on what may cross each way (a prefill of anything else is dropped here too).
+            Func<string, bool> giveOk = GiveAllowed(), getOk = GetAllowed();
+            if (giveItem == null || !_items.IsOffered(giveItem) || (giveOk != null && !giveOk(giveItem)))
+                giveItem = _items.MostStocked(mine, me, getItem, giveOk);
+            if (getItem == null || !_items.IsOffered(getItem) || getItem == giveItem || (getOk != null && !getOk(getItem)))
+                getItem = _items.MostStocked(theirs, them, giveItem, getOk);
             ShowSide(giveSide, giveItem, string.Format(T("BeaverBuddies.Colony.Trade.YouHaveN"), Count(_items.StockOf(mine, me, giveItem))));
             ShowSide(getSide, getItem, string.Format(T("BeaverBuddies.Colony.Trade.TheyHaveN"), PlainName(them),
                 Count(_items.StockOf(theirs, them, getItem))));
@@ -951,7 +1004,7 @@ namespace BeaverBuddies.Colonies
             roundsLess.SetEnabled(!repeat);
             roundsMore.SetEnabled(!repeat);
             TradeOfferForm.Verdict verdict = TradeOfferForm.Judge(giveItem, giveSide.Amount.value, getItem, getSide.Amount.value,
-                roundsBox.value, repeat, out int give, out int get, out int rounds);
+                roundsBox.value, repeat, out int give, out int get, out int rounds, GiveAllowed(), GetAllowed());
             // A reserve matters over more than one round, and only when this side gives something.
             bool keepShown = give > 0 && (repeat || rounds > 1);
             NativeElements.Show(keepCard, keepShown);
@@ -987,6 +1040,14 @@ namespace BeaverBuddies.Colonies
                     break;
                 case TradeOfferForm.Verdict.SameItem:
                     text = T("BeaverBuddies.Colony.Trade.ErrorSame");
+                    break;
+                case TradeOfferForm.Verdict.GiveNotAllowed:
+                    text = giveItem == ExchangeTerms.Beavers ? T("BeaverBuddies.Colony.Trade.ErrorBeaversFaction")
+                        : string.Format(T("BeaverBuddies.Colony.Trade.ErrorNotStorable"), partner, _items.Name(giveItem));
+                    break;
+                case TradeOfferForm.Verdict.GetNotAllowed:
+                    text = getItem == ExchangeTerms.Beavers ? T("BeaverBuddies.Colony.Trade.ErrorBeaversFaction")
+                        : string.Format(T("BeaverBuddies.Colony.Trade.ErrorNotStorableYou"), _items.Name(getItem));
                     break;
                 default:
                     text = T("BeaverBuddies.Colony.Trade.ErrorNoItem");
@@ -1054,7 +1115,8 @@ namespace BeaverBuddies.Colonies
                 ? string.Format(T("BeaverBuddies.Colony.Trade.WantedByThem"), PlainName(wisher))
                 : T("BeaverBuddies.Colony.Trade.WantedByYou");
             picker.Open(side.Side, heading, ItemOf(side), item => _items.StockOf(half, slot, item), item => Choose(side, item), side.Card,
-                item => ColonyWishlist.Instance?.Wants(wisher, item) ?? false, note);
+                item => ColonyWishlist.Instance?.Wants(wisher, item) ?? false, note,
+                allowedItems: side.Side == Give ? GiveAllowed() : GetAllowed());
         }
 
         private void Choose(OfferSide side, string item)
@@ -1403,7 +1465,7 @@ namespace BeaverBuddies.Colonies
             if (!myHalf) return;
             bool repeating = repeatToggle.value;
             TradeOfferForm.Verdict verdict = TradeOfferForm.Judge(giveItem, giveSide.Amount.value, getItem, getSide.Amount.value,
-                roundsBox.value, repeating, out int give, out int get, out int rounds);
+                roundsBox.value, repeating, out int give, out int get, out int rounds, GiveAllowed(), GetAllowed());
             if (!TradeOfferForm.IsOffer(verdict) || !ExchangeTerms.AreValid(giveItem, give, getItem, get)) return;
             // The reserve counts only where its box is shown (more than one round, something given).
             int keep = 0;

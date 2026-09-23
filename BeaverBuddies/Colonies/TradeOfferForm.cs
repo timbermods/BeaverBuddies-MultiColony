@@ -28,6 +28,10 @@ namespace BeaverBuddies.Colonies
             NoItem,
             /// <summary>Both sides give the same item.</summary>
             SameItem,
+            /// <summary>A mixed-factions game: what the offering colony gives may not go to the other colony's faction.</summary>
+            GiveNotAllowed,
+            /// <summary>A mixed-factions game: what the offering colony asks for may not come to its own faction.</summary>
+            GetNotAllowed,
         }
 
         public static bool IsOffer(Verdict verdict) =>
@@ -65,10 +69,12 @@ namespace BeaverBuddies.Colonies
             int.TryParse(text?.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out rounds) && ExchangeTerms.AreValidRounds(rounds);
 
         /// <summary>
-        /// The form as a whole. A repeating offer does not read the rounds box (it counts as 1 and is ignored).
+        /// The form as a whole. A repeating offer does not read the rounds box (it counts as 1 and is ignored). In a
+        /// mixed-factions game <paramref name="giveAllowed"/> and <paramref name="getAllowed"/> say what the factions let
+        /// cross each way (FactionTrade); without them everything may.
         /// </summary>
         public static Verdict Judge(string giveItem, string giveText, string getItem, string getText, string roundsText, bool repeat,
-            out int give, out int get, out int rounds)
+            out int give, out int get, out int rounds, Func<string, bool> giveAllowed = null, Func<string, bool> getAllowed = null)
         {
             bool amountsRead = TryReadAmount(giveText, out give) & TryReadAmount(getText, out get);
             rounds = 1;
@@ -76,6 +82,8 @@ namespace BeaverBuddies.Colonies
             if (give == 0 && get == 0) return Verdict.NothingEitherWay;
             if ((give > 0 && string.IsNullOrEmpty(giveItem)) || (get > 0 && string.IsNullOrEmpty(getItem))) return Verdict.NoItem;
             if (give > 0 && get > 0 && string.Equals(giveItem, getItem, StringComparison.Ordinal)) return Verdict.SameItem;
+            if (give > 0 && giveAllowed != null && !giveAllowed(giveItem)) return Verdict.GiveNotAllowed;
+            if (get > 0 && getAllowed != null && !getAllowed(getItem)) return Verdict.GetNotAllowed;
             if (!repeat && !TryReadRounds(roundsText, out rounds))
             {
                 rounds = 1;

@@ -456,6 +456,14 @@ namespace BeaverBuddies.Colonies
                     Tell(() => a, () => b, () => T("BeaverBuddies.Colony.Trade.Notice.Void"), warning: true);
                     continue;
                 }
+                // A mixed-factions game: terms the factions no longer allow (a colony founded again as another faction).
+                if (!FactionsAllow(OwnerOf(half), OwnerOf(partner), mine.Total > 0 ? mine.GoodId : null, theirs.Total > 0 ? theirs.GoodId : null))
+                {
+                    int a = mine.Colony, b = theirs.Colony;
+                    End(half, partner, "the factions no longer allow its terms");
+                    Tell(() => a, () => b, () => T("BeaverBuddies.Colony.Trade.Notice.VoidFaction"), warning: true);
+                    continue;
+                }
                 if (!mine.IsActive || !TradingPosts.IsTradingPost(half) || mine.CancelAsked || theirs.CancelAsked) continue;
                 if (IsIn(half, mine) && IsIn(partner, theirs)) Cross(half, partner);
             }
@@ -488,13 +496,29 @@ namespace BeaverBuddies.Colonies
             return science != null && science.Enabled && slot >= 0 ? science.PointsOf(slot) : 0;
         }
 
-        /// <summary>How many adults the half's district can give now (the last adult always stays).</summary>
+        /// <summary>
+        /// How many adults the half's district can give now (the last adult always stays). In a mixed-factions game only
+        /// beavers of the other colony's faction count: no other may join it (D20).
+        /// </summary>
         public int BeaversToSpare(DistrictCrossing half)
         {
             DistrictPopulation population = TradingPosts.DistrictOf(half)?.DistrictPopulation;
             if (population == null) return 0;
-            return ExchangeTerms.BeaversToSpare(population.NumberOfAdults, population.Adults.Count(_migrationService.IsNotContaminated));
+            int target = OwnerOf(TradingPosts.Partner(half));
+            return ExchangeTerms.BeaversToSpare(population.NumberOfAdults, population.Adults
+                .Count(beaver => _migrationService.IsNotContaminated(beaver) && BeaverBuddies.Factions.FactionTrade.BeaverMayJoin(beaver, target)));
         }
+
+        /// <summary>
+        /// A mixed-factions game: whether what each side gives may go to the other (D2, D3). Always outside one. Read from
+        /// saved state only (each colony's faction), so every computer agrees.
+        /// </summary>
+        private static bool FactionsAllow(int a, int b, string aGives, string bGives) =>
+            (aGives == null || BeaverBuddies.Factions.FactionTrade.Allows(aGives, a, b))
+            && (bGives == null || BeaverBuddies.Factions.FactionTrade.Allows(bGives, b, a));
+
+        /// <summary>The reason <see cref="WhyNotPropose"/> gives for terms the factions do not allow.</summary>
+        public const string FactionsRefuse = "the factions do not allow these terms";
 
         /// <summary>Both sides are in: everything crosses at once, the ledgers note the round, and the next begins (or it ends).</summary>
         private void Cross(DistrictCrossing a, DistrictCrossing b)
@@ -572,7 +596,10 @@ namespace BeaverBuddies.Colonies
             if (!source || !target) return;
             // Only a beaver who can walk to the new district (the game reassigns one who cannot to the nearest district
             // of any colony, possibly its old one) and carries nothing (what it carries would cross uncounted).
+            // A mixed-factions game: only beavers of the receiving colony's faction (D20).
+            int targetSlot = OwnerOf(to);
             List<Beaver> movers = source.DistrictPopulation.Adults.Where(_migrationService.IsNotContaminated)
+                .Where(beaver => BeaverBuddies.Factions.FactionTrade.BeaverMayJoin(beaver, targetSlot))
                 .Where(beaver => target.IsGloballyReachableFromCitizen(beaver.GetComponent<Citizen>()))
                 .Where(beaver => !(beaver.GetComponent<GoodCarrier>()?.IsCarrying ?? false))
                 .OrderBy(_migrationService.RefusesWork).ThenBy(_migrationService.IsEmployed).ThenBy(_migrationService.HasHome)
@@ -602,6 +629,8 @@ namespace BeaverBuddies.Colonies
             if (!ExchangeTerms.IsValidKeep(keep)) return $"a reserve of {keep}";
             if ((giveAmount > 0 && !IsKnownItem(giveGood)) || (getAmount > 0 && !IsKnownItem(getGood)))
                 return "a good is unknown in this game, or science is not separate";
+            if (!FactionsAllow(actorSlot, OwnerOf(TradingPosts.Partner(half)), giveAmount > 0 ? giveGood : null, getAmount > 0 ? getGood : null))
+                return FactionsRefuse;
             CrossingExchange mine = Of(half), theirs = Of(TradingPosts.Partner(half));
             if (mine == null || theirs == null) return "the crossing cannot hold an exchange";
             if (mine.IsOpen || theirs.IsOpen) return "an exchange is already open here";
@@ -619,7 +648,8 @@ namespace BeaverBuddies.Colonies
             if (why != null)
             {
                 Plugin.LogWarning($"[Colony] Exchange offer skipped: {why}");
-                Tell(() => actorSlot, null, () => T("BeaverBuddies.Colony.Trade.Notice.OfferFailed"), warning: true);
+                string notice = why == FactionsRefuse ? "BeaverBuddies.Colony.Trade.Notice.OfferFailedFaction" : "BeaverBuddies.Colony.Trade.Notice.OfferFailed";
+                Tell(() => actorSlot, null, () => T(notice), warning: true);
                 return;
             }
             DistrictCrossing partner = TradingPosts.Partner(half);
@@ -658,6 +688,10 @@ namespace BeaverBuddies.Colonies
                 || theirs.Total != getAmount || mine.GoodId != ExchangeTerms.GoodOf(giveGood, giveAmount)
                 || theirs.GoodId != ExchangeTerms.GoodOf(getGood, getAmount))
                 why = "the offer changed";
+            else if (theirs.Colony >= 0 && OwnerOf(partner) != theirs.Colony)
+                why = "the other half has changed colony";
+            else if (!FactionsAllow(OwnerOf(half), OwnerOf(partner), mine.Total > 0 ? mine.GoodId : null, theirs.Total > 0 ? theirs.GoodId : null))
+                why = FactionsRefuse;
             if (why != null)
             {
                 Plugin.LogWarning($"[Colony] Exchange acceptance skipped: {why}");

@@ -110,7 +110,7 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>The good a colony has most of at a crossing half's district (a form's first choice), never another.</summary>
-        public string MostStocked(DistrictCrossing half, int slot, string other)
+        public string MostStocked(DistrictCrossing half, int slot, string other, Func<string, bool> allowed = null)
         {
             string best = null;
             int bestStock = -1;
@@ -118,7 +118,7 @@ namespace BeaverBuddies.Colonies
             {
                 foreach (string good in goods)
                 {
-                    if (good == other) continue;
+                    if (good == other || (allowed != null && !allowed(good))) continue;
                     int stock = StockOf(half, slot, good);
                     if (stock > bestStock)
                     {

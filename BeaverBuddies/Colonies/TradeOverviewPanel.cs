@@ -49,6 +49,7 @@ namespace BeaverBuddies.Colonies
         private readonly EntityComponentRegistry _entityComponentRegistry;
         private readonly EntitySelectionService _entitySelectionService;
         private readonly TradeItems _items;
+        private static ColonyFoundingService _colonyFoundingService => SingletonManager.GetSingleton<ColonyFoundingService>();
 
         /// <summary>A colony's row: its texts, its food and water, what it is looking for.</summary>
         private sealed class ColonyCard
@@ -57,6 +58,9 @@ namespace BeaverBuddies.Colonies
             public VisualElement Supplies, Wishes;
             public Image FoodIcon, WaterIcon;
             public Label Food, Water;
+            // A mixed-factions game: the colony's faction on the game's diamond, before its name.
+            public VisualElement Faction;
+            public string ShownFaction;
         }
 
         private VisualElement window, postsList, coloniesList;
@@ -426,7 +430,8 @@ namespace BeaverBuddies.Colonies
                 ColonySession.JoiningClosedAtStart);
             string coloniesKey = string.Join(",", slots) + "|" + string.Join(",", handovers.Select(h => $"{h.from}>{h.to}"))
                 + "|" + me + "/" + seat + "|" + string.Join(",", others.Select(p => p.id)) + "|" + string.Join(",", present)
-                + "|" + (stewards?.Fingerprint() ?? "") + "|" + (wishlist?.Fingerprint() ?? "") + "|" + (started ? "s" : "w");
+                + "|" + (stewards?.Fingerprint() ?? "") + "|" + (wishlist?.Fingerprint() ?? "") + "|" + (started ? "s" : "w")
+                + "|" + FactionsKey(seat, me, started);
             if (coloniesKey != coloniesShape)
             {
                 coloniesShape = coloniesKey;
@@ -439,6 +444,7 @@ namespace BeaverBuddies.Colonies
                         buttons.Add(SmallButton(string.Format(T("BeaverBuddies.Colony.Overview.HandTo"), NativeElements.Plain(ColonyExchangeService.ColonyName(h.to))),
                             () => HandOver(h.from, h.to)));
                     if (started) buttons.AddRange(StewardButtons(slot, seat, me, myId, host, present, others, stewards, lifecycle));
+                    if (started && slot == seat && slot == me) buttons.AddRange(FactionSwitchButtons(slot));
                     ColonyCard card = BuildColonyCard(buttons.ToArray());
                     coloniesList.Add(card.Title.parent.parent.parent);
                     colonyCards[slot] = card;
@@ -454,6 +460,7 @@ namespace BeaverBuddies.Colonies
                 string who = slot == seat ? " " + T("BeaverBuddies.Colony.Overview.You")
                     : slot == me ? " " + T("BeaverBuddies.Colony.Overview.YouRunning") : "";
                 NativeElements.SetText(card.Title, ColoredName(slot) + who);
+                ShowFaction(card, slot);
                 NativeElements.SetText(card.Detail, DescribeColony(slot, lifecycle, present));
                 RefreshSupplies(card, slot, lifecycle, supplies);
                 RefreshNote(card, slot, seat, me, myId, stewards, slotService);
@@ -462,6 +469,47 @@ namespace BeaverBuddies.Colonies
         }
 
         // ---- a colony's row ----
+
+        // What the mixed-factions part of the rows depends on: each colony's faction, and whether this player's own
+        // colony may still switch (its buttons come and go with that).
+        private string FactionsKey(int seat, int me, bool started)
+        {
+            if (!BeaverBuddies.Factions.MixedFactions.IsOn) return "";
+            bool mayRequest = started && seat >= 0 && seat == me && _colonyFoundingService != null
+                && _colonyFoundingService.SlotOwnsDistrict(seat) && _colonyFoundingService.IsUntouched(seat);
+            return BeaverBuddies.Factions.ColonyFactionService.Fingerprint() + (mayRequest ? "+" : "-");
+        }
+
+        /// <summary>"Play Iron Teeth instead" on the player's own colony while it is untouched (D14).</summary>
+        private IEnumerable<Button> FactionSwitchButtons(int slot)
+        {
+            if (!BeaverBuddies.Factions.MixedFactions.IsOn || _colonyFoundingService == null || !_colonyFoundingService.SlotOwnsDistrict(slot)
+                || !_colonyFoundingService.IsUntouched(slot)) yield break;
+            string current = BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot(slot);
+            foreach (var faction in BeaverBuddies.Factions.FactionChoice.Available())
+            {
+                if (faction.Id == current) continue;
+                string id = faction.Id;
+                Button button = SmallButton(string.Format(T("BeaverBuddies.Colony.Faction.SwitchButton"), faction.DisplayName.Value),
+                    () => BeaverBuddies.Factions.FactionChoice.RequestSwitch(id));
+                _tooltipRegistrar.Register(button, string.Format(T("BeaverBuddies.Colony.Faction.SwitchTooltip"), faction.DisplayName.Value));
+                yield return button;
+            }
+        }
+
+        // The colony's faction beside its name (a mixed game only).
+        private static void ShowFaction(ColonyCard card, int slot)
+        {
+            string faction = BeaverBuddies.Factions.MixedFactions.IsOn ? BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot(slot) : null;
+            if (card.Faction == null) return;
+            if (faction != card.ShownFaction)
+            {
+                card.ShownFaction = faction;
+                card.Faction.Clear();
+                if (faction != null) card.Faction.Add(BeaverBuddies.Factions.FactionIcons.Diamond(BeaverBuddies.Factions.MixedFactions.Spec(faction), 30));
+            }
+            NativeElements.Show(card.Faction, faction != null);
+        }
 
         /// <summary>
         /// The buttons for looking after a colony: an owner asks another player (or takes the colony back); a steward
@@ -648,8 +696,11 @@ namespace BeaverBuddies.Colonies
             }
             List<string> wishes = (ColonyWishlist.Instance?.Of(slot) ?? (IReadOnlyList<string>)Array.Empty<string>()).ToList();
             string current = index < wishes.Count ? wishes[index] : null;
+            // A mixed-factions game: a colony looks only for what it may receive (its own faction's goods, science, beavers).
+            Func<string, bool> wishable = BeaverBuddies.Factions.MixedFactions.IsOn
+                ? item => BeaverBuddies.Factions.ColonyWishes.MayWish(slot, item) : (Func<string, bool>)null;
             picker.Open(index + 1, T("BeaverBuddies.Colony.Overview.PickWish"), current, item => _items.StockOfColony(slot, item),
-                item => SetWish(slot, index, item), anchor, inStockOnlyDefault: false);
+                item => SetWish(slot, index, item), anchor, inStockOnlyDefault: false, allowedItems: wishable);
         }
 
         private void SetWish(int slot, int index, string item)
@@ -753,6 +804,12 @@ namespace BeaverBuddies.Colonies
             var card = new ColonyCard();
             NineSliceVisualElement board = Card(out card.Title, out card.Detail, buttons);
             VisualElement text = card.Title.parent;
+            card.Faction = new VisualElement();
+            card.Faction.style.marginRight = 8;
+            card.Faction.style.alignSelf = Align.FlexStart;
+            card.Faction.style.flexShrink = 0;
+            card.Faction.style.display = DisplayStyle.None;
+            text.parent.Insert(0, card.Faction);
             card.Supplies = NativeElements.Row();
             card.Supplies.style.marginTop = 3;
             card.FoodIcon = NativeElements.Icon(18);

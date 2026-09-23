@@ -138,6 +138,7 @@ namespace BeaverBuddies.Colonies
             var mine = CentersOf(from);
             int? best = null;
             long bestDistance = long.MaxValue;
+            var living = new List<(int slot, long distance)>();
             foreach (int slot in candidates.Distinct().OrderBy(s => s))
             {
                 if (slot == from || slot < 0 || slot >= ColonySlotTable.MaxSlots || PopulationOf(slot) == 0) continue;
@@ -150,12 +151,18 @@ namespace BeaverBuddies.Colonies
                         distance = Math.Min(distance, dx * dx + dy * dy);
                     }
                 }
+                living.Add((slot, distance));
                 if (distance < bestDistance)
                 {
                     best = slot;
                     bestDistance = distance;
                 }
             }
+            // A mixed-factions game: the nearest colony of the same faction first (D21), whose beavers and buildings are
+            // that faction's; else the nearest. Each colony's faction is saved state, the same on every computer.
+            if (BeaverBuddies.Factions.MixedFactions.IsOn)
+                return BeaverBuddies.Factions.FactionRules.PreferSameFaction(living, BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot,
+                    BeaverBuddies.Factions.ColonyFactionService.FactionOfSlot(from));
             return best;
         }
 

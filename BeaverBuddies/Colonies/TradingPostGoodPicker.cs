@@ -47,6 +47,8 @@ namespace BeaverBuddies.Colonies
         private Action<string> choose;
         // Which items to mark as looked for by the other colony, and what the mark's tooltip says.
         private Func<string, bool> wanted;
+        // A mixed-factions game: only what may cross this way (FactionTrade); null lists everything.
+        private Func<string, bool> allowed;
         private string wantedNote;
         private bool inStockDefault = true;
         private string selected;
@@ -118,9 +120,11 @@ namespace BeaverBuddies.Colonies
         /// <param name="wantedTooltip">What the mark means, added to a marked item's tooltip.</param>
         /// <param name="inStockOnlyDefault">How the "Only what is in stock" box starts for this use of the picker.</param>
         public void Open(int side, string heading, string current, Func<string, int> stock, Action<string> onChoose, VisualElement anchor,
-            Func<string, bool> wantedItems = null, string wantedTooltip = null, bool inStockOnlyDefault = true)
+            Func<string, bool> wantedItems = null, string wantedTooltip = null, bool inStockOnlyDefault = true,
+            Func<string, bool> allowedItems = null)
         {
             Side = side;
+            allowed = allowedItems;
             selected = current;
             stockOf = stock;
             choose = onChoose;
@@ -203,6 +207,8 @@ namespace BeaverBuddies.Colonies
             VisualElement row = null, grid = null;
             foreach (string item in items)
             {
+                // A mixed-factions game: what the factions do not let cross this way is not offered at all.
+                if (allowed != null && !allowed(item)) continue;
                 int stock = stockOf(item);
                 if (onlyInStock && stock <= 0 && item != selected) continue;
                 if (row == null)

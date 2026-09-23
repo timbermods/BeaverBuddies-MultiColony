@@ -431,6 +431,19 @@ namespace BeaverBuddies.Colonies
             return new UntouchedFacts(centers, others, marks: 0, tradeOpen: false, unlocks: 0);
         }
 
+        /// <summary>Display: whether a colony is untouched, stopping at the first building of its own faction.</summary>
+        public bool IsUntouched(int slot)
+        {
+            FactionCatalog catalog = FactionCatalog.Instance;
+            foreach (EntityComponent entity in _entityRegistry.Entities)
+            {
+                ColonyStamp stamp = entity.GetComponent<ColonyStamp>();
+                if (stamp == null || stamp.Slot != slot || entity.GetComponent<DistrictCenter>() != null) continue;
+                if (catalog?.FactionOfTemplate(entity.GetComponent<TemplateSpec>()?.TemplateName) != null) return false;
+            }
+            return true;
+        }
+
         /// <summary>
         /// Played on every computer (ColonyFactionSwitchEvent): an untouched colony becomes another faction. Each of its
         /// district centers is replaced in place by that faction's (the same footprint), its stock moved across, and its
