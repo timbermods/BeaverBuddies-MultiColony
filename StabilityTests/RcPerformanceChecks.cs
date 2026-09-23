@@ -41,6 +41,28 @@ static class RcPerformanceChecks
 
     public static IEnumerable<(string Name, Action Run)> Tests()
     {
+        yield return ("D-S5: lockstep when the simulation is the limit: a late game keeps pace at speed 7, and no case spirals", () =>
+        {
+            // Estimated late-game tick costs (Script P measures them): host 40 ms, a guest half as fast again, 60 ms.
+            var cases = new (string Name, LockstepModel.Result Result)[]
+            {
+                ("speed 7, 200+ characters (the game's limit, the default)", LockstepModel.Run(7, .4f, 40, 60)),
+                ("speed 7, limit removed", LockstepModel.Run(7, 1, 40, 60)),
+                ("speed 7, limit removed, guest twice as slow", LockstepModel.Run(7, 1, 30, 60)),
+                ("speed 7, limit removed, 10 creations or deletions a tick", LockstepModel.Run(7, 1, 40, 60, interruptsPerTick: 10)),
+                ("boost 15 (speed 22), limit removed", LockstepModel.Run(22, 1, 40, 60)),
+                ("boost 15 (speed 22), the default limit", LockstepModel.Run(22, .4f, 40, 60)),
+            };
+            foreach (var (name, result) in cases) Console.WriteLine($"      {name}: {result}");
+            var normal = cases[0].Result;
+            // Budget B4: the guest within BufferTicksFor(speed) + 2 ticks for 95% of the time, and within 10% of the rate.
+            Check(normal.LagP95 <= BeaverBuddies.CatchUpSpeed.BufferTicksFor(7) + 2, $"the default late game's guest is {normal.LagP95} ticks behind at p95");
+            Check(normal.GuestTicksPerSecond >= .9 * normal.TargetTicksPerSecond, $"the default late game's guest runs at {normal.GuestTicksPerSecond:0.0} ticks/s");
+            // No spiral: however far the computers fall short, the guest's lag stays bounded by the host's hold.
+            foreach (var (name, result) in cases)
+                Check(result.LagMaxLastQuarter <= BeaverBuddies.HostPacing.Scaled(BeaverBuddies.HostPacing.StopTicks, 22) + 10, $"{name}: the guest ended {result.LagMaxLastQuarter} ticks behind");
+        });
+
         yield return ("D-S11: in a large game the desync dialog never offers to turn detailed logging on; with it on, posting stays", () =>
         {
             Check(BeaverBuddies.Connect.DesyncDialogPlan.ReportButtonKey(debug: false, canPostReports: true, largeGame: true) == null,
