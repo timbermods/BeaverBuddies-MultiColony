@@ -72,6 +72,9 @@ namespace BeaverBuddies.Factions
         /// <summary>Common, listed by several factions, or listed by none.</summary>
         public bool IsCommon(string item) => SoleFaction(item) == null;
 
+        /// <summary>A common collection lists it: then every faction has it (<see cref="Has"/> is true whatever the faction).</summary>
+        public bool InCommon(string item) => !string.IsNullOrEmpty(item) && common.Contains(item);
+
         /// <summary>Any collection lists it.</summary>
         public bool IsKnown(string item) => !string.IsNullOrEmpty(item) && (common.Contains(item) || listedBy.ContainsKey(item));
 

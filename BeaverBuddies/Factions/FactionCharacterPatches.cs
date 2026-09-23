@@ -1,12 +1,15 @@
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
 using Timberborn.BaseComponentSystem;
 using Timberborn.Beavers;
 using Timberborn.BeaversUI;
 using Timberborn.BlueprintSystem;
 using Timberborn.Bots;
 using Timberborn.BotsUI;
+using Timberborn.CharacterModelSystem;
 using Timberborn.Characters;
 using Timberborn.CharactersUI;
 using Timberborn.FactionSystem;
@@ -15,6 +18,7 @@ using Timberborn.NeedSystem;
 using Timberborn.SelectionSystem;
 using Timberborn.SingletonSystem;
 using Timberborn.Wellbeing;
+using Timberborn.WonderPlanes;
 using Timberborn.WorkerOutfitSystem;
 using Timberborn.WorkSystem;
 using UnityEngine;
@@ -243,6 +247,75 @@ namespace BeaverBuddies.Factions
             button.SetBackground(avatar(spec));
             button.ChangeOnClickAction();
             return false;
+        }
+    }
+
+    /// <summary>
+    /// A character of one faction doing what a building of the other faction asks: an animation its model does not have is
+    /// left out (a mixed game only). Elsewhere the flag is set as the game sets it.
+    /// </summary>
+    public static class FactionAnimation
+    {
+        private static bool warned;
+
+        /// <summary>CharacterAnimator.SetBool, skipping a flag this character's animator lacks (a mixed game only).</summary>
+        public static void SetBoolIfItHas(CharacterAnimator animator, string parameter, bool value)
+        {
+            if (MixedFactions.IsOn && !animator.HasParameter(parameter))
+            {
+                if (!warned) Plugin.Log($"[Factions] A character without the \"{parameter}\" animation does it without (another faction's)");
+                warned = true;
+                return;
+            }
+            animator.SetBool(parameter, value);
+        }
+
+        internal static void Reset() => warned = false;
+    }
+
+    /*
+     * 2026-09-23, Timberborn 1.1.2.4, WonderPlanes: Pilot.PrepareForFlying(Vector3 planeLauncherPosition)
+        _planeLauncherPosition = planeLauncherPosition;
+        _enterer.UnreserveSlotAndExit();
+        _deadComponentDisabler.DisableComponentsDeadDoNotNeed(this);
+        _characterModel.Hide();
+        _characterAnimator.SetBool(AnimationName, value: true);   (AnimationName = "Piloting")
+        _navMeshObserver.Disable();
+        _characterModel.Position = _planeLauncherPosition.Value;
+        EnableComponent();
+     * When the Earth Repopulator is activated, each of its workers becomes a pilot (PlaneLauncher.OnWonderActivated), and
+     * again when a save with pilots is loaded (Pilot.PostLoadEntity). Every beaver's animator has "Piloting", and so has
+     * an Iron Teeth bot's; a Folktails bot's has not (Bot.Folktails.blueprint), and TimbermeshAnimatorController.SetBool
+     * reads the flag from a dictionary, so it throws. In a mixed game Folktails bots can work at an Earth Repopulator (a
+     * colony handed over to an Iron Teeth one, then set to bot workers): the activation, a replayed action, threw on every
+     * computer and stopped the session. The one SetBool call goes through FactionAnimation, which leaves the flag out for
+     * an animator without it; the rest of the method stays the game's. A body that no longer has exactly one SetBool call
+     * (a game update) is left as the game has it and logged, never thrown out of the mod's patching.
+     */
+    [HarmonyPatch(typeof(Pilot), nameof(Pilot.PrepareForFlying))]
+    static class FactionPilotAnimationPatcher
+    {
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            MethodInfo setBool = AccessTools.Method(typeof(CharacterAnimator), nameof(CharacterAnimator.SetBool));
+            int calls = code.Count(instruction => instruction.Calls(setBool));
+            if (calls != 1)
+            {
+                Plugin.LogWarning($"[Factions] Pilot.PrepareForFlying sets {calls} animation flags where 1 was expected (a game update?): " +
+                    "in a mixed game a Folktails bot flying the Earth Repopulator's plane may stop the session");
+                return code;
+            }
+            // Patched in every game; the replacement reads MixedFactions.IsOn first and, outside a mixed game, sets the
+            // flag exactly as the game does.
+            MethodInfo guarded = AccessTools.Method(typeof(FactionAnimation), nameof(FactionAnimation.SetBoolIfItHas));
+            foreach (CodeInstruction instruction in code)
+            {
+                if (!instruction.Calls(setBool)) continue;
+                instruction.opcode = OpCodes.Call;
+                instruction.operand = guarded;
+            }
+            return code;
         }
     }
 }

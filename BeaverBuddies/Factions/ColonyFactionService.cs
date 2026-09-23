@@ -2,9 +2,14 @@ using BeaverBuddies.Colonies;
 using BeaverBuddies.Util;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Text;
 using Timberborn.BaseComponentSystem;
+using Timberborn.Beavers;
+using Timberborn.Bots;
 using Timberborn.FactionSystem;
+using Timberborn.GameDistricts;
 using Timberborn.GameSceneLoading;
 using Timberborn.Persistence;
 using Timberborn.SceneLoading;
@@ -95,6 +100,49 @@ namespace BeaverBuddies.Factions
 
         /// <summary>For the daily check.</summary>
         public static string Fingerprint() => MixedFactions.IsOn ? table.Fingerprint() : "";
+
+        /// <summary>
+        /// For the daily check (a mixed game only): each colony's beavers and bots by faction, from its districts'
+        /// populations, as "0=Folktails:31+4,1=IronTeeth:40+6" (slot, faction, beavers + bots). Saved state only, the same
+        /// on every computer. The chars hash beside it catches a character made in the wrong faction on one computer; this
+        /// says which colony and faction, and in a long game's log shows each colony's make-up day by day.
+        /// </summary>
+        public static string Census(IEnumerable<DistrictCenter> districtCenters)
+        {
+            if (!MixedFactions.IsOn || districtCenters == null) return "";
+            ImmutableArray<FactionSpec> factions = MixedFactions.AllFactions;
+            // The last faction index is for a character of no known faction.
+            var counts = new int[FactionTable.MaxSlots, factions.Length + 1, 2];
+            foreach (DistrictCenter center in districtCenters)
+            {
+                int slot = DistrictOwner.OwnerOfDistrict(center) ?? -1;
+                DistrictPopulation population = center ? center.GetComponent<DistrictPopulation>() : null;
+                if (slot < 0 || slot >= FactionTable.MaxSlots || population == null) continue;
+                foreach (Beaver beaver in population.Beavers) counts[slot, IndexOf(factions, SimFactionOf(beaver)), 0]++;
+                foreach (Bot bot in population.Bots) counts[slot, IndexOf(factions, SimFactionOf(bot)), 1]++;
+            }
+            var census = new StringBuilder();
+            for (int slot = 0; slot < FactionTable.MaxSlots; slot++)
+            {
+                for (int f = 0; f <= factions.Length; f++)
+                {
+                    if (counts[slot, f, 0] == 0 && counts[slot, f, 1] == 0) continue;
+                    if (census.Length > 0) census.Append(',');
+                    census.Append(slot).Append('=').Append(f < factions.Length ? factions[f].Id : "?")
+                        .Append(':').Append(counts[slot, f, 0]).Append('+').Append(counts[slot, f, 1]);
+                }
+            }
+            return census.ToString();
+        }
+
+        private static int IndexOf(ImmutableArray<FactionSpec> factions, string faction)
+        {
+            for (int i = 0; i < factions.Length; i++)
+            {
+                if (factions[i].Id == faction) return i;
+            }
+            return factions.Length;
+        }
 
         /// <summary>
         /// Records a colony's faction. Called in a replay (founding, switch) or while a new game places its starts, so the

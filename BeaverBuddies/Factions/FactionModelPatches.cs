@@ -6,6 +6,7 @@ using System.Reflection;
 using Timberborn.BaseComponentSystem;
 using Timberborn.BlockSystem;
 using Timberborn.Common;
+using Timberborn.Coordinates;
 using Timberborn.DecalSystem;
 using Timberborn.DecalSystemUI;
 using Timberborn.FactionSystem;
@@ -21,11 +22,14 @@ namespace BeaverBuddies.Factions
     /// </summary>
     public static class FactionModels
     {
-        private static readonly string[] PathVariants = { "0000", "0010", "1010", "0011", "0111", "1111" };
+        // Each variant appears four times in a model's table (once per turn); it is painted once. Main thread only.
+        private static readonly List<GameObject> painted = new List<GameObject>(8);
 
         /// <summary>
         /// Paints a path's (or gate's) ground and roof pieces in a faction's materials, as DynamicPathModel does with the
-        /// game's faction in Awake.
+        /// game's faction in Awake. Every path of a mixed game is painted as it loads and whenever its colony changes, so
+        /// the pieces are taken from the model's own tables, as its Awake filled them: no search of the model's children
+        /// by name (each name read allocates) and no names built.
         /// </summary>
         public static void PaintPath(DynamicPathModel model, string faction)
         {
@@ -35,22 +39,36 @@ namespace BeaverBuddies.Factions
             if (spec == null || pathSpec == null) return;
             try
             {
-                Paint(model, pathSpec.GroundModelPrefix, spec.PathMaterial.Asset);
-                Paint(model, pathSpec.RoofModelPrefix, spec.BaseWoodMaterial.Asset);
+                if (!string.IsNullOrWhiteSpace(pathSpec.GroundModelPrefix)) Paint(model._groundModels, spec.PathMaterial.Asset);
+                if (!string.IsNullOrWhiteSpace(pathSpec.RoofModelPrefix)) Paint(model._roofModels, spec.BaseWoodMaterial.Asset);
             }
             catch (Exception error)
             {
                 Plugin.LogWarning("[Factions] Could not paint a path in its faction's materials: " + error.Message);
             }
+            finally
+            {
+                painted.Clear();
+            }
         }
 
-        private static void Paint(DynamicPathModel model, string prefix, Material material)
+        /*
+         * 2026-09-23, Timberborn 1.1.2.4, PathSystem: DynamicPathModel.AddModel / GetModelVariant
+            _groundModels.AddVariants(GetModelVariant(GroundModelPrefix, variant, Current.PathMaterial.Asset), down, left, up, right);
+            GetModelVariant: GameObject gameObject = base.GameObject.FindChild(prefix + variant); ...
+                gameObject.GetComponentInChildren<Renderer>().sharedMaterial = material;
+         * The objects the game painted are the ones its tables hold (NeighboredValues4: each variant under its four turns).
+         */
+        private static void Paint(NeighboredValues4<GameObject> variants, Material material)
         {
-            if (string.IsNullOrWhiteSpace(prefix) || material == null) return;
-            foreach (string variant in PathVariants)
+            if (variants == null || material == null) return;
+            painted.Clear();
+            foreach (OrientedValue<GameObject> entry in variants._values.Values)
             {
-                GameObject piece = model.GameObject.FindChild(prefix + variant);
-                Renderer renderer = piece != null ? piece.GetComponentInChildren<Renderer>(true) : null;
+                GameObject piece = entry.Value;
+                if (piece == null || painted.Contains(piece)) continue;
+                painted.Add(piece);
+                Renderer renderer = piece.GetComponentInChildren<Renderer>(true);
                 if (renderer != null) renderer.sharedMaterial = material;
             }
         }
@@ -193,7 +211,9 @@ namespace BeaverBuddies.Factions
     /*
      * 2026-09-22, Timberborn 1.1.2.4, PathSystem: DynamicPathModel.Awake → AddModel → GetModelVariant(prefix, variant,
      * _factionService.Current.PathMaterial / BaseWoodMaterial). A gate is its template's faction; a path (one template for
-     * both factions) its colony's, painted again once its colony is known (ColonyStamp).
+     * both factions) its colony's, painted again once its colony is known (ColonyStamp). The game has just painted it in
+     * the base faction's (FactionService.Current's) materials: a path of the base faction, and every loading path, whose
+     * colony is only read after Awake, is left as it is.
      */
     [HarmonyPatch(typeof(DynamicPathModel), nameof(DynamicPathModel.Awake))]
     static class FactionPathModelPatcher
@@ -205,6 +225,7 @@ namespace BeaverBuddies.Factions
             string faction = blockObject != null && blockObject.IsPreview
                 ? ColonyFactionService.SimFactionOf(__instance) ?? ColonyFactionService.LocalFaction
                 : ColonyFactionService.DisplayFactionOf(__instance);
+            if (faction == MixedFactions.BaseFaction) return;
             FactionModels.PaintPath(__instance, faction);
         }
     }
