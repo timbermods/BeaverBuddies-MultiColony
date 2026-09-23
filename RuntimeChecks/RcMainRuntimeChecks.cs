@@ -40,5 +40,24 @@ internal static class RcMainRuntimeChecks
             if (!Writes(Patch("SequentialTransmitterResetFragmentOnResetPatch"), 0)) throw new Exception("OnReset no longer records resetAll = false");
             if (!Writes(Patch("SequentialTransmitterResetFragmentOnResetAllPatch"), 1)) throw new Exception("OnResetAll no longer records resetAll = true");
         });
+
+        test("R8: patch classes a game update breaks are named, the rest still apply, and a co-op game missing any is stopped", () =>
+        {
+            Type plugin = mod.GetType("BeaverBuddies.Plugin", true)!;
+            MethodInfo patchAll = plugin.GetMethod("PatchAllIsolatingFactions", All) ?? throw new Exception("PatchAllIsolatingFactions is gone");
+            // Two catches: the mixed-factions group's (beta21) and, new, one around each other patch class.
+            if (patchAll.GetMethodBody()!.ExceptionHandlingClauses.Count(c => c.Flags == ExceptionHandlingClauseOptions.Clause) < 2)
+                throw new Exception("a patch class that fails still throws out of the mod's start, skipping every later patch");
+            if (!IlScan.Instructions(patchAll).Any(i => i.Member?.Name == "FailedPatches"))
+                throw new Exception("a patch class that fails is not recorded");
+            Type guard = mod.GetType("BeaverBuddies.Fixes.CoopFixGuard", true)!;
+            if (!IlScan.Instructions(guard.GetMethod("UpdateSingleton", All)!).Any(i => i.Member?.Name == "FailedPatches"))
+                throw new Exception("the co-op guard does not look at the patches left out");
+            MethodInfo missing = guard.GetMethod("Missing", All) ?? throw new Exception("CoopFixGuard.Missing is gone");
+            string none = (string?)missing.Invoke(null, new object?[] { null, false, new List<string>(), new List<string>() })!;
+            string one = (string?)missing.Invoke(null, new object?[] { null, false, new List<string>(), new List<string> { "BeaverBuddies.Fixes.Example" } })!;
+            if (none != null) throw new Exception("a game with everything applied is stopped: " + none);
+            if (one == null || !one.Contains("BeaverBuddies.Fixes.Example")) throw new Exception("a game with a patch left out is not stopped, or the message doesn't name it");
+        });
     }
 }

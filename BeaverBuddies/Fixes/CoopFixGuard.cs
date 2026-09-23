@@ -34,7 +34,7 @@ namespace BeaverBuddies.Fixes
             if (_checked) return;
             _checked = true;
             string waterFix = WaterSourceTimingFix.Unavailable;
-            string missing = Missing(waterFix, waterFix != null && HasWaterSeeps(), AutomationEvent.MissingRecorders);
+            string missing = Missing(waterFix, waterFix != null && HasWaterSeeps(), AutomationEvent.MissingRecorders, Plugin.FailedPatches);
             if (missing == null) return;
             Plugin.LogError("[Fixes] This co-op game needs a fix this game version does not allow: " + missing);
             if (EventIO.IsNull) return;
@@ -59,11 +59,15 @@ namespace BeaverBuddies.Fixes
         /// What a co-op game is missing, for the message, or null when nothing it needs is missing:
         /// <paramref name="waterFixUnavailable"/> matters only when the game has water seeps.
         /// </summary>
-        internal static string Missing(string waterFixUnavailable, bool hasWaterSeeps, IReadOnlyCollection<string> missingRecorders)
+        internal static string Missing(string waterFixUnavailable, bool hasWaterSeeps, IReadOnlyCollection<string> missingRecorders,
+            IReadOnlyCollection<string> failedPatches = null)
         {
             var parts = new List<string>();
             if (waterFixUnavailable != null && hasWaterSeeps) parts.Add("water seep timing: " + waterFixUnavailable);
             if (missingRecorders != null && missingRecorders.Count > 0) parts.Add("settings no longer shared: " + string.Join(", ", missingRecorders));
+            // Any patch that could not be applied (Plugin.FailedPatches): the mod keeps every co-op game in step through all
+            // of them, and which one a game needs can't be told, so any one missing stops it.
+            if (failedPatches != null && failedPatches.Count > 0) parts.Add("patches not applied: " + string.Join(", ", failedPatches));
             return parts.Count == 0 ? null : string.Join("; ", parts);
         }
     }

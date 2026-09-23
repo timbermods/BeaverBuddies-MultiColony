@@ -181,25 +181,55 @@ namespace BeaverBuddies
             AutomationEvent.ApplyAutomationPatches(harmony);
 
             // apply each advanced monomod patch manually.
-            GameSaverSavePatcher.Install();
-            TimeTimePatcher.Install();
+            Install(nameof(GameSaverSavePatcher), GameSaverSavePatcher.Install);
+            Install(nameof(TimeTimePatcher), TimeTimePatcher.Install);
 
             Log(UnityEngine.Application.consoleLogPath);
         }
 
         /// <summary>
+        /// Patch classes, and hand-made patches, that could not be applied to this game version (a game update renamed
+        /// or changed what they patch). Empty normally. Single player carries on without them; a co-op game is stopped
+        /// at load while any is missing (CoopFixGuard), since one computer's game would then do what the other's does
+        /// not, with nobody told why.
+        /// </summary>
+        internal static readonly List<string> FailedPatches = new List<string>();
+
+        private static void Install(string name, Action install)
+        {
+            try { install(); }
+            catch (Exception error)
+            {
+                FailedPatches.Add(name);
+                LogError($"Could not apply {name} to this game version (a game update?): co-op is refused until MultiColony is updated. {error}");
+            }
+        }
+
+        /// <summary>
         /// PatchAll, except that mixed factions' patches (BeaverBuddies.Factions: UI, models and needs that only a mixed game
         /// uses) go last and on their own: if a game update breaks one, mixed factions is off for this run
-        /// (MixedFactions.Unavailable) and the rest of the mod still starts. A failure in any other patch still stops the
-        /// mod, as PatchAll did (co-op can't run on part of its patches). Every mixed-factions patch but the decision does
+        /// (MixedFactions.Unavailable) and the rest of the mod still starts. Every mixed-factions patch but the decision does
         /// nothing while mixed factions is off (RuntimeChecks: PatchGateChecks), so the ones already applied stay inert.
         /// No method is patched by classes of both groups, so no two patches change places.
+        /// Any other patch class is applied on its own: one a game update broke is left out and named (FailedPatches),
+        /// and every other still applies. Until 1.4.0-rc1 the first failure threw out of the mod's start, so every patch
+        /// class after it, the mixed-factions ones, the shared automation settings and the save and clock patches were all
+        /// left out, and a co-op game could still start on what was left (the review of beta24, R8).
         /// </summary>
         private static void PatchAllIsolatingFactions(Harmony harmony)
         {
             const string factions = "BeaverBuddies.Factions";
             List<Type> classes = AccessTools.GetTypesFromAssembly(typeof(Plugin).Assembly).Where(t => t.HasHarmonyAttribute()).ToList();
-            foreach (Type type in classes.Where(t => t.Namespace != factions)) harmony.CreateClassProcessor(type).Patch();
+            foreach (Type type in classes.Where(t => t.Namespace != factions))
+            {
+                try { harmony.CreateClassProcessor(type).Patch(); }
+                catch (Exception error)
+                {
+                    FailedPatches.Add(type.FullName);
+                    LogError($"Could not apply {type.FullName} to this game version (a game update?): co-op is refused until " +
+                        $"MultiColony is updated. {error}");
+                }
+            }
             try
             {
                 foreach (Type type in classes.Where(t => t.Namespace == factions)) harmony.CreateClassProcessor(type).Patch();

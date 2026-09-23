@@ -86,6 +86,23 @@ static class RcMainChecks
             Check(unguarded.Count == 0, "Replay looks up an entity without checking it is still there: " + string.Join(", ", unguarded));
         });
 
+        yield return ("R8: a patch a game update breaks is left out and named, every other still applies, and co-op is refused", () =>
+        {
+            string plugin = Source("BeaverBuddies", "Plugin.cs");
+            string patchAll = Body(plugin, "private static void PatchAllIsolatingFactions(Harmony harmony)");
+            int loop = patchAll.IndexOf("classes.Where(t => t.Namespace != factions)", StringComparison.Ordinal);
+            Check(loop >= 0, "the loop over the non-faction patch classes is gone");
+            string rest = patchAll.Substring(loop);
+            Check(rest.IndexOf("try", StringComparison.Ordinal) < rest.IndexOf("CreateClassProcessor", StringComparison.Ordinal)
+                && rest.Contains("FailedPatches.Add(type.FullName)"),
+                "each non-faction patch class must be applied in its own try, recording a failure (a throw skipped every later patch)");
+            string start = Body(plugin, "public void StartMod(");
+            Check(start.Contains("Install(nameof(GameSaverSavePatcher)") && start.Contains("Install(nameof(TimeTimePatcher)"),
+                "the hand-made patches must be applied through Install, which records a failure");
+            string guard = Source("BeaverBuddies", "Fixes", "CoopFixGuard.cs");
+            Check(Body(guard, "public void UpdateSingleton()").Contains("Plugin.FailedPatches"), "the co-op guard must refuse a game with patches left out");
+        });
+
         yield return ("B24-a: a friend's lobby text is one short line, and the list shows it without rich text", () =>
         {
             Check(FriendGameRules.OneLine(null, 10) == "" && FriendGameRules.OneLine("   ", 10) == "", "empty text");

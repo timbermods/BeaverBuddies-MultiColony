@@ -176,7 +176,9 @@ internal static class RcLateGameRuntimeChecks
         {
             Type guard = Mod("BeaverBuddies.Fixes.CoopFixGuard");
             MethodInfo missing = guard.GetMethod("Missing", All)!;
-            string? Missing(string? water, bool seeps, params string[] recorders) => (string?)missing.Invoke(null, new object?[] { water, seeps, recorders.ToList() });
+            // Since R8's patch classes (main session) Missing also takes the patches left out; none here.
+            string? Missing(string? water, bool seeps, params string[] recorders) =>
+                (string?)missing.Invoke(null, new object?[] { water, seeps, recorders.ToList() }.Concat(missing.GetParameters().Length > 3 ? new object?[] { null } : Array.Empty<object?>()).ToArray());
             if (Missing(null, true) != null || Missing("changed", false) != null) throw new Exception("co-op is stopped although nothing it needs is missing");
             if (Missing("changed", true)?.Contains("water seep") != true) throw new Exception("a game with water seeps plays on without the seep timing fix");
             if (Missing(null, false, "Lever.SwitchState")?.Contains("Lever.SwitchState") != true) throw new Exception("a game plays on with a setter no longer shared");
