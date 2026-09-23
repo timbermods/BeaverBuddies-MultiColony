@@ -1,0 +1,44 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "docs/index.html"
+        ],
+        "createdAt": "2026-09-23T17:58:13.221Z",
+        "reason": "agent: plates and bands pad with clamp() and nested .wrap/.toc a/td padding the static scan can't resolve; checked in screenshots"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "docs/install.html"
+        ],
+        "createdAt": "2026-09-23T17:58:13.392Z",
+        "reason": "agent: plates and bands pad with clamp() and nested .wrap/.toc a/td padding the static scan can't resolve; checked in screenshots"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "docs/faq.html"
+        ],
+        "createdAt": "2026-09-23T17:58:13.570Z",
+        "reason": "agent: plates and bands pad with clamp() and nested .wrap/.toc a/td padding the static scan can't resolve; checked in screenshots"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "docs/troubleshooting.html"
+        ],
+        "createdAt": "2026-09-23T17:58:13.758Z",
+        "reason": "agent: plates and bands pad with clamp() and nested .wrap/.toc a/td padding the static scan can't resolve; checked in screenshots"
+      }
+    ]
+  }
+}

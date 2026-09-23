@@ -215,11 +215,35 @@
     // totals
     h += '<div class="tp-rule"></div><span class="tp-caption">Traded with ' + esc(COLONY[them]) + ' (all posts)</span>';
     h += chips(colored(me) + ' sent', S.totals[me + '>' + them]) + chips(colored(them) + ' sent', S.totals[them + '>' + me]);
+    var focused = focusKey();
     root.innerHTML = h;
     renderClock();
     renderSide();
     bind();
+    restoreFocus(focused);
     if (flash) { root.classList.remove('tp-flash'); void root.offsetWidth; root.classList.add('tp-flash'); }
+  }
+
+  // Every render replaces the panel's markup, so keyboard focus is carried across by the control's data attributes.
+  // When that control is gone (Accept after it was pressed, say), focus goes to the panel itself, not the page top.
+  var FOCUS_ATTRS = ['data-pick', 'data-choose', 'data-step', 'data-dir', 'data-rounds', 'data-amount', 'data-rounds-box',
+    'data-repeat', 'data-propose', 'data-withdraw', 'data-accept', 'data-decline', 'data-ask', 'data-agree', 'data-keep'];
+  function focusKey() {
+    var el = document.activeElement;
+    if (!el || !root.contains(el)) return null;
+    var sel = '';
+    for (var i = 0; i < FOCUS_ATTRS.length; i++) {
+      var a = FOCUS_ATTRS[i];
+      if (el.hasAttribute(a)) sel += '[' + a + '="' + el.getAttribute(a).replace(/"/g, '') + '"]';
+    }
+    return sel || '*';
+  }
+  function restoreFocus(sel) {
+    if (!sel) return;
+    var el = sel !== '*' && root.querySelector(sel);
+    if (el && !el.disabled) { el.focus(); return; }
+    root.setAttribute('tabindex', '-1');
+    root.focus();
   }
 
   function renderCompose(me, them) {
@@ -228,9 +252,9 @@
     h += offerSide('get', 'You get', d.get, esc(COLONY[them]) + ' has ' + S.stock[them][d.get], d.getAmount);
     // rounds card
     h += '<div class="tp-card"><div class="tp-head"><span class="tp-caption">Rounds</span><span class="tp-muted">up to ' + MAX_AMOUNT + ' of each per round</span></div>'
-      + '<div class="tp-row"><button class="tp-btn tp-sq" type="button" data-rounds="-1"' + (d.repeat ? ' disabled' : '') + ' title="-1 (Shift+click: -10)">&minus;</button>'
-      + '<input class="tp-input tp-input--rounds" type="text" inputmode="numeric" maxlength="2" value="' + d.rounds + '" data-rounds-box' + (d.repeat ? ' disabled' : '') + ' title="How many times the exchange runs: 1 to 99.">'
-      + '<button class="tp-btn tp-sq" type="button" data-rounds="1"' + (d.repeat ? ' disabled' : '') + ' title="+1 (Shift+click: +10)">+</button>'
+      + '<div class="tp-row"><button class="tp-btn tp-sq" type="button" data-rounds="-1"' + (d.repeat ? ' disabled' : '') + ' aria-label="One round fewer" title="-1 (Shift+click: -10)">&minus;</button>'
+      + '<input class="tp-input tp-input--rounds" type="text" inputmode="numeric" maxlength="2" value="' + d.rounds + '" data-rounds-box' + (d.repeat ? ' disabled' : '') + ' aria-label="Rounds, 1 to 99" title="How many times the exchange runs: 1 to 99.">'
+      + '<button class="tp-btn tp-sq" type="button" data-rounds="1"' + (d.repeat ? ' disabled' : '') + ' aria-label="One round more" title="+1 (Shift+click: +10)">+</button>'
       + '<label class="tp-check" style="margin-left:10px" title="A standing deal: round after round, until both colonies agree to end it."><input type="checkbox" data-repeat' + (d.repeat ? ' checked' : '') + '><span class="box"></span>Repeat until cancelled</label></div></div>';
     // summary
     var j = judge(d), text, ok = isOffer(j.verdict);
@@ -254,9 +278,9 @@
     var open = S.pickerOpen === which;
     var h = '<div class="tp-card"><div class="tp-head"><span class="tp-caption">' + caption + '</span><span class="tp-muted">' + stock + '</span></div>'
       + '<div class="tp-row"><button class="tp-btn tp-select" type="button" data-pick="' + which + '" aria-expanded="' + open + '" title="Choose what to trade">' + icon(item, 60) + '<span>' + esc(good(item).name) + '</span><i></i></button>'
-      + '<button class="tp-btn tp-sq" type="button" data-step="' + which + '" data-dir="-1" title="-' + step(item, false) + ' (Shift+click: -' + step(item, true) + ')">&minus;</button>'
-      + '<input class="tp-input tp-input--amount" type="text" inputmode="numeric" maxlength="3" value="' + amount + '" data-amount="' + which + '" title="How many each round: 0 to ' + MAX_AMOUNT + '.">'
-      + '<button class="tp-btn tp-sq" type="button" data-step="' + which + '" data-dir="1" title="+' + step(item, false) + ' (Shift+click: +' + step(item, true) + ')">+</button></div>';
+      + '<button class="tp-btn tp-sq" type="button" data-step="' + which + '" data-dir="-1" aria-label="' + step(item, false) + ' fewer ' + esc(good(item).plural) + ' you ' + which + '" title="-' + step(item, false) + ' (Shift+click: -' + step(item, true) + ')">&minus;</button>'
+      + '<input class="tp-input tp-input--amount" type="text" inputmode="numeric" maxlength="3" value="' + amount + '" data-amount="' + which + '" aria-label="' + esc(good(item).plural) + ' you ' + which + ' each round, 0 to ' + MAX_AMOUNT + '" title="How many each round: 0 to ' + MAX_AMOUNT + '.">'
+      + '<button class="tp-btn tp-sq" type="button" data-step="' + which + '" data-dir="1" aria-label="' + step(item, false) + ' more ' + esc(good(item).plural) + ' you ' + which + '" title="+' + step(item, false) + ' (Shift+click: +' + step(item, true) + ')">+</button></div>';
     if (open) {
       var owner = which === 'give' ? S.me : 1 - S.me;
       h += '<div class="tp-picker"><span class="tp-caption">' + (which === 'give' ? 'What you give' : 'What you ask ' + esc(COLONY[1 - S.me]) + ' for') + '</span><div class="tp-grid">';
@@ -322,7 +346,7 @@
     else { have = Math.min(s.held, s.total); note = own ? 'on your half' : 'on their half'; }
     var pct = Math.round(100 * have / s.total);
     return '<div class="tp-progress"><div class="tp-head"><span class="tp-caption">' + caption + '</span><span class="tp-muted">' + note + '</span></div>'
-      + '<div class="tp-line">' + icon(s.good, 60) + '<div class="tp-bar' + (own ? '' : ' tp-bar--green') + '"><i style="width:' + pct + '%"></i><span>' + have + ' / ' + s.total + ' ' + nameOf(s.good, s.total) + '</span></div></div></div>';
+      + '<div class="tp-line">' + icon(s.good, 60) + '<div class="tp-bar' + (own ? '' : ' tp-bar--green') + '"><i style="transform:scaleX(' + (pct / 100) + ')"></i><span>' + have + ' / ' + s.total + ' ' + nameOf(s.good, s.total) + '</span></div></div></div>';
   }
   function ledgerPart(caption, item, n) {
     return '<span class="tp-part"><span class="tp-muted">' + caption + '</span>' + (n > 0 && item ? icon(item, 40) + '<span>' + n + '</span>' : '<span>nothing</span>') + '</span>';
