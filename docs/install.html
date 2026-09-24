@@ -46,7 +46,7 @@
   <div class="wrap">
     <div class="marker" aria-hidden="true"><i></i><b></b><i></i></div>
     <h1>Install guide</h1>
-    <p>From download to your first co-op game. Every player follows the install steps and the check with the host; only the host loads a save.</p>
+    <p>From download to your first co-op game. Every player installs and checks with the host; the host then hosts and everyone joins.</p>
   </div>
 </div>
 
@@ -72,13 +72,13 @@
     <section id="requirements">
       <h2>Before you start</h2>
       <ul>
-        <li><b>Timberborn</b> on every player's computer. Timber Together is built and tested against version <b>1.1.2.4</b> on Windows with the Steam version of the game, and everyone must run the same game version.</li>
-        <li>The <b>Harmony</b> and <b>Mod Settings</b> mods, which Timber Together needs. Get Harmony from the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3284904751">Steam Workshop</a> and Mod Settings from the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3283831040">Steam Workshop</a> or <a href="https://mod.io/g/timberborn/m/mod-settings">mod.io</a>.</li>
-        <li>For <b>Steam invites</b>: both players online in Steam and both owning Timberborn on Steam.</li>
+        <li><b>Timberborn 1.1.2.4</b>, the same version on every computer (tested on Windows, Steam version).</li>
+        <li>The <b>Harmony</b> and <b>Mod Settings</b> mods: Harmony from the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3284904751">Steam Workshop</a>, Mod Settings from the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3283831040">Steam Workshop</a> or <a href="https://mod.io/g/timberborn/m/mod-settings">mod.io</a>.</li>
+        <li>For <b>Steam invites</b>: everyone online in Steam, owning Timberborn there.</li>
       </ul>
       <div class="note plate caution">
         <span class="sign-label">Same zip for everyone</span>
-        <p>The mod checks the game version and its own files when someone joins, and refuses any difference. It's the most common cause of trouble, so install the exact same zip on every computer.</p>
+        <p>A join is refused if the game or the mod's files differ in any way. Install the exact same zip on every computer.</p>
       </div>
     </section>
 
@@ -87,148 +87,144 @@
       <ol class="steps">
         <li><div>
           <h3>Download the zip</h3>
-          <p>Open the <a href="https://github.com/timbermods/TimberTogether/releases" data-release-href="notes">newest release</a> and download <code><span data-release="asset-name">TimberTogether-1.4.0-rc4.zip</span></code> under <b>Assets</b>, not "Source code". <b>Got a zip from your host?</b> Use that exact file instead. The release also lists the zip's SHA-256 if you want to check the download (see below).</p>
+          <p>From the <a href="https://github.com/timbermods/TimberTogether/releases" data-release-href="notes">newest release</a>, download <code><span data-release="asset-name">TimberTogether-1.4.0-rc9.zip</span></code> under <b>Assets</b>, not "Source code". Got a zip from your host? Use that one.</p>
         </div></li>
         <li><div>
           <h3>Close Timberborn</h3>
-          <p>Make sure the game isn't running while you change its mods.</p>
+          <p>The game must not be running while you change its mods.</p>
         </div></li>
         <li><div>
           <h3>Keep only one BeaverBuddies</h3>
-          <p>Unsubscribe from the Workshop BeaverBuddies, and delete every other BeaverBuddies folder in <code>Documents\Timberborn\Mods</code>: the Stability Fork (<code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code>) and any other copy of <code>TimberTogether</code>. They change the same parts of the game and can't run together; if one is still enabled, the main menu names it. Your saves aren't kept in the <code>Mods</code> folder, so this doesn't touch them.</p>
+          <p>In <code>Documents\Timberborn\Mods</code>, delete any other BeaverBuddies folder: the Stability Fork (<code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code>) or an older copy of this mod. Unsubscribe from the Workshop BeaverBuddies. Only one can run; the main menu names any other that is enabled. Your saves aren't in this folder.</p>
         </div></li>
         <li><div>
           <h3>Extract and copy</h3>
-          <p>Extract the zip and copy the <code>TimberTogether</code> folder into your Timberborn <code>Mods</code> folder:</p>
+          <p>Extract the zip and copy the <code>TimberTogether</code> folder into:</p>
           <div class="path"><code>Documents\Timberborn\Mods</code><button class="copy" type="button">Copy</button></div>
           <p>You should end up with <code>Mods\TimberTogether\version-1.1\manifest.json</code>.</p>
         </div></li>
         <li><div>
-          <h3>Start Timberborn and enable the mods</h3>
-          <p>Open the mod manager from the main menu and enable <b>Harmony</b>, <b>Mod Settings</b> and <b>Timber Together</b>. Restart the game if it asks you to.</p>
+          <h3>Enable the mods</h3>
+          <p>Start Timberborn and enable <b>Harmony</b>, <b>Mod Settings</b> and <b>Timber Together</b> in the mod manager. Restart if asked.</p>
         </div></li>
       </ol>
-      <p>To check the download, open PowerShell in the folder you saved it to and compare the result with the SHA-256 on the release page:</p>
-      <pre><code>Get-FileHash .\<span data-release="asset-name">TimberTogether-1.4.0-rc4.zip</span> -Algorithm SHA256</code></pre>
+      <p>To check the download, run this in PowerShell where you saved it, and compare with the SHA-256 on the release page:</p>
+      <pre><code>Get-FileHash .\<span data-release="asset-name">TimberTogether-1.4.0-rc9.zip</span> -Algorithm SHA256</code></pre>
     </section>
 
     <section id="compare">
       <h2>Compare with your host</h2>
-      <p>Before anyone hosts, read these three out to each other. All three must match on every computer.</p>
+      <p>Before anyone hosts, check these three together. All must match.</p>
       <div class="table-wrap">
         <table class="stacked compare">
           <thead><tr><th>What</th><th>Should read</th><th>Where to look</th></tr></thead>
           <tbody>
-            <tr><td><b>The mod</b></td><td><span data-release="version">1.4.0-rc4</span></td><td>The mod list shows <b>Timber Together</b> with its version.</td></tr>
+            <tr><td><b>The mod</b></td><td><span data-release="version">1.4.0-rc9</span></td><td>The mod list shows <b>Timber Together</b> with its version.</td></tr>
             <tr><td><b>The game</b></td><td>1.1.2.4</td><td>The same Timberborn version for everyone.</td></tr>
-            <tr><td><b>The download</b></td><td>The same zip</td><td>The same file, not only the same number: compare the SHA-256 if in doubt. A copy someone built themselves won't join.</td></tr>
+            <tr><td><b>The download</b></td><td>The same zip</td><td>The same file, not only the same number: compare the SHA-256 if in doubt.</td></tr>
           </tbody>
         </table>
       </div>
-      <p>If anything differs, joining is refused with <b>Multiplayer build mismatch</b>, which names what differs. Update together: everyone replaces the folder with the same new zip and restarts the game.</p>
+      <p>If anything differs, the join is refused with <b>Multiplayer build mismatch</b>, naming what differs. Everyone installs the same zip and restarts the game.</p>
     </section>
 
     <section id="verify">
       <h2>Check it loaded</h2>
       <ul>
-        <li>The mod list shows <b>Timber Together</b> with version <b><span data-release="version">1.4.0-rc4</span></b>.</li>
+        <li>The mod list shows <b>Timber Together</b> with version <b><span data-release="version">1.4.0-rc9</span></b>.</li>
         <li>The main menu has a <b>Join co-op game</b> button.</li>
-        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>Timber Together v<span data-release="version">1.4.0-rc4</span> is loaded!</code></li>
+        <li>Your game log, <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code>, contains the line <code>Timber Together v<span data-release="version">1.4.0-rc9</span> is loaded!</code></li>
       </ul>
       <p>If it isn't there, see <a href="troubleshooting.html#not-loading">The mod doesn't load</a>.</p>
     </section>
 
     <section id="host">
       <h2>Host a game</h2>
-      <p>Every game is hosted through a <b>Co-op Game</b> page: friends join it and press <b>Ready</b>, and <b>Start Game</b> loads the game for everyone at once. You choose separate colonies or one shared colony where the game is made, with the <b>Separate colonies</b> checkbox:</p>
-      <ul>
-        <li><b>A new game, a colony each:</b> leave <b>Separate colonies</b> ticked on the New Game difficulty page. It's ticked by default, and the page remembers your choice.</li>
-        <li><b>Splitting a save you already share:</b> tick <b>Separate colonies</b> on the save's Co-op Game page. Everything built so far stays your colony; each friend founds their own.</li>
-      </ul>
-      <p><a href="index.html#start">Choose your start</a> shows the two side by side.</p>
+      <p>Every co-op game starts in a <b>Co-op Game</b> room: friends join it and press <b>Ready</b>, and your <b>Start Game</b> loads the game for everyone at once, paused. Nobody can join after Start. Separate colonies or one shared colony? See <a href="index.html#start">Choose your start</a>.</p>
 
       <h3>A new game</h3>
       <ol>
-        <li><b>New Game</b> &rarr; faction &rarr; map &rarr; difficulty, as usual. Tick or untick <b>Separate colonies</b> (and the two boxes under it), then choose <b>Host co-op game</b> beside <b>Start</b> and name your settlement.
-        <li>On the <b>Co-op Game</b> page, bring your friends in with one of the three ways below. They appear in the list and press <b>Ready</b>; you can remove anyone.</li>
-        <li>Press <b>Start Game</b> (you're asked first if someone isn't ready). Everyone loads the new world together, paused; unpause when the connection panel shows nobody <i>(loading)</i>. Nobody new can join after Start.</li>
+        <li><b>New Game</b> &rarr; faction &rarr; map &rarr; difficulty. Set <b>Separate colonies</b> and the boxes under it (see <a href="#settings">Settings</a>), then choose <b>Host co-op game</b> beside <b>Start</b> and name your settlement.</li>
+        <li>Invite your friends (below). They appear in the room and press <b>Ready</b>; you can remove anyone.</li>
+        <li>Press <b>Start Game</b>. Everyone loads together, paused; unpause once the connection panel shows nobody <i>(loading)</i>.</li>
       </ol>
-      <p class="muted">Starting a game from the Co-op Game page hasn't been played yet: please report how it goes.</p>
 
       <h3>A save</h3>
-      <p>From the main menu choose <b>Host co-op game</b> (under Load game). It opens the game's own save box: pick a settlement and a save. A gold line under its picture says what it is: <i>Separate colonies</i> (with how many players it remembers) or <i>One shared colony</i>. Choose <b>Host co-op game</b>; its Co-op Game page opens. Invite, let everyone ready up, and press <b>Start Game</b>. Each player gets the colony the save remembers for them. <b>Load game</b> only loads.</p>
-      <p>For a shared save the page also shows <b>Separate colonies</b>, unticked, with <b>Separate science and unlocks</b> under it. Tick it and the game becomes separate colonies at Start, for good: everything built so far is your colony, and each friend founds their own. Keep a copy of the save first.</p>
+      <p>Choose <b>Load game</b> (main menu, or Esc in a game), pick a save, and press <b>Host co-op game</b>, right of <b>Load</b>. A gold line under the save's picture says whether it has separate colonies or one shared colony. Each player gets the colony the save remembers for them.</p>
+      <p>For a shared save, the room shows <b>Separate colonies</b>: tick it and the game becomes separate colonies at Start, for good. Your colony keeps everything built so far; each friend founds their own. Keep a copy of the save first.</p>
 
-      <h3>From inside a game</h3>
-      <p>Playing alone, open the game menu (Esc) and choose <b>Host co-op game</b>: your game is saved as a new save and its Co-op Game page opens. Hosting a co-op game, the same button reads <b>Save and Rehost</b>: everyone leaves the game, it's saved, and its page opens. Your friends choose <b>Rejoin</b> (or <b>Reconnect</b> after a desync) and land on the page as soon as it opens; when everyone is ready, <b>Start Game</b> carries on. Nobody can join after <b>Start Game</b>.</p>
-      <p class="muted">Hosting a save or a game you're playing, and rejoining a rehost, haven't been played yet.</p>
-      <p>If a warning says your mods and a friend's mods differ, fix that before you start: see <a href="troubleshooting.html#mods-differ">Troubleshooting</a>.</p>
+      <h3>The game you're in</h3>
+      <p>Playing alone, choose Esc &rarr; <b>Host co-op game</b>: the game is saved and its room opens over it. In a co-op game the button reads <b>Save and Rehost</b>: the game is saved and everyone meets in its room again, guests included, by themselves. A guest who missed it chooses <b>Rejoin</b>.</p>
+      <p class="muted">Starting a game from the room, and hosting a save or the game you're in, haven't been played yet: please report how it goes.</p>
+      <p>If a warning says your mods and a friend's differ, fix that before you start: see <a href="troubleshooting.html#mods-differ">Troubleshooting</a>.</p>
 
-      <h3>Option 1: Steam invite (easiest)</h3>
-      <p>Make sure <b>Enable Steam Networking</b> is on in Mod Settings (it is by default), choose <b>Invite Friends</b>, and pick your friend in Steam's overlay. No port forwarding or extra software is needed. If nothing happens in the first moment after hosting starts, click the button again: the Steam lobby is still being created.</p>
+      <h3>Invite: Steam (easiest)</h3>
+      <p>Choose <b>Invite Friends</b> and pick your friend in Steam's overlay. No port forwarding needed. The button lights up a moment after you start hosting, once the Steam lobby is ready.</p>
 
-      <h3>Option 2: Direct IP</h3>
-      <p>Give your friend your IP address. The default port is <b>25565</b>, and your router must forward it to your computer. Direct IP is offered at the same time as Steam invites: whenever you host, anyone who can reach that port can join until the game starts, and the host can't check who they are. Forward the port only while you play by IP with people you trust (see the <a href="faq.html#privacy">FAQ</a>).</p>
+      <h3>Invite: direct IP</h3>
+      <p>Give your friend your IP address, with port <b>25565</b> forwarded to your computer. It's open whenever you host, and anyone who can reach it can join unverified: forward it only while you play by IP with people you trust (see the <a href="faq.html#privacy">FAQ</a>).</p>
 
-      <h3>Option 3: Hamachi or another virtual network</h3>
-      <p>A virtual LAN such as Hamachi avoids port forwarding, and has been tested and works. Give your friend the address the virtual network assigns you, then they join by direct IP.</p>
+      <h3>Invite: Hamachi or another virtual network</h3>
+      <p>A virtual LAN such as Hamachi avoids port forwarding, and works. Give your friend the address it assigns you; they join by IP.</p>
     </section>
 
     <section id="join">
       <h2>Join a game</h2>
-      <h3>From the main menu</h3>
-      <p>Choose <b>Join co-op game</b>: it lists your Steam friends' co-op games. Pick your host's and press <b>Join</b>. You see the host's <b>Co-op Game</b> page; press <b>Ready</b>. A game that has already started may drop off the list. Under the list you can also type the host's IP address or domain name.</p>
+      <h3>From the menu</h3>
+      <p>Choose <b>Join co-op game</b>, in the main menu or, while you play alone, the game menu (Esc). It lists your Steam friends' co-op games: pick your host's and press <b>Join</b>, or type the host's IP address under the list. The host's room opens: press <b>Ready</b>.</p>
+      <p>Joined from inside a game, the room opens over it and your game waits, paused. <b>Leave</b> takes you back to it; at <b>Start Game</b> it is saved as at <i>Exit to menu</i>, and the host's game loads.</p>
       <h3>With a Steam invite</h3>
-      <p>Accept the invite from the Steam notification or overlay, <b>from the main menu</b>: every game is hosted through a Co-op Game page. If Timberborn is closed, Steam launches it and joins for you. If the host has <b>Allow Friends to Join Directly via Steam</b> on (it is by default), you can also use <b>Join Game</b> from the host's entry in your Steam friends list.</p>
-      <p>Guests receive a copy of the host's save. It's kept under <b>Online Games</b>.</p>
+      <p>Accept it from Steam's notification or overlay, from the main menu or while you play alone. If Timberborn is closed, Steam starts it. In a co-op game, leave it first, then accept the invite again. With <b>Allow Friends to Join Directly via Steam</b> on (the default), <b>Join Game</b> on the host's entry in your Steam friends list works too.</p>
+      <p>Your copy of the host's save is kept with your saves, named <b>Online Games</b>.</p>
       <h3>Found your colony</h3>
-      <p>As soon as you're in, even while the game is still paused, a message offers you a district center to place (or press <kbd>Ctrl</kbd>+<kbd>K</kbd> later). Put it anywhere its roads won't join another colony's (their roads show in their colors): it appears already built, free, with starting beavers, food and water. On a multi-start map you get the next start instead. The save remembers your colony by your Steam ID (without Steam, by an id kept on your computer), whoever hosts.</p>
+      <p>As soon as you're in, even while the game is paused, you're offered a district center to place (<b>Place district center</b>, or <kbd>Ctrl</kbd>+<kbd>K</kbd> later). Put it anywhere its roads won't join another colony's: it's free and already built, with starting beavers, food and water. On a multi-start map you get the next start instead. The save remembers your colony by your Steam ID, whoever hosts.</p>
     </section>
 
     <section id="playing">
       <h2>While you play</h2>
       <ul>
-        <li>The <a href="https://github.com/timbermods/TimberTogether/blob/main/CONNECTION-PANEL.md">connection panel</a> shows who is connected and which colony they run, their ping, whether you're in sync and the tick rate. Click its title to collapse it.</li>
-        <li>Each colony's roads show as bright squares in its color while you place a building, or with <kbd>Ctrl</kbd>+<kbd>L</kbd>. Yours must not join another colony's: keep your paths a cell away from its roads and district center. The one place two colonies' roads meet is a Trading Post, placed between one road end of each. <kbd>Ctrl</kbd>+<kbd>T</kbd> lists your Trading Posts and every colony. The rules are in <a href="https://github.com/timbermods/TimberTogether/blob/main/TWO-COLONIES.md">TWO-COLONIES.md</a>.</li>
-        <li>Stepping away? In the <kbd>Ctrl</kbd>+<kbd>T</kbd> window, press <b>Let &hellip; look after it</b> on your colony so a friend can run it until you're back.</li>
-        <li>Your friends' cursors and selections appear on your screen. Change how each looks in <b>Options</b> (Esc), <b>Player cursors</b>; the same dialog sets the color you see your own name in, in the chat.</li>
-        <li>To ping a location on the map for everyone, bind a key for <b>Ping Location</b> in the game's keybinding settings.</li>
-        <li>Set your own <b>Ping Display Name</b> and <b>Ping Color</b> in Mod Settings so your friends can tell you apart.</li>
+        <li>The <a href="https://github.com/timbermods/TimberTogether/blob/main/CONNECTION-PANEL.md">connection panel</a> shows who is connected and their colony, ping, sync and tick rate, with chat. Click its title to collapse it.</li>
+        <li>Your roads must not join another colony's: keep them a cell apart. <kbd>Ctrl</kbd>+<kbd>L</kbd> shows every colony's roads. Where you want to trade, place a Trading Post between the two roads. <kbd>Ctrl</kbd>+<kbd>T</kbd> lists your posts and every colony. The full rules are in <a href="https://github.com/timbermods/TimberTogether/blob/main/TWO-COLONIES.md">TWO-COLONIES.md</a>.</li>
+        <li>Stepping away? <kbd>Ctrl</kbd>+<kbd>T</kbd> &rarr; <b>Let &hellip; look after it</b> lets a friend run your colony until you're back.</li>
+        <li>Your friends' cursors and selections show on your screen. Restyle them in Options (Esc) &rarr; <b>Player cursors</b>.</li>
+        <li>To ping a spot for everyone, bind <b>Ping Location</b> in the game's key bindings. Set your <b>Ping Display Name</b> and <b>Ping Color</b> in Mod Settings.</li>
       </ul>
     </section>
 
     <section id="desync">
       <h2>If a desync happens</h2>
-      <p>A desync means the players' games have drifted apart. The game tells you, and the host should:</p>
+      <p>A desync means the players' games have drifted apart. The game tells you. Then, in any order:</p>
       <ol>
-        <li>Choose <b>Save and Rehost</b>.</li>
-        <li>Guests choose <b>Reconnect (wait for Rehost)</b>, in any order. Each goes to the main menu and lands on the host's Co-op Game page as soon as it opens: a direct IP guest redials the address it used; a Steam guest joins the host's new lobby when Steam shows it (the host needs <b>Allow Friends to Join Directly via Steam</b> on), or else accepts a fresh invite.</li>
+        <li>The host chooses <b>Save and Rehost</b>.</li>
+        <li>Guests choose <b>Reconnect (wait for Rehost)</b>. Each waits in their game and joins the host's room as soon as it opens.</li>
         <li>Everyone presses <b>Ready</b>, and the host presses <b>Start Game</b>.</li>
       </ol>
-      <p>If the game says multiplayer has stopped because an action couldn't be completed, return to the main menu and reload a known-good save. Don't overwrite your good save with that session. Then send every player's <code>Player.log</code> and newest report: <a href="troubleshooting.html#logs">how</a>.</p>
+      <p>If the game says multiplayer has stopped because an action couldn't be completed, reload a known-good save instead, and don't overwrite it with that session. Please send every player's logs: <a href="troubleshooting.html#logs">how</a>.</p>
     </section>
 
     <section id="settings">
       <h2>Settings and keys</h2>
       <h3 class="settings-group">On the New Game page (the host's choice)</h3>
-      <p>A new game's colonies are chosen on the <b>New Game</b> difficulty page, under the game's own <b>Tutorial</b> checkbox. The page remembers your last choice, and a game keeps what it was made with, for good. A shared save's <b>Co-op Game</b> page shows the first two as well.</p>
+      <p>On the <b>New Game</b> difficulty page, under the game's <b>Tutorial</b> checkbox. The page remembers your choice, and a game keeps it for good. A shared save's room shows the first two as well.</p>
       <div class="table-wrap">
         <table class="stacked settings">
           <thead><tr><th>Checkbox</th><th>Default</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><b>Separate colonies</b></td><td>Ticked</td><td>Ticked: each player builds their own colony. Unticked: everyone plays one shared colony, as in ordinary BeaverBuddies; a player other than the host can split off later, once, with <b>Found your own colony</b> in the game menu. Not played yet.</td></tr>
-            <tr><td><b>Separate science and unlocks</b> (under it)</td><td>Ticked</td><td>Each colony earns and spends its own science and unlocks its own buildings. Unticked: the colonies share one pool.</td></tr>
-            <tr><td><b>Mixed factions</b> (under it)</td><td>Unticked</td><td>Each player picks Folktails or Iron Teeth for their colony on the Co-op Game page. Greyed, with the reason in its tooltip, unless every faction is unlocked on the host's computer. Not played yet.</td></tr>
+            <tr><td><b>Separate colonies</b></td><td>Ticked</td><td>A colony each. Unticked: one shared colony, as in ordinary BeaverBuddies (a player other than the host can split off later with Esc &rarr; <b>Found your own colony</b>). Not played yet.</td></tr>
+            <tr><td><b>Separate science and unlocks</b> (under it, while it's ticked)</td><td>Ticked</td><td>Each colony earns its own science and unlocks its own buildings. Unticked: one shared pool.</td></tr>
+            <tr><td><b>Mixed factions</b> (under it, while it's ticked)</td><td>Unticked</td><td>Each player picks Folktails or Iron Teeth in the room. Greyed, with the reason, unless every faction is unlocked on the host's computer and no other faction mod is installed. Not played yet.</td></tr>
           </tbody>
         </table>
       </div>
       <h3 class="settings-group">In Mod Settings (the host's)</h3>
-      <p>Open <b>Mod Settings</b> from the game's mod menu and choose Timber Together. The connecting settings and your own preferences, below, are there as well.</p>
+      <p>In <b>Mod Settings</b> &rarr; Timber Together, along with the settings below.</p>
       <div class="table-wrap">
         <table class="stacked settings">
           <thead><tr><th>Setting</th><th>Default</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><b>Hand over a colony after its player is away (days)</b></td><td>0 (never)</td><td>How many in-game days of hosted play a player may miss before their colony goes to another player. At 0 an away player's colony is kept for them; ask a friend to look after it instead. In a mixed game it only ever goes to a colony of its own faction. It can be changed during a game.</td></tr>
+            <tr><td><b>Ease off when a guest drops below this frame rate</b></td><td>Off</td><td>Slows the game a little while a guest's frame rate is below this, then speeds back up. Also in the connection panel.</td></tr>
+            <tr><td><b>Remove the large colony speed limit</b></td><td>Off</td><td>Runs at the chosen speed however big the colony (the game halves speed 7 in a big one). The host's choice applies to everyone.</td></tr>
+            <tr><td><b>Hand over a colony after its player is away (days)</b></td><td>0 (never)</td><td>How many in-game days of co-op play a player may miss before their colony goes to another player (in a mixed game, only to one of its own faction). At 0 it's kept for them. Can be changed during a game.</td></tr>
           </tbody>
         </table>
       </div>
@@ -237,8 +233,9 @@
         <table class="stacked settings">
           <thead><tr><th>Setting</th><th>Default</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><b>Enable Steam Networking</b></td><td>On</td><td>Lets players join your games through Steam. Joining by IP still works.</td></tr>
+            <tr><td><b>Enable Steam Networking</b></td><td>On</td><td>Lets friends join through Steam. Joining by IP works either way.</td></tr>
             <tr><td><b>Allow Friends to Join Directly via Steam</b></td><td>On</td><td>Friends can join from Steam's friends list without an invite.</td></tr>
+            <tr><td><b>Port</b></td><td>25565</td><td>The port for hosting and joining by IP. The host forwards it.</td></tr>
           </tbody>
         </table>
       </div>
@@ -247,12 +244,13 @@
         <table class="stacked settings">
           <thead><tr><th>Setting</th><th>Default</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><b>Player activity indicators</b></td><td>On</td><td>Shares your cursor, selection and recent edits and shows other players'.</td></tr>
+            <tr><td><b>Reduce the number of forced pauses</b></td><td>Off</td><td>How often the game pauses for menus and dialogs. Every player should choose the same. With <b>Never auto-pause</b>, pause before saving.</td></tr>
+            <tr><td><b>Player activity indicators</b></td><td>On</td><td>Shares your cursor, selection and recent edits, and shows others'.</td></tr>
             <tr><td><b>Ping Display Name</b></td><td>Player</td><td>The name others see next to your pings, cursor and edits.</td></tr>
-            <tr><td><b>Ping Color</b></td><td>Yellow</td><td>The color of your pings, cursor and chat name on everyone's screen. Left on yellow, your cursor and chat name get a color of their own by player number. The color you see your own chat name in is yours to pick under Options, Player cursors.</td></tr>
+            <tr><td><b>Ping Color</b></td><td>Yellow</td><td>Your pings, cursor and chat name on everyone's screen. Left on yellow, you get a color by player number.</td></tr>
             <tr><td><b>Connection panel</b></td><td>Expanded</td><td>Expanded, Collapsed or Hidden.</td></tr>
             <tr><td><b>Connection panel position</b></td><td>Top left</td><td>Top left, top right, bottom left or bottom right.</td></tr>
-            <tr><td><b>Always Use Detailed Logging</b></td><td>Off</td><td>Records extra detail for diagnosing desyncs, but costs performance. Leave it off unless you're hunting a desync.</td></tr>
+            <tr><td><b>Always Use Detailed Logging</b></td><td>Off</td><td>Extra detail for diagnosing desyncs. Costly: leave it off unless asked.</td></tr>
           </tbody>
         </table>
       </div>
@@ -261,15 +259,15 @@
         <table>
           <thead><tr><th>Key</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Found your colony (a player without one, in a separate-colonies game). In a shared game, split off with <b>Found your own colony</b> in the game menu instead.</td></tr>
-            <tr><td><kbd>Ctrl</kbd>+<kbd>L</kbd></td><td>Show every colony's roads as bright squares in its color.</td></tr>
-            <tr><td><kbd>Ctrl</kbd>+<kbd>T</kbd></td><td>Trading Posts and colonies: your posts, every colony, what each is looking for, and who looks after it.</td></tr>
-            <tr><td><kbd>Home</kbd></td><td>Back to your colony. Clicking a name in the connection panel takes your camera to that player instead.</td></tr>
-            <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd></td><td>Write a diagnostics report into <code>TimberTogether-Reports</code>.</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Found your colony, if you have none.</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>L</kbd></td><td>Show every colony's roads in its color.</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>T</kbd></td><td>Your Trading Posts and every colony.</td></tr>
+            <tr><td><kbd>Home</kbd></td><td>Back to your colony. Click a name in the connection panel to go to that player.</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd></td><td>Write a diagnostics report.</td></tr>
           </tbody>
         </table>
       </div>
-      <p>All can be changed under <b>Options, Bindings, Timber Together</b>. <b>Ping Location</b>, <b>Toggle connection panel</b> and <b>Chat: start typing</b> are unbound until you set them there.</p>
+      <p>Change them under Options &rarr; Bindings &rarr; <b>Timber Together</b>. <b>Ping Location</b>, <b>Toggle connection panel</b> and <b>Chat: start typing</b> have no key until you set one.</p>
     </section>
 
     <section id="update">

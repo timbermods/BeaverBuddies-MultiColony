@@ -71,7 +71,7 @@
       <details class="q">
         <summary>What is Timber Together?</summary>
         <div class="answer">
-          <p>A multiplayer co-op mod for Timberborn in which each player runs <b>their own colony</b> on one shared map: their own districts, beavers, stock, working hours and science. There are no borders; the colonies' roads meet only at Trading Posts, where they barter. It's built on the BeaverBuddies Stability Fork and on the original <a href="https://github.com/thomaswp/BeaverBuddies">BeaverBuddies</a> by thomaswp and contributors, and keeps everything they do, including ordinary shared-colony co-op. It's a beta.</p>
+          <p>A co-op mod for Timberborn where each player runs <b>their own colony</b> on one shared map: their own districts, beavers, stock, working hours and science. The colonies' roads meet only at Trading Posts, where they barter. It's built on <a href="https://github.com/thomaswp/BeaverBuddies">BeaverBuddies</a> by thomaswp and contributors, through the BeaverBuddies Stability Fork, and still plays ordinary shared-colony co-op too. It's in beta.</p>
         </div>
       </details>
 
@@ -79,62 +79,59 @@
         <summary>How is it different from ordinary BeaverBuddies co-op?</summary>
         <div class="answer">
           <ul>
-            <li><b>A colony each.</b> Ordinary BeaverBuddies puts every player in one colony. Here each player has their own, next door on the same map, and the colonies trade at Trading Posts.</li>
-            <li><b>Steam friend invites</b> on Valve's current networking API, with no port forwarding.</li>
-            <li>An in-game <b>connection panel</b> with players, ping, sync status, tick rate, chat and a speed boost.</li>
-            <li><b>Player activity</b>: your friends' cursors, selection outlines and Viewing / Editing labels, with per-player cursor styling.</li>
-            <li><b>Fixes</b> for a water desync that depended on frame rate, an animation crash, random-number, saving and demolition problems, and more.</li>
-            <li><b>Clearer failures</b>: a mismatched build is refused before the save is sent, and failed connections and actions end with a plain-language reason.</li>
+            <li><b>A colony each</b>, next door on the same map, trading at Trading Posts. Ordinary BeaverBuddies puts everyone in one colony.</li>
+            <li><b>A Co-op Game room</b>: everyone joins and readies up, then the game loads for all at once.</li>
+            <li><b>Steam friend invites</b> with no port forwarding.</li>
+            <li>A <b>connection panel</b> with players, ping, sync, chat and a speed boost, and your friends' <b>cursors</b> on your screen.</li>
+            <li><b>Fixes</b> for desyncs and crashes, and clear messages when a join or an action fails.</li>
           </ul>
-          <p>The <a href="index.html">home page</a> and the <a href="https://github.com/timbermods/TimberTogether/blob/main/STABILITY-CHANGELOG.md">changelog</a> have the details.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Can we play one shared colony, as in ordinary BeaverBuddies?</summary>
         <div class="answer">
-          <p>Yes. With <b>Separate colonies</b> unticked on the New Game page, a new game is one colony that every player builds together, and a shared save (made that way, or in the Stability Fork) loads the same way. None of the colony model runs then: no owners or road rule, no Trading Post (not even in dev mode), District Crossings holding the game's 30 of a good, no colony check, and nothing of this mod's in the save. A shared save stays shared, unless the host ticks <b>Separate colonies</b> on its Co-op Game page or a friend splits off from the game menu (see the next question).</p>
-          <p>What does apply is what Timber Together adds to co-op in general: its desync fixes, the performance pass, the start prompt, the speed boost, going to a player, your own chat color. Every player needs Timber Together: it and the Stability Fork can't join each other's games.</p>
+          <p>Yes. Untick <b>Separate colonies</b> on the New Game page and everyone builds one colony together; a shared save (including a Stability Fork save) stays shared. None of the colony rules apply then. Every player still needs Timber Together: it can't join Stability Fork games, or the other way round.</p>
         </div>
       </details>
 
       <details class="q" id="split">
         <summary>We already share a big colony. Can we split it?</summary>
         <div class="answer">
-          <p>Yes, two ways, and neither can be undone, so keep a copy of the save first. Either way the colony you built together stays whole as the host's, with its buildings, beavers, fields, science and unlocks, and each friend starts from scratch with a new district center, starting beavers, food and water.</p>
+          <p>Yes, two ways. Neither can be undone, so keep a copy of the save first. Either way the shared colony stays whole as the host's, and each friend starts fresh with a new district center, starting beavers, food and water.</p>
           <ul>
-            <li><b>When you host it:</b> main menu &rarr; <b>Host co-op game</b>, pick the save, and tick <b>Separate colonies</b> on its Co-op Game page. At <b>Start Game</b> it becomes separate colonies; with <b>Separate science and unlocks</b> ticked, each colony earns its own science from then on.</li>
-            <li><b>Later, from inside the game:</b> a friend (not the host) opens the game menu (Esc) and chooses <b>Found your own colony</b>. It asks first; placing their district center makes the split. Science and unlocks stay one shared pool.</li>
+            <li><b>When you host it:</b> <b>Load game</b> &rarr; pick the save &rarr; <b>Host co-op game</b>, and tick <b>Separate colonies</b> in its room. With <b>Separate science and unlocks</b> also ticked, each colony earns its own science from then on.</li>
+            <li><b>Later, in the game:</b> a friend (not the host) chooses Esc &rarr; <b>Found your own colony</b> and places their district center. Science stays one pool.</li>
           </ul>
-          <p>Neither has been played yet. <a href="index.html#start">Choose your start</a> shows it beside a new game.</p>
+          <p>Neither has been played yet.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Is it free?</summary>
         <div class="answer">
-          <p>Yes. It's free and open source under the GNU General Public License v3.0, and the original authorship and license are preserved.</p>
+          <p>Yes: free and open source under the GNU General Public License v3.0, like the original.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Where do I download it? Is it on the Steam Workshop?</summary>
         <div class="answer">
-          <p>Timber Together is distributed through <a href="https://github.com/timbermods/TimberTogether/releases">GitHub Releases</a> only. It isn't on the Steam Workshop or mod.io; the pages you may find there belong to the original project.</p>
+          <p>From <a href="https://github.com/timbermods/TimberTogether/releases">GitHub Releases</a>. It isn't on the Steam Workshop or mod.io yet; the BeaverBuddies pages there are the original mod's.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Which version of Timberborn does it need?</summary>
         <div class="answer">
-          <p>It's built and tested against Timberborn <b>1.1.2.4</b>. Every player must run the same game version, because the mod compares it when someone joins. If a Timberborn update changes a part of the game Timber Together corrects for co-op, co-op stops at load with a message naming it (single player carries on): update Timber Together then.</p>
+          <p>Timberborn <b>1.1.2.4</b>, the same version for every player. If a Timberborn update changes something the mod corrects for co-op, co-op stops at load with a message (single player carries on) until Timber Together is updated.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Which platforms are supported?</summary>
         <div class="answer">
-          <p>It has been tested on <b>Windows with the Steam version</b> of Timberborn. Steam invites need the Steam version. Other stores, macOS and Linux haven't been tested.</p>
+          <p>It's tested on <b>Windows with the Steam version</b>. Steam invites need the Steam version. Other stores, macOS and Linux haven't been tested.</p>
         </div>
       </details>
     </section>
@@ -145,49 +142,50 @@
       <details class="q">
         <summary>How many players can play?</summary>
         <div class="answer">
-          <p>Up to <b>four colonies</b>; a fifth player or more shares the host's colony. The Stability Fork underneath was played for hours with two players; the colony model has had a few short playtests so far.</p>
+          <p>Up to <b>four colonies</b>; a fifth player or more helps run the host's colony. Most real play so far has been with two.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Does everyone need to own Timberborn and install the mod?</summary>
         <div class="answer">
-          <p>Yes. Every player needs their own copy of the game and the same mod download. Only the host needs the save: guests receive a copy of it when they join, stored under <b>Online Games</b>.</p>
+          <p>Yes: their own copy of the game and the same mod download. Only the host needs the save; guests get a copy when they join, kept with their saves as <b>Online Games</b>.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Do I need to forward ports or use Hamachi?</summary>
         <div class="answer">
-          <p>Not with a <b>Steam invite</b>. For a direct IP connection, the default port is 25565 and your router must forward it. A virtual LAN such as Hamachi also works and avoids port forwarding.</p>
+          <p>Not with a <b>Steam invite</b>. For a direct IP connection, forward port 25565 to the host, or use a virtual LAN such as Hamachi.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Can someone join after the game has started?</summary>
         <div class="answer">
-          <p>No. Everyone is sent the save the host started from, and a running game can't be handed to a newcomer: the Co-op Game page closes at <b>Start Game</b>. To let someone in later, the host chooses <b>Save and Rehost</b> in the game menu; everyone meets on the Co-op Game page again, including the newcomer, and <b>Start Game</b> carries on.</p>
+          <p>No: the room closes at <b>Start Game</b>. To let someone in, the host chooses Esc &rarr; <b>Save and Rehost</b>; everyone, newcomer included, meets in the room again, and <b>Start Game</b> carries on.</p>
         </div>
       </details>
 
       <details class="q" id="away">
         <summary>What happens to my colony when I'm away?</summary>
         <div class="answer">
-          <p>It's kept for you. Before you go, ask a friend to look after it: in the <kbd>Ctrl</kbd>+<kbd>T</kbd> window, press <b>Let &hellip; look after it</b> on your colony. They press <b>Run this colony</b> to play it as yours, and <b>Back to your colony</b> when they're done; you can <b>Take it back</b> any time. A colony only changes hands for absence if the host has set <b>Hand over a colony after its player is away (days)</b>, which is 0 (never) by default, and in a mixed game never to the other faction. A colony with no beavers or bots left for a whole day goes to the nearest living colony, and its player can found a new one with <kbd>Ctrl</kbd>+<kbd>K</kbd>. Not played yet.</p>
+          <p>It's kept for you. To keep it running, press <kbd>Ctrl</kbd>+<kbd>T</kbd> &rarr; <b>Let &hellip; look after it</b>: your friend presses <b>Run this colony</b> to play it, and <b>Back to your colony</b> when done. <b>Take it back</b> any time.</p>
+          <p>A colony changes hands only if it has no beavers or bots left for a whole day, if the host hands it over, or if the host has set <b>Hand over a colony after its player is away (days)</b> (0, never, by default). Its player can then found a new colony with <kbd>Ctrl</kbd>+<kbd>K</kbd>. Not played yet.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Do we share a screen?</summary>
         <div class="answer">
-          <p>No. Every player has their own camera and interface, and in Timber Together their own colony: your screen shows your colony's goods, population and science. You see the other players' cursors and selections anywhere on the map, and you can ping it.</p>
+          <p>No. Each player has their own camera and interface, showing their own colony's goods, population and science. You see each other's cursors anywhere on the map, and can ping it.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>What happens if the game desyncs?</summary>
         <div class="answer">
-          <p>The game tells you. The host chooses <b>Save and Rehost</b>, and guests choose <b>Reconnect (wait for Rehost)</b>: a direct IP guest redials the address it used, and a Steam guest joins the host's new lobby when Steam shows it, or else accepts a fresh invite. In a separate-colonies game, colony state is compared with the host's as the game runs, so a Timber Together desync is caught the moment it happens; the log says whether it was the game's random state or the colony check that differed (a difference in the check itself is a bug in the mod, and worth reporting). Keep backups of your saves. See <a href="troubleshooting.html#desync">Troubleshooting</a>.</p>
+          <p>The game tells you. The host chooses <b>Save and Rehost</b> and guests choose <b>Reconnect (wait for Rehost)</b>; everyone meets in the room and carries on. In a separate-colonies game the colonies are checked against the host's as you play, so a difference stops the game the moment it happens. Keep backups, and see <a href="troubleshooting.html#desync">Troubleshooting</a>.</p>
         </div>
       </details>
     </section>
@@ -198,42 +196,42 @@
       <details class="q">
         <summary>Can I play with someone using the original BeaverBuddies?</summary>
         <div class="answer">
-          <p>No. Every player must run the exact same build, so a mixed session is refused. Timber Together has its own mod id, but it changes the same parts of the game as the original and the Stability Fork, so only one of them may be enabled at a time: if another is, the main menu names it and Timber Together stays out of the way.</p>
+          <p>No. Every player needs the same build of Timber Together. And only one BeaverBuddies can be enabled at a time: if another is, the main menu names it.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Can Folktails and Iron Teeth play together?</summary>
         <div class="answer">
-          <p>Yes, though it hasn't been played yet. The host ticks <b>Mixed factions</b> under <b>Separate colonies</b> on the New Game page, and needs every faction unlocked on their own computer. On the Co-op Game page each player picks their faction with the game's own faction switcher; each colony then has its faction's buildings, beavers, bots and storage, and colonies of different factions trade the goods both factions use, and science, but not beavers. A mixed save needs Timber Together: the plain game or the Stability Fork would load only one faction and drop the other's buildings and beavers. See <a href="https://github.com/timbermods/TimberTogether/blob/main/TWO-COLONIES.md#mixed-factions-beta">TWO-COLONIES.md</a>.</p>
+          <p>Yes, though it hasn't been played yet. The host ticks <b>Mixed factions</b> on the New Game page (every faction must be unlocked on their computer), and each player picks a faction in the room. Each colony gets its faction's buildings, beavers and bots; between factions, Trading Posts carry the goods both use, and science, but not beavers. A mixed save needs Timber Together to load both factions. More in <a href="https://github.com/timbermods/TimberTogether/blob/main/TWO-COLONIES.md#mixed-factions-beta">TWO-COLONIES.md</a>.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Can I use other mods?</summary>
         <div class="answer">
-          <p>Yes, but every player should have the same mods at the same versions. When someone joins, both players are shown a warning if their mod lists differ, naming the mods that are on only one computer or at different versions. It's only a warning: mods that only change the interface are usually harmless, but a mod that changes the simulation will make the games drift apart. A guest without a mod whose actions or content the host uses (MixedStorage, for example) leaves the game with a message naming the mod, and the host and the other players play on. Settings that affect the simulation (for example <b>Reduce the number of forced pauses</b>) aren't compared and should match too. See <a href="troubleshooting.html#mods-differ">Troubleshooting</a>.</p>
+          <p>Yes, if every player has the same mods at the same versions, with the same settings. You get a warning when the lists differ. Interface-only mods are usually harmless; a mod that changes the simulation will make the games drift apart. A guest missing a mod the host uses (MixedStorage, for example) leaves the game with a message naming it. See <a href="troubleshooting.html#mods-differ">Troubleshooting</a>.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Do I need Harmony and Mod Settings?</summary>
         <div class="answer">
-          <p>Yes, both. Get them from the <a href="install.html#requirements">install guide</a>.</p>
+          <p>Yes, both. Links are in the <a href="install.html#requirements">install guide</a>.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Why do we all have to use exactly the same download?</summary>
         <div class="answer">
-          <p>The game must play out identically on every computer, and even a rebuilt copy of the same version can differ. So when someone joins, the mod compares the game version, its own version and its own files, and refuses any difference before the save is sent. <a href="install.html#compare">Compare with your host</a> before you join.</p>
+          <p>The game must play out identically on every computer, and even a rebuilt copy of the same version can differ. So a join compares the game version and the mod's files, and refuses any difference. <a href="install.html#compare">Compare with your host</a> first.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>I have another BeaverBuddies installed. What do I do?</summary>
         <div class="answer">
-          <p>Keep exactly one. Unsubscribe from the Workshop BeaverBuddies, and delete any <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder and any extra copy of <code>TimberTogether</code> from <code>Documents\Timberborn\Mods</code>. Only one BeaverBuddies can run at a time, and the main menu names any other that is enabled.</p>
+          <p>Keep only Timber Together. Unsubscribe from the Workshop BeaverBuddies, and delete any other BeaverBuddies folder from <code>Documents\Timberborn\Mods</code> (the Stability Fork, or an older copy of this mod).</p>
         </div>
       </details>
     </section>
@@ -244,22 +242,22 @@
       <details class="q">
         <summary>Does a Steam connection reveal my IP address?</summary>
         <div class="answer">
-          <p>Connections go directly between players when Steam can find a route and are otherwise relayed through Steam's network. Valve documents that relaying keeps players' IP addresses hidden from each other. With a <b>direct IP</b> connection, the host's address is shared with the players you give it to.</p>
+          <p>No. Steam connects players directly when it can, and relays through its network otherwise; either way Valve keeps IP addresses hidden. With a <b>direct IP</b> connection, the players you give it to know the host's address.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Can a stranger join my game?</summary>
         <div class="answer">
-          <p>Not over Steam. The host opens a friends-only lobby and only accepts players who joined it, so someone who knows your Steam ID can't connect, and a Steam guest is seated by the Steam ID that Steam proves for its connection.</p>
-          <p>Direct IP is different. Whenever you host, even when you only invite friends over Steam, the host also listens on the direct IP port (25565 by default) until the game starts. Anyone who can reach that port (on your network, through a forwarded port, or over IPv6 if your firewall lets them in) can join, and the host can't check who they are: someone who copies another player's id can take that player's colony. Forward the port, or let it through your firewall, only while you play by IP with people you trust.</p>
+          <p>Not over Steam: the host's lobby is friends-only, and each Steam guest is identified by Steam.</p>
+          <p>Direct IP is different. Whenever you host, the direct IP port (25565) is open until the game starts, even if you only invite over Steam. Anyone who can reach it can join, unverified, and could claim another player's colony. Forward that port, or let it through your firewall, only while you play by IP with people you trust.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>What does the mod send about me?</summary>
         <div class="answer">
-          <p>Other players in your session receive your game actions and, if <b>Player activity indicators</b> is on, your cursor position, selection, recent building edits and the display name and color you chose. Timber Together's builds contain no bug-report upload token, so the <b>Post Bug Report</b> button doesn't upload anything, and diagnostic files are written only to your own computer.</p>
+          <p>Other players receive your game actions and, if <b>Player activity indicators</b> is on, your cursor, selection, recent edits, and the name and color you chose. Nothing is uploaded anywhere: diagnostics and logs stay on your computer until you send them.</p>
         </div>
       </details>
     </section>
@@ -270,29 +268,29 @@
       <details class="q">
         <summary>How does it keep everyone in sync?</summary>
         <div class="answer">
-          <p>Everyone starts from the same save. Every action is sent to the host, which decides the tick it happens on and sends it to everyone. Because the game is deterministic, the same save and the same actions on the same ticks play out identically on every computer. The <a href="index.html#also">home page</a> explains it in a minute, and the <a href="https://github.com/thomaswp/BeaverBuddies/wiki/How-does-it-work%3F">original project's wiki</a> goes deeper.</p>
+          <p>Everyone starts from the same save, and every action goes through the host, which decides the tick it happens on and sends it to everyone. The game is deterministic, so the same save and the same actions on the same ticks play out the same everywhere. The <a href="https://github.com/thomaswp/BeaverBuddies/wiki/How-does-it-work%3F">original project's wiki</a> goes deeper.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>What is the "tick rate" in the connection panel?</summary>
         <div class="answer">
-          <p>How many simulation ticks per second the game is running right now, averaged over about three seconds. It's around 1.7 at normal speed, rises with game speed (about 11.7 at the fastest button), and drops to 0 when paused.</p>
-          <p>To go past the fastest button, use the <b>speed boost</b> at the top of the chat box: <b>-</b> and <b>+</b>, or a typed number, add a constant to the speed everyone picked, so the fastest button with +0.5 runs at 7.5x. It goes from -6.5 to +23, and the game never runs below 0.5x or above 30x. How fast the game really goes is still down to the slowest computer; the tick rate says what is achieved.</p>
+          <p>How many simulation ticks per second the game runs, averaged over a few seconds: about 1.7 at normal speed, about 11.7 at the fastest button, 0 when paused.</p>
+          <p>To go faster, use the <b>speed boost</b> at the top of the chat: <b>+</b> adds to the speed everyone picked (the fastest button with +0.5 runs at 7.5x, up to 30x). The slowest computer still sets the real pace.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Does the mod slow the game down?</summary>
         <div class="answer">
-          <p>Normal play has little overhead. More colonies mean more to simulate, so prefer a smaller map, and the host can ease off for a slow guest from the connection panel. The one big exception is <b>Always Use Detailed Logging</b>, which records a lot of extra detail for diagnosing desyncs. Leave it off unless you're hunting a desync.</p>
+          <p>Barely, in normal play. More colonies mean more to simulate, so prefer a smaller map; the host can ease off for a slow guest from the connection panel. Leave <b>Always Use Detailed Logging</b> off unless you're hunting a desync: it's costly.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>Is there a delay when I do something as a guest?</summary>
         <div class="answer">
-          <p>A little. A guest's action goes to the host, which schedules it on a tick and sends it back, so it appears a short moment after you click. The Stability Fork removed about half a tick of that delay (roughly 0.3 seconds at normal speed) by sending your actions immediately, and over Steam that delay no longer grows as the game speeds up.</p>
+          <p>A short one. Your action goes to the host, which schedules it and sends it back, so it appears a moment after you click. While it travels, the tiles you placed or marked are tinted.</p>
         </div>
       </details>
     </section>
@@ -303,14 +301,14 @@
       <details class="q">
         <summary>How do I update?</summary>
         <div class="answer">
-          <p>Download the new zip, close the game, and replace the <code>TimberTogether</code> folder. Everyone updates together, because different builds won't join each other.</p>
+          <p>Download the new zip, close the game, and replace the <code>TimberTogether</code> folder. Everyone updates together.</p>
         </div>
       </details>
 
       <details class="q">
         <summary>How do I report a bug?</summary>
         <div class="answer">
-          <p>Open an issue on the <a href="https://github.com/timbermods/TimberTogether/issues">project's GitHub page</a> and attach, from <b>every player</b>: <code>Player.log</code>, and the newest report in the <code>TimberTogether-Reports</code> folder next to it. <a href="troubleshooting.html#logs">Collecting logs</a> explains where to find them.</p>
+          <p>Open an <a href="https://github.com/timbermods/TimberTogether/issues">issue</a> with every player's <code>Player.log</code> and newest report from <code>TimberTogether-Reports</code>. <a href="troubleshooting.html#logs">Collecting logs</a> shows where they are.</p>
         </div>
       </details>
 
@@ -318,12 +316,12 @@
         <summary>What are the known limits?</summary>
         <div class="answer">
           <ul>
-            <li>Everyone must run the exact same build. Other mods should match (you get a warning when they don't), and settings aren't compared.</li>
-            <li>Nobody can join after <b>Start Game</b>; the host uses <b>Save and Rehost</b> to let someone in.</li>
-            <li>Desyncs can still happen; a colony difference is caught the moment it happens.</li>
-            <li>Beta: the colony model has had a few short playtests so far. Up to four colonies; tested on Windows with the Steam version only.</li>
-            <li>Text added by this mod is English only. Other languages show the English text for those strings.</li>
-            <li>The game ends only when every beaver on the map is gone, not per colony; the map (water, droughts, badwater) is shared.</li>
+            <li>Everyone needs the exact same build; other mods and their settings should match too.</li>
+            <li>Nobody can join after <b>Start Game</b>; the host uses <b>Save and Rehost</b>.</li>
+            <li>Desyncs can still happen; in a separate-colonies game they're caught the moment they do.</li>
+            <li>Up to four colonies. Tested on Windows with the Steam version only.</li>
+            <li>Text this mod adds is English only.</li>
+            <li>The game ends only when every beaver on the map is gone.</li>
             <li>The full list is in <a href="https://github.com/timbermods/TimberTogether/blob/main/TWO-COLONIES.md#known-limits">TWO-COLONIES.md</a>.</li>
           </ul>
         </div>
