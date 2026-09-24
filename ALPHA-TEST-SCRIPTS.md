@@ -447,8 +447,7 @@ waiting room and of each colony help.
 1. **The checkbox.** Host: New Game → Folktails → a map → the difficulty page: **Separate colonies** ticked, and
    **Mixed factions** ticked under it (since 1.4.0-rc3; a Mod Setting before). Its tooltip is on screen.
 2. **The room.** New Game → Folktails → a BeaverBuddies multi-start map with 3 starts → Normal → **Host co-op game**.
-   The page shows the plate *map - Normal* (no faction), a gold line *Separate colonies: each player builds their own
-   colony, as Folktails or Iron Teeth.*, then **Your
+   The page shows the plate *map - Normal* (no faction), a gold line *Separate colony* *(rc8)*, then **Your
    faction** with the faction page's arrows, ring and name plate reading *Folktails*. Log: `[Factions]` nothing yet.
 3. **Picking.** Guest joins from the main menu: the same switcher, showing Folktails. Guest presses the right arrow:
    *Iron Teeth*, the Iron Teeth logo in the ring. Within a second the host's row for the guest shows the Iron Teeth
@@ -722,8 +721,8 @@ and no text may overlap or run off.
 3. **Iron Teeth.** Back, pick Iron Teeth, the same map: whether or not the game shows its Tutorial checkbox for Iron
    Teeth, the colony checkboxes are there, aligned.
 4. **Remembered.** Untick **Separate colonies**, quit the game, start it again: the page shows it unticked. Tick it again.
-5. **A shared room.** Untick **Separate colonies** → **Host co-op game**. Under the plate, the gold line reads *One shared
-   colony: everyone plays it together…*, on the host's page and on the guest's. Start.
+5. **A shared room.** Untick **Separate colonies** → **Host co-op game**. Under the plate, the gold line reads *Shared colony*
+   *(rc8)*, on the host's page and on the guest's. Start.
 6. **The game menu.** In the game (paused or not), the guest opens the game menu (Esc): **Found your own colony** is below
    Settings (and Player cursors), the same size as the others, its text on one line. The host's menu has no such button.
    The guest's **Ctrl+K** says the game has one shared colony and points to the menu; the host's says the shared colony
@@ -740,7 +739,7 @@ and no text may overlap or run off.
 9. **For good.** The host's Save and Rehost: the guest is brought into the room over their game *(rc7)*; Ready,
    Start: still two colonies, no button, and the guest's Ctrl+K says they already have a colony.
 10. **A separate room.** New game, **Separate colonies** ticked and **Separate science and unlocks** unticked → Host co-op
-    game: the gold line reads *Separate colonies: each player builds their own colony.* In the game, the guest is offered
+    game: the gold line reads *Separate colony* *(rc8)*. In the game, the guest is offered
     to place a district center as before, and the colonies share one pool of science.
 11. Send both `Player.log` files.
 

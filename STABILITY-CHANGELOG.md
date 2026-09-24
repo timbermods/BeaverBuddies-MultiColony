@@ -5,6 +5,13 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc8
+
+**The room's gold line is two words.** Asked for by Kyler after rc7: the line under the Co-op Game room's plate
+(`LobbyRules.ColonyNoteKey`), on the host's page and every guest's, now reads *Shared colony* or *Separate colony*
+(`Lobby.Colonies.Shared`, `Separate`, `SeparateMixed`, `SeparateSave`). A mixed-factions save and a shared save made
+separate at Start keep their own lines, which say what Start does. Text only; wire and saves unchanged. **Not played.**
+
 ## 1.4.0-rc7
 
 **Hosting and joining from inside a game.** Asked for by Kyler after rc6, planned in `design/IN-GAME-HOSTING-PLAN.md`
