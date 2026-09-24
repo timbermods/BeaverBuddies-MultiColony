@@ -302,9 +302,11 @@ internal static class Rc7RuntimeChecks
             // The guest: when its save arrives, before the join is installed and the registry reset.
             var load = IlScan.Instructions(Mod("BeaverBuddies.Connect.ClientConnectionService").GetMethod("LoadMap", All)!);
             int guestSave = load.FindIndex(i => i.Calls && i.Is("BeaverBuddies.Lobby.InGameLobby", "ExitSaveForStart"));
+            int seed = load.FindIndex(i => i.Calls && i.Is("BeaverBuddies.DeterminismService", "InitGameStartState"));
             int install = load.FindIndex(i => i.Calls && i.Is("BeaverBuddies.IO.EventIO", "Set"));
             int reset = load.FindIndex(i => i.Calls && i.Is("BeaverBuddies.SingletonManager", "Reset"));
-            if (guestSave < 0 || install < guestSave || reset < guestSave) throw new Exception("the guest's game is not saved before the host's save replaces it");
+            if (guestSave < 0 || seed < guestSave || install < guestSave || reset < guestSave)
+                throw new Exception("the guest's game is not saved before the host's save (its seed, its session) replaces it");
             // Only a game binds it: the autosaver is the Game context's (BindingChecks checks the container can make it).
             if (IlScan.Instructions(Only(Mod("BeaverBuddies.ConnectionMenuConfigurator"), "Configure")).Any(i => i.Calls && i.Member is MethodInfo m
                 && m.IsGenericMethod && m.GetGenericArguments()[0] == lobby)) throw new Exception("the main menu binds the game side of the room");

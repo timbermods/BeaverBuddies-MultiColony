@@ -478,7 +478,8 @@ static class Rc7Checks
             InOrder(Body(Source("BeaverBuddies", "Lobby", "LobbyHostPanel.cs"), "private void StartNow()"), "the host's Start",
                 "InGameLobby.Current?.ExitSaveForStart(started.Setup.SavedForRoom);", "started.Start(_sceneLoader,");
             InOrder(Body(Source("BeaverBuddies", "Connect", "ClientConnectionService.cs"), "private void LoadMap(byte[] mapBytes, ClientEventIO joined)"), "the guest's save",
-                "InGameLobby.Current?.ExitSaveForStart(savedForRoom: false);", "EventIO.Set(joined);", "SingletonManager.Reset();");
+                "InGameLobby.Current?.ExitSaveForStart(savedForRoom: false);", "DeterminismService.InitGameStartState(mapBytes);", "EventIO.Set(joined);",
+                "SingletonManager.Reset();");
             // The autosaver is the game's alone: the main menu never binds the game side of the room.
             Check(!Body(Source("BeaverBuddies", "Plugin.cs"), "public class ConnectionMenuConfigurator").Contains("InGameLobby>"), "the main menu binds the autosaver's user");
         });
