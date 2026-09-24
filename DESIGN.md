@@ -168,7 +168,7 @@ The world rejects the mod-page default: the screenshot hero, the icon-tile featu
 - Timber is the structure: posts, rails, section rules, the header beam, the footer. It never carries content color.
 - Two colony colors, used only for their own colony. Navy is for actions and directions, caution yellow for status.
 - Condensed signage lettering for headings, labels and buttons. system-ui for reading.
-- One moving part: goods crossing at the Trading Post on the hero map.
+- One moving part: goods (game-icon crates, never beavers) changing owner at the Trading Post on the hero map.
 
 ## Colors
 

@@ -89,8 +89,11 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
   localStorage key is release.js's cache `tbmods.release.v2.timbermods/TimberTogether` (30 min); clear it
   when checking version badges.
 - Phones: no horizontal scroll at 390px, tap targets ≥ 44px (menu links 48px). Breakpoints 1060/940/760/640/520.
-- Motion: the one barter loop on the hero map (goods slide to the Trading Post and cross, 9s
-  `cubic-bezier(.45,0,.2,1)`, the post glows), paused off screen; everything still under `prefers-reduced-motion`.
+- Motion: the one barter loop on the hero map, 9s, paused off screen; everything still under `prefers-reduced-motion`.
+  It shows **goods, never beavers**: navy crates with the game's Logs and Gears icons, edged in the owner's colour, each
+  carried along its own road to its own half; the post glows when both are in; they swap halves (one over, one under)
+  and the edge turns the new owner's colour at the divider; then they fade there. Nothing moves on the other colony's
+  road (Kyler: a dot crossing over read as beavers walking across).
 - Signatures: the two-arm signpost (Choose your start, `[data-signpost]`), the Trading Post sign (amber and teal
   plates on one timber post), the hero map with leader-line labels, the colony section marker.
 - The Trading Post replica is a contained exception: the game's greens, wood, yellow captions and Noto Sans stay

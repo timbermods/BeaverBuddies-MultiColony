@@ -66,7 +66,7 @@
 
     <figure class="map-figure plate enamel">
       <div class="map-box">
-        <svg class="map" viewBox="0 0 600 420" role="img" aria-label="A map with two colonies: colony 1 in amber on the left and colony 2 in teal on the right, each with a district center, houses, trees and its own roads. The two colonies' main roads run to the middle and end at the two halves of one Trading Post, the only place they meet. Goods are carried to each half and cross together. A river runs along the bottom.">
+        <svg class="map" viewBox="0 0 600 420" role="img" aria-label="A map with two colonies: colony 1 in amber on the left and colony 2 in teal on the right, each with a district center, houses, trees and its own roads. The two colonies' main roads run to the middle and end at the two halves of one Trading Post, the only place they meet. Each colony's goods, logs from one and gears from the other, are carried to its own half of the post; once both are in, they swap halves and belong to the other colony. A river runs along the bottom.">
           <defs>
             <pattern id="tiles" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="var(--map-grid)" stroke-width="1"/></pattern>
           </defs>
@@ -98,14 +98,13 @@
           <rect x="300" y="186" width="26" height="50" rx="2" class="b2"/>
           <path class="roof" d="M266 190 L300 164 L334 190 Z"/>
           <line x1="300" y1="190" x2="300" y2="236" stroke="var(--map-ground)" stroke-width="2"/>
-          <!-- goods on their way: logs from colony 1, gears from colony 2 -->
-          <g class="good good-1" style="--run:110px;--cross:190px">
-            <rect x="142" y="203" width="18" height="14" rx="4" fill="var(--c1)" stroke="#fff" stroke-width="2"/>
-            <path d="M146 210h10" stroke="#fff" stroke-width="1.6"/>
+          <!-- goods, not beavers: colony 1's logs and colony 2's gears are each carried to their own half, swap
+               there (over and under, changing owner at the divider) and are taken in on the other side -->
+          <g class="good good-1" style="--in:136px;--swap:162px;--hop:-20px">
+            <g class="hop"><rect class="crate own" x="140" y="199" width="22" height="22" rx="4" stroke="var(--c1)"/><rect class="crate new" x="140" y="199" width="22" height="22" rx="4" stroke="var(--c2)"/><image href="assets/goods/logs-40.png" x="142" y="201" width="18" height="18"/></g>
           </g>
-          <g class="good good-2" style="--run:-110px;--cross:-190px">
-            <circle cx="449" cy="210" r="8" fill="var(--c2)" stroke="#fff" stroke-width="2"/>
-            <circle cx="449" cy="210" r="2.6" fill="#fff"/>
+          <g class="good good-2" style="--in:-136px;--swap:-162px;--hop:20px">
+            <g class="hop"><rect class="crate own" x="438" y="199" width="22" height="22" rx="4" stroke="var(--c2)"/><rect class="crate new" x="438" y="199" width="22" height="22" rx="4" stroke="var(--c1)"/><image href="assets/goods/gear-40.png" x="440" y="201" width="18" height="18"/></g>
           </g>
           <!-- leader lines to the labels (wide screens) and numbered pins (phones) -->
           <g class="leader"><path d="M87 139 L70 62"/><path d="M513 139 L530 62"/><path d="M300 162 V62"/><path d="M190 352 L150 366"/></g>
