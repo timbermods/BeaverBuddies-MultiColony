@@ -198,6 +198,8 @@ namespace BeaverBuddies.Connect
             if (EventIO.IsNull) return;
             // Once only: a Save and Rehost told them before its save.
             TellGuestsMoving();
+            // The room opens next: its listener takes the Steam lobby as this server closes.
+            (EventIO.Get() as ServerEventIO)?.HandLobbyToRoom();
             SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
             // A desync or a failed action ended the session already, and may have left its connection installed.
             EventIO.Reset();
@@ -213,6 +215,19 @@ namespace BeaverBuddies.Connect
             if (!(EventIO.Get() is ServerEventIO server) || server.IsSessionOver) return;
             try { server.MoveToRoom(); }
             catch (Exception error) { Plugin.LogWarning("[Lobby] Could not tell the guests the game is moving to a waiting room: " + error.Message); }
+        }
+
+        /// <summary>
+        /// A move whose room will not open (Save and Rehost's save failed after the guests were told): the session they have
+        /// left ends quietly, as the room's would have ended it, and its Steam lobby is left as any end leaves it. The
+        /// guests wait under their box until they cancel it or the host hosts again. Nothing if no move is under way.
+        /// </summary>
+        internal static void AbandonMove()
+        {
+            if (!(EventIO.Get() is ServerEventIO server) || !server.IsMoving) return;
+            Plugin.LogWarning("[Lobby] The move to a waiting room failed after the guests were told; ending the session");
+            SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
+            EventIO.Reset();
         }
     }
 }

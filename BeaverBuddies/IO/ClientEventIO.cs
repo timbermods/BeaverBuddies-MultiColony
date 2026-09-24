@@ -144,13 +144,16 @@ namespace BeaverBuddies.IO
             if (FailedToConnect) return;
             ulong? keptLobby = NetBase?.MovedToSteamLobby;
             bool isCurrent = ReferenceEquals(EventIO.Get(), this);
+            bool held = HeldJoin;
             CleanUp();
             FailedToConnect = true;
-            // Only a running game's session is moved: a join still waiting in a room has no game of its host's to move.
-            if (!isCurrent || !mapDelivered) return;
+            HeldJoin = false;
+            // A session something newer replaced has nobody to follow for.
+            if (!isCurrent && !held) return;
             Plugin.Log("[Lobby] The host is moving this game to a waiting room; following it");
-            // Quietly (no message): the game stays, played alone, until the room's Start.
-            SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
+            // Quietly (no message): the game stays, played alone, until the room's Start. (A join whose save had not been
+            // loaded yet, the moment after its host's Start, has no game of the host's here: it follows all the same.)
+            if (isCurrent && mapDelivered) SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
             EventIO.ResetIf(this);
             ClientConnectionService.FollowHost(keptLobby);
         }

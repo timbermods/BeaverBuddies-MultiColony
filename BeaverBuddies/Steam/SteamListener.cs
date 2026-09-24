@@ -64,6 +64,8 @@ namespace BeaverBuddies.Steam
                 // including direct IP, because of a Steam problem.
                 Plugin.LogError("Steam invites are unavailable this session (direct IP still works): " + e.Message);
                 link.Stop();
+                // A lobby kept for this listener (a host moving its game to this room) is left, not kept for nobody.
+                LeaveHandedOverLobby();
             }
         }
 

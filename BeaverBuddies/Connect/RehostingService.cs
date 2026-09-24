@@ -113,7 +113,10 @@ namespace BeaverBuddies.Connect
         /// </summary>
         public bool RehostGame()
         {
-            return SaveRehostFile(save => HostSaved(save, rehost: true), true, beforeSave: () => ServerHostingUtils.TellGuestsMoving());
+            bool saved = SaveRehostFile(save => HostSaved(save, rehost: true), true, beforeSave: () => ServerHostingUtils.TellGuestsMoving());
+            // The guests were told and have left: a save that failed after that ends the session they left.
+            if (!saved) ServerHostingUtils.AbandonMove();
+            return saved;
         }
 
         /// <summary>Host co-op game in single player's game menu: this game, saved, in its Co-op Game room over it.</summary>
@@ -133,6 +136,7 @@ namespace BeaverBuddies.Connect
             catch (Exception error)
             {
                 Plugin.LogError("[Lobby] Could not open the Co-op Game room for the save: " + error);
+                ServerHostingUtils.AbandonMove();
                 _dialogBoxShower.Create().SetMessage(RegisteredLocalizationService.T("BeaverBuddies.Lobby.CouldNotOpen")).Show();
             }
         }

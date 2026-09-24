@@ -30,6 +30,9 @@ namespace BeaverBuddies
             if (Plugin.Disabled) return;
             // Reset everything before loading singletons
             SingletonManager.Reset();
+            // A join held apart from the game this replaces (its room's window never opened, and the player loaded
+            // another save) belongs to that game: closed, or it would stay in the host's room with nothing reading it.
+            ClientConnectionService.DropHeldJoin();
 
             Plugin.Log($"Registering In Game Services");
 
@@ -107,9 +110,11 @@ namespace BeaverBuddies
             SingletonManager.Reset();
             // A new game's waiting room left over from a scene the flow did not expect (its guests are told why).
             BeaverBuddies.Lobby.LobbySession.EndStale("the host went back to the main menu");
-            // And a Steam lobby a host moving its game kept for a room that never took it (1.4.0-rc7).
-            SteamListener.LeaveHandedOverLobby();
             EventIO.Reset();
+            // And, once the last session's server has closed, a Steam lobby it kept for a room that never took it
+            // (1.4.0-rc7), and a join still held apart from the game that was left.
+            SteamListener.LeaveHandedOverLobby();
+            ClientConnectionService.DropHeldJoin();
             // A faction picked in an earlier waiting room is not this next game's.
             BeaverBuddies.Factions.LocalFactionPick.Clear();
             // No game is loaded, so nothing is mixed (until 1.4.0-rc7 NewGameFactionCapture did this as it was made; it is

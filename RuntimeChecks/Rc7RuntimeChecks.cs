@@ -239,12 +239,19 @@ internal static class Rc7RuntimeChecks
             int quiet = end.FindIndex(i => i.Calls && i.Is("BeaverBuddies.ReplayService", "EndSession"));
             int reset = end.FindLastIndex(i => i.Calls && i.Is("BeaverBuddies.IO.EventIO", "Reset"));
             if (tell < 0 || quiet < tell || reset < quiet) throw new Exception("the guests are not told before the session ends and its server closes");
+            int hand = end.FindIndex(i => i.Calls && i.Is("BeaverBuddies.IO.ServerEventIO", "HandLobbyToRoom"));
+            if (hand < tell || quiet < hand) throw new Exception("the Steam lobby is not handed to the room just before the session ends");
             if (!IlScan.Instructions(Only(utils, "TellGuestsMoving")).Any(i => i.Calls && i.Is("BeaverBuddies.IO.ServerEventIO", "MoveToRoom")))
                 throw new Exception("the host's move tells nobody");
-            var move = IlScan.Instructions(Only(Mod("BeaverBuddies.IO.ServerEventIO"), "MoveToRoom"));
-            int send = move.FindIndex(i => i.Calls && i.Member?.Name == "SendMoveNotice");
-            int keep = move.FindIndex(i => i.Calls && i.Member?.Name == "KeepLobbyForNextServer");
-            if (send < 0 || keep < send) throw new Exception("the lobby is kept before the guests are told, or not at all");
+            Type serverIo = Mod("BeaverBuddies.IO.ServerEventIO");
+            var move = IlScan.Instructions(Only(serverIo, "MoveToRoom"));
+            if (!move.Any(i => i.Calls && i.Member?.Name == "SendMoveNotice")) throw new Exception("the move tells nobody");
+            if (move.Any(i => i.Calls && i.Member?.Name == "KeepLobbyForNextServer")) throw new Exception("the lobby is kept at the notice, before the room is certain");
+            if (!IlScan.Instructions(Only(serverIo, "HandLobbyToRoom")).Any(i => i.Calls && i.Member?.Name == "KeepLobbyForNextServer"))
+                throw new Exception("the room never gets the lobby");
+            // A move that fails after its notice ends the session its guests left.
+            if (!IlScan.Instructions(Only(Mod("BeaverBuddies.Connect.RehostingService"), "RehostGame")).Any(i => i.Calls && i.Member?.Name == "AbandonMove"))
+                throw new Exception("a failed Save and Rehost leaves the host serving guests who have gone");
             Type rehosting = Mod("BeaverBuddies.Connect.RehostingService");
             MethodInfo save = Only(rehosting, "SaveRehostFile");
             if (!save.GetParameters().Any(p => p.Name == "beforeSave")) throw new Exception("Save and Rehost can no longer tell the guests before its save");
@@ -279,6 +286,15 @@ internal static class Rc7RuntimeChecks
             if (!watch.Any(i => i.Calls && i.Is("BeaverBuddies.Connect.JoinFlowRules", "BoxCanShow"))) throw new Exception("the rejoin's box waits for a panel a game may never have");
             Type plan = Mod("BeaverBuddies.Connect.ReconnectStep");
             if (!Enum.GetNames(plan).Contains("ConnectInLobby")) throw new Exception("a Steam guest cannot go straight to the host in the kept lobby");
+            if (!IlScan.Instructions(Only(service, "HostOwnsLobby")).Any(i => i.Calls && i.Member?.Name == "GetLobbyOwner"))
+                throw new Exception("a guest follows a lobby its host has left");
+            // A join held when a scene is set up is closed (both configurators).
+            foreach (string configurator in new[] { "BeaverBuddies.ReplayConfigurator", "BeaverBuddies.ConnectionMenuConfigurator" })
+                if (!IlScan.Instructions(Only(Mod(configurator), "Configure")).Any(i => i.Calls && i.Is("BeaverBuddies.Connect.ClientConnectionService", "DropHeldJoin")))
+                    throw new Exception(configurator + " leaves the last scene's held join connected");
+            // A guest reads its host's last frames past its link's close.
+            var receive = IlScan.Instructions(Assembly.Load("TimberNet").GetType("TimberNet.TimberNetBase", true)!.GetMethod("ReceiveMessages", All)!);
+            if (!receive.Any(i => i.Calls && i.Member?.Name == "IsMoveType")) throw new Exception("the receive loop no longer reads the move notice");
         });
 
         // ---- Exit saves at Start (plan §4.5, K3) ----

@@ -386,13 +386,16 @@ static class Rc7Checks
             InOrder(Body(hosting, "public static void LoadAndHost(GameSaveRepository repository, SaveReference saveReference, bool savedForRoom)"),
                 "hosting", "EndSessionForRoom();", "waitingRoom.OpenForSave(");
             InOrder(Body(hosting, "internal static void EndSessionForRoom()"), "ending the session", "TellGuestsMoving();",
-                "GetSingleton<ReplayService>()?.EndSession(null);", "EventIO.Reset();");
+                "(EventIO.Get() as ServerEventIO)?.HandLobbyToRoom();", "GetSingleton<ReplayService>()?.EndSession(null);", "EventIO.Reset();");
             string tell = Body(hosting, "internal static void TellGuestsMoving()");
             Check(tell.Contains("EventIO.Get() is ServerEventIO server) || server.IsSessionOver) return;") && tell.Contains("server.MoveToRoom();"),
                 "the move is told for a session this game does not host, or not at all");
             string server = Source("BeaverBuddies", "IO", "ServerEventIO.cs");
             InOrder(Body(server, "public void MoveToRoom()"), "the host's notice", "if (moving ||", "NetBase.SendMoveNotice(lobby);",
-                "SteamNet.PumpBetweenTicks(force: true);", "steam?.KeepLobbyForNextServer();");
+                "SteamNet.PumpBetweenTicks(force: true);");
+            // The lobby is kept only as the room opens, so a move that fails before then leaves it as any end does.
+            Check(!Body(server, "public void MoveToRoom()").Contains("KeepLobbyForNextServer"), "the lobby is kept at the notice, before the room is certain");
+            InOrder(Body(server, "public void HandLobbyToRoom()"), "the handover", "if (!moving) return;", "steam.KeepLobbyForNextServer();");
             // The room's server is started after the old one is closed (EndSession resets EventIO, which closes it and its
             // listeners), so the port and the Steam lobby are free for it.
             Check(Source("BeaverBuddies", "ReplayService.cs").Contains("EventIO.Reset();"), "ending the session leaves its server open");
@@ -424,7 +427,7 @@ static class Rc7Checks
             string io = Source("BeaverBuddies", "IO", "ClientEventIO.cs");
             Check(io.Contains("NetBase.OnHostMoved += OnHostMoved;") && io.Contains("NetBase.OnHostMoved -= OnHostMoved;"), "the guest does not hear of the move");
             InOrder(Body(io, "private void OnHostMoved()"), "the guest's move", "ulong? keptLobby = NetBase?.MovedToSteamLobby;", "CleanUp();",
-                "FailedToConnect = true;", "if (!isCurrent || !mapDelivered) return;", "GetSingleton<ReplayService>()?.EndSession(null);",
+                "FailedToConnect = true;", "if (!isCurrent && !held) return;", "if (isCurrent && mapDelivered) SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);",
                 "EventIO.ResetIf(this);", "ClientConnectionService.FollowHost(keptLobby);");
             Check(!Body(io, "private void OnHostMoved()").Contains("SessionEndMessages") && !Body(io, "private void OnHostMoved()").Contains("offerRejoin"),
                 "the guest is told its connection was lost, or offered Rejoin, for a move");
@@ -461,6 +464,111 @@ static class Rc7Checks
             Check(Csv("BeaverBuddies.Rejoin.Waiting")!.Contains("Co-op Game room"), "the rejoin's box still names a page in the main menu");
         });
 
+        yield return ("rc7 (review): a move that fails after the guests were told ends the session they left; a kept lobby never outlives it", () =>
+        {
+            string rehosting = Source("BeaverBuddies", "Connect", "RehostingService.cs");
+            InOrder(Body(rehosting, "public bool RehostGame()"), "Save and Rehost", "bool saved = SaveRehostFile(", "if (!saved) ServerHostingUtils.AbandonMove();");
+            Check(Body(rehosting, "private void HostSaved(SaveReference save, bool rehost)").Contains("ServerHostingUtils.AbandonMove();"),
+                "a room that fails to open after the notice leaves the host serving nobody");
+            string hosting = Source("BeaverBuddies", "Connect", "ServerHostingUtils.cs");
+            InOrder(Body(hosting, "internal static void AbandonMove()"), "abandoning", "!server.IsMoving) return;", "EndSession(null);", "EventIO.Reset();");
+            // The main menu leaves a kept lobby only once the last session's server has closed (a close may hand it over).
+            InOrder(Body(Source("BeaverBuddies", "Plugin.cs"), "public class ConnectionMenuConfigurator"), "the main menu", "EventIO.Reset();",
+                "SteamListener.LeaveHandedOverLobby();");
+            // A Steam listener that could not start leaves the lobby kept for it.
+            InOrder(Body(Source("BeaverBuddies", "Steam", "SteamListener.cs"), "public void Start()"), "a failed Steam start", "catch (Exception e)",
+                "link.Stop();", "LeaveHandedOverLobby();");
+        });
+
+        yield return ("rc7 (review): a join still held when a scene is set up is closed; a move heard between scenes is followed by the next", () =>
+        {
+            string service = Source("BeaverBuddies", "Connect", "ClientConnectionService.cs");
+            Check(Body(service, "private bool TryToConnect(ISocketStream socket)").Contains("heldJoin = client;"), "a held join is not remembered past its scene");
+            InOrder(Body(service, "public static void DropHeldJoin()"), "dropping", "heldJoin = null;", "if (held == null || !held.HeldJoin) return;",
+                "held.HeldJoin = false;", "held.Close();");
+            Check(Body(service, "public void EndJoin(ClientEventIO join)").Contains("if (ReferenceEquals(heldJoin, join)) heldJoin = null;")
+                && Body(service, "private void LoadMap(byte[] mapBytes, ClientEventIO joined)").Contains("if (ReferenceEquals(heldJoin, joined)) heldJoin = null;"),
+                "a join that ended, or became the session, is closed again by the next scene");
+            string plugin = Source("BeaverBuddies", "Plugin.cs");
+            Check(Body(plugin, "public class ReplayConfigurator").Contains("ClientConnectionService.DropHeldJoin();")
+                && Body(plugin, "public class ConnectionMenuConfigurator").Contains("ClientConnectionService.DropHeldJoin();"),
+                "a scene is set up with the last one's held join still connected");
+            InOrder(Body(service, "public static void FollowHost(ulong? keptLobby)"), "following between scenes", "if (service == null)", "followPending = true;");
+            Check(Body(service, "public void UpdateSingleton()").Contains("StartRejoin(following: true, followLobby);"), "a move heard between scenes is never followed");
+            // A kept lobby the host has left (its room closed) is not dialled for ever.
+            Check(service.Contains("if (!HostOwnsLobby(plan.Lobby, host))") && Body(service, "private static bool HostOwnsLobby(ulong lobby, ulong host)").Contains("GetLobbyOwner("),
+                "a guest follows a lobby its host has left");
+        });
+
+        yield return ("rc7 (review): a guest reads the frames its host sent before closing, even once its link says it is closed", () =>
+        {
+            // A Steam link marks itself closed the moment the host's close arrives; what came before it is still to be read.
+            // The save, read and loaded first; then the host's last frames and its close, read after the link says it closed.
+            var save = new List<byte>();
+            var last = new List<byte>();
+            void Frame(List<byte> to, byte[] body) { to.AddRange(Length(body.Length)); to.AddRange(body); }
+            Frame(save, new byte[] { 7, 8, 9 });
+            Frame(last, CompressionUtils.Compress(StatusFrames.Roster(1, Array.Empty<PeerStatus>()).ToString(Newtonsoft.Json.Formatting.None)));
+            Frame(last, CompressionUtils.Compress(MoveFrames.Notice(99).ToString(Newtonsoft.Json.Formatting.None)));
+            var stream = new ClosedWithData(save.ToArray(), last.ToArray());
+            var guest = new TimberClient(stream);
+            int maps = 0, moved = 0;
+            string? error = null;
+            guest.OnMapReceived += _ => maps++;
+            guest.OnHostMoved += () => moved++;
+            guest.OnError += e => error = e;
+            try
+            {
+                guest.Start();
+                Check(SpinWait.SpinUntil(() => { guest.Update(); return maps > 0 || error != null; }, 3000), "the guest never got its save");
+                stream.Close.Set();
+                Check(SpinWait.SpinUntil(() => { guest.Update(); return moved > 0 || error != null; }, 3000), "the guest read nothing after the close");
+                Check(maps == 1 && moved == 1 && error == null, $"the guest stopped at its link's close: map {maps}, moved {moved}, error {error}");
+                Check(guest.MovedToSteamLobby == 99, "the notice was read without its lobby");
+            }
+            finally { guest.Close(); }
+        });
+
+        yield return ("rc7 (review): a room's server binds its port again the moment the game's server closed on its guests", () =>
+        {
+            // The host moving its game closes its guests' connections and listens on the same port at once. On macOS and
+            // Linux a connection the host closed lingers on the port (TIME_WAIT) and refuses a new listener unless it may
+            // reuse the address, which TCPListenerWrapper sets there (not on Windows, which needs it not and where it would
+            // let another program listen too). Shown on IPv4 (the wrapper listens on IPv6 and IPv4; some containers have no
+            // IPv6).
+            string wrapper = Source("TimberNet", "TCPListenerWrapper.cs");
+            Check(wrapper.Contains("IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))")
+                && wrapper.Contains("SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true)"), "the listener no longer reuses the port off Windows");
+            bool windows = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
+            // A port with a connection its listener closed first, still lingering.
+            int Lingering()
+            {
+                var game = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+                if (!windows) game.Server.SetSocketOption(System.Net.Sockets.SocketOptionLevel.Socket, System.Net.Sockets.SocketOptionName.ReuseAddress, true);
+                game.Start();
+                int port = ((System.Net.IPEndPoint)game.LocalEndpoint).Port;
+                using var guest = new System.Net.Sockets.TcpClient();
+                var accepting = game.AcceptTcpClientAsync();
+                guest.Connect(System.Net.IPAddress.Loopback, port);
+                Check(accepting.Wait(3000), "the game's server accepted nobody");
+                accepting.Result.Close();
+                Thread.Sleep(100);
+                game.Stop();
+                return port;
+            }
+            bool Binds(int port, bool reuse)
+            {
+                var room = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, port);
+                if (reuse) room.Server.SetSocketOption(System.Net.Sockets.SocketOptionLevel.Socket, System.Net.Sockets.SocketOptionName.ReuseAddress, true);
+                try { room.Start(); return true; }
+                catch (System.Net.Sockets.SocketException) { return false; }
+                finally { room.Stop(); }
+            }
+            Check(Binds(Lingering(), reuse: !windows), "the room can't take the port its game's server has just closed");
+            // (Whether a system refuses the port without the option depends on the runtime: .NET 8 on Linux sets it by itself,
+            // plain sockets there do not, and the game's own runtime is not this one. So only the case the mod makes is shown.)
+        });
+
         // ---- Exit saves at Start (plan §4.5, K3) ----
 
         yield return ("rc7: Start's exit save: a host or guest leaving a game of their own, not a guest's copy, a game just saved, or the main menu", () =>
@@ -483,5 +591,37 @@ static class Rc7Checks
             // The autosaver is the game's alone: the main menu never binds the game side of the room.
             Check(!Body(Source("BeaverBuddies", "Plugin.cs"), "public class ConnectionMenuConfigurator").Contains("InGameLobby>"), "the main menu binds the autosaver's user");
         });
+    }
+
+    static byte[] Length(int length)
+    {
+        byte[] bytes = BitConverter.GetBytes(length);
+        if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
+        return bytes;
+    }
+
+    // A link that gives the save first; once Close is set, it says it is closed, and still holds the host's last frames
+    // (as a Steam link does when the host's close arrives with them).
+    sealed class ClosedWithData : ISocketStream
+    {
+        private readonly MemoryStream first, rest;
+        public readonly ManualResetEventSlim Close = new ManualResetEventSlim();
+        public ClosedWithData(byte[] save, byte[] last) { first = new MemoryStream(save); rest = new MemoryStream(last); }
+        public bool Connected => !Close.IsSet;
+        public string Name => "closed-with-data";
+        public int MaxChunkSize => 1024;
+        public int MaxBytesPerSecond => int.MaxValue;
+        public Task ConnectAsync() => Task.CompletedTask;
+        public int Read(byte[] buffer, int offset, int count)
+        {
+            int read = first.Read(buffer, offset, count);
+            if (read > 0) return read;
+            // The next frame comes with the close: the reader is between frames when the link says it closed.
+            Close.Wait(3000);
+            Thread.Sleep(20);
+            return rest.Read(buffer, offset, count);
+        }
+        public void Write(byte[] buffer, int offset, int count) { }
+        void ISocketStream.Close() { }
     }
 }

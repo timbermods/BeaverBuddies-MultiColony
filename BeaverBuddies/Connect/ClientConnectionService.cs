@@ -182,6 +182,7 @@ namespace BeaverBuddies.Connect
             if (JoinFlowRules.HoldJoin(InGameLobby.InGame))
             {
                 client.HeldJoin = true;
+                heldJoin = client;
                 Plugin.Log("[Lobby] Joining from a game: this game stays single-player until the host's save arrives");
                 return true;
             }
@@ -203,9 +204,25 @@ namespace BeaverBuddies.Connect
         {
             if (join == null) return;
             if (ReferenceEquals(client, join)) client = null;
+            if (ReferenceEquals(heldJoin, join)) heldJoin = null;
             join.HeldJoin = false;
             if (ReferenceEquals(EventIO.Get(), join)) EventIO.Reset();
             else join.Close();
+        }
+
+        // The join held apart from the game in this scene, if any. Static, so a scene set up while one is still held (the
+        // player loaded another save while the room's window waited) closes it: nothing would read it any more.
+        private static ClientEventIO heldJoin;
+
+        /// <summary>A scene is being set up: a join still held apart from the scene before is closed (1.4.0-rc7).</summary>
+        public static void DropHeldJoin()
+        {
+            ClientEventIO held = heldJoin;
+            heldJoin = null;
+            if (held == null || !held.HeldJoin) return;
+            Plugin.Log("[Lobby] A join held apart from the game that was left is closed");
+            held.HeldJoin = false;
+            held.Close();
         }
 
         public void ConnectOrShowFailureMessage()
@@ -239,11 +256,17 @@ namespace BeaverBuddies.Connect
             ClientConnectionService service = SingletonManager.GetSingleton<ClientConnectionService>();
             if (service == null)
             {
-                Plugin.LogWarning("[Lobby] The host moved to a waiting room, but nothing here can follow it (Join co-op game joins it)");
+                // Between scenes (the host moved as this guest's game was loading): the next scene's service follows it.
+                Plugin.Log("[Lobby] The host moved to a waiting room between scenes; the next scene follows it");
+                followPending = true;
+                followLobby = keptLobby;
                 return;
             }
             service.StartRejoin(following: true, keptLobby);
         }
+
+        // A move heard while no scene's service was up (FollowHost), started by the next scene's first update.
+        private static bool followPending;
 
         private void StartRejoin(bool following, ulong? keptLobby)
         {
@@ -327,8 +350,16 @@ namespace BeaverBuddies.Connect
             {
                 case ReconnectStep.ConnectInLobby:
                     // Still a member of the lobby the host kept for its room: straight to the host once the lobby says the
-                    // room is open (a Steam connection starts in the background; nothing waits on this thread).
-                    if (!RejoinLobbyOpen(plan.Lobby) || !(lastJoin?.SteamHost is ulong host)) return;
+                    // room is open (a Steam connection starts in the background; nothing waits on this thread). A lobby the
+                    // host has left (its room closed) is no longer the way: the host's next lobby is looked for instead.
+                    if (!(lastJoin?.SteamHost is ulong host)) return;
+                    if (!HostOwnsLobby(plan.Lobby, host))
+                    {
+                        Plugin.Log("[Lobby] Rejoin: the host has left the lobby it kept; looking for its next one");
+                        followLobby = null;
+                        return;
+                    }
+                    if (!RejoinLobbyOpen(plan.Lobby)) return;
                     Plugin.Log("[Lobby] Rejoin: the host's room is open in the lobby it kept; connecting to the host");
                     quietJoin = true;
                     try { TryToConnect(new CSteamID(host)); }
@@ -353,6 +384,17 @@ namespace BeaverBuddies.Connect
                     probeAddress = typed;
                     probe = System.Threading.Tasks.Task.Run(() => HostListening(typed, port));
                     break;
+            }
+        }
+
+        // Whether the host is still the owner of a lobby this player is in (a member sees its owner at once).
+        private static bool HostOwnsLobby(ulong lobby, ulong host)
+        {
+            try { return SteamMatchmaking.GetLobbyOwner(new CSteamID(lobby)).m_SteamID == host; }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Lobby] Rejoin: could not read the owner of the host's Steam lobby: " + error.Message);
+                return false;
             }
         }
 
@@ -597,6 +639,7 @@ namespace BeaverBuddies.Connect
             if (joined != null && joined.HeldJoin)
             {
                 joined.HeldJoin = false;
+                if (ReferenceEquals(heldJoin, joined)) heldJoin = null;
                 EventIO.Set(joined);
             }
 
@@ -619,6 +662,11 @@ namespace BeaverBuddies.Connect
 
         public void UpdateSingleton()
         {
+            if (followPending)
+            {
+                followPending = false;
+                StartRejoin(following: true, followLobby);
+            }
             connectingBox?.Poll();
             rejoinBox?.Poll();
             for (int i = closingBoxes.Count - 1; i >= 0; i--)

@@ -509,7 +509,9 @@ namespace TimberNet
         {
             //Log("Client connected");
             int messageCount = 0;
-            while (client.Connected && !IsStopped)
+            // A guest reads on until its stream ends, not while it says it is connected: a Steam link marks itself closed as
+            // soon as the host's close arrives, with the host's last frames (its move notice, say) still waiting to be read.
+            while ((isClient || client.Connected) && !IsStopped)
             {
                 if (!TryReadLength(client, out int messageLength)) break;
 

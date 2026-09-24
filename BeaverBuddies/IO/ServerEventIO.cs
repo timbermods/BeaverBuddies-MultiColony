@@ -92,11 +92,14 @@ namespace BeaverBuddies.IO
 
         private bool moving;
 
+        /// <summary>The host has told this session's guests it is moving the game to a waiting room (<see cref="MoveToRoom"/>).</summary>
+        public bool IsMoving => moving;
+
         /// <summary>
         /// The host moves this running game's players to a waiting room (1.4.0-rc7, K1): every guest is told (MoveFrames,
-        /// naming the Steam lobby the room keeps), the word is handed to Steam at once, and the Steam lobby is kept for the
-        /// room's listener instead of being left as this server closes. The caller then ends the session and opens the
-        /// room; a guest follows it by itself. Once per session.
+        /// naming the Steam lobby the room will keep), and the word is handed to Steam at once. The caller then ends the
+        /// session, handing the lobby to the room (<see cref="HandLobbyToRoom"/>), and opens the room; a guest follows it
+        /// by itself. Once per session.
         /// </summary>
         public void MoveToRoom()
         {
@@ -108,8 +111,21 @@ namespace BeaverBuddies.IO
             // A Steam guest's copy waits for the next pump otherwise, and its connection closes before then (it lingers to
             // drain what it has, so it is sent).
             SteamNet.PumpBetweenTicks(force: true);
-            steam?.KeepLobbyForNextServer();
-            Plugin.Log($"[Lobby] Moving to a waiting room: told {told} guest(s){(lobby.HasValue ? $"; Steam lobby {lobby} kept for the room" : "")}");
+            Plugin.Log($"[Lobby] Moving to a waiting room: told {told} guest(s){(lobby.HasValue ? $" (Steam lobby {lobby})" : "")}");
+        }
+
+        /// <summary>
+        /// Just before this moving session's server closes for the room that opens next: its Steam lobby goes to the room's
+        /// listener instead of being left (the guests are still members). Only then, so a move that fails before its room
+        /// opens leaves the lobby as any end does.
+        /// </summary>
+        public void HandLobbyToRoom()
+        {
+            if (!moving) return;
+            SteamListener steam = SteamListener;
+            if (steam == null) return;
+            steam.KeepLobbyForNextServer();
+            Plugin.Log($"[Lobby] Steam lobby {steam.LobbyID} kept for the room");
         }
 
         private void StartServer(Func<Task<byte[]>> mapProvider, LobbyRoom room)
