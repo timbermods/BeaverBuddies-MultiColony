@@ -13,7 +13,7 @@ BeaverBuddies.JoinCoopGame.State.OtherVersion,"Version {0}",""
 BeaverBuddies.JoinCoopGame.State.OlderVersion,"Older version",""
 BeaverBuddies.JoinCoopGame.State.Looking,"Checking…",""
 BeaverBuddies.FirstTimer.Message,"It looks like this is your first time using Timber Together. We recommend a quick look through the guide to make sure you are set up to play. Would you like to do that now?","It looks like this is your first time using Timber Together. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
-BeaverBuddies.DuplicateMod.Message,"Another BeaverBuddies mod is enabled: {0}.
+BeaverBuddies.DuplicateMod.Message,"Another multiplayer mod is enabled: {0}.
 
 Timber Together cannot run alongside it: both change the same parts of the game. Disable it in the mod list (or unsubscribe from it on the Workshop) and restart Timberborn.",""
 BeaverBuddies.Saving.HostCoopGame,"Host co-op game","Host co-op game"

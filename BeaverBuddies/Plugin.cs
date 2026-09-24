@@ -193,7 +193,7 @@ namespace BeaverBuddies
             // why (DuplicateModWarning) and this copy stays out of the way.
             if (Harmony.HasAnyPatches(OtherBeaverBuddiesID) || Harmony.HasAnyPatches(EarlierBuildID))
             {
-                LogError("Another BeaverBuddies mod is enabled and already running; Timber Together will not start. Disable the other one and restart.");
+                LogError("Another multiplayer mod is enabled and already running; Timber Together will not start. Disable the other one and restart.");
                 Disabled = true;
                 return;
             }
