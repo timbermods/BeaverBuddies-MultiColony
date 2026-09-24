@@ -223,8 +223,8 @@ A colony goes to another colony, with its buildings, marks, stock and science, w
 
 - **it has no beavers or bots left** for a whole day: to the nearest living colony (in a mixed game, its own
   faction's first);
-- **its player has been away** longer than the host's limit, **Mod Settings → Timber Together → Hand over a colony
-  after its player is away (days)**. The default is 0: never. It goes to the nearest colony whose player is playing
+- **its player has been away** longer than the host's limit, **Hand over a colony after its player is away
+  (days)** in Timber Together's settings (**Mods** → the settings button beside it). The default is 0: never. It goes to the nearest colony whose player is playing
   (in a mixed game, only one of its own faction). Days the host plays alone, and the first day after loading, don't
   count;
 - **the host hands it over**, from the Ctrl+T window: any colony whose player is away, or that has no beavers. Useful
