@@ -600,7 +600,7 @@
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "The hero name plate's title only: Barlow Semi Condensed Black (900) in capitals and small letters, hand-cut edges, a split log-end o; always on one line, sized to the hero column (container query on .post), at most 4.6rem. The plate has no keyline and sits in a mitred timber frame."
+        "purpose": "The hero name plate's title only: Barlow Semi Condensed ExtraBold (800) in capitals and small letters, hand-cut edges, a split log-end o; always on one line, sized to the hero column (container query on .post), at most 5.52rem; the hero's left column is 1.22fr to the map's 1fr so it has room. The plate has no keyline and sits in a mitred timber frame."
       },
       "headline": {
         "displayName": "Headline",

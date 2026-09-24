@@ -42,8 +42,8 @@ colors:
 typography:
   display:
     fontFamily: "Barlow Semi Condensed, Bahnschrift SemiCondensed, DIN Condensed, Roboto Condensed, Arial Narrow, sans-serif"
-    fontSize: "min(4.6rem, calc((100cqi - 3.4rem - 26px) / 7.05))"
-    fontWeight: 900
+    fontSize: "min(5.52rem, calc((100cqi - 3.4rem - 26px) / 6.95))"
+    fontWeight: 800
     lineHeight: 0.92
     letterSpacing: "0"
   headline:
@@ -205,14 +205,14 @@ The palette is a painted-enamel set on river-stone: two colony enamels, a navy d
 
 ## Typography
 
-**Display Font:** Barlow Semi Condensed 600/700 (900 for the name alone), self-hosted under the SIL OFL (fallbacks Bahnschrift SemiCondensed, DIN Condensed, Roboto Condensed, Arial Narrow)
+**Display Font:** Barlow Semi Condensed 600/700 (800 for the name alone), self-hosted under the SIL OFL (fallbacks Bahnschrift SemiCondensed, DIN Condensed, Roboto Condensed, Arial Narrow)
 **Body Font:** system-ui (with -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial)
 **Label/Mono Font:** ui-monospace (with Cascadia Code, SF Mono, Consolas) for paths, settings and keys
 
 **Character:** Road-sign lettering over plain reading text. The condensed face is used for anything short enough to be painted on a plate. Long text stays in the reader's own system face.
 
 ### Hierarchy
-- **Display** (900, at most 4.6rem, line-height 0.92): the name plate's title only, in capitals and small letters. "Timber Together" is always one line: its size follows the hero column (a container query on `.post`) so it never wraps. Its edges are hand-cut (a light SVG displacement filter, `#hewn`, over the live text), and its o is a log end: a white disc with growth rings split amber (colony 1) and teal (colony 2), bright by day and deep at night, with the pith and a crack in the plate's navy. The real "o" stays in the text, visually hidden.
+- **Display** (800, at most 5.52rem, line-height 0.92): the name plate's title only, in capitals and small letters. "Timber Together" is always one line: its size follows the hero column (a container query on `.post`) so it never wraps. Its edges are hand-cut (a light SVG displacement filter, `#hewn`, over the live text), and its o is a log end: a white disc with growth rings split amber (colony 1) and teal (colony 2), bright by day and deep at night, with the pith and a crack in the plate's navy. The real "o" stays in the text, visually hidden.
 - **Headline** (700, clamp 1.9–2.75rem, 1.08): section headings on the home page. Guide pages use the page title (clamp 2.4–3.8rem) and prose h2s at clamp 1.8–2.3rem.
 - **Title** (700, 1.2–1.6rem, 1.15): plate titles, step titles, rail steps and questions (1.2rem).
 - **Body** (400, 17px / 16.5px under 640px, 1.65): prose at a 68–72ch measure. Bold is set at 650.
@@ -228,7 +228,7 @@ The palette is a painted-enamel set on river-stone: two colony enamels, a navy d
 
 The page is a single column of full-width bands inside a centred wrap of 1180px, with a fluid gutter (clamp 1rem–2.5rem) on each side. Bands alternate stone, deep stone and timber, with vertical padding of clamp 3.5–6.5rem. A section head holds a colony marker, the heading and one lead line, capped at 60ch.
 
-The home page is composed in rows: the hero (post and plate on the left, the map on the right), a three-step rail, the two-arm signpost, full-width install steps, the play grid (1.25fr / 1fr), a four-column inherited-features strip ruled top and bottom in timber, and a closing plate. The guide pages use a 220px sticky TOC beside a 760px prose column from 1000px up. Below that the TOC becomes an enamel panel of links above the prose.
+The home page is composed in rows: the hero (post and plate on the left, the map on the right, 1.22fr / 1fr so the name has room), a three-step rail, the two-arm signpost, full-width install steps, the play grid (1.25fr / 1fr), a four-column inherited-features strip ruled top and bottom in timber, and a closing plate. The guide pages use a 220px sticky TOC beside a 760px prose column from 1000px up. Below that the TOC becomes an enamel panel of links above the prose.
 
 Breakpoints, as shipped:
 - **1060px:** nav links tighten.
