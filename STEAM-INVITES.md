@@ -1,160 +1,45 @@
 # Steam invites
 
-Invite a Steam friend into your hosted game from Steam's own overlay. This is an
-**alternative to direct IP**, not a replacement: both are offered at the same time when
-you host, so Hamachi / port forwarding / direct IP keep working exactly as before.
+Invite Steam friends into your game from Steam's overlay: no port forwarding, no Hamachi. Joining by IP works
+alongside it.
 
-## Using it
+## Host
 
-**Host of a new game (Timber Together's waiting room, 1.4.0-beta18)**
-1. **New Game** → faction → map → difficulty → **Host co-op game** (beside Start), and name the settlement.
-2. On the **Co-op Game** page choose **Invite Friends** (it is enabled once the Steam lobby exists) and pick your
-   friend. The friend appears in the room; press **Start Game** when everyone is ready. Nobody new can join after
-   that: the Steam lobby closes at Start.
+1. Host a game: **Host co-op game** beside **Start** for a new game, right of **Load** in the Load game box for a
+   save, or in the game menu (Esc) for the game you're in.
+2. In the **Co-op Game** room, choose **Invite Friends** and pick your friend in Steam's overlay. The button is
+   greyed for a moment, until the Steam lobby is ready.
+3. Your friend appears in the room. When everyone is **Ready**, press **Start Game**.
 
-**Host of a save from the main menu** (1.4.0-beta19): **Load Game** → select the save → **Host co-op game** opens the
-same waiting room; invite and start as above.
+Nobody can join after **Start Game**. To let someone in later, choose Esc → **Save and Rehost** and invite them.
+Players already in the game come along by themselves. Friends without Steam join by IP (port 25565).
+**Enable Steam Networking** (Mod Settings, on by default) must be on.
 
-**Host of a save from inside a game** (Options → Load Game, or Save and Rehost)
-1. Make sure **Enable Steam Networking** is on in Mod Settings (it is by default).
-2. Load your save and choose **Host co-op game**.
-3. Choose **Invite Friends** and pick your friend in the Steam overlay.
-4. Choose **Start Game** once your friend appears in the connected-player list, and then **wait, paused, until
-   everyone is in**: place or mark nothing meanwhile. In Timber Together, joining closes at the host's first tick or at
-   the first change to the game, whichever comes first (a later joiner would be sent the save without it).
+## Friend
 
-**Friend**
-- Accept the invite (Steam notification or overlay). A *Connecting to …* box shows (with Cancel) until the host's
-  waiting room opens or its save arrives. Accept a waiting room's invite **from the main menu**: accepted during a
-  game, you are told to go back to the main menu and accept it again. If Timberborn is not running, Steam
-  launches it and joins for you. With **Allow Friends to Join Directly via Steam** on, a
-  friend can also use **Join Game** from Steam's friends list.
-- Both players need the same BeaverBuddies build and the game version must match. Since 1.4.0-alpha11 the
-  mod's own `Buildings` and `TemplateCollections` files are part of that check: a copy with them missing or
-  edited is refused with a *build mismatch* message, not merely warned about.
-- **Your colony follows your Steam account** in a separate-colonies game (Timber Together): the save remembers each
-  player by their Steam ID, so you get the same colony every time, whoever hosts. Without Steam an id kept on your
-  computer is used instead. If your Steam account changes, you join as a new player and the host hands your old
-  colony to you from the **Ctrl+T** window. When you join through a Steam invite the host checks your Steam ID
-  against the Steam connection, so nobody joining over Steam can take your colony by saying your ID; over a direct
-  IP connection the host has only the guest's word for it. The host listens for direct IP joins as well while it
-  hosts, even in a game you invite friends to over Steam, so anyone who can reach its port joins unverified (see the
-  README, *Which joins are verified*).
+- Accept the invite from Steam's notification or overlay. A *Connecting to …* box shows, then the host's room:
+  press **Ready**.
+- If Timberborn is closed, Steam starts it and joins for you.
+- Playing alone? The room opens over your game, which waits, paused, until **Start Game**. **Leave** takes you
+  back to it.
+- In a co-op game, leave it first, then accept the invite again. Hosting a room of your own? Close it first.
+- With the host's **Allow Friends to Join Directly via Steam** on (the default), their game also shows in **Join
+  co-op game**, and **Join Game** works from your Steam friends list.
+- An invite to a game that has started says so. Ask the host to rehost and send a new one.
 
-Nobody can join once the game has started, or once the host changed anything while it waited paused. An old
-invite then says the host already started (or already changed the game), instead of hanging; the host saves,
-rehosts and sends a new one.
+## Good to know
 
-No port forwarding or Hamachi is needed. Connections go directly between players when
-Steam can find a route, and are otherwise relayed through Steam's network. Valve documents
-that relaying prevents players' IP addresses from being revealed to each other.
+- Everyone must be online in Steam and own Timberborn there, with the same mod build and game version.
+- **Your colony follows your Steam account.** The save remembers you by your Steam ID, whoever hosts. If your Steam
+  account changes, you join as a new player, and the host can hand your old colony to you from the Ctrl+T window.
+- **Over Steam, nobody can take your colony** by claiming your ID: the host checks each guest's Steam ID. Direct IP
+  can't check, and the direct-IP port is open whenever someone hosts, so forward it only for people you trust.
+- Steam connects players directly when it can, and relays through its network otherwise. Either way, Valve keeps IP
+  addresses hidden from other players.
+- **After a desync**, the host chooses **Save and Rehost** and guests choose **Reconnect (wait for Rehost)**. Each
+  guest waits in their game and joins the room when it opens.
+- **If Steam won't connect**, the message says why, with Steam's own reason; so does `Player.log`. Host by direct
+  IP or Hamachi instead: Steam problems never stop direct-IP hosting.
+- Much of the text this mod adds is English only.
 
-## How it works
-
-Previously this used Valve's legacy `ISteamNetworking` P2P API, which Valve marks
-deprecated ("we may remove this API from the SDK in a future release"). It now uses
-`ISteamNetworkingSockets`, the API Valve recommends, which ships in the game's own
-Steamworks assembly.
-
-- **Lobby.** The host opens a friends-only Steam lobby; that is what the overlay invites
-  into. Lobby data records whether the host is still accepting players, and is set to closed at the
-  first tick or the first game-changing action while paused (a new game's waiting room: at **Start Game**), so an
-  old invite explains itself instead of hanging.
-- **Admission.** The host accepts a connection only from a player who is in its lobby, so a
-  stranger who knows a Steam ID cannot connect. A guest that appears before the host's lobby
-  view catches up gets a five-second grace period.
-- **One thread for Steam.** Every Steam call happens on the game's main thread, where Steam
-  callbacks are delivered. TimberNet's threads use plain in-memory queues. `Write` never
-  blocks (a blocked game thread would stop the pump that drains the queue) and `Read`
-  blocks on a queue the pump fills. Steam's documentation does not promise these calls are
-  safe from other threads, so nothing depends on it.
-- **Pumped between ticks too.** The pump runs once per frame, and also in the game's tick loop
-  between the buckets of a tick, at most once a millisecond and right after a tick's events
-  are queued for the guests. A frame at a high game speed is mostly simulation, so data
-  would otherwise wait for the end of it, in both directions, and the ping grew with the
-  speed. Only data transfer runs there (no state changes, closing or admission), on the same
-  thread as everything else. The log reports how long data waited once a minute.
-- **The overlay and dialogs.** While Steam's overlay is open the game pushes an empty panel that
-  blocks input, and pops it when the overlay closes, but only if it is still on top. If a dialog
-  opened over it in between (an invite that cannot be joined, a connection error), the panel used
-  to stay for good and swallow every key press. It is now removed as soon as the dialog above it is
-  closed.
-- **Connecting in the background.** The connection completes after `ConnectAsync` returns.
-  The client waits for it on a worker thread (up to 45 s) before the compatibility
-  handshake's own 15 s clock starts. `TimberClient.Start()` used to wait 3 s on the game
-  thread, which a transport that needs the game thread could never satisfy.
-- **Speed.** Steam's defaults cap a connection at 256 KB/s with a 512 KB send buffer. The
-  mod raises the send rate ceiling to 8 MB/s and the send buffer to 4 MB, so the initial
-  save transfer is not throttled. If Steam's buffer fills, data stays queued and is
-  retried next frame; nothing is dropped and message order is preserved.
-- **Never hangs silently.** A send that makes no progress for 30 s, a connect that takes
-  over 40 s, or a queue that grows past 128 MB fails the connection with an explanation.
-  Steam's own end reason is translated into plain language and shown in the error and in
-  the log, for example "The connection timed out. Steam could not find a working route
-  between you. (Steam code 5003: ...)".
-- **Steam can never break hosting.** If Steam fails to start, direct-IP hosting continues.
-- **Closing.** Local close flushes queued data for up to 3 s before closing, and data the
-  peer sent before closing is still delivered before end-of-stream.
-
-## Validation
-
-`dotnet run --project StabilityTests` runs the production transport (`SteamLinkSocket`,
-`SteamLinkManager`) against a fake Steam network. The fake **fails any test that calls
-Steam off the game thread**, rejects messages over Steam's 512 KB limit, and uses a small
-send buffer to force backpressure. It covers: background connect; byte-exact ordered
-transfer of 3 MB through a tiny buffer; write coalescing; `Write` never blocking with the
-pump stopped; the queue cap; failure explanations; connect timeout; the stall detector;
-draining before end-of-stream; close and idempotent close; one bad connection not affecting
-another; lobby-only admission with the grace period; duplicate arrival notices; replacing
-an unstopped listener; a full TimberNet session (handshake, a 2 MB save, events and
-player activity in both directions) over the Steam transport; and protocol parity: one
-scripted session (about 60 events each way, one of 220 KB, plus cursor traffic) is run over
-a direct connection and over Steam under stress, and both peers must end with identical
-events and state hashes. Corrupting a single byte in the Steam path makes these fail.
-
-**Confirmed with a real Steam friend** in playtests between the maintainer and a friend,
-including a session at a true speed 7 with the ping under 100 ms. The automated checks cannot
-run Steam itself: the thin layer that calls Steam (`SteamLinkBackend`, `SteamNet`,
-`SteamListener`, `SteamOverlayConnectionService`) compiles against the game's real Steamworks
-assembly and is exercised only in the game, which needs two Steam accounts. The overlay panel
-fix and the pumping between ticks are covered by checks on their decisions, not by a Steam session.
-
-## Two-account playtest
-
-1. Host with Steam Networking on. In `Player.log` expect:
-   `Steam networking started`, `Steam relay network: Current`, `Steam is listening for players`,
-   `Steam lobby created with ID ...`.
-2. Choose **Invite Friends**; the overlay should open. If not, the log says the lobby is not
-   ready yet.
-3. Friend accepts. Expect `Steam link to <name>: accepted` then `... Connecting -> Connected`
-   on the host, and the friend appears in the connected-player list.
-4. Start the game, play, then have the friend leave. Confirm the host keeps running. In Timber Together, from the
-   next in-game day the **Ctrl+T** window shows the friend's colony as away, and the host may hand it over.
-5. Repeat with the friend's game **closed** when they accept (tests the launch invite).
-6. Repeat with an invite sent **after** the host has unpaused (expect the "already started" message), and once with
-   an invite sent after the host placed a path while still paused (expect the "already changed the game" message).
-   An invite sent after **Start Game** while the host still waits paused, with nothing changed, still works.
-6b. **Waiting room:** New Game → **Host co-op game**; invite the friend; the friend sees *Connecting…*, then the
-    host's **Co-op Game** page; ready up and start. An invite accepted after Start gets the "already started"
-    message. See `ALPHA-TEST-SCRIPTS.md`, Script D. Since beta19 the same for a save hosted from the main menu
-    (Script D, line 15).
-6a. Rejoin the same save later with the friend hosting it: in Timber Together each of you gets the same colony as
-    before (`[Colony] Player … plays slot …` in the log).
-7. Host with Steam Networking **off** and confirm direct IP works as before.
-
-If something fails, send both `Player.log` files. Every state change and close is logged with
-Steam's numeric end reason and debug text, which is what makes a failure diagnosable.
-
-## Known limits
-
-- Both players must be online in Steam, and the friend must own Timberborn.
-- Joining after the host's first tick (unpausing), or after the host changed anything while waiting paused, is not
-  possible; nor after a waiting room's **Start Game**.
-  After a desync, the host uses **Save and rehost**. A Steam guest's **Reconnect (wait for Rehost)** joins the
-  host's new lobby when Steam shows it (the host has **Allow Friends to Join Directly via Steam** on); otherwise the
-  guest is told to accept a fresh invite. In Timber Together a
-  guest whose colony state differs from the host's stops the tick it happens (since 1.4.0-alpha13), so the
-  rehost may come sooner than the game's random-state check alone would have asked for.
-- The **Invite Friends** button does nothing for the first moment after hosting starts,
-  until the lobby exists; click it again.
-- New strings are English only; other languages fall back to English.
+How the Steam connection is built: [DEVELOPING.md](DEVELOPING.md#steam-networking).
