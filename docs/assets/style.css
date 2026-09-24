@@ -344,17 +344,16 @@ pre code { background: none; border: 0; padding: 0; font-size: inherit; overflow
   display: flex; align-items: center; gap: .8rem; margin: 0 0 1rem; padding: .65rem .8rem;
   background: var(--stone); border-radius: 5px; border: 1.5px solid var(--rule);
 }
-.switch .state { flex: none; font: 700 .8rem/1 var(--display); letter-spacing: .1em; text-transform: uppercase; padding: .4rem .55rem; border-radius: 3px; background: var(--navy); color: #fff; }
-.switch .state.off { background: transparent; color: var(--ink-soft); box-shadow: inset 0 0 0 1.5px var(--ink-soft); }
+/* the setting drawn as the game's ticked checkbox: what the box should look like */
+.switch .tick { flex: none; display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 4px; background: var(--navy); box-shadow: inset 0 0 0 1.5px var(--navy-rim); }
+.switch .tick svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .switch .name { font-weight: 650; line-height: 1.3; }
 .switch .name small { display: block; font-weight: 400; color: var(--ink-soft); font-size: .85rem; }
 .switch .name b { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
-.switch .state { min-width: 5.6rem; text-align: center; }
-.switch.quiet { background: transparent; border-style: dashed; }
-.switch.quiet .name { font-weight: 500; color: var(--ink-soft); }
 .path-card ol { margin-bottom: .8rem; }
 .outcome { margin: 0; padding-top: .8rem; border-top: 1px dashed var(--rule); color: var(--ink-soft); font-size: .96rem; }
 .shared-note { margin: 1.6rem 0 0; max-width: 72ch; color: var(--ink-soft); }
+.shared-note + .shared-note { margin-top: .8rem; }
 
 /* ---------- install ---------- */
 .both { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 1.4rem 2.2rem; padding: clamp(1.4rem, 3vw, 2.2rem); margin-bottom: 2.4rem; align-items: start; }
