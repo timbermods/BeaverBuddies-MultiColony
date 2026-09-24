@@ -600,7 +600,7 @@
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "The hero name plate's title only."
+        "purpose": "The hero name plate's title only, always on one line: sized to the hero column (container query on .post), at most 4.6rem."
       },
       "headline": {
         "displayName": "Headline",

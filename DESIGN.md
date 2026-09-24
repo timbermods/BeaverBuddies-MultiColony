@@ -42,7 +42,7 @@ colors:
 typography:
   display:
     fontFamily: "Barlow Semi Condensed, Bahnschrift SemiCondensed, DIN Condensed, Roboto Condensed, Arial Narrow, sans-serif"
-    fontSize: "clamp(2.6rem, 6.4vw, 4.6rem)"
+    fontSize: "min(4.6rem, calc((100cqi - 4.4rem) / 6.7))"
     fontWeight: 700
     lineHeight: 0.92
     letterSpacing: "-0.01em"
@@ -212,7 +212,7 @@ The palette is a painted-enamel set on river-stone: two colony enamels, a navy d
 **Character:** Road-sign lettering over plain reading text. The condensed face is used for anything short enough to be painted on a plate. Long text stays in the reader's own system face.
 
 ### Hierarchy
-- **Display** (700, clamp 2.6–4.6rem, line-height 0.92): the name plate's title only. Its small line above ("BeaverBuddies") is part of the name, set in uppercase at 600.
+- **Display** (700, at most 4.6rem, line-height 0.92): the name plate's title only. "Timber Together" is always one line: its size follows the hero column (a container query on `.post`) so it never wraps.
 - **Headline** (700, clamp 1.9–2.75rem, 1.08): section headings on the home page. Guide pages use the page title (clamp 2.4–3.8rem) and prose h2s at clamp 1.8–2.3rem.
 - **Title** (700, 1.2–1.6rem, 1.15): plate titles, step titles, rail steps and questions (1.2rem).
 - **Body** (400, 17px / 16.5px under 640px, 1.65): prose at a 68–72ch measure. Bold is set at 650.
