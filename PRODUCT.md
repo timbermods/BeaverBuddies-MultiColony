@@ -114,7 +114,8 @@ the README disagree, flag the mismatch; don't guess.
   (https://github.com/timbermods/BeaverBuddies-Stability-Fork), which is built on thomaswp's original BeaverBuddies
   (https://github.com/thomaswp/BeaverBuddies). GPL-3.0.
 - **Voice:** a fellow player inviting friends to test something new and ambitious. Warm, clear, honest about beta
-  status, never overpromising.
+  status, never overpromising. **Short and plain**: one idea per sentence, each thing said once, no internals and no
+  history (the full rules are in CLAUDE.md, "Writing README and website text").
 - **No official Timberborn logos or key art.** Small in-game item icons (goods, the beaver) are allowed in UI
   replicas such as the Trading Post demo.
 - Mod name as shown in game: **Timber Together**.
