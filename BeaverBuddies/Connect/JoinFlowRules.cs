@@ -7,8 +7,11 @@ namespace BeaverBuddies.Connect
         Nothing,
         /// <summary>The guest is in the main menu, where its page (LobbyGuestPanel) shows the room.</summary>
         ShowRoom,
-        /// <summary>The guest is in a game, which a waiting room can't be entered from (D20): leave it and say why.</summary>
-        LeaveForGame,
+        /// <summary>
+        /// The guest is in a game: the room shows as a window over it (LobbyGuestPanel, 1.4.0-rc7). Until rc6 a game's join
+        /// left the room and asked the player to go to the main menu (D20).
+        /// </summary>
+        ShowWindow,
     }
 
     /// <summary>
@@ -19,14 +22,22 @@ namespace BeaverBuddies.Connect
         /// <summary>
         /// CheckWaitingRoom's decision. <paramref name="saveReceived"/>: LoadMap has been given the host's save. From then on
         /// the room is over for this guest, whatever the registry says: LoadMap empties it (SingletonManager.Reset) as the
-        /// game loads, so the guest page is no longer found, and taking that for "in a game" dropped every waiting-room
-        /// guest in the frame its save arrived (1.4.0-beta18 to beta20).
+        /// game loads (1.4.0-beta18 to beta20 took the empty registry for "in a game" and dropped every waiting-room guest in
+        /// the frame its save arrived). <paramref name="inGame"/>: the join was made in a game, whose room is a window.
         /// </summary>
-        public static WaitingRoomStep CheckWaitingRoom(bool connected, bool welcomed, bool saveReceived, bool guestPageBound)
+        public static WaitingRoomStep CheckWaitingRoom(bool connected, bool welcomed, bool saveReceived, bool inGame)
         {
             if (!connected || !welcomed || saveReceived) return WaitingRoomStep.Nothing;
-            return guestPageBound ? WaitingRoomStep.ShowRoom : WaitingRoomStep.LeaveForGame;
+            return inGame ? WaitingRoomStep.ShowWindow : WaitingRoomStep.ShowRoom;
         }
+
+        /// <summary>
+        /// Whether a join is held apart from the game (1.4.0-rc7): a join made in a game is not the game's EventIO until
+        /// its save arrives (LoadMap). Installed at once, the game played alone would turn co-op while the guest waits in
+        /// the room: its actions sent to the host instead of played, its ticks waiting for the host's. The main menu has
+        /// no game to spoil, and installs the join at once, as before.
+        /// </summary>
+        public static bool HoldJoin(bool inGame) => inGame;
 
         /// <summary>
         /// Whether a join that failed is reported by the join's own dialog. Not when a waiting room ended it and the guest's
@@ -63,6 +74,24 @@ namespace BeaverBuddies.Connect
         /// described yet are waited out.
         /// </summary>
         public static bool RejoinEntersLobby(FriendGameState state) => state == FriendGameState.WaitingRoom;
+
+        /// <summary>
+        /// Whether a join's box (Connecting, the rejoin's wait) can go on the panel stack now: never over an overlay (the
+        /// Steam overlay's input blocker, the Load game box), and in the main menu only once it is up (a panel is there). A
+        /// game with nothing open takes it at once (1.4.0-rc7: a rejoin waits in the game, over it).
+        /// </summary>
+        public static bool BoxCanShow(bool inGame, int panelsOpen, bool overlayOnTop) => panelsOpen == 0 ? inGame : !overlayOnTop;
+
+        /// <summary>
+        /// How long a rejoin waits between tries: a few seconds, as it waits for a host to rehost; every second for the first
+        /// minute of following a host's move to its room (1.4.0-rc7, K1), which opens a moment after the move.
+        /// </summary>
+        public static double RejoinEveryMs(bool followingMove, double msSinceStart) =>
+            followingMove && msSinceStart < FollowFastForMs ? FollowEveryMs : WaitEveryMs;
+
+        public const double WaitEveryMs = 3000;
+        public const double FollowEveryMs = 1000;
+        public const double FollowFastForMs = 60000;
     }
 
     /// <summary>What an accepted Steam invite does (SteamOverlayConnectionService).</summary>
@@ -70,8 +99,11 @@ namespace BeaverBuddies.Connect
     {
         /// <summary>In the main menu: join the host's page now.</summary>
         Join,
-        /// <summary>In a game played alone: ask, then save it and join from the main menu.</summary>
-        OfferFromGame,
+        /// <summary>
+        /// In a game played alone (or one whose session has ended): join the host's room now, in this game, its window over
+        /// it (1.4.0-rc7; rc6 asked, then saved the game and joined from the main menu).
+        /// </summary>
+        JoinInGame,
         /// <summary>In a co-op game: its session is not ended for an invite; the player leaves it first.</summary>
         LeaveCoopGameFirst,
         /// <summary>Hosting a Co-op Game page (or loading its game): closed first, not replaced by a join.</summary>
@@ -81,33 +113,48 @@ namespace BeaverBuddies.Connect
     public static class InviteRules
     {
         /// <summary>
-        /// An accepted invite to an open Co-op Game page. A page is joined only from the main menu (D20); a game played
-        /// alone is saved and left for it after asking (1.4.0-rc6); a co-op game or a page this player hosts is never
-        /// ended or replaced by a join (the in-game join used to take over the running session's connection).
+        /// An accepted invite to an open Co-op Game room. The main menu joins its page; a game played alone joins in the game
+        /// (1.4.0-rc7), the join held until its save arrives; a co-op game or a room this player hosts is never ended or
+        /// replaced by a join (the in-game join used to take over the running session's connection).
         /// </summary>
         public static InviteStep Decide(bool inMainMenu, bool inCoopSession, bool hostingPage)
         {
             if (hostingPage) return InviteStep.StopHostingFirst;
             if (inMainMenu) return InviteStep.Join;
-            return inCoopSession ? InviteStep.LeaveCoopGameFirst : InviteStep.OfferFromGame;
+            return inCoopSession ? InviteStep.LeaveCoopGameFirst : InviteStep.JoinInGame;
         }
     }
 
-    /// <summary>The main menu's band, grown to fit its panel with the mod's two buttons (ClientConnectionUI.FitMainMenu).</summary>
-    public static class MainMenuFit
+    /// <summary>Whether the menu has Join co-op game (ClientConnectionUI).</summary>
+    public static class JoinButtonRules
     {
         /// <summary>
-        /// The band's height: the game's <paramref name="band"/> (720 px), or, when the panel and the logo above it need
-        /// more with <paramref name="gap"/> above and below the panel, that much, but never taller than the screen
-        /// (<paramref name="screen"/>) the band is centred on. Before the first layout (no sizes yet) the game's height.
+        /// The main menu always. A game's menu (1.4.0-rc7) when no co-op session is live in it and this player hosts no
+        /// room: a live session is left first (InviteRules), and a host's room is closed first. A game whose session ended
+        /// (a desync, a lost connection) may join, as a game played alone does.
         /// </summary>
-        public static float Band(float panel, float logo, float screen, float band, float gap)
-        {
-            if (!(panel > 0) || !(logo > 0)) return band;
-            float need = panel + logo + 2 * gap;
-            if (screen > 0 && need > screen) need = screen;
-            return need > band ? need : band;
-        }
+        public static bool Show(bool mainMenu, bool sessionLive, bool hostingRoom) => mainMenu || (!sessionLive && !hostingRoom);
+    }
+
+    /// <summary>
+    /// The Load game box made wide enough for Host co-op game beside its Load (1.4.0-rc7). The game's numbers (UI.zip,
+    /// read again by RuntimeChecks): <c>.load-box</c> is 800 px wide (OptionsStyle), its <c>.box__content-container</c> has
+    /// 45 px of padding each side (CoreStyle), which leaves 710 px, and a <c>.menu-button--medium</c> is at least 184 px
+    /// (CoreStyle): four are 736 px in a centred row (<c>.box-buttons</c>). The box grows; the game's buttons stay its size.
+    /// </summary>
+    public static class LoadBoxFit
+    {
+        public const float Box = 800;
+        public const float Padding = 45;
+        public const float ButtonMinWidth = 184;
+        public const float Extra = 70;
+        public static float WidenedBox => Box + Extra;
+
+        /// <summary>The room inside a box <paramref name="width"/> wide, for its row of buttons.</summary>
+        public static float Inside(float width) => width - 2 * Padding;
+
+        /// <summary>Whether <paramref name="buttons"/> medium buttons fit side by side in a box <paramref name="width"/> wide.</summary>
+        public static bool Fits(int buttons, float width) => buttons * ButtonMinWidth <= Inside(width);
     }
 
     /// <summary>What the game menu's hosting button is (ClientConnectionUI).</summary>
@@ -137,5 +184,13 @@ namespace BeaverBuddies.Connect
             if (replayFailure || !loadedAsHost) return HostButtonKind.Hidden;
             return HostButtonKind.SaveAndRehost;
         }
+
+        /// <summary>
+        /// The Load game box's Host co-op game (1.4.0-rc7): wherever a Co-op Game room can be opened
+        /// (<paramref name="roomPanelBound"/>: the room's panel is bound in this scene), and in a game as the game menu's
+        /// hosting button is shown (<see cref="Decide"/>): never for a guest's game, nor after a failed action. It hosts the
+        /// selected save, whatever the game menu's button is called.
+        /// </summary>
+        public static bool ShowOnLoadBox(bool roomPanelBound, HostButtonKind kind) => roomPanelBound && kind != HostButtonKind.Hidden;
     }
 }

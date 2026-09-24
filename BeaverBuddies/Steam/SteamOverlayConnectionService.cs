@@ -28,7 +28,6 @@ namespace BeaverBuddies.Steam
         private EventBus _eventBus;
         private Settings _settings;
         private DialogBoxShower _dialogBoxShower;
-        private Timberborn.MainMenuSceneLoading.MainMenuSceneLoader _mainMenuSceneLoader;
 
         private bool? _lastSuccess = null;
         private string _lastHostName = null;
@@ -42,12 +41,10 @@ namespace BeaverBuddies.Steam
             PanelStack panelStack,
             EventBus eventBus,
             Settings settings,
-            DialogBoxShower dialogBoxShower,
-            Timberborn.MainMenuSceneLoading.MainMenuSceneLoader mainMenuSceneLoader
+            DialogBoxShower dialogBoxShower
             )
         {
             _dialogBoxShower = dialogBoxShower;
-            _mainMenuSceneLoader = mainMenuSceneLoader;
             _steamManager = steamManager;
             _clientConnectionService = clientConnectionService;
             _panelStack = panelStack;
@@ -98,7 +95,6 @@ namespace BeaverBuddies.Steam
                     Plugin.Log("Waiting on Steamworks to initialize...");
                 }
             }
-            if (done) JoinPendingInvite();
             //ReceiveMessages();
         }
 
@@ -203,9 +199,10 @@ namespace BeaverBuddies.Steam
         }
 
         /// <summary>
-        /// A host's lobby this player is in (an invite, the Join box, a rejoin): its Co-op Game page is joined from the main
-        /// menu. From a game played alone the player is asked, and the game is saved and left for the main menu, where the
-        /// join goes on by itself (1.4.0-rc6). A co-op game, or a page this player hosts, is never ended or replaced by it.
+        /// A host's lobby this player is in (an invite, the Join box, a rejoin): its Co-op Game room is joined, from the main
+        /// menu as its page, from a game played alone as a window over the game (1.4.0-rc7; rc6 saved the game and joined
+        /// from the main menu), the join held apart from the game until its save arrives. A co-op game, or a room this
+        /// player hosts, is never ended or replaced by it.
         /// </summary>
         private void JoinHostLobby(CSteamID lobby, CSteamID owner)
         {
@@ -221,12 +218,13 @@ namespace BeaverBuddies.Steam
             string host;
             try { host = SteamFriends.GetFriendPersonaName(owner); }
             catch (Exception) { host = null; }
-            bool inMainMenu = SingletonManager.GetSingleton<BeaverBuddies.Lobby.LobbyGuestPanel>() != null;
+            // The guest's room is bound in both scenes since 1.4.0-rc7: the main menu is the scene without a game.
+            bool inMainMenu = SingletonManager.GetSingleton<BeaverBuddies.Lobby.LobbyGuestPanel>() != null && !BeaverBuddies.Lobby.InGameLobby.InGame;
             switch (InviteRules.Decide(inMainMenu, inCoopSession: !EventIO.IsNull, hostingPage: BeaverBuddies.Lobby.LobbySession.Current != null))
             {
-                case InviteStep.OfferFromGame:
-                    OfferJoinFromGame(lobby, host);
-                    return;
+                case InviteStep.JoinInGame:
+                    Plugin.Log($"[Join] Joining {host}'s Co-op Game room in this game");
+                    break;
                 case InviteStep.LeaveCoopGameFirst:
                     // The lobby of the game this player is in, entered again: nothing to do.
                     if (lobby == enteredLobby) return;
@@ -257,36 +255,6 @@ namespace BeaverBuddies.Steam
             }
         }
 
-        // ---- an invite accepted in a game (1.4.0-rc6) ----
-
-        // The lobby of an invite accepted in a game played alone, joined once the main menu is up (0: none). Static: it
-        // crosses the scene change. The player stays in the lobby meanwhile, so its host lets the connection in.
-        private static ulong pendingInviteLobby;
-        private int framesInMenu;
-
-        private void OfferJoinFromGame(CSteamID lobby, string host)
-        {
-            try
-            {
-                _dialogBoxShower.Create()
-                    .SetMessage(RegisteredLocalizationService.T("BeaverBuddies.Invite.FromGame", host ?? ""))
-                    .SetConfirmButton(() =>
-                    {
-                        Plugin.Log($"[Join] Saving this game and going to the main menu to join {host}'s Co-op Game page");
-                        pendingInviteLobby = lobby.m_SteamID;
-                        // The game's own way out: its exit save, then the main menu.
-                        _mainMenuSceneLoader.SaveAndOpenMainMenu();
-                    }, RegisteredLocalizationService.T("BeaverBuddies.Invite.SaveAndJoin"))
-                    .SetCancelButton(() => LeaveSafely(lobby), RegisteredLocalizationService.T("BeaverBuddies.Rejoin.Stay"))
-                    .Show();
-            }
-            catch (Exception error)
-            {
-                Plugin.LogWarning("Could not offer to join from the main menu: " + error.Message);
-                LeaveSafely(lobby);
-            }
-        }
-
         private void TellWhyNot(CSteamID lobby, string key, string host)
         {
             Plugin.Log($"[Join] Not joining {host}'s Co-op Game page now ({key})");
@@ -301,27 +269,6 @@ namespace BeaverBuddies.Steam
             catch (Exception error) { Plugin.LogWarning("Could not leave the invite's Steam lobby: " + error.Message); }
         }
 
-        // In the main menu, once it is up (not under its changelog or first-timer box): the invite's host is joined.
-        private void JoinPendingInvite()
-        {
-            if (pendingInviteLobby == 0 || SingletonManager.GetSingleton<BeaverBuddies.Lobby.LobbyGuestPanel>() == null) return;
-            if (framesInMenu++ < 2 || _panelStack._stack.Count == 0 || _panelStack.TopPanel.IsOverlay) return;
-            var lobby = new CSteamID(pendingInviteLobby);
-            pendingInviteLobby = 0;
-            CSteamID owner;
-            try { owner = SteamMatchmaking.GetLobbyOwner(lobby); }
-            catch (Exception) { owner = CSteamID.Nil; }
-            if (!owner.IsValid() || owner == SteamUser.GetSteamID())
-            {
-                // The host left meanwhile.
-                Plugin.LogWarning("[Join] The invite's host is no longer in its lobby");
-                LeaveSafely(lobby);
-                _clientConnectionService.ShowConnectionMessage(false);
-                return;
-            }
-            Plugin.Log("[Join] Joining the invite accepted in a game");
-            JoinHostLobby(lobby, owner);
-        }
 #else
         // Need to implement the interface
         public void UpdateSingleton() { }

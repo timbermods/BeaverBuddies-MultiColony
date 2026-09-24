@@ -59,12 +59,13 @@ internal static class DesyncDialogChecks
                 throw new Exception("Joining over Steam is not remembered");
             if (!IlScan.Names(IlScan.Members(Method("TryToConnect", "String")), "BeaverBuddies.Connect.JoinRoute", "ViaAddress"))
                 throw new Exception("Joining by address is not remembered");
-            // Since 1.4.0-rc4 Reconnect, from a game, goes to the main menu (a rehost's Co-op Game page is there) and
+            // Since 1.4.0-rc7 Reconnect waits in the scene it is pressed in (rc4 to rc6 went to the main menu), and
             // WatchRejoin tries there, following the plan (rc5: the old in-menu ReconnectNow, never reached, is gone).
             var fromGame = IlScan.Members(type.GetMethod("Reconnect", all, Type.EmptyTypes)
                 ?? throw new Exception("ClientConnectionService has no Reconnect"));
-            if (!IlScan.Names(fromGame, "Timberborn.MainMenuSceneLoading.MainMenuSceneLoader", "OpenMainMenu"))
-                throw new Exception("Reconnect from a game no longer goes to the main menu, where the rehost's page is");
+            if (!fromGame.Any(m => m.Name == "StartRejoin")) throw new Exception("Reconnect no longer starts the rejoin");
+            if (IlScan.Of(type).Values.Any(members => members.Any(m => m.Name == "OpenMainMenu")))
+                throw new Exception("a rejoin goes to the main menu again (rc7 waits in the game)");
             var watch = IlScan.Members(type.GetMethod("WatchRejoin", all, Type.EmptyTypes) ?? throw new Exception("ClientConnectionService has no WatchRejoin"));
             if (!IlScan.Names(watch, plan, "Reconnect")) throw new Exception("the rejoin does not ask DesyncDialogPlan.Reconnect");
             if (!IlScan.Names(watch, "Steamworks.SteamMatchmaking", "JoinLobby")) throw new Exception("the rejoin never joins the host's Steam lobby");

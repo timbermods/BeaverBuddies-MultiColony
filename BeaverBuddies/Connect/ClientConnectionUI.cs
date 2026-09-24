@@ -75,20 +75,24 @@ namespace BeaverBuddies.Connect
         private readonly DialogBoxShower _dialogBoxShower;
 
         /// <summary>
-        /// Host co-op game and Join co-op game, under Load game (1.4.0-rc4 adds Host). In the main menu, Host opens the Host
-        /// co-op game box (HostCoopMenu) and Join the Join co-op game box. In a game, single player's Host co-op game hosts
-        /// this game, and a co-op host's button is Save and Rehost; a guest has neither, and Join is not there: a Co-op Game
-        /// page is joined from the main menu (D20).
+        /// The mod's buttons under Load game. The main menu has Join co-op game alone: a save is hosted from the Load game
+        /// box (its Host co-op game, right of Load, 1.4.0-rc7). A game's menu has Host co-op game (a game played alone) or
+        /// Save and Rehost (the host of a co-op game), which host this game; a guest has neither. Join co-op game is in a
+        /// game's menu too (1.4.0-rc7) while no co-op session is live in it and this player hosts no room: the room joined
+        /// opens over the game (JoinButtonRules).
         /// </summary>
         public void AddJoinButton(VisualElement __result, bool mainMenu)
         {
-            Button host = ButtonInserter.DuplicateOrGetButton(__result, "LoadGameButton", HostButtonName, created =>
+            if (!mainMenu)
             {
-                created.text = _loc.T("BeaverBuddies.Saving.HostCoopGame");
-                created.clicked += () => HostClicked(mainMenu);
-            }, _visualElementInitializer);
-            if (!mainMenu) DressHostInGame(host);
-            Button button = ButtonInserter.DuplicateOrGetButton(__result, HostButtonName, "JoinButton", button =>
+                Button host = ButtonInserter.DuplicateOrGetButton(__result, "LoadGameButton", HostButtonName, created =>
+                {
+                    created.text = _loc.T("BeaverBuddies.Saving.HostCoopGame");
+                    created.clicked += HostClicked;
+                }, _visualElementInitializer);
+                DressHostInGame(host);
+            }
+            Button button = ButtonInserter.DuplicateOrGetButton(__result, mainMenu ? "LoadGameButton" : HostButtonName, "JoinButton", button =>
             {
                 button.text = _loc.T("BeaverBuddies.Menu.JoinCoopGame");
                 button.clicked += () =>
@@ -98,36 +102,9 @@ namespace BeaverBuddies.Connect
                     else ShowBox();
                 };
             }, _visualElementInitializer);
-            // In a game every host is in a waiting room or a started game, and neither can be joined from a game (1.4.0-rc5
-            // review, C6): the main menu's Join co-op game is the way in.
-            button.ToggleDisplayStyle(mainMenu);
-            if (mainMenu) FitMainMenu(__result);
-        }
-
-        // The game's main menu band (MainMenuPanel.uxml: .main-menu__content, 720 px, 104 of them the logo) was made for its
-        // own ten buttons. With Host co-op game and Join co-op game its panel is taller than what is left, and it hung over
-        // the band's bottom bar (1.4.0-rc5 review, C3). The band grows by what the panel needs, up to the screen's height:
-        // its background and bars stretch, as the game's own do.
-        private const string FitsPanelMarker = "beaverbuddies-fits-panel";
-        private const float MainMenuBand = 720;
-        // The breathing room above and below the panel, as the game's own spacers leave with its ten buttons.
-        private const float PanelGap = 24;
-
-        private static void FitMainMenu(VisualElement root)
-        {
-            VisualElement content = root.Q(className: "main-menu__content");
-            VisualElement logo = root.Q(className: "background__logo");
-            VisualElement panel = root.Q("MainMenuPanel");
-            if (content == null || logo == null || panel == null || content.ClassListContains(FitsPanelMarker)) return;
-            content.AddToClassList(FitsPanelMarker);
-            void Fit(GeometryChangedEvent _)
-            {
-                float band = MainMenuFit.Band(panel.layout.height, logo.layout.height, root.layout.height, MainMenuBand, PanelGap);
-                StyleLength wanted = band > MainMenuBand ? new StyleLength(band) : new StyleLength(StyleKeyword.Null);
-                if (content.style.minHeight != wanted) content.style.minHeight = wanted;
-            }
-            panel.RegisterCallback<GeometryChangedEvent>(Fit);
-            root.RegisterCallback<GeometryChangedEvent>(Fit);
+            // rc5 (C6) took it out of a game's menu, where nothing could be joined; rc7 joins rooms in a game.
+            button.ToggleDisplayStyle(JoinButtonRules.Show(mainMenu, sessionLive: !EventIO.IsNull,
+                hostingRoom: BeaverBuddies.Lobby.LobbySession.Current != null));
         }
 
         // A game's menu: Host co-op game alone, Save and Rehost as the host of a co-op game, nothing as a guest (also after
@@ -139,19 +116,15 @@ namespace BeaverBuddies.Connect
             host.text = _loc.T(kind == HostButtonKind.SaveAndRehost ? "BeaverBuddies.ClientDesynced.SaveAndRehostButton" : "BeaverBuddies.Saving.HostCoopGame");
         }
 
-        private static HostButtonKind HostKind()
+        /// <summary>This game's hosting button (the game menu's, and whether the Load game box has Host co-op game).</summary>
+        internal static HostButtonKind HostKind()
         {
             ReplayService replay = SingletonManager.GetSingleton<ReplayService>();
             return HostButtonRules.Decide(coopGame: replay != null, loadedAsHost: replay?.LoadedAsHost == true, ReplayService.HasReplayFailure);
         }
 
-        private void HostClicked(bool mainMenu)
+        private void HostClicked()
         {
-            if (mainMenu)
-            {
-                HostCoopMenu.Instance?.OpenBox();
-                return;
-            }
             RehostingService rehosting = SingletonManager.GetSingleton<RehostingService>();
             HostButtonKind kind = HostKind();
             if (rehosting == null || kind == HostButtonKind.Hidden) return;
@@ -172,7 +145,10 @@ namespace BeaverBuddies.Connect
         {
             try
             {
+                // In a game the box gets the main menu's sheets its classes come from (InGameLobby); the main menu has them.
+                BeaverBuddies.Lobby.InGameLobby inGame = BeaverBuddies.Lobby.InGameLobby.Current;
                 JoinCoopBox.Show(_panelStack, _visualElementLoader, _visualElementInitializer, _inputService,
+                    inGame != null ? inGame.AttachStyles : (Action<VisualElement>)null,
                     _settings.ClientConnectionAddress.Value,
                     lobby => SteamMatchmaking.JoinLobby(new CSteamID(lobby)),
                     ip =>

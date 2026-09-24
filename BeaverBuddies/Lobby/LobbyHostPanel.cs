@@ -22,9 +22,11 @@ using UnityEngine.UIElements;
 namespace BeaverBuddies.Lobby
 {
     /// <summary>
-    /// The host's Co-op Game page, the New Game wizard's page after Game Mode (D7): opened by Host co-op game (after the
-    /// settlement's name), it shows the room as it fills, and Start Game starts the new co-op game (LobbySession). Since
-    /// 1.4.0-beta19 it is also what Host co-op game on the main menu's Load Game box opens for a save (OpenForSave).
+    /// The host's Co-op Game room, as it fills, and Start Game, which starts the co-op game (LobbySession). A new game's room
+    /// is the New Game wizard's page after Game Mode (D7), opened by Host co-op game (after the settlement's name). A save's
+    /// room (OpenForSave) is opened by the Load game box's Host co-op game, in the main menu as that page, and in a game
+    /// (1.4.0-rc7) as a window over the game, which pauses under it: also by the game menu's Host co-op game and Save and
+    /// Rehost, which save the game first. Bound in both scenes.
     /// </summary>
     public class LobbyHostPanel : RegisteredSingleton, IPanelController, IUpdatableSingleton
     {
@@ -116,10 +118,12 @@ namespace BeaverBuddies.Lobby
         }
 
         /// <summary>
-        /// Host co-op game on the main menu's Load Game box, once the game's own checks of the save have passed
-        /// (ServerHostingUtils.LoadAndHost): the waiting room for that save, with <paramref name="bytes"/> as everyone's copy.
+        /// A save's waiting room, with <paramref name="bytes"/> as everyone's copy: the Load game box's Host co-op game, once
+        /// the game's own checks of the save have passed (ServerHostingUtils.LoadAndHost), or this game just saved for it
+        /// (<paramref name="savedForRoom"/>: the game menu's Host co-op game and Save and Rehost). The main menu's page, or a
+        /// window over the game.
         /// </summary>
-        public void OpenForSave(SaveReference save, byte[] bytes)
+        public void OpenForSave(SaveReference save, byte[] bytes, bool savedForRoom = false)
         {
             if (session != null || sending != null) return;
             faction = null;
@@ -153,6 +157,7 @@ namespace BeaverBuddies.Lobby
                 Mixed = colonies != null && colonies.Mixed,
                 Factions = colonies != null && colonies.Mixed ? capture?.UnlockedFactions() ?? new System.Collections.Generic.List<string>()
                     : new System.Collections.Generic.List<string>(),
+                SavedForRoom = savedForRoom,
             });
         }
 
@@ -164,10 +169,15 @@ namespace BeaverBuddies.Lobby
                 _dialogBoxShower.Create().SetMessage(RegisteredLocalizationService.T("BeaverBuddies.Lobby.CouldNotOpen")).Show();
                 return;
             }
-            page = new LobbyPage(_loader, _initializer, _tooltipRegistrar, "BeaverBuddies.Lobby.Header.Host");
+            // In a game, a window over it (its sheets added: a game has not the main menu's); in the main menu, the page.
+            InGameLobby inGame = InGameLobby.Current;
+            page = new LobbyPage(_loader, _initializer, _tooltipRegistrar, "BeaverBuddies.Lobby.Header.Host",
+                inGame != null ? LobbyFrame.Window : LobbyFrame.Page, inGame != null ? inGame.AttachStyles : (Action<VisualElement>)null);
             page.Back.text = RegisteredLocalizationService.T(CommonLocKeys.CancelKey);
             page.Next.text = RegisteredLocalizationService.T("BeaverBuddies.Host.StartGame");
             page.Back.clicked += OnUICancelled;
+            // The window's close button is its Cancel (asking first, with guests in the room).
+            if (page.Close != null) page.Close.clicked += OnUICancelled;
             page.Next.clicked += () => OnUIConfirmed();
             page.Invite.clicked += () => session?.IO.SteamListener?.ShowInviteFriendsPanel();
             page.RemoveClicked += ConfirmRemove;
@@ -198,7 +208,10 @@ namespace BeaverBuddies.Lobby
             shownVersion = -1;
             starting = false;
             Refresh();
-            _panelStack.HideAndPush(this);
+            // In place of what it was opened from (the Game Mode page, the Load game box, the game menu), so Cancel returns
+            // there; over the game when nothing is open (a desync's Save and Rehost). Either way a game pauses under it.
+            if (LobbyRules.HostRoomPush(_panelStack._stack.Count) == RoomPush.Push) _panelStack.Push(this);
+            else _panelStack.HideAndPush(this);
         }
 
         /// <summary>
@@ -268,7 +281,8 @@ namespace BeaverBuddies.Lobby
             return true;
         }
 
-        // Esc, or Cancel: back to the Game Mode page (or the Load Game box), and everyone in the room is told.
+        // Esc, Cancel or the window's close button: back to the Game Mode page, the Load game box or the game menu (or the
+        // game), and everyone in the room is told.
         public void OnUICancelled()
         {
             if (starting || session == null) return;
@@ -314,6 +328,9 @@ namespace BeaverBuddies.Lobby
             convertOptions?.SetEnabled(false);
             page.SetStatus(new LobbyText(LobbyRules.KeyPrefix + "Status.Starting"));
             LobbySession started = session;
+            // K3: a room opened over a game replaces that game with the hosted save: its exit save first, as Exit to menu
+            // makes it (not for a game just saved for the room; the main menu has none).
+            InGameLobby.Current?.ExitSaveForStart(started.Setup.SavedForRoom);
             // The menu scene ends here for a new game; the session carries on (LobbyWorldMaker).
             session = null;
             started.Start(_sceneLoader, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Tip.Creating"));
@@ -341,7 +358,7 @@ namespace BeaverBuddies.Lobby
             ShowFailure();
         }
 
-        // Back to the page before the room (the Game Mode page, or the Load Game box), with the reason.
+        // Back to what was under the room (the Game Mode page, the Load game box, the game menu, or the game), with the reason.
         private void ShowFailure()
         {
             starting = false;

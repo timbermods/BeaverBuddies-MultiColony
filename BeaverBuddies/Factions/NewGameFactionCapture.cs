@@ -32,8 +32,8 @@ namespace BeaverBuddies.Factions
         {
             _factionSpecService = factionSpecService;
             _factionUnlockingService = factionUnlockingService;
-            // The main menu: no game is loaded, so nothing is mixed.
-            MixedFactions.Reset();
+            // Made in the main menu and, since 1.4.0-rc7, in every game (a save's room offers the host's unlocked factions):
+            // it leaves MixedFactions alone, which the main menu's configurator resets and a game's own load decides.
         }
 
         /// <summary>

@@ -135,6 +135,8 @@ RcColonyRuntimeChecks.Run(assembly, Test);
 // The review of 1.4.0-rc2 to rc4 (design/review-1.4.0-rc4/).
 Rc5RuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Test);
 Rc6RuntimeChecks.Run(assembly, Test);
+// 1.4.0-rc7: hosting and joining from inside a running game (design/IN-GAME-HOSTING-PLAN.md).
+Rc7RuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

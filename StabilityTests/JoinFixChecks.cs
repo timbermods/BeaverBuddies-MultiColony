@@ -11,20 +11,20 @@ static class JoinFixChecks
 
     public static IEnumerable<(string Name, Action Run)> Tests()
     {
-        yield return ("J1: the waiting-room check leaves a guest alone once its save has come, and still sends an in-game guest away", () =>
+        yield return ("J1: the waiting-room check leaves a guest alone once its save has come; a guest in a game gets the room's window (rc7)", () =>
         {
             // Classic joins: never welcomed.
-            Check(JoinFlowRules.CheckWaitingRoom(true, false, false, true) == WaitingRoomStep.Nothing);
-            Check(JoinFlowRules.CheckWaitingRoom(true, false, true, false) == WaitingRoomStep.Nothing);
+            Check(JoinFlowRules.CheckWaitingRoom(true, false, false, false) == WaitingRoomStep.Nothing);
+            Check(JoinFlowRules.CheckWaitingRoom(true, false, true, true) == WaitingRoomStep.Nothing);
             // Main menu, in the room: the page shows it.
-            Check(JoinFlowRules.CheckWaitingRoom(true, true, false, true) == WaitingRoomStep.ShowRoom);
-            // D20: a guest in a game (no page bound there) that a room welcomes leaves it.
-            Check(JoinFlowRules.CheckWaitingRoom(true, true, false, false) == WaitingRoomStep.LeaveForGame);
-            // J1: the frame the save is handed to LoadMap, which has emptied the registry, so the page is "not bound".
-            Check(JoinFlowRules.CheckWaitingRoom(true, true, true, false) == WaitingRoomStep.Nothing,
-                "a waiting-room guest is dropped as its save loads");
+            Check(JoinFlowRules.CheckWaitingRoom(true, true, false, false) == WaitingRoomStep.ShowRoom);
+            // rc7: a guest in a game that a room welcomes sees it as a window over the game (until rc6 it left, D20).
+            Check(JoinFlowRules.CheckWaitingRoom(true, true, false, true) == WaitingRoomStep.ShowWindow);
+            // J1: the frame the save is handed to LoadMap, which has emptied the registry: nothing, in either scene.
+            Check(JoinFlowRules.CheckWaitingRoom(true, true, true, false) == WaitingRoomStep.Nothing
+                && JoinFlowRules.CheckWaitingRoom(true, true, true, true) == WaitingRoomStep.Nothing, "a waiting-room guest is dropped as its save loads");
             // A connection that is gone does nothing here (the join's error reports it).
-            Check(JoinFlowRules.CheckWaitingRoom(false, true, false, false) == WaitingRoomStep.Nothing);
+            Check(JoinFlowRules.CheckWaitingRoom(false, true, false, true) == WaitingRoomStep.Nothing);
         });
 
         yield return ("J8: a room that ended is reported once: by its page, or by the join when the page never opened", () =>

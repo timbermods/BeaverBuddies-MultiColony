@@ -40,6 +40,12 @@ namespace BeaverBuddies.Connect
         /// yet): the guest has to accept the host's new invite.
         /// </summary>
         WaitForSteamInvite,
+        /// <summary>
+        /// A Steam guest whose host moved its game to a waiting room and kept its lobby for it (1.4.0-rc7), still a member:
+        /// connect straight to the host once <see cref="ReconnectPlan.Lobby"/> says the room is open, even when the lobby
+        /// is invite-only.
+        /// </summary>
+        ConnectInLobby,
     }
 
     public readonly struct ReconnectPlan
@@ -101,12 +107,15 @@ namespace BeaverBuddies.Connect
         /// <summary>
         /// What a guest's "Reconnect (wait for Rehost)" does. <paramref name="lastJoin"/> is how it joined (null if
         /// not known), <paramref name="savedAddress"/> the address in the settings, and
-        /// <paramref name="hostLobby"/> the host's joinable Steam lobby, if Steam shows one.
+        /// <paramref name="hostLobby"/> the host's joinable Steam lobby, if Steam shows one. <paramref name="keptLobby"/>:
+        /// the Steam lobby the host said it keeps for its room as it moved its game there (1.4.0-rc7), null otherwise.
         /// </summary>
-        public static ReconnectPlan Reconnect(JoinRoute lastJoin, string savedAddress, System.Func<ulong, ulong?> hostLobby)
+        public static ReconnectPlan Reconnect(JoinRoute lastJoin, string savedAddress, System.Func<ulong, ulong?> hostLobby, ulong? keptLobby = null)
         {
             if (lastJoin?.SteamHost is ulong host)
             {
+                // Still a member of the lobby the host kept: straight to the host, however the lobby is shown.
+                if (keptLobby.HasValue && keptLobby.Value != 0) return new ReconnectPlan(ReconnectStep.ConnectInLobby, null, keptLobby.Value);
                 // Never the saved address: it has nothing to do with this host (by default it is 127.0.0.1).
                 ulong? lobby = hostLobby(host);
                 return lobby.HasValue

@@ -41,10 +41,37 @@ namespace TimberNet
         protected override void HandleConnectionFailure(ISocketStream stream, string message)
         {
             if (IsStopped || Interlocked.Exchange(ref connectionFailed, 1) != 0) return;
+            // The host said it is moving its game to a waiting room: the connection ends as it does, and that is no error.
+            // Queued before the close, so the game never sees the session over with nothing to say why.
+            if (hostMoved)
+            {
+                QueueHostMoved();
+                Close();
+                return;
+            }
             // Capture the reason first: Close() tears the stream down.
             message = DescribeFailure(stream, message);
             Close();
             QueueError(message);
+        }
+
+        // ---- The host's move to a waiting room (see MoveFrames) ----
+
+        private volatile bool hostMoved;
+        // Written before hostMoved, read after it.
+        private ulong movedToLobby;
+
+        /// <summary>The host said it is moving its game to a waiting room (read on the receive thread, before the connection's end).</summary>
+        public bool HostMoved => hostMoved;
+
+        /// <summary>The Steam lobby the host keeps for its room, as its notice said; null if it named none.</summary>
+        public ulong? MovedToSteamLobby => hostMoved && movedToLobby != 0 ? movedToLobby : (ulong?)null;
+
+        protected override void OnHostMoving(ulong? steamLobby)
+        {
+            movedToLobby = steamLobby ?? 0;
+            hostMoved = true;
+            Log("The host is moving this game to a waiting room" + (steamLobby.HasValue ? $" (Steam lobby {steamLobby})" : ""));
         }
 
         private ActivityChannel? activityChannel;

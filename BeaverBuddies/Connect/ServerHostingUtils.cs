@@ -26,9 +26,10 @@ namespace BeaverBuddies.Connect
 {
 
     /// <summary>
-    /// The Load Game box's Host co-op game button (a copy of its Load), shown only while the box is open as the main
-    /// menu's Host co-op game box (HostCoopMenu, 1.4.0-rc4). The Load Game box itself only loads, in the main menu and in a
-    /// game: a game hosts itself from its game menu.
+    /// The Load game box's Host co-op game button (1.4.0-rc7): a copy of its Load, right of it, in the main menu and in a
+    /// game. It hosts the selected save through its Co-op Game room (LobbyHostPanel.OpenForSave): the main menu's page, or
+    /// a game's window over the game. Load, Enter and a double-click load, as the game made them. Shown as the game menu's
+    /// hosting button is (HostButtonRules.ShowOnLoadBox): not for a game loaded as a guest, nor after a failed action.
     /// </summary>
     public static class LoadGameBoxHostButton
     {
@@ -42,53 +43,25 @@ namespace BeaverBuddies.Connect
         {
             if (__result == null) return;
             ILoc _loc = __instance._loc;
-            ButtonInserter.DuplicateOrGetButton(__result, "LoadButton", LoadGameBoxHostButton.Name, (button) =>
+            Button host = ButtonInserter.DuplicateOrGetButton(__result, "LoadButton", LoadGameBoxHostButton.Name, (button) =>
             {
                button.text = _loc.T("BeaverBuddies.Saving.HostCoopGame");
                button.clicked += () => HostSelectedGame(__instance);
             }, __instance._visualElementLoader?._visualElementInitializer);
-            // Null in a game (the main menu's alone): the box is the Load Game box there.
-            HostCoopMenu menu = SingletonManager.GetSingleton<HostCoopMenu>();
-            if (menu != null) menu.Dress(__result);
-            else __result.Q<Button>(LoadGameBoxHostButton.Name)?.ToggleDisplayStyle(false);
+            bool shown = HostButtonRules.ShowOnLoadBox(SingletonManager.GetSingleton<BeaverBuddies.Lobby.LobbyHostPanel>() != null,
+                ClientConnectionUI.HostKind());
+            host.ToggleDisplayStyle(shown);
+            // Four medium buttons do not fit the box as the game sizes it: it is made wider while Host co-op game is there
+            // (LoadBoxFit), never its buttons narrower.
+            VisualElement box = __result.Q(className: "load-box");
+            if (box != null) box.style.width = shown ? new StyleLength(LoadBoxFit.WidenedBox) : new StyleLength(StyleKeyword.Null);
+            // Under the picture, what the selected save is.
+            LoadGameBoxColonies.Of(__result);
         }
-
-        /// <summary>Enter or a double-click on a save: in the Host co-op game box, host it rather than load it.</summary>
-        internal static void HostSelectedGameFromBox(LoadGameBox box) => HostSelectedGame(box);
 
         [ManualMethodOverwrite]
         /*
-         * 04/19/2025
-        if (_saveList.TryGetSelectedSave(out var selectedSave))
-        {
-            if (_gameSaveRepository.SaveExists(selectedSave.SaveReference))
-            {
-                _validatingGameLoader.LoadGameIfSaveValid(selectedSave.SaveReference);
-                return true;
-            }
-
-            Debug.LogWarning("Save: " + selectedSave.DisplayName + " doesn't exist, failed to load.");
-        }
-        return false;
-         */
-        // Duplicates the LoadGameBox.LoadGame method, but loads the game with
-        // the HostingSaveReference instead of ValidatingGameLoader
-        private static void HostSelectedGame(LoadGameBox __instance)
-        {
-            if (__instance._saveList.TryGetSelectedSave(out var selectedSave))
-            {
-                if (__instance._gameSaveRepository.SaveExists(selectedSave.SaveReference))
-                {
-                    ServerHostingUtils.LoadIfSaveValidAndHost(__instance._validatingGameLoader, __instance._dialogBoxShower, selectedSave.SaveReference);
-                }
-                // Debug.LogWarning("Save: " + selectedSave.DisplayName + " doesn't exist, failed to load.");
-            }
-        }
-    }
-
-    [ManualMethodOverwrite]
-    /*
-     * 2026-09-23, Timberborn 1.1.2.4, GameSaveRepositorySystemUI: LoadGameBox.LoadGame
+         * 2026-09-23, Timberborn 1.1.2.4, GameSaveRepositorySystemUI: LoadGameBox.LoadGame
         if (_saveList.TryGetSelectedSave(out var selectedSave))
         {
             if (_gameSaveRepository.SaveExists(selectedSave.SaveReference))
@@ -99,41 +72,35 @@ namespace BeaverBuddies.Connect
             UnityEngine.Debug.LogWarning("Save: " + selectedSave.DisplayName + " doesn't exist, failed to load.");
         }
         return false;
-     */
-    /// <summary>The Host co-op game box's Enter and double-click host the selected save (1.4.0-rc4); the Load Game box loads it.</summary>
-    [HarmonyPatch(typeof(LoadGameBox), "LoadGame")]
-    public class LoadGameBoxLoadGamePatcher
-    {
-        [HarmonyPriority(Priority.Last)]
-        static bool Prefix(LoadGameBox __instance, ref bool __result)
+         */
+        // LoadGameBox.LoadGame, hosting the selected save through the game's own save checks (ValidatingGameLoader's
+        // validators, as a load goes through them) instead of loading it.
+        private static void HostSelectedGame(LoadGameBox __instance)
         {
-            // Only the main menu's box hosts; a game's Load Game box always loads (1.4.0-rc5 review, A7).
-            if (!HostCoopMenu.HostMode || HostCoopMenu.Instance == null) return true;
-            __result = __instance._saveList.TryGetSelectedSave(out _);
-            LoadGameBoxGetPanelPatcher.HostSelectedGameFromBox(__instance);
-            return false;
+            if (__instance._saveList.TryGetSelectedSave(out var selectedSave))
+            {
+                if (__instance._gameSaveRepository.SaveExists(selectedSave.SaveReference))
+                {
+                    ServerHostingUtils.LoadIfSaveValidAndHost(__instance._validatingGameLoader, __instance._dialogBoxShower, selectedSave.SaveReference);
+                    return;
+                }
+                Plugin.LogWarning("[Lobby] The save " + selectedSave.SaveReference.SaveName + " doesn't exist, so it was not hosted.");
+            }
         }
     }
 
-    /// <summary>The box closed: the next time it opens from Load Game it is the Load Game box again.</summary>
-    [HarmonyPatch(typeof(LoadGameBox), nameof(LoadGameBox.OnUICancelled))]
-    public class LoadGameBoxClosedPatcher
-    {
-        static void Postfix() => HostCoopMenu.BoxClosed();
-    }
-
-    /// <summary>A save was picked: the Host co-op game box's button follows the game's Load, and it says what the save is.</summary>
+    /// <summary>A save was picked: Host co-op game follows the game's Load, and the line under the picture says what it is.</summary>
     [HarmonyPatch(typeof(LoadGameBox), "OnSaveSelectionChanged")]
     public class LoadGameBoxSaveSelectedPatcher
     {
         static void Postfix(LoadGameBox __instance)
         {
-            if (!HostCoopMenu.HostMode || HostCoopMenu.Instance == null) return;
             try
             {
                 bool selected = __instance._saveList.TryGetSelectedSave(out GameSaveItem save);
-                __instance.GetPanel()?.Q<Button>(LoadGameBoxHostButton.Name)?.SetEnabled(selected);
-                HostCoopMenu.Instance?.SaveSelected(selected ? save.SaveReference : null);
+                VisualElement root = __instance.GetPanel();
+                root?.Q<Button>(LoadGameBoxHostButton.Name)?.SetEnabled(selected);
+                LoadGameBoxColonies.Of(root)?.Show(selected ? save.SaveReference : null, __instance._gameSaveRepository);
             }
             catch (Exception error)
             {
@@ -166,7 +133,7 @@ namespace BeaverBuddies.Connect
         {
             if (index >= loader._gameLoadValidators.Length)
             {
-                LoadAndHost(loader, shower, saveReference);
+                LoadAndHost(loader._gameSceneLoader._gameSaveRepository, saveReference, savedForRoom: false);
                 return;
             }
             loader._gameLoadValidators[index].ValidateSave(saveReference, delegate
@@ -193,25 +160,74 @@ namespace BeaverBuddies.Connect
             return ((SceneLoader)loader)._coroutineStarter._monoBehaviour;
         }
 
-        public static void LoadAndHost(ValidatingGameLoader loader, DialogBoxShower shower, SaveReference saveReference)
+        /// <summary>
+        /// The save's Co-op Game room, in this scene (1.4.0-rc7): the main menu's page, or a window over this game. After the
+        /// game's own checks of a save picked in the Load game box, or at once for a save this game has just written for it
+        /// (<paramref name="savedForRoom"/>: the game menu's Host co-op game and Save and Rehost).
+        /// </summary>
+        public static void LoadAndHost(GameSaveRepository repository, SaveReference saveReference, bool savedForRoom)
         {
-            var sceneLoader = loader._gameSceneLoader;
-            var repository = sceneLoader._gameSaveRepository;
             byte[] data = GetMapBtyes(repository, saveReference);
             Plugin.Log($"Reading map with length {data.Length}");
 
-            // A save is always hosted through its waiting room, the Co-op Game page (1.4.0-beta19; the only way since
-            // 1.4.0-rc4): players join and ready up, and everyone loads the save together at Start. The page is the main
-            // menu's: a game hosts itself by going there first (HostCoopFlow), never from here.
+            // A save is always hosted through its waiting room, the Co-op Game room (1.4.0-beta19; the only way since
+            // 1.4.0-rc4): players join and ready up, and everyone loads the save together at Start. Its panel is bound in the
+            // main menu and in every game (1.4.0-rc7), which it opens over.
             BeaverBuddies.Lobby.LobbyHostPanel waitingRoom = SingletonManager.GetSingleton<BeaverBuddies.Lobby.LobbyHostPanel>();
-            if (waitingRoom != null)
+            if (waitingRoom == null)
             {
-                // Hosting starts here: a join or session left from before ends.
-                EventIO.Reset();
-                waitingRoom.OpenForSave(saveReference, data);
+                Plugin.LogWarning("[Lobby] No Co-op Game room can open in this scene; nothing was hosted");
                 return;
             }
-            Plugin.LogWarning("[Lobby] A save can be hosted only from the main menu; nothing was hosted");
+            // Hosting starts here: a session or join left from before ends.
+            EndSessionForRoom();
+            waitingRoom.OpenForSave(saveReference, data, savedForRoom);
+        }
+
+        /// <summary>
+        /// Before a room opens, whatever session this game still has ends, so that the room's server can take the port and
+        /// the Steam lobby: a co-op game this player hosts tells its guests first, who follow into the room (1.4.0-rc7,
+        /// K1), then its session ends quietly (no message on either side; the game stays, played alone until Start), and its
+        /// server closes, releasing the port, its Steam lobby kept for the room. A join left from before is closed.
+        /// </summary>
+        internal static void EndSessionForRoom()
+        {
+            // A join under way ends: held apart from a game it is not EventIO, and nothing else would close it.
+            ClientConnectionService joins = SingletonManager.GetSingleton<ClientConnectionService>();
+            joins?.EndJoin(joins.CurrentJoin);
+            if (EventIO.IsNull) return;
+            // Once only: a Save and Rehost told them before its save.
+            TellGuestsMoving();
+            // The room opens next: its listener takes the Steam lobby as this server closes.
+            (EventIO.Get() as ServerEventIO)?.HandLobbyToRoom();
+            SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
+            // A desync or a failed action ended the session already, and may have left its connection installed.
+            EventIO.Reset();
+        }
+
+        /// <summary>
+        /// A running co-op game this player hosts is moving to a waiting room (1.4.0-rc7, K1): its guests are told, and its
+        /// Steam lobby is kept for the room (ServerEventIO.MoveToRoom). Nothing when this game hosts no live session. The
+        /// session is ended by the caller, after (a Save and Rehost saves between the two).
+        /// </summary>
+        internal static void TellGuestsMoving()
+        {
+            if (!(EventIO.Get() is ServerEventIO server) || server.IsSessionOver) return;
+            try { server.MoveToRoom(); }
+            catch (Exception error) { Plugin.LogWarning("[Lobby] Could not tell the guests the game is moving to a waiting room: " + error.Message); }
+        }
+
+        /// <summary>
+        /// A move whose room will not open (Save and Rehost's save failed after the guests were told): the session they have
+        /// left ends quietly, as the room's would have ended it, and its Steam lobby is left as any end leaves it. The
+        /// guests wait under their box until they cancel it or the host hosts again. Nothing if no move is under way.
+        /// </summary>
+        internal static void AbandonMove()
+        {
+            if (!(EventIO.Get() is ServerEventIO server) || !server.IsMoving) return;
+            Plugin.LogWarning("[Lobby] The move to a waiting room failed after the guests were told; ending the session");
+            SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
+            EventIO.Reset();
         }
     }
 }

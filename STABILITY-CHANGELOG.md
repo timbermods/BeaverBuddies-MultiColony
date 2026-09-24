@@ -5,6 +5,90 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc7
+
+**Hosting and joining from inside a game.** Asked for by Kyler after rc6, planned in `design/IN-GAME-HOSTING-PLAN.md`
+(his decisions K1 to K4). The Co-op Game room also opens as a window over a running game, which pauses under it; a save
+is hosted from the Load game box, in the main menu or in a game; a guest joins from their game; and a host moving a
+running co-op game to a room carries its guests there. Nobody passes through the main menu. It reverses rc4's rule that
+a room is a main-menu page only (D20). Wire: a new host control frame (`HostMoving`); everyone needs this build (the
+handshake checks). Saves unchanged. Written by a session without the game, then built against Timberborn 1.1.2.4 on
+Kyler's machine: both configurations with 0 warnings, and every RuntimeCheck passes. **Not played.**
+
+- **The Load game box hosts** (`LoadGameBoxGetPanelPatcher`, `LoadGameBoxColonies`, `LoadBoxFit`). It has **Host co-op
+  game** right of **Load** (a copy of it), in the main menu and in a game, shown as the game menu's hosting button is
+  (`HostButtonRules.ShowOnLoadBox`: not for a guest's game, nor after a failed action). Four medium buttons need 736 px
+  and the game's box leaves 710, so the box is 70 px wider while the button is there; the game's buttons keep their
+  size. The gold line under the picture (what the save is) shows for every selected save, read off the game's thread.
+  Load, Enter and a double-click load as the game made them: rc4's host mode, title swap and `LoadGame` prefix are gone,
+  with `HostCoopMenu` and `HostCoopFlow`.
+- **The main menu** has **Load game** then **Join co-op game**; its **Host co-op game** goes, and with it rc5's band fit
+  (C3): the panel fits the game's band again.
+- **The room over a game** (`LobbyPage` frames, `InGameLobby`). The room's content is built once, in the main menu's page
+  (unchanged) or a game's window: the game's `Common/NamedBoxTemplate` (capsule title, close button) with a `box-buttons`
+  row of medium buttons, 700 px wide, held to the screen's height (only the board shrinks, and scrolls). A game lacks the
+  main menu's sheets, so the window gets OptionsStyle, MainMenuStyle, MainMenuMiscStyle and ModdingStyle on its root
+  (loaded by the game's asset loader). It goes in place of what it was opened from (the Load game box, the game menu),
+  so **Cancel** returns there, or over the game when nothing is open (`LobbyRules.HostRoomPush`, `GuestRoomPush`); the
+  game pauses under it through the panel stack's own lock. Its close button and Esc are Cancel or Leave. The room's
+  panels and the faction capture are bound in every game; the capture no longer resets mixed factions as it is made (the
+  main menu's configurator does).
+- **Hosting from a game** (`ServerHostingUtils.LoadAndHost`, `RehostingService`). A save picked in a game's Load game box
+  opens its room in the game, after the game's own save checks. The game menu's **Host co-op game** and **Save and
+  Rehost** save the game (as before) and open its room over it, marked as just saved. Before a room opens, whatever
+  session the game still has ends (`EndSessionForRoom`), so the room's server can take the port.
+- **Joining from a game: the held join** (`ClientConnectionService`, `ClientEventIO.HeldJoin`). A join made in a game is
+  not installed as the game's session until the host's save arrives (`LoadMap`, just before the registry's reset and
+  the load): the game stays single-player while its player waits in the room. Every place that took a guest's join for
+  `EventIO` follows it: the error planner reports a held join's failure, a held join's session fault never reaches the
+  game, the guest's room watches the service's join, and Leave, a room's end, Cancel, a stopped rejoin, a new join and
+  hosting instead all end it (`EndJoin`). A join still held when another scene is set up is closed (`DropHeldJoin`). A room welcomed in a game shows as its window (`CheckWaitingRoom`: no more D20
+  leave, and `BeaverBuddies.Lobby.InGameInvite` goes).
+- **Invites and Join in a game.** An invite accepted while playing alone joins in place (`InviteRules`: `JoinInGame`);
+  rc6's *Save and join* box, its pending join in the main menu and its two texts go. In a co-op game, or while hosting a
+  room, the invite still waits. The game menu has **Join co-op game** again while no session is live and no room is
+  hosted (`JoinButtonRules`, reversing rc5's C6); its Join box gets the main menu's sheets in a game.
+- **Carrying the guests** (K1). Before a live co-op session its host ends for a room (Save and Rehost, the desync
+  dialog's Save and Rehost, or Load game → Host co-op game while hosting), every guest is told with a TimberNet control
+  frame (`MoveFrames`, naming the Steam lobby kept for the room), flushed through each guest's lane and to Steam; then the
+  game saves (a rehost), the session ends quietly, its server closes (the port and the Steam listener free), and the room
+  opens. A guest stops reading at the notice, and its connection's end is then no error (`TimberClient.HostMoved`,
+  `OnHostMoved`, queued before the close): its session ends quietly (no *connection lost*, no Rejoin box) and it follows
+  at once (`ClientConnectionService.FollowHost`), trying every second for a minute under a box that says the host is
+  moving the game. A guest told before its save was loaded follows too, and one told between scenes is followed by the
+  next scene. A guest reads its connection to the end, as a Steam link says it is closed as soon as the host's close
+  arrives, with the notice still unread. A guest that missed the notice sees *connection lost* with Rejoin, which
+  reaches the same room. A Save and Rehost whose save fails after the guests were told ends the session they left
+  quietly (`AbandonMove`); they wait under their box. Off Windows, the room's TCP listener may reuse its address, so it
+  takes the port again at once after the game's server closed on its guests.
+- **The Steam lobby is kept** (`SteamListener`). As the room opens, the stopping listener hands its lobby to the next
+  instead of leaving it (`HandLobbyToRoom`, `KeepLobbyForNextServer`); the room's listener reopens it, if it is still the
+  host's (joinable, `bb_open` 1, `bb_room` 1, a new description). The guests are still members, so a Steam guest connects
+  straight to the host once the lobby says the room is open, even when it is invite-only (`ReconnectStep.ConnectInLobby`),
+  and looks for the host's next lobby if the host has left that one. A room that fails to start, a Steam listener that
+  fails, a server without Steam, and the main menu leave a kept lobby. `LobbySession.Open` now survives a server that throws as it
+  starts.
+- **Rejoin in the game.** Rejoin and the desync dialog's Reconnect wait in the game (no main menu), their box over the
+  paused game (`JoinFlowRules.BoxCanShow`), and the host's room opens as a window when it welcomes the player. rc5's quiet
+  tries, off-thread probe, Steam lobby check and give-up rules stay.
+- **Exit saves** (K3, `ExitSaveRules`, `InGameLobby.ExitSaveForStart`). At Start, a game of the player's own that the
+  hosted save replaces gets the game's own exit save (`Autosaver.CreateExitSave`, as Exit to menu): the host's, before
+  its room starts; a guest's, when the host's save arrives, before anything of that save is set up. None for a game just
+  saved for the room, a game loaded as a guest (a carried guest's), or the main menu. A save that fails is logged and the
+  start goes on.
+- **Texts:** the game menu's questions, a failed rehost, the lost connection, the rejoin's boxes, the desync message
+  and the room's Cancel question no longer send the player to the main menu; new `BeaverBuddies.Rejoin.Following`;
+  `Invite.FromGame`, `Invite.SaveAndJoin` and `Lobby.InGameInvite` removed.
+- **Checks:** StabilityTests 476 → **502** (26 new in `Rc7Checks.cs`: real hosts and guests over pipes for the move
+  notice and for a guest reading its host's last frames after its link closed, a real port bound again; the rc4, rc5 and rc6 checks, `JoinBoxChecks` and `JoinFixChecks` follow the change). RuntimeChecks: 13 new in
+  `Rc7RuntimeChecks.cs` (the game members used, the UI.zip numbers of the Load game box, every class the window uses in
+  a sheet it has, the IL order of the move, the held join and the exit saves, the game context's bindings), and the rc4,
+  rc5, rc6 and desync checks follow. All 502 and 453 pass on both builds, and the new and changed RuntimeChecks fail on
+  rc6's DLL.
+- **Docs:** README (hosting a save from Load game, the room over a game, joining from a game, carried guests, rejoin),
+  TWO-COLONIES (the room in a game), ALPHA-TEST-SCRIPTS (new Script G with screenshots of the Load game box and the
+  window; Scripts D, H and S where they changed). Not played.
+
 ## 1.4.0-rc6
 
 **Joining: the two rough edges left after rc5's review.** Asked for by Kyler after rc5. Wire and saves unchanged;

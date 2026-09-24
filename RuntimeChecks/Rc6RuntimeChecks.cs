@@ -2,8 +2,9 @@
 using System.Reflection;
 using System.Reflection.Emit;
 
-// 1.4.0-rc6, checks against the compiled mod and the game: an invite accepted in a game is saved and joined from the main
-// menu with the game's own exit save, and a direct join is not waited for on the game thread.
+// 1.4.0-rc6, checks against the compiled mod and the game: an invite accepted in a game never takes over a co-op game (rc7:
+// alone, it joins the room in the game; rc6 saved the game and joined from the main menu), and a direct join is not waited
+// for on the game thread.
 internal static class Rc6RuntimeChecks
 {
     const BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
@@ -26,13 +27,9 @@ internal static class Rc6RuntimeChecks
                 throw new Exception("nothing waits for the connection before the handshake");
         });
 
-        test("rc6: an invite accepted in a game alone saves it with the game's own exit save, and is joined from the main menu", () =>
+        test("rc6: an invite accepted in a game asks the invite's rule before it connects (rc7: alone, it joins in the game)", () =>
         {
-            // The game: SaveAndOpenMainMenu asks for the exit save (skipAutoSave false), and the autosaver makes it.
-            Type loader = Game("Timberborn.MainMenuSceneLoading", "Timberborn.MainMenuSceneLoading.MainMenuSceneLoader");
-            var save = IlScan.Instructions(Only(loader, "SaveAndOpenMainMenu"));
-            int post = save.FindIndex(i => i.Op == OpCodes.Newobj && i.Member?.DeclaringType?.Name == "PreMainMenuStartedEvent");
-            if (post < 1 || save[post - 1].Op != OpCodes.Ldc_I4_0) throw new Exception("the game's SaveAndOpenMainMenu no longer asks for an exit save");
+            // The game's exit save (rc7 makes it at Start, Rc7RuntimeChecks): the one the game makes on its way to the main menu.
             Type autosaver = Game("Timberborn.Autosaving", "Timberborn.Autosaving.Autosaver");
             if (!IlScan.Instructions(Only(autosaver, "OnPreMainMenuStarted")).Any(i => i.Calls && i.Member?.Name == "CreateExitSave"))
                 throw new Exception("the game no longer saves on the way to the main menu");
@@ -47,10 +44,11 @@ internal static class Rc6RuntimeChecks
             int decide = join.FindIndex(i => i.Calls && i.Member?.Name == "Decide" && i.Member.DeclaringType?.Name == "InviteRules");
             int connect = join.FindIndex(i => i.Calls && i.Member?.Name == "TryToConnect");
             if (decide < 0 || connect < decide) throw new Exception("a lobby entered in a game connects before the invite's rule is asked");
-            if (!IlScan.Of(steam).Values.Any(members => members.Any(m => m.Name == "SaveAndOpenMainMenu" && m.DeclaringType == loader)))
-                throw new Exception("the invite does not save the game on the way to the main menu");
-            if (!IlScan.Instructions(Only(steam, "UpdateSingleton")).Any(i => i.Calls && i.Member?.Name == "JoinPendingInvite"))
-                throw new Exception("the main menu never joins an invite accepted in a game");
+            // rc7: no Save-and-join box, and no join left for the main menu.
+            if (IlScan.Of(steam).Values.Any(members => members.Any(m => m.Name == "SaveAndOpenMainMenu")))
+                throw new Exception("an invite in a game saves it and goes to the main menu again");
+            foreach (string gone in new[] { "JoinPendingInvite", "OfferJoinFromGame" })
+                if (steam.GetMethod(gone, All) != null) throw new Exception(gone + " is back: an invite in a game goes through the main menu");
         });
     }
 }

@@ -30,6 +30,9 @@ namespace BeaverBuddies
             if (Plugin.Disabled) return;
             // Reset everything before loading singletons
             SingletonManager.Reset();
+            // A join held apart from the game this replaces (its room's window never opened, and the player loaded
+            // another save) belongs to that game: closed, or it would stay in the host's room with nothing reading it.
+            ClientConnectionService.DropHeldJoin();
 
             Plugin.Log($"Registering In Game Services");
 
@@ -48,10 +51,16 @@ namespace BeaverBuddies
             // A new game's waiting room makes its world in a single-player scene, then loads it as the hosted game.
             containerDefinition.Bind<BeaverBuddies.Lobby.LobbyWorldMaker>().AsSingleton();
             // Host co-op game in a game played alone, and Save and Rehost in co-op: both save this game and open its Co-op
-            // Game page in the main menu. Bound in every game, before the co-op-only services below (1.4.0-rc5 review, A1).
+            // Game room over it. Bound in every game, before the co-op-only services below (1.4.0-rc5 review, A1).
             containerDefinition.Bind<RehostingService>().AsSingleton();
-            // The Host co-op game box is the main menu's: a game's Load Game box only loads (A7).
-            HostCoopMenu.BoxClosed();
+            // A save's Co-op Game room opens in a game too, as a window over it (1.4.0-rc7): the host's panel, what a mixed
+            // save's room offers (the host's unlocked factions), and the game scene's side of it (the main menu's style
+            // sheets, and which scene this is). In every game, co-op or not, so before the co-op-only services below.
+            containerDefinition.Bind<BeaverBuddies.Lobby.InGameLobby>().AsSingleton();
+            containerDefinition.Bind<BeaverBuddies.Lobby.LobbyHostPanel>().AsSingleton();
+            containerDefinition.Bind<BeaverBuddies.Factions.NewGameFactionCapture>().AsSingleton();
+            // And a host's room joined from this game (an invite, the game menu's Join co-op game): its window over it.
+            containerDefinition.Bind<BeaverBuddies.Lobby.LobbyGuestPanel>().AsSingleton();
 
             // EventIO gets set before load, so if it's null, this is a regular
             // game, so don't initialize these services.
@@ -102,8 +111,15 @@ namespace BeaverBuddies
             // A new game's waiting room left over from a scene the flow did not expect (its guests are told why).
             BeaverBuddies.Lobby.LobbySession.EndStale("the host went back to the main menu");
             EventIO.Reset();
+            // And, once the last session's server has closed, a Steam lobby it kept for a room that never took it
+            // (1.4.0-rc7), and a join still held apart from the game that was left.
+            SteamListener.LeaveHandedOverLobby();
+            ClientConnectionService.DropHeldJoin();
             // A faction picked in an earlier waiting room is not this next game's.
             BeaverBuddies.Factions.LocalFactionPick.Clear();
+            // No game is loaded, so nothing is mixed (until 1.4.0-rc7 NewGameFactionCapture did this as it was made; it is
+            // made in every game now, where it must leave the loaded game's factions alone).
+            BeaverBuddies.Factions.MixedFactions.Reset();
             // Nor a hosted save's conversion to separate colonies that never started (1.4.0-rc4).
             BeaverBuddies.Colonies.SaveConversion.Pending = null;
 
@@ -120,13 +136,12 @@ namespace BeaverBuddies
             containerDefinition.Bind<BeaverBuddies.Factions.NewGameFactionCapture>().AsSingleton();
             // The Game Mode page's colony checkboxes (Separate colonies, and under it science and factions).
             containerDefinition.Bind<BeaverBuddies.Lobby.NewGameColonyOptions>().AsSingleton();
-            // Host co-op game on the main menu (the Load Game box as the Host co-op game box), and a save a game handed over.
-            containerDefinition.Bind<HostCoopMenu>().AsSingleton();
 
             //new ReportingService().PostDesync("test").ContinueWith(result => Plugin.Log($"Posted: {result.Result}"));
             containerDefinition.Bind<SteamOverlayConnectionService>().AsSingleton();
             containerDefinition.Bind<DuplicateModWarning>().AsSingleton();
-            // A new game's waiting room (Host co-op game on the Game Mode page), and a guest's page in one.
+            // A new game's waiting room (Host co-op game on the Game Mode page), a save's (the Load game box's Host co-op
+            // game), and a guest's page in one.
             containerDefinition.Bind<BeaverBuddies.Lobby.LobbyHostPanel>().AsSingleton();
             containerDefinition.Bind<BeaverBuddies.Lobby.LobbyGuestPanel>().AsSingleton();
 

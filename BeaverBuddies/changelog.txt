@@ -1,3 +1,11 @@
+v1.4.0-rc7 (BeaverBuddies MultiColony)
+* Host a save from Load game, in the main menu or in a game: pick a save and press Host co-op game, right of Load. The main menu's own Host co-op game is gone.
+* The Co-op Game room opens over your game as a window, and the game pauses under it; Cancel or Leave takes you back to your game as it was. Nobody goes through the main menu any more.
+* Join from inside a game: the game menu has Join co-op game again, and a friend's invite accepted while you play alone opens their room over your game.
+* Save and Rehost brings your friends into the room by themselves, with no lost connection to click through. Rejoin and Reconnect wait in your game.
+* At Start Game, the game you leave gets its exit save, as Exit to menu makes it.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc6 (BeaverBuddies MultiColony)
 * Accept a friend's invite while playing alone: Save and join saves your game and takes you to their Co-op Game page. In a co-op game the invite waits until you leave it.
 * Joining by IP address no longer freezes the menu while it connects.

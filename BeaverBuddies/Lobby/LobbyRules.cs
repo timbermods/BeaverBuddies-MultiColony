@@ -16,6 +16,35 @@ namespace BeaverBuddies.Lobby
         NotReady,
     }
 
+    /// <summary>How the room's page or window goes on the game's panel stack (1.4.0-rc7).</summary>
+    public enum RoomPush
+    {
+        /// <summary>Not yet: an overlay (the Steam overlay's input blocker) is on top, and would be hidden under it.</summary>
+        Wait,
+        /// <summary>Over the game itself, nothing being open (an invite, a carried guest, a desync's Save and Rehost).</summary>
+        Push,
+        /// <summary>In place of the panel on top (a page of the main menu, the Load game box, the game menu), which comes back when it closes.</summary>
+        HideAndPush,
+    }
+
+    /// <summary>
+    /// Whether Start makes the exit save of the game a player is in, as the hosted save replaces it (1.4.0-rc7, K3): the
+    /// game's own exit save, the one Exit to menu makes.
+    /// </summary>
+    public static class ExitSaveRules
+    {
+        /// <param name="inGame">The player is in a game (the main menu has nothing to save).</param>
+        /// <param name="loadedAsGuest">
+        /// That game was loaded as a guest (also after its session ended): its copy is the host's, so a guest carried into
+        /// its host's room, or one whose session was lost, saves nothing.
+        /// </param>
+        /// <param name="savedForRoom">
+        /// The host's game was saved for this room a moment ago (the game menu's Host co-op game, Save and Rehost): that save
+        /// is the one being hosted.
+        /// </param>
+        public static bool Make(bool inGame, bool loadedAsGuest, bool savedForRoom) => inGame && !loadedAsGuest && !savedForRoom;
+    }
+
     /// <summary>A line of text as a loc key and its arguments.</summary>
     public readonly struct LobbyText
     {
@@ -137,6 +166,25 @@ namespace BeaverBuddies.Lobby
             foreach (string id in guestIds ?? Array.Empty<string>())
                 slots.Add(string.IsNullOrEmpty(id) || id == hostId ? null : table.Resolve(id, ""));
             return slots;
+        }
+
+        /// <summary>
+        /// How the host's room is shown (1.4.0-rc7): in place of what it was opened from (the Game Mode page or the Load game
+        /// box, both scenes; the game menu), so Cancel returns there; over the game when nothing is open.
+        /// </summary>
+        public static RoomPush HostRoomPush(int panelsOpen) => panelsOpen == 0 ? RoomPush.Push : RoomPush.HideAndPush;
+
+        /// <summary>
+        /// How a guest's room is shown once its host welcomes it: never over an overlay (an invite accepted in the Steam
+        /// overlay leaves its input blocker on top until the overlay closes: a page pushed then hid the blocker and shared
+        /// the screen with the main menu, the first playtest), else in place of the panel on top (the main menu's page, the
+        /// game menu it was joined from), or, in a game with nothing open (an invite accepted while playing, a guest carried
+        /// into its host's room), over the game (1.4.0-rc7).
+        /// </summary>
+        public static RoomPush GuestRoomPush(bool inGame, int panelsOpen, bool overlayOnTop)
+        {
+            if (panelsOpen > 0 && overlayOnTop) return RoomPush.Wait;
+            return panelsOpen == 0 && inGame ? RoomPush.Push : RoomPush.HideAndPush;
         }
 
         /// <summary>The name of the new world's first save, in the settlement the host named (like a Rehost save's).</summary>

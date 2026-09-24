@@ -20,9 +20,16 @@ namespace BeaverBuddies.Connect
         /// <param name="isCurrentSession">This is still the session the game is using, not one a rejoin replaced.</param>
         /// <param name="mapDelivered">The host's save arrived and the game was told to load it.</param>
         /// <param name="hasReplayFailure">A failed action already stopped multiplayer and said so.</param>
-        public static ConnectionErrorPlan Decide(bool isCurrentSession, bool mapDelivered, bool hasReplayFailure)
+        public static ConnectionErrorPlan Decide(bool isCurrentSession, bool mapDelivered, bool hasReplayFailure) =>
+            Decide(isCurrentSession, false, mapDelivered, hasReplayFailure);
+
+        /// <param name="isHeldJoin">
+        /// A join made in a game, held apart from it until its save arrives (1.4.0-rc7, JoinFlowRules.HoldJoin): not the
+        /// game's session, but still the player's join, and its error is the only word they get.
+        /// </param>
+        public static ConnectionErrorPlan Decide(bool isCurrentSession, bool isHeldJoin, bool mapDelivered, bool hasReplayFailure)
         {
-            if (!isCurrentSession) return ConnectionErrorPlan.Ignore;
+            if (!isCurrentSession && !isHeldJoin) return ConnectionErrorPlan.Ignore;
             // Joining never produced a game, so this error is the only explanation the player will get.
             if (!mapDelivered) return ConnectionErrorPlan.ReportWhileJoining;
             return hasReplayFailure ? ConnectionErrorPlan.Ignore : ConnectionErrorPlan.EndRunningGame;

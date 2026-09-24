@@ -11,15 +11,26 @@ using UnityEngine.UIElements;
 
 namespace BeaverBuddies.Lobby
 {
+    /// <summary>What holds the room's content (1.4.0-rc7): the main menu's page, or a window over a game.</summary>
+    internal enum LobbyFrame
+    {
+        /// <summary>A page of the game's own New Game wizard (MainMenu/NewGameTemplate: the banner, the capsule title, Back and Next).</summary>
+        Page,
+        /// <summary>A box over a running game (Common/NamedBoxTemplate: the frame, the capsule title, the close button), as the Load game box is.</summary>
+        Window,
+    }
+
     /// <summary>
-    /// The waiting room's page, for the host and a guest alike: a page of the game's own New Game wizard
-    /// (MainMenu/NewGameTemplate: the banner, the capsule title, Back and Next), holding the Game Mode page's summary
-    /// plate with the faction's logo ring, the settlement's name, the Mods window's board with one Mods row per player,
-    /// the faction page's yellow status line, and (for the host) the map page's wide Invite button.
+    /// The waiting room's content, for the host and a guest alike, in either frame (<see cref="LobbyFrame"/>): the Game Mode
+    /// page's summary plate, the settlement's name, the Mods window's board with one Mods row per player, the faction page's
+    /// yellow status line, and (for the host) the map page's wide Invite button; then the pair of buttons (Cancel / Start
+    /// Game, Leave / Ready). The content is built once, the same in both frames, and keeps one API, so the host's and the
+    /// guest's panels only choose the frame.
     /// <para>
     /// Only the game's templates and the classes of the style sheets the main menu loads (CommonStyle, CoreStyle,
-    /// OptionsStyle, MainMenuStyle, MainMenuMiscStyle, ModdingStyle). Not Util/NativeElements: its helpers use the in-game
-    /// sheets, which the main menu does not load. See design/PRE-GAME-LOBBY-PLAN.md §5.
+    /// OptionsStyle, MainMenuStyle, MainMenuMiscStyle, ModdingStyle); a window in a game has the four a game lacks added to
+    /// its root (InGameLobby.AttachStyles). Not Util/NativeElements: its helpers use the in-game sheets, which the main menu
+    /// does not load. See design/PRE-GAME-LOBBY-PLAN.md §5 and design/IN-GAME-HOSTING-PLAN.md §3.
     /// </para>
     /// </summary>
     internal sealed class LobbyPage
@@ -33,6 +44,14 @@ namespace BeaverBuddies.Lobby
             "button-square--large", "button-cross",
         };
 
+        /// <summary>The window's own classes (the named box, its button row and buttons), besides <see cref="ClassesUsed"/>.</summary>
+        public static readonly string[] WindowClassesUsed = { "content-row-centered", "box-buttons", "menu-button", "menu-button--medium" };
+
+        /// <summary>The window's width: the board's 600 px and the box's padding (45 px each side, CoreStyle), and a little more.</summary>
+        public const float WindowWidth = 700;
+        /// <summary>What the window leaves of the screen's height, above and below it together; its board scrolls in what is left.</summary>
+        public const float WindowMargin = 40;
+
         private const string InviteIconPath = "UI/Images/Game/ico-beavers";
 
         private readonly VisualElementLoader _loader;
@@ -43,6 +62,9 @@ namespace BeaverBuddies.Lobby
         public VisualElement Root { get; }
         public Button Back { get; }
         public Button Next { get; }
+        /// <summary>The window's close button (its Cancel or Leave); null on the page, whose Back is the way out.</summary>
+        public Button Close { get; }
+        public LobbyFrame Frame { get; }
         public Label Status { get; }
         public Button Invite { get; }
         public Label DirectIp { get; }
@@ -62,36 +84,77 @@ namespace BeaverBuddies.Lobby
         /// <summary>The host clicked a guest's remove button.</summary>
         public event Action<LobbyPlayer> RemoveClicked;
 
+        /// <param name="attachStyles">A window in a game: adds the main menu's sheets to its root (InGameLobby.AttachStyles).</param>
         public LobbyPage(VisualElementLoader loader, VisualElementInitializer initializer, ITooltipRegistrar tooltipRegistrar,
-            string headerLocKey)
+            string headerLocKey, LobbyFrame frame = LobbyFrame.Page, Action<VisualElement> attachStyles = null)
         {
             _loader = loader;
             _initializer = initializer;
             _tooltipRegistrar = tooltipRegistrar;
+            Frame = frame;
 
-            // Built as the game's own New Game pages are (NewGameModePanel.uxml, NewGameFactionPanel.uxml): a grow-centered
-            // root holding the template as an instance (width-stretch), whose content goes into the template's content slot.
-            // NewGameTemplate marks that slot (MainContent) content-container="true", so the TemplateContainer forwards its
-            // children, and ElementAt(0), to the empty slot: 1.4.0-beta18 to beta21 took ElementAt(0) for the page's root
-            // and threw ArgumentOutOfRange the moment the waiting room opened (the first playtest).
-            TemplateContainer template = loader.LoadVisualTreeAsset("MainMenu/NewGameTemplate").CloneTree();
-            template.AddToClassList("width-stretch");
-            Root = new VisualElement { pickingMode = PickingMode.Ignore };
-            Root.AddToClassList("grow-centered");
-            Root.Add(template);
-            // The game's pages give the template's title a key through their own UXML (AttributeOverrides); loaded alone it
-            // has none, and the localizer would throw. So it is keyed here, and only then initialised.
-            header = template.Q<Label>("HeaderText");
-            if (header is LocalizableLabel localizable) localizable._textLocKey = headerLocKey;
-            initializer.InitializeVisualElement(Root);
+            VisualElement main;
+            VisualElement buttons = null;
+            if (frame == LobbyFrame.Page)
+            {
+                // Built as the game's own New Game pages are (NewGameModePanel.uxml, NewGameFactionPanel.uxml): a grow-centered
+                // root holding the template as an instance (width-stretch), whose content goes into the template's content slot.
+                // NewGameTemplate marks that slot (MainContent) content-container="true", so the TemplateContainer forwards its
+                // children, and ElementAt(0), to the empty slot: 1.4.0-beta18 to beta21 took ElementAt(0) for the page's root
+                // and threw ArgumentOutOfRange the moment the waiting room opened (the first playtest).
+                TemplateContainer template = loader.LoadVisualTreeAsset("MainMenu/NewGameTemplate").CloneTree();
+                template.AddToClassList("width-stretch");
+                Root = new VisualElement { pickingMode = PickingMode.Ignore };
+                Root.AddToClassList("grow-centered");
+                Root.Add(template);
+                // The game's pages give the template's title a key through their own UXML (AttributeOverrides); loaded alone it
+                // has none, and the localizer would throw. So it is keyed here, and only then initialised.
+                header = template.Q<Label>("HeaderText");
+                if (header is LocalizableLabel localizable) localizable._textLocKey = headerLocKey;
+                initializer.InitializeVisualElement(Root);
 
-            Back = template.Q<Button>("BackButton");
-            Next = template.Q<Button>("NextButton");
-            // Both buttons the size of the template's Back (menu-button--medium): its Next is the wizard's larger one, and
-            // here the two sit side by side as a pair (Cancel / Start Game, Leave / Ready).
-            Next.RemoveFromClassList("menu-button--large-text");
-            Next.AddToClassList("menu-button--medium");
-            VisualElement main = template.Q(className: "new-game__main-content") ?? template.contentContainer;
+                Back = template.Q<Button>("BackButton");
+                Next = template.Q<Button>("NextButton");
+                // Both buttons the size of the template's Back (menu-button--medium): its Next is the wizard's larger one, and
+                // here the two sit side by side as a pair (Cancel / Start Game, Leave / Ready).
+                Next.RemoveFromClassList("menu-button--large-text");
+                Next.AddToClassList("menu-button--medium");
+                main = template.Q(className: "new-game__main-content") ?? template.contentContainer;
+            }
+            else
+            {
+                // The game's named box, as the Load game box and the Join co-op game box are: an instance whose children go
+                // into its content slot (content-container="true"; so never ElementAt(0)), its title keyed before it is
+                // initialised. Over the game, centred; the main menu's sheets on its root, before anything is styled.
+                TemplateContainer box = loader.LoadVisualTreeAsset("Common/NamedBoxTemplate").CloneTree();
+                box.style.width = WindowWidth;
+                Root = new VisualElement { pickingMode = PickingMode.Ignore };
+                Root.AddToClassList("content-row-centered");
+                attachStyles?.Invoke(Root);
+                Root.Add(box);
+                header = box.Q<Label>("Header");
+                if (header is LocalizableLabel localizable) localizable._textLocKey = headerLocKey;
+                Close = box.Q<Button>("CloseButton");
+                // The game's box buttons (a box-buttons row of medium menu buttons), under everything: added, and initialised, at
+                // the end.
+                buttons = new VisualElement();
+                buttons.AddToClassList("box-buttons");
+                buttons.style.flexShrink = 0;
+                Back = WindowButton(buttons);
+                Next = WindowButton(buttons);
+                initializer.InitializeVisualElement(Root);
+                main = box.contentContainer;
+                // The box never grows past the screen: its content is held to the screen's height, and the board, the one
+                // part that shrinks, scrolls in what is left.
+                VisualElement content = main;
+                Root.RegisterCallback<GeometryChangedEvent>(_ =>
+                {
+                    float screen = Root.panel?.visualTree?.layout.height ?? 0;
+                    if (!(screen > 0)) return;
+                    var most = new StyleLength(Math.Max(200, screen - WindowMargin));
+                    if (content.style.maxHeight != most) content.style.maxHeight = most;
+                });
+            }
 
             // The Game Mode page's summary plate, alone and centred as that page shows it. (A logo ring beside it, until
             // beta22, pushed it off centre; each player's row shows their faction's logo.)
@@ -177,6 +240,28 @@ namespace BeaverBuddies.Lobby
             // Once, before any row: each pass over a ScrollView adds another set of scroll-bar decorations.
             foreach (VisualElement element in new VisualElement[] { plate, settlement, factionNote, listTitle, board, Status, Invite, DirectIp })
                 initializer.InitializeVisualElement(element);
+
+            if (buttons != null)
+            {
+                // In the window everything but the board keeps its height; the board scrolls.
+                foreach (VisualElement element in new VisualElement[] { plate, settlement, factionNote, optionsSlot, factionSlot, listTitle, Status, Invite, DirectIp })
+                    element.style.flexShrink = 0;
+                // The wide Invite button centred, as it is on the page's centred column.
+                Invite.style.alignSelf = Align.Center;
+                main.Add(buttons);
+                // Made before the box was initialised, and not in it yet: their click sound and any-modifier clicks now.
+                initializer.InitializeVisualElement(buttons);
+            }
+        }
+
+        // One of the window's pair of buttons: the game's medium menu button, as the Join co-op game box makes them.
+        private static Button WindowButton(VisualElement row)
+        {
+            var button = new NineSliceButton();
+            button.AddToClassList("menu-button");
+            button.AddToClassList("menu-button--medium");
+            row.Add(button);
+            return button;
         }
 
         public void SetHeader(string text) => header.text = text;

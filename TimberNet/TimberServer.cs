@@ -933,6 +933,38 @@ namespace TimberNet
             }
         }
 
+        /// <summary>
+        /// Tells every guest in the game that the host is moving it to a waiting room (MoveFrames, 1.4.0-rc7), and waits a
+        /// little for the word to go out (each guest's lane, <see cref="AbortFlushMs"/> at most), closing nothing: the
+        /// caller ends the session after. A guest still receiving its save is not told (its join thread holds its stream
+        /// for the whole paced save, as in <see cref="AbortSession"/>): it sees its connection end, and its Rejoin reaches
+        /// the same room. Returns how many guests were told.
+        /// </summary>
+        public int SendMoveNotice(ulong? steamLobby)
+        {
+            byte[] wire = MessageToBuffer(MoveFrames.Notice(steamLobby));
+            var lanes = new List<SendLane>();
+            int told = 0;
+            lock (queuedMessages)
+                foreach (var client in clients.ToArray())
+                {
+                    if (!client.Connected || queuedMessages.ContainsKey(client)) continue;
+                    told++;
+                    // After what is already queued for the guest, from its lane; written at once to one without a lane.
+                    if (sendLanes.TryGetValue(client, out SendLane? lane))
+                    {
+                        lane.Post(wire, MoveFrames.Type, TickCount);
+                        lanes.Add(lane);
+                    }
+                    else SendBytes(client, wire, MoveFrames.Type, TickCount);
+                }
+            // Outside the lock, and briefly: a guest that takes nothing must not hold up the host's move.
+            long deadline = SendLane.NowMs + AbortFlushMs;
+            foreach (SendLane lane in lanes) lane.WaitUntilEmpty((int)Math.Max(0, deadline - SendLane.NowMs));
+            Log($"Told {told} guest(s) the game is moving to a waiting room");
+            return told;
+        }
+
         public override void AbortSession(string reason)
         {
             var lanes = new List<SendLane>();
