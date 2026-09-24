@@ -27,6 +27,24 @@ namespace BeaverBuddies.Lobby
         HideAndPush,
     }
 
+    /// <summary>
+    /// Whether Start makes the exit save of the game a player is in, as the hosted save replaces it (1.4.0-rc7, K3): the
+    /// game's own exit save, the one Exit to menu makes.
+    /// </summary>
+    public static class ExitSaveRules
+    {
+        /// <param name="inGame">The player is in a game (the main menu has nothing to save).</param>
+        /// <param name="loadedAsGuest">
+        /// That game was loaded as a guest (also after its session ended): its copy is the host's, so a guest carried into
+        /// its host's room, or one whose session was lost, saves nothing.
+        /// </param>
+        /// <param name="savedForRoom">
+        /// The host's game was saved for this room a moment ago (the game menu's Host co-op game, Save and Rehost): that save
+        /// is the one being hosted.
+        /// </param>
+        public static bool Make(bool inGame, bool loadedAsGuest, bool savedForRoom) => inGame && !loadedAsGuest && !savedForRoom;
+    }
+
     /// <summary>A line of text as a loc key and its arguments.</summary>
     public readonly struct LobbyText
     {

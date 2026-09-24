@@ -587,6 +587,11 @@ namespace BeaverBuddies.Connect
                 catch (Exception error) { Plugin.LogWarning("Could not word the loading screen's tip: " + error.Message); }
             }
 
+            // K3: a join made in a game replaces that game with the host's save: its exit save first, as Exit to menu makes it
+            // (not a guest's copy of the host's game; the main menu has none). Before the join is installed, so it is saved
+            // as the single-player game it still is.
+            InGameLobby.Current?.ExitSaveForStart(savedForRoom: false);
+
             // A join held apart from a game becomes the session only now, with this game about to be replaced (1.4.0-rc7);
             // in the main menu it has been EventIO since it connected.
             if (joined != null && joined.HeldJoin)

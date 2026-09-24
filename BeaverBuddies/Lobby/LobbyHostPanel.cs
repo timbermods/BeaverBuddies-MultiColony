@@ -328,6 +328,9 @@ namespace BeaverBuddies.Lobby
             convertOptions?.SetEnabled(false);
             page.SetStatus(new LobbyText(LobbyRules.KeyPrefix + "Status.Starting"));
             LobbySession started = session;
+            // K3: a room opened over a game replaces that game with the hosted save: its exit save first, as Exit to menu
+            // makes it (not for a game just saved for the room; the main menu has none).
+            InGameLobby.Current?.ExitSaveForStart(started.Setup.SavedForRoom);
             // The menu scene ends here for a new game; the session carries on (LobbyWorldMaker).
             session = null;
             started.Start(_sceneLoader, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Tip.Creating"));

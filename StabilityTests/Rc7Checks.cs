@@ -460,5 +460,27 @@ static class Rc7Checks
             Check(SessionEndMessages.ConnectionLost(null).Contains("Rejoin waits here"), "the lost connection still sends the player to the main menu");
             Check(Csv("BeaverBuddies.Rejoin.Waiting")!.Contains("Co-op Game room"), "the rejoin's box still names a page in the main menu");
         });
+
+        // ---- Exit saves at Start (plan §4.5, K3) ----
+
+        yield return ("rc7: Start's exit save: a host or guest leaving a game of their own, not a guest's copy, a game just saved, or the main menu", () =>
+        {
+            Check(ExitSaveRules.Make(inGame: true, loadedAsGuest: false, savedForRoom: false), "the host's game (Load game → Host co-op game) is not saved");
+            Check(!ExitSaveRules.Make(true, false, savedForRoom: true), "the game menu's Host co-op game or Save and Rehost is saved twice");
+            Check(!ExitSaveRules.Make(true, loadedAsGuest: true, false), "a carried guest's copy of the host's game is saved");
+            Check(ExitSaveRules.Make(true, false, false), "a guest joining from a game played alone is not saved");
+            Check(!ExitSaveRules.Make(inGame: false, false, false), "the main menu makes an exit save");
+            string lobby = Source("BeaverBuddies", "Lobby", "InGameLobby.cs");
+            string exit = Body(lobby, "public void ExitSaveForStart(bool savedForRoom)");
+            InOrder(exit, "the exit save", "bool loadedAsGuest = replay != null && !replay.LoadedAsHost;", "ExitSaveRules.Make(", "_autosaver.CreateExitSave();");
+            Check(exit.Contains("catch (Exception error)") && exit.Contains("starting anyway"), "a failed exit save stops the start");
+            // The host: at Start, before the session starts. The guest: when the save arrives, before its join is installed.
+            InOrder(Body(Source("BeaverBuddies", "Lobby", "LobbyHostPanel.cs"), "private void StartNow()"), "the host's Start",
+                "InGameLobby.Current?.ExitSaveForStart(started.Setup.SavedForRoom);", "started.Start(_sceneLoader,");
+            InOrder(Body(Source("BeaverBuddies", "Connect", "ClientConnectionService.cs"), "private void LoadMap(byte[] mapBytes, ClientEventIO joined)"), "the guest's save",
+                "InGameLobby.Current?.ExitSaveForStart(savedForRoom: false);", "EventIO.Set(joined);", "SingletonManager.Reset();");
+            // The autosaver is the game's alone: the main menu never binds the game side of the room.
+            Check(!Body(Source("BeaverBuddies", "Plugin.cs"), "public class ConnectionMenuConfigurator").Contains("InGameLobby>"), "the main menu binds the autosaver's user");
+        });
     }
 }

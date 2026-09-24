@@ -120,8 +120,8 @@ internal static class Rc7RuntimeChecks
             Type loader = Game("Timberborn.AssetSystem", "Timberborn.AssetSystem.IAssetLoader");
             if (!loader.GetMethods().Any(m => m.Name == "Load" && m.IsGenericMethodDefinition && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string)))
                 throw new Exception("IAssetLoader.Load<T>(string) is gone (the window's style sheets)");
-            if (Mod("BeaverBuddies.Lobby.InGameLobby").GetConstructors().Single().GetParameters().Single().ParameterType != loader)
-                throw new Exception("the game side of the room no longer takes only the asset loader");
+            if (!Mod("BeaverBuddies.Lobby.InGameLobby").GetConstructors().Single().GetParameters().Any(p => p.ParameterType == loader))
+                throw new Exception("the game side of the room no longer takes the asset loader");
         });
 
         test("rc7: every game binds the host's and the guest's rooms, their game side and the faction capture before the co-op return", () =>
@@ -279,6 +279,35 @@ internal static class Rc7RuntimeChecks
             if (!watch.Any(i => i.Calls && i.Is("BeaverBuddies.Connect.JoinFlowRules", "BoxCanShow"))) throw new Exception("the rejoin's box waits for a panel a game may never have");
             Type plan = Mod("BeaverBuddies.Connect.ReconnectStep");
             if (!Enum.GetNames(plan).Contains("ConnectInLobby")) throw new Exception("a Steam guest cannot go straight to the host in the kept lobby");
+        });
+
+        // ---- Exit saves at Start (plan §4.5, K3) ----
+
+        test("rc7: Start makes the game's own exit save of the game it replaces, before the load, on both sides", () =>
+        {
+            Type autosaver = Game("Timberborn.Autosaving", "Timberborn.Autosaving.Autosaver");
+            MethodInfo create = autosaver.GetMethod("CreateExitSave", BindingFlags.Public | BindingFlags.Instance) ?? throw new Exception("Autosaver.CreateExitSave is gone or not public");
+            if (create.GetParameters().Length != 0) throw new Exception("Autosaver.CreateExitSave takes arguments now");
+            Type lobby = Mod("BeaverBuddies.Lobby.InGameLobby");
+            if (!lobby.GetConstructors().Single().GetParameters().Any(p => p.ParameterType == autosaver)) throw new Exception("the game side of the room has no autosaver");
+            var exit = IlScan.Instructions(Only(lobby, "ExitSaveForStart"));
+            int rule = exit.FindIndex(i => i.Calls && i.Is("BeaverBuddies.Lobby.ExitSaveRules", "Make"));
+            int save = exit.FindIndex(i => i.Calls && i.Member == create);
+            if (rule < 0 || save < rule) throw new Exception("the exit save is made without its rule, or not at all");
+            // The host: at Start, before the session starts (and loads the save).
+            var start = IlScan.Instructions(Only(Mod("BeaverBuddies.Lobby.LobbyHostPanel"), "StartNow"));
+            int hostSave = start.FindIndex(i => i.Calls && i.Is("BeaverBuddies.Lobby.InGameLobby", "ExitSaveForStart"));
+            int starts = start.FindIndex(i => i.Calls && i.Is("BeaverBuddies.Lobby.LobbySession", "Start"));
+            if (hostSave < 0 || starts < hostSave) throw new Exception("the host's game is not saved before its room starts");
+            // The guest: when its save arrives, before the join is installed and the registry reset.
+            var load = IlScan.Instructions(Mod("BeaverBuddies.Connect.ClientConnectionService").GetMethod("LoadMap", All)!);
+            int guestSave = load.FindIndex(i => i.Calls && i.Is("BeaverBuddies.Lobby.InGameLobby", "ExitSaveForStart"));
+            int install = load.FindIndex(i => i.Calls && i.Is("BeaverBuddies.IO.EventIO", "Set"));
+            int reset = load.FindIndex(i => i.Calls && i.Is("BeaverBuddies.SingletonManager", "Reset"));
+            if (guestSave < 0 || install < guestSave || reset < guestSave) throw new Exception("the guest's game is not saved before the host's save replaces it");
+            // Only a game binds it: the autosaver is the Game context's (BindingChecks checks the container can make it).
+            if (IlScan.Instructions(Only(Mod("BeaverBuddies.ConnectionMenuConfigurator"), "Configure")).Any(i => i.Calls && i.Member is MethodInfo m
+                && m.IsGenericMethod && m.GetGenericArguments()[0] == lobby)) throw new Exception("the main menu binds the game side of the room");
         });
     }
 }
