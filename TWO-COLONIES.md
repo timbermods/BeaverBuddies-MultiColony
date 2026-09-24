@@ -336,8 +336,8 @@ Trade button close it. It does not pause the game.
 science or beavers) chosen from the game's goods grid (the box opens beside the window, unticked so every good
 shows), each chip a button to change it, **+** to add and **Clear** to drop them. It is saved colony state, set by an
 action (a colony sets only its own). Other players see the wishes beside the colony in their own window, as
-*Sarah is looking for: [icons]* under the header of a Trading Post they share with her, and in the goods grid when
-they choose what to give her (the count in the game's yellow, with a word in the tooltip); choosing what to ask for
+*Player 2 is looking for: [icons]* under the header of a Trading Post they share with that colony, and in the goods
+grid when they choose what to give it (the count in the game's yellow, with a word in the tooltip); choosing what to ask for
 marks your own colony's wishes the same way.
 
 **Good to know:**

@@ -42,7 +42,7 @@ diff do this.
   - **(b) A failed join, any host.** The join fails while the overlay is open, and the error dialog goes over the blocker. When the player dismisses the error, `PanelHiddenEvent` fires, and "Connecting to …" appears for a dead join. beta17 showed "Joined! Receiving map..." here, which was also wrong but was only an OK box.
 - **Fix:** `ShowConnecting` shows the box only while a join is under way and not yet welcomed: `JoinFlowRules.ShowConnectingBox(joining, welcomed)`. See the diff, ClientConnectionService hunk `@@ -230,6 +239,10 @@`, and `JoinFlowRules.cs`. Wire and saves: none.
 - **Check to add:** `ReviewAFixChecks` "A-new-1" (the rule). The panel sequence itself needs the game.
-- **Test script:** D4b. Accept the invite from the Steam overlay and leave the overlay open until the Kyler's Game page shows, then close it. No "Connecting to …" box sits over the page, and Leave returns straight to the main menu.
+- **Test script:** D4b. Accept the invite from the Steam overlay and leave the overlay open until the Player 1's Game page shows, then close it. No "Connecting to …" box sits over the page, and Leave returns straight to the main menu.
 
 ### J5a: the start message carries the previous session's speed boost
 - **Status:** Confirmed by trace.
@@ -89,7 +89,7 @@ diff do this.
   - `ReviewAChecks` "J1", a source scan: LoadMap reads no registry after `SingletonManager.Reset()`; CheckWaitingRoom has a saved/delivered guard; the `GetPanel` postfixes are null-safe.
   - `ReviewAFixChecks` "J1" (the rule table, including D20 and classic).
   - "J1 premise" (TimberNet).
-- **Test script:** D8 is the line that fails today. Add D8a: the guest's loading screen says "Loading Kyler's co-op game…". The guest arrives in the game paused at tick 0, and its `Player.log` has no "Ignoring an error in a handler for the received save".
+- **Test script:** D8 is the line that fails today. Add D8a: the guest's loading screen says "Loading Player 1's co-op game…". The guest arrives in the game paused at tick 0, and its `Player.log` has no "Ignoring an error in a handler for the received save".
 
 ### A-new-3: a guest the room has let go is read ungated until its connection closes, so a SessionFault it sends kills the co-op game at load
 - **Status:** Confirmed by rig: "ReviewA A-new-3" on base reports "1 action(s) as player -1, 1 session fault(s)".

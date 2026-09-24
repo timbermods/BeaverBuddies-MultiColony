@@ -35,7 +35,7 @@ starve you.
 
 **Start together:** choose **Host co-op game** on the New Game page and a Co-op Game room opens. Invite Steam friends
 or give your IP address, everyone readies up, and the world loads for everyone at once. Any save can be hosted the
-same way. On a standard map the other players found their colony wherever they like; a BeaverBuddies multi-start map
+same way. On a standard map the other players found their colony wherever they like; a multi-start map
 gives each player a start.
 
 **Folktails and Iron Teeth together:** with *Mixed factions* ticked, each player picks their own faction in the room.

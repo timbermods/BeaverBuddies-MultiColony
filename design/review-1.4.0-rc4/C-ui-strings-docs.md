@@ -218,7 +218,7 @@ are also 8 docs items (section 3), one of them the public website.
 
 ### C9. In custom difficulty the colony checkboxes no longer line up with the page's own checkboxes
 - **Status:** Plausible (layout from UI.zip; a screenshot settles it). **Kind:** UI/look. **Hits:** every
-  custom-difficulty New Game. It is automatic on BeaverBuddies multi-start maps: `MultiStartPatches.cs:334-376` call
+  custom-difficulty New Game. It is automatic on multi-start maps: `MultiStartPatches.cs:334-376` call
   `OnCustomizeButtonClicked`.
 - **Evidence:**
   - Custom mode hides the moved `TutorialToggleWrapper` (`TutorialToggleController.HideMainToggle`,

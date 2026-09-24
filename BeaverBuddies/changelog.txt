@@ -188,7 +188,7 @@ v1.4.0-beta1 (Timber Together)
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
 v1.4.0-alpha22
-* The Trading Post's ledger names both sides: "You gave 100 Logs, Sarah gave 25 Gears", the partner in their colour.
+* The Trading Post's ledger names both sides: "You gave 100 Logs, Player 2 gave 25 Gears", the partner in their colour.
 
 v1.4.0-alpha21
 * Documentation only: this in-game changelog and the Doc folder describe Timber Together. Nothing in the game changed since alpha14.

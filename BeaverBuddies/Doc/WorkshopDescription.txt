@@ -6,7 +6,7 @@ Co-op Timberborn with a colony each: every player runs their own districts, beav
 
 [b]Trading Posts:[/b] the one place two colonies' roads meet. Offer "100 logs for 25 gears, 4 rounds" (or science, or beavers, or a gift), the other player accepts, and both colonies' beavers carry it out: each side's goods wait on its own half and cross together once both are in. Standing deals repeat by themselves, with a reserve so they never starve you.
 
-[b]Start together:[/b] choose Host co-op game on the New Game page and a Co-op Game room opens. Invite Steam friends or give your IP address, everyone readies up, and the world loads for everyone at once. Any save can be hosted the same way. On a standard map the other players found their colony wherever they like; a BeaverBuddies multi-start map gives each player a start.
+[b]Start together:[/b] choose Host co-op game on the New Game page and a Co-op Game room opens. Invite Steam friends or give your IP address, everyone readies up, and the world loads for everyone at once. Any save can be hosted the same way. On a standard map the other players found their colony wherever they like; a multi-start map gives each player a start.
 
 [b]Folktails and Iron Teeth together:[/b] with Mixed factions ticked, each player picks their own faction in the room.
 

@@ -210,7 +210,7 @@ namespace BeaverBuddies.Colonies
             myHalfButton = NativeElements.WoodenButton(T("BeaverBuddies.Colony.Trade.SelectMyHalf"), SelectMyHalf);
             myHalfButton.style.marginTop = 6;
             body.Add(myHalfButton);
-            // "Sarah is looking for: [icons]" (their wishlist, Ctrl+T), so a player sees what would please before choosing.
+            // "Player 2 is looking for: [icons]" (their wishlist, Ctrl+T), so a player sees what would please before choosing.
             wantsRow = BuildChipRow();
             wantsRow.Root.style.marginTop = 5;
             wantsRow.Caption.style.width = StyleKeyword.Auto;
@@ -976,7 +976,7 @@ namespace BeaverBuddies.Colonies
             keepBox.SetValueWithoutNotify(Math.Max(0, Math.Min(ExchangeTerms.MaxKeep, prefillKeep)).ToString(CultureInfo.InvariantCulture));
         }
 
-        /// <summary>"Sarah is looking for: [icons]" under the header, when she has said so (Ctrl+T).</summary>
+        /// <summary>"Player 2 is looking for: [icons]" under the header, when they have said so (Ctrl+T).</summary>
         private void RefreshWants(int them)
         {
             IReadOnlyList<string> wants = ColonyWishlist.Instance?.Of(them) ?? (IReadOnlyList<string>)Array.Empty<string>();
@@ -1394,7 +1394,7 @@ namespace BeaverBuddies.Colonies
                 date.style.flexShrink = 0;
                 _tooltipRegistrar.Register(date, _timestampFormatter.FormatLongLocalized(record.Cycle, record.Day));
                 row.Add(date);
-                // Both sides named: "You gave [icon] 100", "Sarah gave [icon] 25" (the partner in their colour).
+                // Both sides named: "You gave [icon] 100", "Player 2 gave [icon] 25" (the partner in their colour).
                 row.Add(LedgerPart(T("BeaverBuddies.Colony.Trade.LedgerYouGave"), record.Gave, record.GaveAmount));
                 row.Add(LedgerPart(string.Format(T("BeaverBuddies.Colony.Trade.LedgerTheyGave"), ColoredName(partnerSlot)), record.Got, record.GotAmount));
                 // A click puts the round's terms in the offer form (once the post is free), to offer the same again.
@@ -1407,7 +1407,7 @@ namespace BeaverBuddies.Colonies
                 ledgerRows.Add(NativeElements.MutedText(string.Format(T("BeaverBuddies.Colony.Trade.LedgerMore"), records.Count - LedgerShown)));
         }
 
-        /// <summary>"You gave [icon] 100", "Sarah gave [icon] 25", or "... gave nothing". The caption may carry rich text (a name in its colour).</summary>
+        /// <summary>"You gave [icon] 100", "Player 2 gave [icon] 25", or "... gave nothing". The caption may carry rich text (a name in its colour).</summary>
         private VisualElement LedgerPart(string caption, string item, int amount)
         {
             VisualElement part = NativeElements.Row();
