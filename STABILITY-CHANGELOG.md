@@ -12,8 +12,8 @@ entry above the current one.
 is hosted from the Load game box, in the main menu or in a game; a guest joins from their game; and a host moving a
 running co-op game to a room carries its guests there. Nobody passes through the main menu. It reverses rc4's rule that
 a room is a main-menu page only (D20). Wire: a new host control frame (`HostMoving`); everyone needs this build (the
-handshake checks). Saves unchanged. **Written without the game: not built against Timberborn's assemblies, not played.**
-A session on Kyler's machine builds both configurations and runs RuntimeChecks before release.
+handshake checks). Saves unchanged. Written by a session without the game, then built against Timberborn 1.1.2.4 on
+Kyler's machine: both configurations with 0 warnings, and every RuntimeCheck passes. **Not played.**
 
 - **The Load game box hosts** (`LoadGameBoxGetPanelPatcher`, `LoadGameBoxColonies`, `LoadBoxFit`). It has **Host co-op
   game** right of **Load** (a copy of it), in the main menu and in a game, shown as the game menu's hosting button is
@@ -83,7 +83,8 @@ A session on Kyler's machine builds both configurations and runs RuntimeChecks b
   notice and for a guest reading its host's last frames after its link closed, a real port bound again; the rc4, rc5 and rc6 checks, `JoinBoxChecks` and `JoinFixChecks` follow the change). RuntimeChecks: 13 new in
   `Rc7RuntimeChecks.cs` (the game members used, the UI.zip numbers of the Load game box, every class the window uses in
   a sheet it has, the IL order of the move, the held join and the exit saves, the game context's bindings), and the rc4,
-  rc5, rc6 and desync checks follow; **written, compiled, not run** (they need the game).
+  rc5, rc6 and desync checks follow. All 502 and 453 pass on both builds, and the new and changed RuntimeChecks fail on
+  rc6's DLL.
 - **Docs:** README (hosting a save from Load game, the room over a game, joining from a game, carried guests, rejoin),
   TWO-COLONIES (the room in a game), ALPHA-TEST-SCRIPTS (new Script G with screenshots of the Load game box and the
   window; Scripts D, H and S where they changed). Not played.

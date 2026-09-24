@@ -1,8 +1,8 @@
 # In-game hosting and joining (plan for 1.4.0-rc7)
 
-Status: **built in 1.4.0-rc7 without the game** (2026-09-24: StabilityTests pass; the mod not yet compiled against
-Timberborn's assemblies, RuntimeChecks not yet run, nothing played; the deviations from this plan are listed in the
-rc7 pull request). Written 2026-09-23 after 1.4.0-rc6, from Kyler's request and his answers below. It
+Status: **built in 1.4.0-rc7** (2026-09-24: written by a cloud session without the game, then compiled against
+Timberborn's assemblies on Kyler's machine, where StabilityTests and RuntimeChecks pass; not played; the deviations from
+this plan are listed in the rc7 pull request, #17). Written 2026-09-23 after 1.4.0-rc6, from Kyler's request and his answers below. It
 reverses rc4's rule that a waiting room is a main-menu page only (and D20 of `design/PRE-GAME-LOBBY-PLAN.md`): a
 save can now be hosted, and a room joined, from inside a running game, with nobody sent to the main menu.
 
