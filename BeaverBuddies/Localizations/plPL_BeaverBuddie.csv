@@ -1,7 +1,7 @@
 ID,Text,Comment
 BeaverBuddies.Menu.JoinCoopGame,"Dołącz do gry kooperacyjnej","Join co-op game"
 BeaverBuddies.JoinCoopGame.EnterIp,"Wprowadź globalny adres IP hosta:","Enter the global IP address of the Host:"
-BeaverBuddies.FirstTimer.Message,"Wygląda na to, że pierwszy raz używasz BeaverBuddies. Zalecamy szybkie zapoznanie się z naszym przewodnikiem, aby upewnić się, że jesteś gotowy do gry. Czy chcesz to zrobić teraz?","It looks like this is your first time using BeaverBuddies. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
+BeaverBuddies.FirstTimer.Message,"Wygląda na to, że pierwszy raz używasz Timber Together. Zalecamy szybkie zapoznanie się z naszym przewodnikiem, aby upewnić się, że jesteś gotowy do gry. Czy chcesz to zrobić teraz?","It looks like this is your first time using Timber Together. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
 BeaverBuddies.Saving.HostCoopGame,"Hostuj grę kooperacyjną","Host co-op game"
 BeaverBuddies.JoinCoopGame.ConnectionFailedMessageWithError,"Błąd połączenia:
 {0}
@@ -80,7 +80,7 @@ BeaverBuddies.JoinCoopGame.Error.InvalidFormat,"Nieprawidłowy format adresu. Ni
 BeaverBuddies.JoinCoopGame.Error.InvalidAddress,"Adres nie był prawidłowym adresem IP.
 Podjęto próbę rozwiązania go jako nazwy hosta, ale nie został przetłumaczony na adres IP.",""
 BeaverBuddies.JoinCoopGame.Error.CouldNotConnect,"Nie udało się połączyć z hostem. Sprawdź adres i port oraz upewnij się, że host faktycznie hostuje i ma przekierowany port, jeśli to konieczne. Szczegóły błędu:",""
-BeaverBuddies.KeyBindings.Group,"BeaverBuddies",""
+BeaverBuddies.KeyBindings.Group,"Timber Together",""
 BeaverBuddies.KeyBindings.Ping,"Oznacz lokalizację",""
 BeaverBuddies.Settings.PingPlayerName,"Wyświetlana nazwa pingów",""
 BeaverBuddies.Settings.PingPlayerName.Tooltip,"Nazwa wyświetlana innym graczom obok twoich pingów.",""

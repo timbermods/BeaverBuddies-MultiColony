@@ -22,8 +22,8 @@ jobs:
   update:
     uses: timbermods/.github/.github/workflows/latest-release.yml@main
     with:
-      site-url: https://timbermods.github.io/BeaverBuddies-MultiColony/
+      site-url: https://timbermods.github.io/TimberTogether/
       install-page: 'install.html'
-      asset-pattern: '^BeaverBuddies-MultiColony-[\w.-]+\.zip$'
+      asset-pattern: '^TimberTogether-[\w.-]+\.zip$'
       test-command: ''
       dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}

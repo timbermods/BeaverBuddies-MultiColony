@@ -42,7 +42,7 @@ namespace BeaverBuddies.Help
             // Too high a barrier, and not important enough.
             string changelog = Resources.ChangeLog.Replace("\r\n", "\n");
             string[] lines = changelog.Split("\n\n");
-            string prefix = "BeaverBuddies Changelog:\n\n";
+            string prefix = $"{Plugin.Name} changelog:\n\n";
             if (lines.Length <= 3)
             {
                 return prefix + changelog;

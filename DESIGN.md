@@ -1,5 +1,5 @@
 ---
-name: BeaverBuddies MultiColony
+name: Timber Together
 description: The project site as a river station's signage, with fired-enamel plates on timber posts telling two neighbours where to go and where to meet.
 colors:
   stone: "#e2e6e1"
@@ -149,7 +149,7 @@ components:
     padding: "1rem 3.2rem 1rem 1.15rem"
 ---
 
-# Design System: BeaverBuddies MultiColony
+# Design System: Timber Together
 
 ## Overview
 

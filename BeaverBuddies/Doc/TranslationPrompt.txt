@@ -1,5 +1,5 @@
 The mod's own strings are English only: every language file under Localizations/ carries the original
-BeaverBuddies' translations, and the Stability Fork's and MultiColony's lines (BeaverBuddies.Panel.*,
+BeaverBuddies' translations, and the Stability Fork's and Timber Together's lines (BeaverBuddies.Panel.*,
 BeaverBuddies.Colony.*, BeaverBuddies.Host.*, BeaverBuddies.KeyBind.* and others) exist in enUS only; the game
 shows the English text elsewhere. This prompt is how the original project asked for translations; to translate the
 new lines, take them from enUS_BeaverBuddie.csv (grep for the prefixes above) and use the same request.

@@ -827,8 +827,8 @@ unless another release lands first; re-check before cutting):
 - Build both configurations into a scratch mods folder; zip in the previous release's entry order (new files
   appended), reading long paths through `\\?\`; `<ver>-SHA256SUMS.txt`.
 - Commit; `git fetch`; confirm `origin/trading-exchange` is an ancestor of `HEAD`; push `HEAD` to `trading-exchange`,
-  `main` and the branch; annotated tag `v1.4.0-betaN` ("BeaverBuddies MultiColony 1.4.0-betaN").
-- `gh release create --repo timbermods/BeaverBuddies-MultiColony --prerelease --verify-tag` with notes derived from the
+  `main` and the branch; annotated tag `v1.4.0-betaN` ("Timber Together 1.4.0-betaN").
+- `gh release create --repo timbermods/TimberTogether --prerelease --verify-tag` with notes derived from the
   previous release's (`gh release view <prev> --json body`). Always pass `--repo` (gh's default here is the Stability
   Fork).
 - Afterwards: the asset hash matches (`gh release download`), the CI "Tests" run is green on the tag, Pages built.

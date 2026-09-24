@@ -1,7 +1,7 @@
 ID,Text,Comment
 BeaverBuddies.Menu.JoinCoopGame,"Присоединиться к кооперативной игре","Join co-op game"
 BeaverBuddies.JoinCoopGame.EnterIp,"Введите глобальный IP-адрес хоста:","Enter the global IP address of the Host:"
-BeaverBuddies.FirstTimer.Message,"Похоже, вы используете BeaverBuddies впервые. Мы рекомендуем быстро ознакомиться с нашим руководством, чтобы убедиться, что вы готовы к игре. Хотите сделать это сейчас?","It looks like this is your first time using BeaverBuddies. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
+BeaverBuddies.FirstTimer.Message,"Похоже, вы используете Timber Together впервые. Мы рекомендуем быстро ознакомиться с нашим руководством, чтобы убедиться, что вы готовы к игре. Хотите сделать это сейчас?","It looks like this is your first time using Timber Together. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
 BeaverBuddies.Saving.HostCoopGame,"Хост кооперативной игры","Host co-op game"
 BeaverBuddies.JoinCoopGame.ConnectionFailedMessageWithError,"Ошибка подключения:
 {0}
@@ -80,7 +80,7 @@ BeaverBuddies.JoinCoopGame.Error.InvalidFormat,"Неверный формат а
 BeaverBuddies.JoinCoopGame.Error.InvalidAddress,"Адрес не является допустимым IP-адресом.
 Была предпринята попытка разрешить его как имя хоста, но оно не разрешилось в IP-адрес.",""
 BeaverBuddies.JoinCoopGame.Error.CouldNotConnect,"Не удалось подключиться к хосту. Проверьте адрес и порт, убедитесь, что хост запущен и, при необходимости, настроена переадресация порта. Подробности ошибки:",""
-BeaverBuddies.KeyBindings.Group,"BeaverBuddies",""
+BeaverBuddies.KeyBindings.Group,"Timber Together",""
 BeaverBuddies.KeyBindings.Ping,"Отметить место",""
 BeaverBuddies.Settings.PingPlayerName,"Отображаемое имя меток",""
 BeaverBuddies.Settings.PingPlayerName.Tooltip,"Имя, отображаемое другим игрокам рядом с вашими метками.",""

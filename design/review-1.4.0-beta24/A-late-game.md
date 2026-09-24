@@ -579,8 +579,8 @@ change only your game and will desync it."*
   player's computer with the settings made there."
 - *Automation timing:* "In co-op the automation runs on the game's ticks: a change shows up to one tick later than in
   single player, and a spring-return lever gives a pulse of one tick (it can't be held on)."
-- *Game updates:* "If a Timberborn update changes a part of the game MultiColony corrects, co-op stops at load with a
-  message instead of going out of step; single player is unaffected. Update MultiColony."
+- *Game updates:* "If a Timberborn update changes a part of the game Timber Together corrects, co-op stops at load with a
+  message instead of going out of step; single player is unaffected. Update Timber Together."
 
 **Script L lines** (each: what should happen; send both `Player.log` and Ctrl+Shift+J):
 - **L-A1:** on each colony, build a lever, a relay, a memory, a timer and an indicator in a chain. Flip levers on both

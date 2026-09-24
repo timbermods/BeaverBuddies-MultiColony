@@ -363,5 +363,5 @@ Other amendments:
 
 - **Stamping** is done at the JSON level in TimberNet (`TimberServer.StampReceivedEvent` → `TimberNetBase.StampPlayer`, which stamps the group and every child, in the `$type`/`$values` shape the mod really writes) **and** by the host when it flattens a group in `ReplayEvents`.
 - **Only the first two starts become colonies** (seats exist for two).
-- **Repository and name.** Built in the new BeaverBuddies-MultiColony repository; mod shown as "BeaverBuddies - MultiColony (alpha)" with the unchanged mod ID `beaverbuddies`; zip `BeaverBuddies-MultiColony-1.2.0-two-colony-alpha1.zip` with top folder `BeaverBuddies-MultiColony`.
+- **Repository and name.** Built in the new TimberTogether repository; mod shown as "BeaverBuddies - Timber Together (alpha)" with the unchanged mod ID `beaverbuddies`; zip `TimberTogether-1.2.0-two-colony-alpha1.zip` with top folder `TimberTogether`.
 - **Keys:** border toggle **K**, debug seat flip **Ctrl+Shift+K** (host + debug only), both rebindable.

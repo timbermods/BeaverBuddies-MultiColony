@@ -31,7 +31,7 @@ namespace BeaverBuddies.Colonies
     /// <summary>
     /// A diagnostics report for performance, desync and colony problems, written on request (Ctrl+Shift+J, or the
     /// button in the Ctrl+T window) and by itself when this computer desyncs. It is saved next to Player.log, in
-    /// BeaverBuddies-Reports, and copied to the clipboard, ready to paste into a bug report.
+    /// TimberTogether-Reports, and copied to the clipboard, ready to paste into a bug report.
     ///
     /// Once a day, every computer also logs a one-line fingerprint of the colony state (owners, marks, science,
     /// exchanges, population...), as the host's day plays (ColonyPresenceEvent, which compares it). The simulation is the
@@ -276,12 +276,12 @@ namespace BeaverBuddies.Colonies
             }
             catch (Exception error)
             {
-                text = $"BeaverBuddies MultiColony diagnostics report\nThe report could not be built: {error}";
+                text = $"Timber Together diagnostics report\nThe report could not be built: {error}";
             }
             string path = null;
             try
             {
-                string folder = Path.Combine(Application.persistentDataPath, "BeaverBuddies-Reports");
+                string folder = Path.Combine(Application.persistentDataPath, "TimberTogether-Reports");
                 Directory.CreateDirectory(folder);
                 path = Path.Combine(folder, $"colony-report-{DateTime.Now:yyyyMMdd-HHmmss}.txt");
                 File.WriteAllText(path, text);
@@ -299,7 +299,7 @@ namespace BeaverBuddies.Colonies
         private string BuildReport(string reason)
         {
             var r = new StringBuilder();
-            r.AppendLine("BeaverBuddies MultiColony diagnostics report");
+            r.AppendLine("Timber Together diagnostics report");
             r.AppendLine($"Version {Plugin.Version} | Timberborn {GameVersions.CurrentVersion} | "
                 + $"written {DateTime.Now:yyyy-MM-dd HH:mm:ss} ({reason})");
             EventIO io = EventIO.Get();

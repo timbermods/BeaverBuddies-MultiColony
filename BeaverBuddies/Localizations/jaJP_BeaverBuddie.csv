@@ -1,7 +1,7 @@
 ID,Text,Comment
 BeaverBuddies.Menu.JoinCoopGame,"協力ゲームに参加","Join co-op game"
 BeaverBuddies.JoinCoopGame.EnterIp,"ホストのグローバルIPアドレスを入力してください:","Enter the global IP address of the Host:"
-BeaverBuddies.FirstTimer.Message,"BeaverBuddiesを使用するのは初めてのようです。プレイの準備ができていることを確認するために、ガイドを一読することをお勧めします。今すぐ確認しますか？","It looks like this is your first time using BeaverBuddies. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
+BeaverBuddies.FirstTimer.Message,"Timber Togetherを使用するのは初めてのようです。プレイの準備ができていることを確認するために、ガイドを一読することをお勧めします。今すぐ確認しますか？","It looks like this is your first time using Timber Together. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
 BeaverBuddies.Saving.HostCoopGame,"協力ゲームをホスト","Host co-op game"
 BeaverBuddies.JoinCoopGame.ConnectionFailedMessageWithError,"エラーが発生して参加に失敗しました:
 {0}
@@ -80,7 +80,7 @@ BeaverBuddies.JoinCoopGame.Error.InvalidFormat,"無効なアドレス形式で�
 BeaverBuddies.JoinCoopGame.Error.InvalidAddress,"アドレスが有効なIPアドレスではありませんでした。
 ホスト名として解決を試みましたが、IPアドレスに解決できませんでした。",""
 BeaverBuddies.JoinCoopGame.Error.CouldNotConnect,"ホストに接続できませんでした。アドレスとポートを確認し、ホストが実際にホスティングしており、必要に応じてポート転送が設定されていることを確認してください。エラー詳細:",""
-BeaverBuddies.KeyBindings.Group,"BeaverBuddies",""
+BeaverBuddies.KeyBindings.Group,"Timber Together",""
 BeaverBuddies.KeyBindings.Ping,"場所をピン",""
 BeaverBuddies.Settings.PingPlayerName,"ピンの表示名",""
 BeaverBuddies.Settings.PingPlayerName.Tooltip,"他のプレイヤーのピンの横に表示される名前。",""

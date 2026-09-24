@@ -1,4 +1,4 @@
-# Review findings: the waiting room and mixed factions, MultiColony 1.4.0-beta18 to beta20 → fixed in 1.4.0-beta21
+# Review findings: the waiting room and mixed factions, Timber Together 1.4.0-beta18 to beta20 → fixed in 1.4.0-beta21
 
 **Reviewed:** `v1.4.0-beta20` (`79d4757`), and the beta18 and beta19 changes inside it (from `v1.4.0-beta17`), with
 Timberborn 1.1.2.4. The review followed [REVIEW-PLAN-1.4.0-beta18-20.md](REVIEW-PLAN-1.4.0-beta18-20.md).
@@ -235,7 +235,7 @@ Timberborn 1.1.2.4. The review followed [REVIEW-PLAN-1.4.0-beta18-20.md](REVIEW-
   - MixedStorage only sees the faction-filtered goods.
   - LateGamePerformance's background save completes before the room reads it.
   - Separately, and not a beta18–20 issue: LateGamePerformance pins `ColonyStamp.Save` by a raw-IL hash, which
-    changes with every MultiColony build, so the pin hasn't matched since beta2.
+    changes with every Timber Together build, so the pin hasn't matched since beta2.
 - **C3:** beta17–19 saves load as not mixed.
 
 ---

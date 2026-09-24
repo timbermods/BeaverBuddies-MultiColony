@@ -152,7 +152,7 @@ namespace BeaverBuddies.Events
                 }
             };
 
-            string versionInfo = $"BeaverBuddies: {Plugin.Version}; Timberborn: {GameVersions.CurrentVersion}";
+            string versionInfo = $"{Plugin.Name}: {Plugin.Version}; Timberborn: {GameVersions.CurrentVersion}";
 
             if (!rehostingService.SaveRehostFile(saveReference =>
             {

@@ -1,7 +1,7 @@
 ID,Text,Comment
 BeaverBuddies.Menu.JoinCoopGame,"Приєднатися до кооперативної гри","Join co-op game"
 BeaverBuddies.JoinCoopGame.EnterIp,"Введіть глобальну IP-адресу хоста:","Enter the global IP address of the Host:"
-BeaverBuddies.FirstTimer.Message,"Здається, це ваш перший раз у BeaverBuddies. Ми рекомендуємо швидко ознайомитися з нашим посібником, щоб переконатися, що ви готові до гри. Хочете зробити це зараз?","It looks like this is your first time using BeaverBuddies. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
+BeaverBuddies.FirstTimer.Message,"Здається, це ваш перший раз у Timber Together. Ми рекомендуємо швидко ознайомитися з нашим посібником, щоб переконатися, що ви готові до гри. Хочете зробити це зараз?","It looks like this is your first time using Timber Together. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
 BeaverBuddies.Saving.HostCoopGame,"Хостити кооперативну гру","Host co-op game"
 BeaverBuddies.JoinCoopGame.ConnectionFailedMessageWithError,"Не вдалося підключитися з помилкою:
 {0}
@@ -80,7 +80,7 @@ BeaverBuddies.JoinCoopGame.Error.InvalidFormat,"Неправильний фор�
 BeaverBuddies.JoinCoopGame.Error.InvalidAddress,"Адреса не є дійсною IP-адресою.
 Було зроблено спробу розпізнати її як ім’я хоста, але це не вдалося.",""
 BeaverBuddies.JoinCoopGame.Error.CouldNotConnect,"Не вдалося підключитися до хоста. Перевірте адресу та порт, а також переконайтеся, що хост дійсно запущений і, за потреби, налаштовано переадресацію порту. Деталі помилки:",""
-BeaverBuddies.KeyBindings.Group,"BeaverBuddies",""
+BeaverBuddies.KeyBindings.Group,"Timber Together",""
 BeaverBuddies.KeyBindings.Ping,"Позначити місце",""
 BeaverBuddies.Settings.PingPlayerName,"Відображуване ім'я позначок",""
 BeaverBuddies.Settings.PingPlayerName.Tooltip,"Ім'я, яке показується іншим гравцям поряд із вашими позначками.",""

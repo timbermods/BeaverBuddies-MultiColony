@@ -1,4 +1,4 @@
-# Review plan: ready for 1.4.0? The late game, mixed factions and trading at scale (MultiColony 1.4.0-beta24)
+# Review plan: ready for 1.4.0? The late game, mixed factions and trading at scale (Timber Together 1.4.0-beta24)
 
 **Status:** proposed 2026-09-23, for Kyler's approval. Written against beta23, then rebased on beta24 (the Join co-op
 box, reviewed in §0.1). Written to be carried out by one session (Opus 5.5, xhigh) that runs reviewers as subagents,
@@ -36,7 +36,7 @@ Findings go to `design/REVIEW-FINDINGS-1.4.0-beta24.md`.
 **Why this review.** 1.4.0 is meant to be the first official release. Everything that has been played is the early
 game. The systems people build towards in the late game (automation, the HTTP API, water automation, dynamite and
 tunnels, both Wonders, bots, power grids, badwater), Folktails and Iron Teeth together, and Trading Posts at scale
-have never run in a MultiColony game.
+have never run in a Timber Together game.
 
 **Kyler's goal** (2026-09-23): through the rigour of this review, to know with high confidence that every late-game
 feature works and doesn't crash. The game testing comes later, in a real two-player playtest in a late-game colony.
@@ -75,7 +75,7 @@ those, only `IO/ServerEventIO.cs` is cited here, and those citations use beta24'
 | Waiting room | Pages seen (beta23) | A game started from it (Script D7, D7a, D8) |
 | Join co-op box (beta24) | Kyler, 2026-09-23: "works great" | B24-b (Enter while typing an address with a friend selected) |
 | Mixed factions | Nothing | All of Script F, and every late-game system in a mixed game |
-| Late-game systems in co-op | Nothing in MultiColony. beta12 read Wonder timing, levers and deletions; its Script B lines 8t to 8y are owed | Automation, HTTP API, water automation, dynamite, tunnels, both Wonders, bots, power, badwater, fireworks, zipline and tubeway networks, beehives |
+| Late-game systems in co-op | Nothing in Timber Together. beta12 read Wonder timing, levers and deletions; its Script B lines 8t to 8y are owed | Automation, HTTP API, water automation, dynamite, tunnels, both Wonders, bots, power, badwater, fireworks, zipline and tubeway networks, beehives |
 
 **Not re-reviewed** (found sound before; don't redo them unless this review's scale or the colony layer breaks their
 premise, and then say which premise):
@@ -234,7 +234,7 @@ for the owed playtests):
 
 | | What | Budget |
 |---|---|---|
-| B1 | MultiColony installed, single-player | Tick time within 1 % of the game alone: the mod costs nothing outside co-op |
+| B1 | Timber Together installed, single-player | Tick time within 1 % of the game alone: the mod costs nothing outside co-op |
 | B2 | Co-op host, no guests | The mod's own share of tick time at most 5 % in a shared colony, 7 % with the save split into two colonies |
 | B3 | Allocation | No mod patch or singleton among PerformanceLog's top allocators per tick (GC pauses are the late game's hitches) |
 | B4 | Host and guest, speed 7 and a boost of 15 | The guest stays within `BufferTicksFor(speed) + 2` ticks of the host for 95 % of ticks, with no catch-up spiral, and the achieved tick rate is within 10 % of single-player |
@@ -281,7 +281,7 @@ All `file:line` references are beta23's (see §0 for beta24). "Recorded" means a
 |---|---|---|
 | `R-late` | `Saves/Romans missing leg/Romans missing leg (9) TESTING.timber` | 1.1.2.4, Folktails, 11,356 entities, 319 adults, 1,601 paths, 229 levees, 46 floodgates, 12 gravity batteries, 6 geothermal engines, depth and contamination sensors, 2 gates, a dynamite and an explosives factory, 24 zipline stations, an observatory. No levers, relays, timers, Wonder or HTTP buildings. Carries Kyler's OptimizedLocalHousing singleton |
 | `R-blast` | `Saves/roman is kinda uglyyyy/roman is kinda uglyyyy (37).timber` | Saved in 1.0.13; a reference for its contents only. 14,702 entities, 478 adults, 3,428 paths, 39 double dynamite and 2 dynamite, 22 tunnels, 57 fill valves, 62 floodgates, a badwater rig and dome, a dirt excavator |
-| `R-long` | `Saves/beta15/beta15 (1) late.timber` | MultiColony, two colonies, day 47-9: small |
+| `R-long` | `Saves/beta15/beta15 (1) late.timber` | Timber Together, two colonies, day 47-9: small |
 
 None has Iron Teeth, a mixed game, bots, a Wonder, HTTP buildings, levers, relays, memory or timers. Scripts L, M and
 T (§6) give Kyler the steps to build those in single-player with dev mode before hosting.
@@ -734,14 +734,14 @@ player hit by a desync would press.
 
 ### Tier 2: compatibility
 
-**C1. MultiColony with LateGamePerformance, the late-game stack.** LateGamePerformance (Kyler's) was built for
-BeaverBuddies co-op, and it rewrites what MultiColony hooks:
+**C1. Timber Together with LateGamePerformance, the late-game stack.** LateGamePerformance (Kyler's) was built for
+BeaverBuddies co-op, and it rewrites what Timber Together hooks:
 - `Ticker.Update`'s catch-up (`source/CatchUp.cs`), against the tick gate and `GiveBackBuckets`;
 - the entity tick list (`source/IdleEntities.cs:31, 203`, which knows BeaverBuddies hashes the game's list), against
   the entity-order hash and P-5's interrupts;
 - background saves (`source/BackgroundSave.cs:313-328`), against saves at a tick boundary and the rehost save;
 - the save snapshot, which pins `BeaverBuddies.Colonies.ColonyStamp` by a hash (`source/SaveSnapshot.cs:138`; stale
-  since MultiColony beta2);
+  since Timber Together beta2);
 - hauling, home and terrain caches, against the colony layer's "each colony's beavers work for it alone".
 
 **Check:** read both mods on every shared target (LateGamePerformance's source is at
@@ -752,7 +752,7 @@ LateGamePerformance go to Kyler as a list; they are not fixed from here.
 PersistentWorkAreas, MixedStorage (large stockpiles, faction goods), TipsyTail, PerformanceLog (observer). beta21's C2
 covered the beta18 to beta20 targets; this one covers late-game targets.
 
-**C3. Late single-player and Stability Fork saves hosted in MultiColony.** `R-late` hosted as a shared colony. Then
+**C3. Late single-player and Stability Fork saves hosted in Timber Together.** `R-late` hosted as a shared colony. Then
 split it with *Allow founding colonies in a shared game*: 11,000 entities stamped at one tick (cost, correctness).
 
 ### Tier 3: release readiness
@@ -860,7 +860,7 @@ chooses. The session reads the recordings with `perflog.py report` and `compare`
 
 | Run | What Kyler records | Budgets and leads |
 |---|---|---|
-| P1 | Single-player, the late save, with and without MultiColony | B1, S10 |
+| P1 | Single-player, the late save, with and without Timber Together | B1, S10 |
 | P2 | Hosting it with nobody joined, shared, then split into two colonies | B2, B3 |
 | P3 | With a guest, at speeds 3 and 7 and a boost of 15 | B4 |
 | P4 | A mixed game against a single-faction one of the same size | B6 |
@@ -1022,6 +1022,6 @@ From earlier reviews and releases (the project memory has the detail):
 - **Releasing:**
   - `git fetch` and `merge-base --is-ancestor origin/trading-exchange HEAD` right before pushing; rebase, don't merge,
     if main moved. `changelog.txt` is embedded, so rebuild after a rebase.
-  - `gh` defaults to the upstream fork: always pass `--repo timbermods/BeaverBuddies-MultiColony`.
+  - `gh` defaults to the upstream fork: always pass `--repo timbermods/TimberTogether`.
   - Right after a release, `gh release view` can show no assets; the API listing is the authority.
   - Check the CI "Tests" run on the tag and the branch.

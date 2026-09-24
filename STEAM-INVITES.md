@@ -6,7 +6,7 @@ you host, so Hamachi / port forwarding / direct IP keep working exactly as befor
 
 ## Using it
 
-**Host of a new game (MultiColony's waiting room, 1.4.0-beta18)**
+**Host of a new game (Timber Together's waiting room, 1.4.0-beta18)**
 1. **New Game** → faction → map → difficulty → **Host co-op game** (beside Start), and name the settlement.
 2. On the **Co-op Game** page choose **Invite Friends** (it is enabled once the Steam lobby exists) and pick your
    friend. The friend appears in the room; press **Start Game** when everyone is ready. Nobody new can join after
@@ -20,7 +20,7 @@ same waiting room; invite and start as above.
 2. Load your save and choose **Host co-op game**.
 3. Choose **Invite Friends** and pick your friend in the Steam overlay.
 4. Choose **Start Game** once your friend appears in the connected-player list, and then **wait, paused, until
-   everyone is in**: place or mark nothing meanwhile. In MultiColony, joining closes at the host's first tick or at
+   everyone is in**: place or mark nothing meanwhile. In Timber Together, joining closes at the host's first tick or at
    the first change to the game, whichever comes first (a later joiner would be sent the save without it).
 
 **Friend**
@@ -32,7 +32,7 @@ same waiting room; invite and start as above.
 - Both players need the same BeaverBuddies build and the game version must match. Since 1.4.0-alpha11 the
   mod's own `Buildings` and `TemplateCollections` files are part of that check: a copy with them missing or
   edited is refused with a *build mismatch* message, not merely warned about.
-- **Your colony follows your Steam account** in a separate-colonies game (MultiColony): the save remembers each
+- **Your colony follows your Steam account** in a separate-colonies game (Timber Together): the save remembers each
   player by their Steam ID, so you get the same colony every time, whoever hosts. Without Steam an id kept on your
   computer is used instead. If your Steam account changes, you join as a new player and the host hands your old
   colony to you from the **Ctrl+T** window. When you join through a Steam invite the host checks your Steam ID
@@ -128,7 +128,7 @@ fix and the pumping between ticks are covered by checks on their decisions, not 
    ready yet.
 3. Friend accepts. Expect `Steam link to <name>: accepted` then `... Connecting -> Connected`
    on the host, and the friend appears in the connected-player list.
-4. Start the game, play, then have the friend leave. Confirm the host keeps running. In MultiColony, from the
+4. Start the game, play, then have the friend leave. Confirm the host keeps running. In Timber Together, from the
    next in-game day the **Ctrl+T** window shows the friend's colony as away, and the host may hand it over.
 5. Repeat with the friend's game **closed** when they accept (tests the launch invite).
 6. Repeat with an invite sent **after** the host has unpaused (expect the "already started" message), and once with
@@ -138,7 +138,7 @@ fix and the pumping between ticks are covered by checks on their decisions, not 
     host's **Co-op Game** page; ready up and start. An invite accepted after Start gets the "already started"
     message. See `ALPHA-TEST-SCRIPTS.md`, Script D. Since beta19 the same for a save hosted from the main menu
     (Script D, line 15).
-6a. Rejoin the same save later with the friend hosting it: in MultiColony each of you gets the same colony as
+6a. Rejoin the same save later with the friend hosting it: in Timber Together each of you gets the same colony as
     before (`[Colony] Player … plays slot …` in the log).
 7. Host with Steam Networking **off** and confirm direct IP works as before.
 
@@ -152,7 +152,7 @@ Steam's numeric end reason and debug text, which is what makes a failure diagnos
   possible; nor after a waiting room's **Start Game**.
   After a desync, the host uses **Save and rehost**. A Steam guest's **Reconnect (wait for Rehost)** joins the
   host's new lobby when Steam shows it (the host has **Allow Friends to Join Directly via Steam** on); otherwise the
-  guest is told to accept a fresh invite. In MultiColony a
+  guest is told to accept a fresh invite. In Timber Together a
   guest whose colony state differs from the host's stops the tick it happens (since 1.4.0-alpha13), so the
   rehost may come sooner than the game's random-state check alone would have asked for.
 - The **Invite Friends** button does nothing for the first moment after hosting starts,

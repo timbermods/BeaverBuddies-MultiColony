@@ -71,7 +71,7 @@ namespace BeaverBuddies.DesyncDetecter
             if (written || failed || trace.TickCount == 0) return;
             try
             {
-                string directory = Path.Combine(Application.persistentDataPath, "BeaverBuddiesDiagnostics");
+                string directory = Path.Combine(Application.persistentDataPath, "TimberTogether-Diagnostics");
                 Directory.CreateDirectory(directory);
                 string path = Path.Combine(directory, $"walkers-{DateTime.UtcNow:yyyyMMdd-HHmmss-fff}-{GuidPatcher.RealNewGuid():N}.tsv");
                 using (var writer = new StreamWriter(path)) trace.Write(writer);

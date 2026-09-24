@@ -17,7 +17,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>BeaverBuddies</AssemblyName>
     <Description>TimberModTest</Description>
-    <Version>1.4.0-rc8</Version>
+    <Version>1.4.0-rc9</Version>
     <!-- Report exactly the version above, without a +<commit> suffix. -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <TimberbornTargetVersion>1.1</TimberbornTargetVersion>
@@ -26,7 +26,7 @@
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <NoWarn>$(NoWarn)</NoWarn>
     <!-- Path Config -->
-    <BeaverBuddiesModsPath>$(DocumentsPath)Timberborn\Mods\BeaverBuddies-MultiColony\</BeaverBuddiesModsPath>
+    <BeaverBuddiesModsPath>$(DocumentsPath)Timberborn\Mods\TimberTogether\</BeaverBuddiesModsPath>
     <VersionOutputPath>$(BeaverBuddiesModsPath)version-$(TimberbornTargetVersion)\</VersionOutputPath>
     <!-- Old env.props files use the TimberbornPath, make that compatible with the new OS-independent TimberbornPath -->
     <TimberbornDataPath Condition="'$(TimberbornDataPath)' == ''">$(TimberbornPath)Timberborn_Data\</TimberbornDataPath>
@@ -147,6 +147,9 @@
       <TemplateCollectionFileToCopy Include="$(ProjectDir)$(OutDir)TemplateCollections\**\*" />
       <UIFileToCopy Include="$(ProjectDir)$(OutDir)UI\**\*" />
       <RootDirFilesToCopy Include="$(ProjectDir)thumbnail.png" />
+      <!-- The license and the credits travel with every copy of the mod, the Workshop upload included. -->
+      <RootDirFilesToCopy Include="$(ProjectDir)..\License.txt" />
+      <RootDirFilesToCopy Include="$(ProjectDir)..\CREDITS.md" />
     </ItemGroup>
     <!-- Clear VersionOutputPath Directory & Copy Output files inside -->
     <RemoveDir Directories="$(VersionOutputPath)" />

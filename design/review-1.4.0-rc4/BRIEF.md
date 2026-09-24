@@ -2,8 +2,8 @@
 
 ## What is under review
 
-BeaverBuddies MultiColony, a Timberborn 1.1.2.4 lockstep co-op mod (C#, Harmony). Repository (a git worktree):
-`C:/Users/Kyler/code/BeaverBuddies-MultiColony/.claude/worktrees/timbermods-beaverbuddies-multicolony-53f20d`
+Timber Together, a Timberborn 1.1.2.4 lockstep co-op mod (C#, Harmony). Repository (a git worktree):
+`C:/Users/Kyler/code/TimberTogether/.claude/worktrees/timbermods-timber-together-53f20d`
 
 The last in-depth review was of 1.4.0-beta24 (it became rc1, commit `ebe3d4a`). Since then three releases were
 built in one session and checked only by their author (a self-read of the diff, plus automated checks):
@@ -43,7 +43,7 @@ How to read the changes:
 - **Do not build or run the test suites in the repository** (another process uses its build folders). If you must try
   a snippet of C#, do it outside the repository, in your own folder under the scratchpad below.
 - Write your report, and nothing else, to `SCRATCH/review-rc5/<your letter>-<area>.md`, where
-  SCRATCH = `C:/Users/Kyler/AppData/Local/Temp/claude/C--Users-Kyler-code-BeaverBuddies-MultiColony--claude-worktrees-timbermods-beaverbuddies-multicolony-53f20d/1a7f49ab-4610-41db-989b-5c8047c74244/scratchpad`.
+  SCRATCH = `C:/Users/Kyler/AppData/Local/Temp/claude/C--Users-Kyler-code-TimberTogether--claude-worktrees-timbermods-timber-together-53f20d/1a7f49ab-4610-41db-989b-5c8047c74244/scratchpad`.
 
 ## What you can use
 

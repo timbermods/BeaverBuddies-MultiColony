@@ -403,31 +403,31 @@ performance; everyone. **Reported; the build config is unchanged** (decision D4)
 
 ### 1.13 Compatibility (C1, C2, C3)
 
-**C1: MultiColony with LateGamePerformance 0.4.28** (read in `C:/Users/Kyler/code/LateGamePerformance/source`; not
+**C1: Timber Together with LateGamePerformance 0.4.28** (read in `C:/Users/Kyler/code/LateGamePerformance/source`; not
 edited). Compatible when every player runs the same LateGamePerformance version. Findings for Kyler, in that mod:
 1. **C1-1 `Ticker.Update` catch-up** (`CatchUp.cs:28-38, 90-127`): scales the frame time handed to the ticker; never
-   touches `_accumulatedDeltaTime`, `TickBuckets`, `FinishFullTick` or `TickOnce`. MultiColony's tick gate and refund
+   touches `_accumulatedDeltaTime`, `TickBuckets`, `FinishFullTick` or `TickOnce`. Timber Together's tick gate and refund
    stay intact. Effect: a guest recovering from a hitch catches up somewhat slower (at most twice its recent frame time
    a frame). No co-op gate needed. Pacing only; confirmed.
 2. **C1-2 `IdleEntities`** (`IdleEntities.cs:31, 203-279`): walks the game's own `_tickableEntities` and skips entities
-   with no enabled tick component, a state only `EnableComponent`/`DisableComponent` change; runs Last, so MultiColony's
+   with no enabled tick component, a state only `EnableComponent`/`DisableComponent` change; runs Last, so Timber Together's
    bucket hash reads the same list. Reads nothing per computer. None; confirmed.
 3. **C1-3 `BackgroundSave`** (`BackgroundSave.cs:313-328, 573-747`): does not hook `GameSaver.Save`; snapshots on the game
-   thread inside whatever `Save` runs (MultiColony's deferred one), writes on a worker, calls back after the file exists.
+   thread inside whatever `Save` runs (Timber Together's deferred one), writes on a worker, calls back after the file exists.
    Instant saves (rehost, desync report) stay synchronous. None; confirmed.
 4. **C1-4 `SaveSnapshot` pins `ColonyStamp` by IL hash** (`SaveSnapshot.cs:44-45, 138, 194-199`), read against beta2.
    `ColonyStamp.Save` changed in beta7 (it returns early in a shared game, `ColonyStamps.cs:36-41`), so the pin no longer
    matches: LateGamePerformance logs a warning each session and saves every building (each carries a `ColonyStamp`) on
    the main thread. Nothing is lost or stale. Performance only; fix in LateGamePerformance: re-read and re-pin. Confirmed.
 5. **C1-5 hauling, home, yielder and district-count caches** (`HaulCache.cs`, `HomeSearch.cs`, `YielderSearch.cs:151-306`,
-   `DistrictCounts.cs`): the yielder search replaces the game's at Priority.Last and searches the list MultiColony's
+   `DistrictCounts.cs`): the yielder search replaces the game's at Priority.Last and searches the list Timber Together's
    colony filter already narrowed (`ColonySeparationPatches.cs:86-114`); it only drops candidates. The others keep the
    game's order per district and are invalidated by simulation hooks and ticks, never by time. None; confirmed (the
    haul cache's reaction to `HaulPrioritizable.Prioritized` on the clicking computer alone is harmless while the rebuilt
    list equals the cached one: plausible, none).
 6. **C1-6 route maps, terrain maps and terrain search need the same LateGamePerformance on every player**
    (`RouteMaps.cs:51-53`, `TerrainMaps.cs:42-44`, `TerrainSearch.cs:27-34`, LateGamePerformance's own statements). A player
-   without it, with another version, or with a feature that turned itself off (`TurnedOff.cs`) desyncs. MultiColony only
+   without it, with another version, or with a feature that turned itself off (`TurnedOff.cs`) desyncs. Timber Together only
    warns on a mod-list difference (`ModCompatibility.cs:99-103`). Desync; confirmed. Doc line below.
 7. **C1-7 a local preview can trigger a route-map scan on one computer** (`MapChanges.cs:44-71`): the postfixes on
    `DistrictMap.AddDistrictCenter/RemoveDistrictCenter/OnObstacleChanged/OnNavMeshUpdated` do not check which map they
@@ -441,7 +441,7 @@ edited). Compatible when every player runs the same LateGamePerformance version.
 9. **C1-9 terrain search history** (`TerrainSearch.cs:35, 136-139, 477-527`): a search made on one computer only would
    diverge; the only such caller is the game's dev-mode cursor tool. Low; plausible.
 10. Everything else that reads the camera, frame time or threads (`UiThrottle`, `AnimatorCulling`, `SoundListenerSkip`,
-    `WaterRendering`, the timing features) is display or measurement only. `AnimatorCulling` and MultiColony's Wonder
+    `WaterRendering`, the timing features) is display or measurement only. `AnimatorCulling` and Timber Together's Wonder
     timing (`WonderTimingFix.cs:550-580`) agree in either order. None; confirmed.
 
 **C2: Kyler's other mods** (read; not edited). None desyncs when every player has the same mods, versions and settings.
@@ -450,15 +450,15 @@ edited). Compatible when every player runs the same LateGamePerformance version.
   conflicting housing mod skips its `Tick`. Once a day: up to 32 path queries a tick, then an n × n matrix (2.9 MB at 600
   adults) worked through over about n ticks.
 - **HungryPathing:** decides what beavers do from `HungryPathing.cfg` (`Config.cs:8-10`), which nothing compares
-  between players: a different file desyncs (medium). Reads MultiColony's per-colony working hours by reflection, which
+  between players: a different file desyncs (medium). Reads Timber Together's per-colony working hours by reflection, which
   matches this build.
 - **PersistentWorkAreas:** draws only. None.
-- **MixedStorage:** shares `SingleGoodAllower.Allow/Disallow` and `InputService.UpdateSingleton` with MultiColony;
-  MultiColony's recording prefixes run first, the rest are void prefixes and finalizers. A refused Apply leaves its panel
+- **MixedStorage:** shares `SingleGoodAllower.Allow/Disallow` and `InputService.UpdateSingleton` with Timber Together;
+  Timber Together's recording prefixes run first, the rest are void prefixes and finalizers. A refused Apply leaves its panel
   on "Queued" until reload (interface only, `StorageView.cs:452-457`).
 - **TipsyTail:** no patches; adds a beaver need to both factions, so every player needs it.
 - **PerformanceLog:** timing only; its `AutoWatch` puts the random state back after patching (the same issue as D-new-1).
-  With this branch, MultiColony no longer has a prefix on every entity's tick for it to find.
+  With this branch, Timber Together no longer has a prefix on every entity's tick for it to find.
 
 **C3: a late single-player save hosted, then split.** Found sound from reading; Script P, P2 measures it.
 - Hosting `R-late` as a shared colony: nothing is stamped (`ColonyStamp.Save` writes nothing in a shared game).
@@ -626,13 +626,13 @@ TWO-COLONIES *Known limits* (and README's co-op notes):
   decisions and the host send them all every tick: a colony of 200 or more beavers and bots can't keep up, so the desync
   dialog no longer offers it there.
 - **LateGamePerformance and co-op:** every player needs the same version of it (it says so itself), with nothing
-  turned off after an error. MultiColony only warns when the players' mod lists differ.
+  turned off after an error. Timber Together only warns when the players' mod lists differ.
 - **A boost the computers can't carry** leaves a guest a few seconds behind the host (the host eases off until the
   guest keeps up), so the guest's own actions take that long to show.
 - **The daily colony check** (`[Colony] Check` in the log) is taken as the host's day reaches each computer, one tick
   after the turn of the day.
 
-Changelog (for the main session): the S10 gates (MultiColony costs less in single player), D-S9, D-S12, D-S4, D-S7a-c,
+Changelog (for the main session): the S10 gates (Timber Together costs less in single player), D-S9, D-S12, D-S4, D-S7a-c,
 D-S11, the report's new lines and the `[Perf]` line, D-new-1, and D-new-2 (switching detailed logging on during a
 session no longer stops it with a false desync).
 
@@ -646,18 +646,18 @@ Common to every run:
   leave to the main menu (so the session folder is finished).
 - Send: the session folders from `Documents\Timberborn\PerformanceLog\` (one per load), each player's `Player.log`
   (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`), and in co-op each player's Ctrl+Shift+J report
-  (pressed just before leaving; saved in `BeaverBuddies-Reports` next to `Player.log`).
+  (pressed just before leaving; saved in `TimberTogether-Reports` next to `Player.log`).
 
-- **P1, single player, with and without MultiColony (B1, D-S10).** Record R-late in single player with MultiColony
+- **P1, single player, with and without Timber Together (B1, D-S10).** Record R-late in single player with Timber Together
   disabled in the mod manager (restart), then enabled (restart). Should see: tick time within 1% of each other;
-  PerformanceLog's "which mod patches which hot method" no longer lists MultiColony on `TickableEntity.Tick`.
+  PerformanceLog's "which mod patches which hot method" no longer lists Timber Together on `TickableEntity.Tick`.
   `python tools/perflog.py compare <without> <with>`.
-  - **P1b (D4, optional):** the same with MultiColony's Release build instead of Release Steam (the main session builds
+  - **P1b (D4, optional):** the same with Timber Together's Release build instead of Release Steam (the main session builds
     it into a folder for Kyler; Kyler copies it in himself). Should see whether the optimised DLL's tick share is lower.
 - **P2, hosting with nobody joined (B2, B3, C3, S9).** Host R-late from the main menu (waiting room, Start at once),
   record. Then, in the same game, found a second colony with *Allow founding colonies in a shared game* on (split),
-  let a day pass, record again. In each, also hold a path tool for 30 s over roads. Should see: MultiColony's share of
-  tick time at most 5% shared, 7% split; no MultiColony method among the top allocators; the report's "Colony code"
+  let a day pass, record again. In each, also hold a path tool for 30 s over roads. Should see: Timber Together's share of
+  tick time at most 5% shared, 7% split; no Timber Together method among the top allocators; the report's "Colony code"
   rows (working hours, resource searches, placement previews, road overlay, daily check) small against "Ticking".
 - **P3, with a guest (B4, S2, S5).** Host R-late split into two colonies, a guest joined (same PerformanceLog settings),
   3 minutes each at the game's speed 2 (x3), speed 3 (x7), then speed 3 with a boost of 15 (chat box `/boost 15`).

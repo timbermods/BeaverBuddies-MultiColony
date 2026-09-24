@@ -1,7 +1,7 @@
 ID,Text,Comment
 BeaverBuddies.Menu.JoinCoopGame,"Unirse al juego cooperativo","Join co-op game"
 BeaverBuddies.JoinCoopGame.EnterIp,"Ingrese la dirección IP global del anfitrión:","Enter the global IP address of the Host:"
-BeaverBuddies.FirstTimer.Message,"Parece que es la primera vez que usas BeaverBuddies. Recomendamos echar un vistazo rápido a nuestra guía para asegurarte de que estás listo para jugar. ¿Te gustaría hacerlo ahora?","It looks like this is your first time using BeaverBuddies. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
+BeaverBuddies.FirstTimer.Message,"Parece que es la primera vez que usas Timber Together. Recomendamos echar un vistazo rápido a nuestra guía para asegurarte de que estás listo para jugar. ¿Te gustaría hacerlo ahora?","It looks like this is your first time using Timber Together. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
 BeaverBuddies.Saving.HostCoopGame,"Hostear juego cooperativo","Host co-op game"
 BeaverBuddies.JoinCoopGame.ConnectionFailedMessageWithError,"Fallo al unirse con error:
 {0}
@@ -80,7 +80,7 @@ BeaverBuddies.JoinCoopGame.Error.InvalidFormat,"Formato de dirección no válido
 BeaverBuddies.JoinCoopGame.Error.InvalidAddress,"La dirección no era una dirección IP válida.
 Se intentó resolver como un nombre de host, pero no se resolvió a una dirección IP.",""
 BeaverBuddies.JoinCoopGame.Error.CouldNotConnect,"No se pudo conectar al host. Verifica la dirección y el puerto, y asegúrate de que el host esté en línea y tenga el puerto reenviado si es necesario. Detalles del error:",""
-BeaverBuddies.KeyBindings.Group,"BeaverBuddies",""
+BeaverBuddies.KeyBindings.Group,"Timber Together",""
 BeaverBuddies.KeyBindings.Ping,"Marcar ubicación",""
 BeaverBuddies.Settings.PingPlayerName,"Nombre del marcador",""
 BeaverBuddies.Settings.PingPlayerName.Tooltip,"El nombre que se muestra a los demás jugadores junto a tus marcadores.",""

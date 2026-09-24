@@ -1,5 +1,5 @@
 /*
- * BeaverBuddies MultiColony: the project site. A river station's signage: fired-enamel plates on timber posts.
+ * Timber Together: the project site. A river station's signage: fired-enamel plates on timber posts.
  * Amber enamel is colony 1 and river-teal enamel colony 2, and nothing else wears either color; the Trading Post is
  * where the two meet. Navy enamel carries directions and actions. No external requests: the one display face,
  * Barlow Semi Condensed, is self-hosted under the SIL OFL (fonts/OFL-Barlow.txt).
@@ -178,7 +178,6 @@ pre code { background: none; border: 0; padding: 0; font-size: inherit; overflow
 .brand { display: flex; align-items: center; gap: .7rem; min-height: 44px; text-decoration: none; color: var(--ink); }
 .brand-mark { width: 40px; height: 40px; flex: none; }
 .brand-name { font: 700 1.3rem/1 var(--display); letter-spacing: .01em; }
-.brand-name span { color: var(--ink-soft); font-weight: 600; }
 .nav { display: flex; align-items: center; gap: .15rem; margin-left: auto; }
 .nav a {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 .75rem;
@@ -235,7 +234,8 @@ pre code { background: none; border: 0; padding: 0; font-size: inherit; overflow
 }
 .name-plate { display: inline-block; padding: 1.35rem 2.2rem 1.4rem; margin: 0 0 1.6rem; }
 .name-plate h1 { margin: 0; font-size: clamp(2.6rem, 6.4vw, 4.6rem); line-height: .92; letter-spacing: -.01em; }
-.name-plate h1 small { display: block; font-size: clamp(.95rem, 1.6vw, 1.65rem); font-weight: 600; letter-spacing: .12em; text-transform: uppercase; margin-bottom: .35em; opacity: .9; }
+.name-plate h1 span { display: block; }
+.name-plate .motto { margin: .55em 0 0; font: 600 clamp(.9rem, 1.45vw, 1.35rem)/1.2 var(--display); letter-spacing: .12em; text-transform: uppercase; opacity: .9; }
 .pitch { font-size: clamp(1.18rem, 2.2vw, 1.4rem); line-height: 1.45; margin: 0 0 .7rem; max-width: 34ch; font-weight: 500; }
 .differs { color: var(--ink-soft); margin: 0 0 1.6rem; max-width: 46ch; }
 .status-tag {
@@ -504,7 +504,6 @@ td:first-child { font-variant-numeric: tabular-nums; }
 .site-footer li a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
 .site-footer p { color: var(--bark-soft); }
 .site-footer .brand-name { color: var(--bark); font-size: 1.5rem; display: block; margin-bottom: .6rem; }
-.site-footer .brand-name span { color: var(--bark-soft); }
 .fineprint { margin: 2rem 0 0; padding-top: 1.3rem; border-top: 1px solid rgba(241, 232, 218, .25); font-size: .87rem; max-width: 90ch; }
 
 /* ---------- responsive ---------- */
@@ -545,7 +544,6 @@ td:first-child { font-variant-numeric: tabular-nums; }
 }
 @media (max-width: 640px) {
   body { font-size: 16.5px; }
-  .brand-name span { display: none; }
   .name-plate { padding: 1.1rem 1.4rem 1.15rem; }
   .btn-row .btn { flex: 1 1 100%; }
   .status-tag { padding-left: 1.7rem; }

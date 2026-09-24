@@ -7,7 +7,7 @@ using Timberborn.SingletonSystem;
 namespace BeaverBuddies.Help
 {
     /// <summary>
-    /// Every other BeaverBuddies (the original, the Stability Fork, older MultiColony builds) patches the same game code
+    /// Every other BeaverBuddies (the original, the Stability Fork, this mod's own earlier builds) patches the same game code
     /// for its own multiplayer, so it cannot run alongside this one. When one is enabled too, the main menu says so,
     /// by name, every time, until it is disabled.
     /// </summary>
@@ -23,12 +23,13 @@ namespace BeaverBuddies.Help
         }
 
         /// <summary>
-        /// The original, the Stability Fork and older MultiColony builds: all use this id, or carry these names. An add-on
+        /// The original, the Stability Fork and this mod's earlier builds: all use this id, or carry these names. An add-on
         /// or translation named after BeaverBuddies is not one of them.
         /// </summary>
         private static bool IsBeaverBuddies(string id, string name)
         {
-            if (string.Equals(id, Plugin.OtherBeaverBuddiesID, StringComparison.OrdinalIgnoreCase)) return true;
+            if (string.Equals(id, Plugin.OtherBeaverBuddiesID, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(id, Plugin.EarlierBuildID, StringComparison.OrdinalIgnoreCase)) return true;
             name = name ?? "";
             return name.StartsWith("BeaverBuddies", StringComparison.OrdinalIgnoreCase)
                 && (name.IndexOf("Co-Op", StringComparison.OrdinalIgnoreCase) >= 0

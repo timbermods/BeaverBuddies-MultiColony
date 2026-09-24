@@ -40,7 +40,7 @@ namespace BeaverBuddies.Fixes
             if (EventIO.IsNull) return;
             string message;
             try { message = RegisteredLocalizationService.T("BeaverBuddies.CoopFix.Stopped", missing); }
-            catch { message = "Co-op has stopped: MultiColony can't keep this game in step on this version of Timberborn (" + missing + "). Update MultiColony."; }
+            catch { message = "Co-op has stopped: Timber Together can't keep this game in step on this version of Timberborn (" + missing + "). Update Timber Together."; }
             ReplayService replayService = SingletonManager.GetSingleton<ReplayService>();
             if (replayService != null) replayService.EndSession(message);
             else EventIO.Reset();
