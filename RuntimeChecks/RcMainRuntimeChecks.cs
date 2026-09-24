@@ -194,16 +194,15 @@ internal static class RcMainRuntimeChecks
             if (menuLoader.GetMethod("OpenMainMenu", All) == null) throw new Exception("MainMenuSceneLoader.OpenMainMenu is gone");
         });
 
-        test("rc4: a game hosts itself through the main menu's Co-op Game page, and a guest rejoins it there", () =>
+        test("rc4: a game hosts itself through its Co-op Game room (rc7: over the game), and a guest rejoins it", () =>
         {
             bool Calls(Type type, string name) => type.GetMethods(All).Concat(type.GetNestedTypes(All).SelectMany(t => t.GetMethods(All)))
                 .Any(m => IlScan.Instructions(m).Any(i => i.Calls && i.Member?.Name == name));
             Type rehosting = mod.GetType("BeaverBuddies.Connect.RehostingService", true)!;
-            if (!Calls(rehosting, "HostInMainMenu")) throw new Exception("a game no longer hosts itself through the main menu");
-            if (Calls(rehosting, "LoadIfSaveValidAndHost")) throw new Exception("a game hosts in place again (the original dialog)");
-            Type menu = mod.GetType("BeaverBuddies.Connect.HostCoopMenu", true)!;
-            if (!IlScan.Instructions(Only(menu, "UpdateSingleton")).Any(i => i.Calls && i.Member?.Name == "LoadIfSaveValidAndHost"))
-                throw new Exception("the main menu no longer opens a handed-over save's page");
+            if (!Calls(rehosting, "LoadAndHost")) throw new Exception("a game no longer hosts its save in its room");
+            if (Calls(rehosting, "OpenMainMenu")) throw new Exception("a game hosts itself through the main menu again");
+            foreach (string gone in new[] { "BeaverBuddies.Connect.HostCoopMenu", "BeaverBuddies.Connect.HostCoopFlow" })
+                if (mod.GetType(gone) != null) throw new Exception(gone + " is back: a save is handed to the main menu again");
             Type utils = mod.GetType("BeaverBuddies.Connect.ServerHostingUtils", true)!;
             if (utils.GetMethod("UpdateDialogBox", All) != null || utils.GetMethod("GiveUpHosting", All) != null)
                 throw new Exception("the original hosting dialog is back");

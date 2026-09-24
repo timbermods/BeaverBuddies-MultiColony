@@ -133,7 +133,7 @@ namespace BeaverBuddies.Connect
         {
             if (index >= loader._gameLoadValidators.Length)
             {
-                LoadAndHost(loader, shower, saveReference);
+                LoadAndHost(loader._gameSceneLoader._gameSaveRepository, saveReference, savedForRoom: false);
                 return;
             }
             loader._gameLoadValidators[index].ValidateSave(saveReference, delegate
@@ -160,25 +160,41 @@ namespace BeaverBuddies.Connect
             return ((SceneLoader)loader)._coroutineStarter._monoBehaviour;
         }
 
-        public static void LoadAndHost(ValidatingGameLoader loader, DialogBoxShower shower, SaveReference saveReference)
+        /// <summary>
+        /// The save's Co-op Game room, in this scene (1.4.0-rc7): the main menu's page, or a window over this game. After the
+        /// game's own checks of a save picked in the Load game box, or at once for a save this game has just written for it
+        /// (<paramref name="savedForRoom"/>: the game menu's Host co-op game and Save and Rehost).
+        /// </summary>
+        public static void LoadAndHost(GameSaveRepository repository, SaveReference saveReference, bool savedForRoom)
         {
-            var sceneLoader = loader._gameSceneLoader;
-            var repository = sceneLoader._gameSaveRepository;
             byte[] data = GetMapBtyes(repository, saveReference);
             Plugin.Log($"Reading map with length {data.Length}");
 
-            // A save is always hosted through its waiting room, the Co-op Game page (1.4.0-beta19; the only way since
-            // 1.4.0-rc4): players join and ready up, and everyone loads the save together at Start. The page is the main
-            // menu's: a game hosts itself by going there first (HostCoopFlow), never from here.
+            // A save is always hosted through its waiting room, the Co-op Game room (1.4.0-beta19; the only way since
+            // 1.4.0-rc4): players join and ready up, and everyone loads the save together at Start. Its panel is bound in the
+            // main menu and in every game (1.4.0-rc7), which it opens over.
             BeaverBuddies.Lobby.LobbyHostPanel waitingRoom = SingletonManager.GetSingleton<BeaverBuddies.Lobby.LobbyHostPanel>();
-            if (waitingRoom != null)
+            if (waitingRoom == null)
             {
-                // Hosting starts here: a join or session left from before ends.
-                EventIO.Reset();
-                waitingRoom.OpenForSave(saveReference, data);
+                Plugin.LogWarning("[Lobby] No Co-op Game room can open in this scene; nothing was hosted");
                 return;
             }
-            Plugin.LogWarning("[Lobby] A save can be hosted only from the main menu; nothing was hosted");
+            // Hosting starts here: a session or join left from before ends.
+            EndSessionForRoom();
+            waitingRoom.OpenForSave(saveReference, data, savedForRoom);
+        }
+
+        /// <summary>
+        /// Before a room opens, whatever session this game still has ends, so that the room's server can take the port: a
+        /// co-op game's session ends quietly (its host chose to host again; the game stays, played alone until Start), and a
+        /// join left from before is closed.
+        /// </summary>
+        internal static void EndSessionForRoom()
+        {
+            if (EventIO.IsNull) return;
+            SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
+            // A desync or a failed action ended the session already, and may have left its connection installed.
+            EventIO.Reset();
         }
     }
 }

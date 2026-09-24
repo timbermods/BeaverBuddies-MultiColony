@@ -15,11 +15,11 @@ namespace BeaverBuddies.Lobby
 {
     /// <summary>
     /// The game a waiting room is for: a new game as the host set it up on the game's Game Mode page, or a save chosen on
-    /// the main menu's Load Game box (<see cref="Save"/> set).
+    /// the Load game box (in the main menu or in a game) or just saved by the game menu (<see cref="Save"/> set).
     /// </summary>
     public sealed class LobbySetup
     {
-        /// <summary>A hosted save (Load Game → Host co-op game in the main menu); null for a new game.</summary>
+        /// <summary>A hosted save (Load game → Host co-op game; the game menu's Host co-op game, Save and Rehost); null for a new game.</summary>
         public SaveReference Save { get; set; }
         /// <summary>The save's bytes, read once: every guest and the host load exactly these.</summary>
         public byte[] SaveBytes { get; set; }
@@ -27,6 +27,11 @@ namespace BeaverBuddies.Lobby
         public int Cycle { get; set; }
         public int Day { get; set; }
         public bool IsSave => Save != null;
+        /// <summary>
+        /// The game this room is hosted from was saved for it a moment ago (the game menu's Host co-op game, Save and Rehost,
+        /// 1.4.0-rc7): Start makes no exit save of it (K3).
+        /// </summary>
+        public bool SavedForRoom { get; set; }
 
         public string FactionId { get; set; }
         public MapFileReference Map { get; set; }
@@ -251,8 +256,9 @@ namespace BeaverBuddies.Lobby
         }
 
         /// <summary>
-        /// Every frame of the scene that makes the world (for a save: of the menu, from the host's page). Once each guest's
-        /// join is queued (so it gets everything the host plays from tick 0 on), the save is loaded as the hosted game.
+        /// Every frame of the scene that makes the world (for a save: of the menu or the game, from the host's room). Once
+        /// each guest's join is queued (so it gets everything the host plays from tick 0 on), the save is loaded as the hosted
+        /// game.
         /// </summary>
         public void Update(ISceneLoader sceneLoader, string loadingTip)
         {

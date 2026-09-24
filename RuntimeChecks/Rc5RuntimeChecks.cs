@@ -75,7 +75,8 @@ internal static class Rc5RuntimeChecks
             Type service = Mod("BeaverBuddies.Connect.ClientConnectionService");
             foreach (string gone in new[] { "ReconnectNow", "ShowWaitForSteamInvite" })
                 if (service.GetMethod(gone, All) != null) throw new Exception(gone + " is back, and nothing reaches it");
-            if (Mod("BeaverBuddies.Connect.HostCoopFlow").GetProperty("PendingRehost", All) != null) throw new Exception("PendingRehost is back (nothing reads it)");
+            // rc7 hosts in the game: HostCoopFlow, and its PendingRehost with it, is gone.
+            if (mod.GetType("BeaverBuddies.Connect.HostCoopFlow") != null) throw new Exception("HostCoopFlow is back: a game hosts through the main menu again");
             if (Mod("BeaverBuddies.Connect.RehostingService").GetConstructors().Single().GetParameters().Any(p => p.ParameterType.Name == "ValidatingGameLoader"))
                 throw new Exception("RehostingService asks for a loader it never uses");
         });

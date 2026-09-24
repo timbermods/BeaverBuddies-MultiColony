@@ -184,24 +184,24 @@ internal static class LobbyRuntimeChecks
             Has(Steam("SteamFriends"), "GetPersonaName", "the host's name in its lobby");
         });
 
-        test("Waiting room for a save: every save is hosted through it, from the main menu (a game goes there first)", () =>
+        test("Waiting room for a save: every save is hosted through it, in the main menu and in a game (rc7)", () =>
         {
-            // LoadAndHost opens the waiting room (the main menu binds its page; a game does not). Since 1.4.0-rc4 there is
-            // no other way: the original BeaverBuddies dialog, which let guests load as soon as they connected, is gone,
-            // and a game hosts itself by saving and opening the page in the main menu (HostCoopFlow).
+            // LoadAndHost opens the waiting room (the main menu and, since 1.4.0-rc7, every game bind its panel). Since
+            // 1.4.0-rc4 there is no other way: the original BeaverBuddies dialog, which let guests load as soon as they
+            // connected, is gone. rc4 to rc6 hosted a game by going to the main menu; rc7 opens the room over the game.
             MethodInfo loadAndHost = Mod("BeaverBuddies.Connect.ServerHostingUtils").GetMethod("LoadAndHost", all)!;
             var code = IlScan.Instructions(loadAndHost);
             if (!code.Any(i => i.Calls && i.Is("BeaverBuddies.Lobby.LobbyHostPanel", "OpenForSave")))
                 throw new Exception("Host co-op game on a save no longer opens the waiting room");
             if (code.Any(i => i.Op == OpCodes.Newobj && i.Member?.DeclaringType?.FullName == "BeaverBuddies.IO.ServerEventIO"))
                 throw new Exception("a save is hosted without its waiting room again (its own server and dialog)");
-            // Only the main menu has the page.
+            // Both scenes have the host's room: the main menu its page, a game its window.
             var menu = Mod("BeaverBuddies.ConnectionMenuConfigurator").GetMethod("Configure", all)!;
             var game = Mod("BeaverBuddies.ReplayConfigurator").GetMethod("Configure", all)!;
             bool Binds(MethodInfo configure) => IlScan.Instructions(configure).Any(i => i.Calls && i.Member is MethodInfo m
                 && m.IsGenericMethod && m.GetGenericArguments().Any(t => t.FullName == "BeaverBuddies.Lobby.LobbyHostPanel"));
             if (!Binds(menu)) throw new Exception("the main menu no longer binds the host page");
-            if (Binds(game)) throw new Exception("a game binds the host page: hosting from a game would open the waiting room");
+            if (!Binds(game)) throw new Exception("a game no longer binds the host's room: hosting from a game does nothing");
             // What the page reads of a save: its date from the metadata, worded as the Load Game box words it.
             Has(Game("Timberborn.GameSaveRepositorySystem", "Timberborn.GameSaveRepositorySystem.GameSaveDeserializer"), "ReadFromSaveFile", "the save's date");
             Type metadata = Game("Timberborn.SaveMetadataSystem", "Timberborn.SaveMetadataSystem.SaveMetadata");

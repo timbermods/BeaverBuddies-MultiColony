@@ -16,6 +16,17 @@ namespace BeaverBuddies.Lobby
         NotReady,
     }
 
+    /// <summary>How the room's page or window goes on the game's panel stack (1.4.0-rc7).</summary>
+    public enum RoomPush
+    {
+        /// <summary>Not yet: an overlay (the Steam overlay's input blocker) is on top, and would be hidden under it.</summary>
+        Wait,
+        /// <summary>Over the game itself, nothing being open (an invite, a carried guest, a desync's Save and Rehost).</summary>
+        Push,
+        /// <summary>In place of the panel on top (a page of the main menu, the Load game box, the game menu), which comes back when it closes.</summary>
+        HideAndPush,
+    }
+
     /// <summary>A line of text as a loc key and its arguments.</summary>
     public readonly struct LobbyText
     {
@@ -138,6 +149,12 @@ namespace BeaverBuddies.Lobby
                 slots.Add(string.IsNullOrEmpty(id) || id == hostId ? null : table.Resolve(id, ""));
             return slots;
         }
+
+        /// <summary>
+        /// How the host's room is shown (1.4.0-rc7): in place of what it was opened from (the Game Mode page or the Load game
+        /// box, both scenes; the game menu), so Cancel returns there; over the game when nothing is open.
+        /// </summary>
+        public static RoomPush HostRoomPush(int panelsOpen) => panelsOpen == 0 ? RoomPush.Push : RoomPush.HideAndPush;
 
         /// <summary>The name of the new world's first save, in the settlement the host named (like a Rehost save's).</summary>
         public static string SaveName(string timestamp) => (timestamp ?? "").Replace(",", "") + " Co-op start";

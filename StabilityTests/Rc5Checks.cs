@@ -172,7 +172,8 @@ static class Rc5Checks
             string service = Source("BeaverBuddies", "Connect", "ClientConnectionService.cs");
             foreach (string gone in new[] { "ReconnectNow", "ShowWaitForSteamInvite", "triedLobby" })
                 Check(!service.Contains(gone), gone + " is back");
-            Check(!Source("BeaverBuddies", "Connect", "HostCoopFlow.cs").Contains("PendingRehost"), "PendingRehost is back (nothing reads it)");
+            // rc7 hosts in the game, so HostCoopFlow (and its PendingRehost) is gone altogether.
+            Check(!File.Exists(Path.Combine(Root(), "BeaverBuddies", "Connect", "HostCoopFlow.cs")), "HostCoopFlow is back (a game no longer hosts through the main menu)");
             Check(!Source("BeaverBuddies", "Connect", "RehostingService.cs").Contains("_validatingGameLoader"), "RehostingService keeps a loader it never uses");
             Check(!File.Exists(Path.Combine(Root(), "BeaverBuddies", "Colonies", "HostStartGate.cs")), "the start prompt, unreachable since every game starts from a room, is back");
             foreach (string key in new[] { "BeaverBuddies.Colony.Start.Prompt", "BeaverBuddies.Colony.Start.Kept", "BeaverBuddies.Host.ConnectedClients",

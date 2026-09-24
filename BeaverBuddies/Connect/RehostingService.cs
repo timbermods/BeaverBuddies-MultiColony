@@ -23,9 +23,10 @@ using static Timberborn.GameSaveRuntimeSystem.GameSaver;
 namespace BeaverBuddies.Connect
 {
     /// <summary>
-    /// A game hosts itself (1.4.0-rc4): it saves, as a new save of its settlement, and opens the Co-op Game page for that
-    /// save in the main menu (HostCoopFlow), where the players join and ready up. Host co-op game from single player's game
-    /// menu (a "… Co-op" save), and Save and Rehost in co-op (a "… Rehost" save: its players rejoin it).
+    /// A game hosts itself: it saves, as a new save of its settlement, and opens the Co-op Game room for that save as a
+    /// window over this game (1.4.0-rc7; rc4 to rc6 went to the main menu for it), where the players join and ready up.
+    /// Host co-op game from single player's game menu (a "… Co-op" save), and Save and Rehost in co-op (a "… Rehost" save:
+    /// its players rejoin it). The save was just written, so Start makes no exit save of this game (K3).
     /// </summary>
     public class RehostingService : RegisteredSingleton
     {
@@ -34,18 +35,15 @@ namespace BeaverBuddies.Connect
         private readonly GameSaveRepository _gameSaveRepository;
         private readonly SettlementReferenceService _settlementReferenceService;
         private readonly DialogBoxShower _dialogBoxShower;
-        private readonly Timberborn.MainMenuSceneLoading.MainMenuSceneLoader _mainMenuSceneLoader;
 
         public RehostingService(
             AutosaveNameService autosaveNameService, 
             GameSaver gameSaver, 
             GameSaveRepository gameSaveRepository,
             SettlementReferenceService settlementReferenceService,
-            DialogBoxShower dialogBoxShower,
-            Timberborn.MainMenuSceneLoading.MainMenuSceneLoader mainMenuSceneLoader
+            DialogBoxShower dialogBoxShower
         ) 
         {
-            _mainMenuSceneLoader = mainMenuSceneLoader;
             _autosaveNameService = autosaveNameService;
             _gameSaver = gameSaver;
             _gameSaveRepository = gameSaveRepository;
@@ -106,18 +104,33 @@ namespace BeaverBuddies.Connect
         }
 
         /// <summary>
-        /// Save and Rehost (the desync dialog, and the host's game menu in co-op): everyone leaves this game, which is saved,
-        /// and its Co-op Game page opens in the main menu; its players rejoin it there (Reconnect, Rejoin).
+        /// Save and Rehost (the desync dialog, and the host's game menu in co-op): this game is saved and its Co-op Game room
+        /// opens over it; its players rejoin it (Reconnect, Rejoin).
         /// </summary>
         public bool RehostGame()
         {
-            return SaveRehostFile(save => HostCoopFlow.HostInMainMenu(_mainMenuSceneLoader, save, rehost: true), true);
+            return SaveRehostFile(save => HostSaved(save, rehost: true), true);
         }
 
-        /// <summary>Host co-op game in single player's game menu: this game, saved, on its Co-op Game page.</summary>
+        /// <summary>Host co-op game in single player's game menu: this game, saved, in its Co-op Game room over it.</summary>
         public bool HostThisGame()
         {
-            return SaveRehostFile(save => HostCoopFlow.HostInMainMenu(_mainMenuSceneLoader, save, rehost: false), true, " Co-op");
+            return SaveRehostFile(save => HostSaved(save, rehost: false), true, " Co-op");
+        }
+
+        // The save just written (a frame ago: its file is closed), hosted in this game. No checks to run: this game wrote it.
+        private void HostSaved(SaveReference save, bool rehost)
+        {
+            Plugin.Log($"[Lobby] Hosting \"{save.SaveName}\" in this game ({(rehost ? "a rehost" : "a game played alone")})");
+            try
+            {
+                ServerHostingUtils.LoadAndHost(_gameSaveRepository, save, savedForRoom: true);
+            }
+            catch (Exception error)
+            {
+                Plugin.LogError("[Lobby] Could not open the Co-op Game room for the save: " + error);
+                _dialogBoxShower.Create().SetMessage(RegisteredLocalizationService.T("BeaverBuddies.Lobby.CouldNotOpen")).Show();
+            }
         }
     }
 }
