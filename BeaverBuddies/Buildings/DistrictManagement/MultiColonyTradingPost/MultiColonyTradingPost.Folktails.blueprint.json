@@ -30,8 +30,8 @@
   "BlockObjectSpec": {
     "Size": {
       "X": 3,
-      "Y": 1,
-      "Z": 2
+      "Y": 2,
+      "Z": 3
     },
     "Blocks": [
       {
@@ -51,6 +51,90 @@
       {
         "MatterBelow": "GroundOrStackable",
         "Occupations": "Bottom, Top, Corners, Path, Middle",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "GroundOrStackable",
+        "Occupations": "Bottom, Top, Corners, Path, Middle",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "GroundOrStackable",
+        "Occupations": "Bottom, Top, Corners, Path, Middle",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "GroundOrStackable",
+        "Occupations": "Bottom, Top, Corners, Path, Middle",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "Any",
+        "Occupations": "All",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "Any",
+        "Occupations": "All",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "Any",
+        "Occupations": "All",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "Any",
+        "Occupations": "All",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "Any",
+        "Occupations": "All",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "Any",
+        "Occupations": "All",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "Any",
+        "Occupations": "All",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "Any",
+        "Occupations": "All",
+        "Stackable": "None",
+        "OccupyAllBelow": false,
+        "Underground": false
+      },
+      {
+        "MatterBelow": "Any",
+        "Occupations": "All",
         "Stackable": "None",
         "OccupyAllBelow": false,
         "Underground": false
@@ -98,7 +182,7 @@
       "HasCustomPivot": true,
       "Coordinates": {
         "X": 1.5,
-        "Y": 1.0,
+        "Y": 2.0,
         "Z": 0.0
       }
     },
@@ -122,7 +206,7 @@
     "LocalAccess": {
       "X": 1.5,
       "Y": 0.0,
-      "Z": 1.0
+      "Z": 2.0
     },
     "ForceOneFinalAccess": false
   },
@@ -185,6 +269,19 @@
               "Y": 1,
               "Z": 0
             },
+            "IsTwoWay": true
+          },
+          {
+            "Start": {
+              "X": 1,
+              "Y": 1,
+              "Z": 0
+            },
+            "End": {
+              "X": 1,
+              "Y": 2,
+              "Z": 0
+            },
             "IsTwoWay": false
           }
         ]
@@ -224,44 +321,20 @@
   "Children": {
     "#Finished": {
       "TimbermeshSpec": {
-        "Model": "Buildings/DistrictManagement/DistrictCrossing/DistrictCrossing.Folktails.Model"
+        "Model": "Buildings/DistrictManagement/MultiColonyTradingPost/TradingPost.Folktails.Model"
       },
       "CollidersSpec": {
         "BoxColliders": [
           {
             "Center": {
-              "X": 1.50582361,
-              "Y": 0.496590853,
-              "Z": 0.58214134
+              "X": 1.5,
+              "Y": 1.2675,
+              "Z": 1.0
             },
             "Size": {
-              "X": 2.76765823,
-              "Y": 1.00564241,
-              "Z": 0.751245141
-            }
-          },
-          {
-            "Center": {
-              "X": 1.49376357,
-              "Y": 0.6928351,
-              "Z": 0.581762
-            },
-            "Size": {
-              "X": 1.72682786,
-              "Y": 1.39813089,
-              "Z": 0.7520038
-            }
-          },
-          {
-            "Center": {
-              "X": 1.49376345,
-              "Y": 0.02666691,
-              "Z": 0.48527962
-            },
-            "Size": {
-              "X": 3.00085449,
-              "Y": 0.06579453,
-              "Z": 0.9449686
+              "X": 3.0,
+              "Y": 2.535,
+              "Z": 2.0
             }
           }
         ],
@@ -271,37 +344,25 @@
     },
     "#Unfinished": {
       "Children": {
-        "ConstructionBase3x2Half#nested": {
-          "BlueprintPath": "ConstructionBases/ConstructionBase3x2Half/ConstructionBase3x2Half.blueprint"
+        "ConstructionBase3x2#nested": {
+          "BlueprintPath": "ConstructionBases/ConstructionBase3x2/ConstructionBase3x2.blueprint"
         },
         "ConstructionStage0": {
           "TimbermeshSpec": {
-            "Model": "Buildings/DistrictManagement/DistrictCrossing/DistrictCrossing.Folktails.ConstructionStage0.Model"
+            "Model": "Buildings/DistrictManagement/MultiColonyTradingPost/TradingPost.Folktails.ConstructionStage0.Model"
           },
           "CollidersSpec": {
             "BoxColliders": [
               {
                 "Center": {
                   "X": 1.5,
-                  "Y": 0.4955544,
-                  "Z": 0.6149061
+                  "Y": 0.66,
+                  "Z": 1.0
                 },
                 "Size": {
-                  "X": 2.7535162,
-                  "Y": 0.9911088,
-                  "Z": 0.770187855
-                }
-              },
-              {
-                "Center": {
-                  "X": 1.5,
-                  "Y": 1.31363821,
-                  "Z": 0.879893661
-                },
-                "Size": {
-                  "X": 1.75455,
-                  "Y": 0.644045353,
-                  "Z": 0.240212739
+                  "X": 3.0,
+                  "Y": 1.32,
+                  "Z": 2.0
                 }
               }
             ],

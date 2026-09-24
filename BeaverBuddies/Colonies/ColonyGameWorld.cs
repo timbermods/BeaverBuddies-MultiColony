@@ -67,6 +67,37 @@ namespace BeaverBuddies.Colonies
             catch (Exception) { return false; }
         }
 
+        /// <summary>
+        /// Whether two placements of a Trading Post are the two halves its placement tool puts down together, as the
+        /// game lays them out for a building of that template's size (see <see cref="SecondHalf"/>).
+        /// </summary>
+        public bool AreHalvesOfOnePost(string templateName, Placement a, Placement b)
+        {
+            BlockObjectSpec spec;
+            try { spec = _buildingService.GetBuildingTemplate(templateName)?.GetSpec<BlockObjectSpec>(); }
+            catch (Exception) { return false; }
+            return spec != null && AreHalvesOfOnePost(a, b, spec.Size);
+        }
+
+        /// <summary>
+        /// Where a Trading Post's second half goes when its first goes at <paramref name="first"/>: the tool lays the
+        /// two down together, the second at the pair's far corner and turned round (the game's
+        /// AreaPicker.HalvesCoordinates, compared by RuntimeChecks). <paramref name="size"/> is one half's size.
+        /// </summary>
+        public static Placement SecondHalf(Placement first, Vector3Int size) =>
+            new Placement(first.Coordinates + first.Orientation.Transform(new Vector3Int(size.x - 1, size.y * 2 - 1, 0)),
+                first.Orientation.Flip(), first.FlipMode);
+
+        /// <summary>Whether <paramref name="a"/> and <paramref name="b"/>, in either order, are one post's two halves.</summary>
+        public static bool AreHalvesOfOnePost(Placement a, Placement b, Vector3Int size) =>
+            IsSecondHalf(a, b, size) || IsSecondHalf(b, a, size);
+
+        private static bool IsSecondHalf(Placement first, Placement other, Vector3Int size)
+        {
+            Placement second = SecondHalf(first, size);
+            return second.Coordinates == other.Coordinates && second.Orientation == other.Orientation;
+        }
+
         /// <summary>Whether this game has a building of that name (another player's mod may add some it does not).</summary>
         public bool HasBuilding(string templateName)
         {

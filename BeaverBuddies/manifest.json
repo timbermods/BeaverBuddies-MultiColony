@@ -1,6 +1,6 @@
 {
   "Name": "Timber Together",
-  "Version": "1.4.0-rc9",
+  "Version": "1.4.0-rc10",
   "Id": "timbermods.TimberTogether",
   "MinimumGameVersion": "1.1.0.0",
   "Description": "Build apart. Thrive together. Co-op Timberborn with a colony each: every player runs their own districts, beavers and science on one map, and the colonies barter at Trading Posts. Built on BeaverBuddies by thomaswp and contributors (GPL-3.0), through the BeaverBuddies Stability Fork: see CREDITS.md. Do not enable another BeaverBuddies mod alongside it.",
