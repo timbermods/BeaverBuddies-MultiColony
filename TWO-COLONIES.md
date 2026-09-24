@@ -61,9 +61,9 @@ the host's first colony is start 1, the next player's start 2, and so on.
 co-op game** (beside Start) and names the settlement in the game's own box. The **Co-op Game** page, a page of the
 game's New Game wizard, lists everyone in the room: the host (colony 1), then each guest in the order they came in
 (colonies 2 to 4, then helpers of colony 1; no colonies in a shared game), each **Ready** or **Not ready**
-(**Joining…** until the guest has said who it is). Guests join from the main menu, by Steam invite or **Join co-op
-game**, and press **Ready**; the host may remove a guest, and **Start Game** asks first if someone is not ready
-or nobody came. At Start:
+(**Joining…** until the guest has said who it is). Guests join by Steam invite or **Join co-op game**, from the main
+menu or from a game (see [the room in a game](#the-room-in-a-game)), and press **Ready**; the host may remove a guest,
+and **Start Game** asks first if someone is not ready or nobody came. At Start:
 
 - nobody new can join, for good (a **Save and Rehost** lets someone in later, as after any first tick);
 - the host's computer makes the world as a single-player game behind the loading screen, fills the colony slot
@@ -76,30 +76,63 @@ or nobody came. At Start:
   switching colonies and asking a steward work at once, while paused; the host's **Hand to …** buttons still wait
   for the first tick (a guest still loading looks away).
 
-**A save in the waiting room.** Every save is hosted through the same page (the only way since 1.4.0-rc4):
-- **From the main menu**, **Host co-op game** (under Load game) opens the game's own save browser as the **Host co-op
-  game** box: its title, its settlements and saves, and **Host co-op game** in place of Load (Enter and a double-click
-  host too). Under the selected save's picture a gold line says what it is: *Separate colonies: 2 players* (the
-  players its slot table remembers), *… only yours so far*, or *One shared colony*. **Host co-op game** opens the page
-  for the save (its settlement, name and in-game date), after the game's own checks of the save.
-- **From inside a game**, the game menu's **Host co-op game** (playing alone) saves the game as a new save
-  (`<date> Co-op`) and opens its page in the main menu. A co-op host's same button is **Save and Rehost** (`<date>
-  Rehost`, also on the desync dialog): everyone leaves the game, and the others' **Rejoin** (on the lost-connection
-  message) or **Reconnect (wait for Rehost)** takes them to their main menu, where they join the page as soon as it
-  opens (Cancel stops waiting). A direct-IP guest asks the host's address every few seconds, off the menu's thread,
-  and joins once something listens there; a Steam guest enters the host's lobby only once its data says it is an open
-  Co-op Game page of this build (until the host rehosts, Steam shows the lobby of the game that ended), or accepts the
-  host's invite. The wait says nothing while nobody is there or the old game refuses newcomers, and stops with the
-  reason for another build of the mod or a full room (1.4.0-rc5). **Load game** only loads.
-- **The game menu's button** is decided by how the game was loaded (`HostButtonRules`), not by whether its session
-  still runs: **Host co-op game** in a game played alone, **Save and Rehost** for the host (also after a desync or a
-  lost guest), and nothing for a guest, also once its connection is lost (its copy may be out of step) or after a
-  failed action. A game's menu has no **Join co-op game**: a page is joined from the main menu (1.4.0-rc5).
+**A save in the waiting room.** Every save is hosted through the same room:
+- **Load game → Host co-op game**, in the main menu or in a game (Esc → **Load game**). The game's own Load game box has
+  **Host co-op game** right of **Load** (the box is made a little wider for it); Load, Enter and a double-click still
+  load. Under the selected save's picture a gold line says what it is, for every save: *Separate colonies: 2 players*
+  (the players its slot table remembers), *… only yours so far*, or *One shared colony*. **Host co-op game** opens the
+  room for the save (its settlement, name and in-game date), after the game's own checks of the save: the full page in
+  the main menu, a window over the game in a game. **Cancel** returns to the Load game box.
+- **The game you're in**: the game menu's **Host co-op game** (playing alone) saves the game as a new save (`<date>
+  Co-op`) and opens its room over it. A co-op host's same button is **Save and Rehost** (`<date> Rehost`, also on the
+  desync dialog): the game is saved and its room opens over it, and the guests are carried into it (below). No exit
+  save at Start for a game saved this way: that save is the one hosted.
+- **The buttons follow how the game was loaded** (`HostButtonRules`), not whether its session still runs: the game
+  menu has **Host co-op game** in a game played alone and **Save and Rehost** for the host (also after a desync or a
+  lost guest); a guest's game has neither, and no **Host co-op game** in its Load game box, also once its connection is
+  lost (its copy may be out of step) or after a failed action. The game menu has **Join co-op game** while no co-op
+  session is live in the game and the player hosts no room.
 
 At **Start Game** the save's bytes go to everyone and the host loads the same bytes; joining closes at Start, so
 founding, switching colonies and asking a steward work at once, as after a new game's waiting room. A save seats each
-player by who it remembers (the slot table in the save); the page reads that from the save and shows each row's
+player by who it remembers (the slot table in the save); the room reads that from the save and shows each row's
 colony and its faction (a brand-new player's row shows the colony they would most likely get).
+
+### The room in a game
+
+The Co-op Game room is the same room in the main menu and in a game: in the main menu a page of the game's New Game
+wizard, in a game a window over the game (the game's own named box, like the Load game box), with the same plate, notes,
+checkboxes, faction picker, players' board, **Invite Friends** and direct-IP line, status line, and **Cancel** / **Start
+Game** (the host) or **Leave** / **Ready** (a guest). The board scrolls; the window never grows past the screen. Its
+close button and Esc are Cancel or Leave, which ask first as the page's do.
+
+- **The game pauses under the window**, as under any of the game's boxes, and closing it (Cancel, Leave, the host
+  closing the room or removing the guest, whose box says why) returns to the game as it was.
+- **Joining from a game** (Esc → **Join co-op game**, or a Steam invite accepted while playing alone): a *Connecting*
+  box over the game, then the host's room as a window over it. The game stays a single-player game while its player
+  waits in the room: the join is held apart from it, and becomes the session only when the host's save arrives. A
+  connection that drops meanwhile closes the window, and the join's box says why. An invite accepted in a co-op game,
+  or while hosting a room, is set aside with a message (leave first).
+- **Carrying the guests.** When a host moves a running co-op game to a room (Save and Rehost, or Load game → Host co-op
+  game while hosting), every guest is told first, then the host saves (a rehost), ends the session and opens the room.
+  Each guest's session ends quietly (no *connection lost*, no Rejoin box), a box says the host is moving the game to a
+  room, and the room opens as a window over the guest's game, already joined; they press **Ready** as usual. Over Steam
+  the host keeps its lobby for the room (reopened to players, now a waiting room), so its guests, still members,
+  connect straight back even when the lobby is invite-only; a direct-IP guest reconnects to the address it used, where
+  the room listens on the same port. A guest that missed the word (a slow or dropped link) sees *The multiplayer
+  connection was lost* with **Rejoin**, which reaches the same room.
+- **Rejoin** (on the lost-connection message) and **Reconnect (wait for Rehost)** (on the desync dialog) wait in the
+  game, in a box over it (Cancel stops waiting), and open the host's room as a window when it welcomes the player. A
+  direct-IP guest asks the host's address every few seconds, off the game's thread, and joins once something listens
+  there; a Steam guest enters the host's lobby only once its data says it is an open Co-op Game room of this build
+  (until the host rehosts, Steam shows the lobby of the game that ended), or accepts the host's invite. The wait says
+  nothing while nobody is there or the old game refuses newcomers, and stops with the reason for another build of the
+  mod or a full room.
+- **Exit saves.** At **Start Game** each player's current game is replaced by the hosted save. A game of the player's own
+  first gets the game's own exit save, the one **Exit to menu** makes: the host's when it hosted a save from Load game,
+  a guest's when it joined from a game played alone. There is none for a game just saved for the room (the game menu's
+  Host co-op game, Save and Rehost), for a guest carried from the host's co-op game (its copy is the host's), or in the
+  main menu. A save that fails is logged and the start goes on.
 
 **A shared save made separate at Start** (1.4.0-rc4). For a save that is not separate colonies (a single-player game,
 a shared co-op save, a Stability Fork save), the host's page shows the New Game page's **Separate colonies** checkbox,
@@ -156,7 +189,7 @@ game's two factions: with a mod that adds a faction installed, a new game stays 
   faction's district center (*Place your Iron Teeth colony's district center*); **Another faction** changes it.
 - A player who did not pick (a game made alone and hosted later, or someone who joined a save) chooses in the
   founding box: one card per faction, with the game's own logo, name and description.
-- A **mixed save** hosted from the main menu shows each player's colony and its faction in the room. Only a player
+- A **mixed save** hosted from Load game shows each player's colony and its faction in the room. Only a player
   whose colony has no faction yet (they will found it) picks one there.
 
 **Which factions.** The host's unlocks count: Iron Teeth is there if it is unlocked on the hosting computer, whoever
@@ -522,15 +555,15 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   game's faction see the host's.
 - In a hosted save's waiting room a player whose colony has no faction yet picks one there; the others keep theirs, and
   a player can still switch an untouched colony.
-- Every game is hosted through the waiting room, from the main menu (a new game; a save, from Host co-op game); a game
-  hosts itself by going there (the game menu's Host co-op game, Save and Rehost). It holds at most seven guests (the Steam lobby's eight), and
-  is joined from the main menu only. An invite accepted in a game never connects from it (1.4.0-rc6,
-  `InviteRules`): playing alone, the player is asked, and **Save and join** makes the game's own exit save and goes to
-  the main menu, which joins the host's page by itself (the player stays in the host's Steam lobby meanwhile, so the
-  host lets them in); in a co-op game, or while hosting a page, the invite is set aside with a message and the lobby
-  left, so the running session is never taken over. It has no chat, map preview or mod-list
-  comparison (mismatch warnings still show in the game). Its settlement-name box has no *Change start location*.
-  Anyone who can reach the direct-IP port can come into the room; the host can remove them.
+- Every game is hosted through the waiting room: a new game from the main menu, a save from Load game → Host co-op game
+  (in the main menu or in a game), and the game a player is in from the game menu (Host co-op game, Save and Rehost). It
+  holds at most seven guests (the Steam lobby's eight). An invite accepted in a co-op game, or while hosting a room, is
+  set aside with a message and the lobby left (`InviteRules`), so the running session is never taken over. It has no
+  chat, map preview or mod-list comparison (mismatch warnings still show in the game). Its settlement-name box has no
+  *Change start location*. Anyone who can reach the direct-IP port can come into the room; the host can remove them.
+- A host moving a running co-op game to a room carries only the guests connected at that moment: a guest still
+  receiving its save is not told, sees its connection lost, and comes in with **Rejoin**. A direct-IP guest's first
+  tries may find nothing listening for a second, while the room's server starts; it tries every second.
 - Over Steam, a guest who leaves a waiting room stays in the host's Steam lobby (eight places). After many leaves and
   rejoins a friend may find it full while the room still shows free places; the host re-opening the room clears it.
 - If the host's game stops while it makes a waiting room's world, the guests wait on *Creating the world…* until they
@@ -657,8 +690,8 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   refused, and so is a hello the host could not stamp with a guest's number (a connection it no longer knows).
   (`ColonySlotTable.SeatHello` and `CheckHello`; a refused hello is logged as `[Colony] Refused PlayerHelloEvent …`.)
 - **Joining** closes at the waiting room's Start, before the world is made or the save sent: every game is hosted
-  through a waiting room since 1.4.0-rc4 (a game hosts itself by saving and opening its room in the main menu,
-  `HostCoopFlow`). The host's first message says so (`InitializeClientEvent.joiningClosedAtStart`), and
+  through a waiting room (a game hosts itself by saving and opening its room over the game, `RehostingService`). The
+  host's first message says so (`InitializeClientEvent.joiningClosedAtStart`), and
   `ColonyRules.WaitsForStart` then holds nothing back. (A host that waited in its game, paused, while players joined,
   held its first change for *Start the game?*; that way of hosting, BeaverBuddies' original, is gone, and since
   1.4.0-rc5 so is its prompt, `HostStartGate`. The refusals for a game still open to joiners stay, as the guard should
@@ -669,6 +702,17 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   length so a hosted save's bytes on the wire are unchanged. The server stays outside the game's session until the
   saved world loads, so the scene that makes the world is a single-player one (`LobbySession`, `LobbyWorldMaker`). The join check covers the mod's own files (`Buildings`,
   `TemplateCollections`) as well as the game and mod versions.
+- **The room in a game.** The room's panels are bound in every game as in the main menu (`LobbyHostPanel`,
+  `LobbyGuestPanel`); `LobbyPage` builds its content once, in the main menu's page frame or a game's window frame
+  (`Common/NamedBoxTemplate`, with the main menu's style sheets added to its root by `InGameLobby`). A join made in a
+  game is held by `ClientConnectionService`, not installed as the game's session (`EventIO`), until the host's save
+  arrives (`LoadMap`, just before the scene changes): its errors are still the join's to report, and nothing it hears
+  reaches the game. A host moving a running game sends each guest a control frame of its own (`MoveFrames`, never
+  replayed or hashed) and flushes it before its server closes; a guest that read it takes its connection's end as the
+  move, not an error (`TimberClient.HostMoved`, `ClientEventIO.OnHostMoved`), and rejoins at once. The host's Steam
+  listener hands its lobby to the room's (`SteamListener.KeepLobbyForNextServer`); the room's server binds the same
+  port once the old one has closed. The exit save at Start is the game's own (`Autosaver.CreateExitSave`), made by
+  `InGameLobby` as `ExitSaveRules` says.
 - **Every colony state change** (owners, marks, science and unlocks, exchanges and their ledger, traded
   beavers, presence, hand-overs, working hours) made inside a tick or a replayed action folds into a running digest.
   The host sends it with every heartbeat; a guest whose own differs stops that tick. The last 16384 changes are

@@ -16,7 +16,9 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 >   every tick; Trading Posts with exchanges of goods and beavers; opening the waiting room and joining it; and the
 >   Stability Fork's Steam invites, connection panel, cursors and desync fixes, over hours of two-player play.
 > - **Not played yet:** the New Game page's **Separate colonies** checkbox and splitting a shared game from the game
->   menu; **Host co-op game** for a save and from a game, and rejoining a rehost; starting a game from the waiting room; Folktails and Iron Teeth together; looking after an
+>   menu; **Host co-op game** for a save and from a game, and rejoining a rehost; the waiting room as a window over a
+>   game (hosting and joining from inside a game, guests carried into the host's room); starting a game from the
+>   waiting room; Folktails and Iron Teeth together; looking after an
 >   away player's colony, and hand-overs; most of the road rule; Trading Posts at scale; and the late game
 >   (automation and the HTTP API, water automation, power, dynamite and tunnels, both Wonders, bots). A two-player
 >   late-game playtest is next ([ALPHA-TEST-SCRIPTS](ALPHA-TEST-SCRIPTS.md), Scripts L, M and T).
@@ -80,11 +82,13 @@ a number of days for a group where someone may not come back (see
 - Press **Start Game** whenever you like (if someone is not ready, or nobody came, you are asked first). Your
   computer makes the world behind the loading screen, and everyone loads it together, paused at the start. Nobody new
   can join after Start (a **Save and Rehost** lets someone in later).
-- **Guests**, **from the main menu**: **Join co-op game** lists your Steam friends' co-op games; pick the host's
-  and press **Join**. Or accept the Steam invite, or type the host's IP under the list. A short
-  *Connecting* box, then the same page with **Ready** and **Leave**. An invite accepted while you play alone asks
-  first: **Save and join** saves your game and goes to the main menu, which joins the page by itself. In a co-op game,
-  or while hosting a page of your own, the invite waits: leave first, then accept it again.
+- **Guests**: **Join co-op game** (in the main menu, or in the game menu, Esc, while you play alone) lists your Steam
+  friends' co-op games; pick the host's and press **Join**. Or accept the Steam invite, or type the host's IP under the
+  list. A short *Connecting* box, then the same page with **Ready** and **Leave**. Joined from a game (the game menu,
+  or an invite accepted while you play), the room is a window over your game, which pauses under it: **Leave** returns
+  you to your game as it was, and your game stays yours until the host's **Start Game**, when it gets its exit save
+  (as **Exit to menu** makes it) and the host's save loads. In a co-op game, or while hosting a room of your own, the
+  invite waits: leave first, then accept it again.
   A game that has started may drop off the list instead of showing *Already started* (Steam may stop reporting a
   lobby nobody can join). A friend with the same version number but another build (one they built themselves) lists
   as joinable and is then refused with *Multiplayer build mismatch*: everyone installs the same zip.
@@ -102,17 +106,21 @@ a number of days for a group where someone may not come back (see
 - **A new game on a standard map, or a separate-colonies save:** the district centers already there are the host's
   colony. Every other player founds theirs after joining (step 5).
 - **A shared save** (a single-player game made with **Separate colonies** unticked, a shared co-op save, or a
-  Stability Fork save) stays one shared colony, unless you tick **Separate colonies** on its Co-op Game page (step 3).
+  Stability Fork save) stays one shared colony, unless you tick **Separate colonies** in its Co-op Game room (step 3).
   A player other than the host may also split it later, once, from the game menu (see
   [one shared colony](#one-shared-colony)).
 
-**3. Host a save: Host co-op game.** From the main menu choose **Host co-op game** (under Load game). It opens the
-game's own save browser as the **Host co-op game** box: pick a settlement and a save, and a gold line under its picture
-says what it is (separate colonies, with how many players it remembers, or one shared colony). **Host co-op game**
-opens its **Co-op Game** page (its settlement, name and in-game date): invite with **Invite Friends** (Steam) or your
-IP address (port **25565**), friends ready up, and **Start Game** loads the save for everyone at once. Each player
-gets the colony the save remembers for them (a new player the next free one); the page reads that from the save and
-shows each player's colony and its faction. Guests join from the main menu, as for a new game.
+**3. Host a save: Load game → Host co-op game.** In the main menu, or in a game (Esc), choose **Load game**: pick a
+settlement and a save, and a gold line under its picture says what it is (separate colonies, with how many players it
+remembers, or one shared colony). **Host co-op game**, right of **Load**, checks the save as a load does and opens its
+**Co-op Game** room (its settlement, name and in-game date): the full page in the main menu, a window over your game in
+a game, which pauses under it. Invite with **Invite Friends** (Steam) or your IP address (port **25565**), friends
+ready up, and **Start Game** loads the save for everyone at once; from a game, your game gets its exit save first (as
+**Exit to menu** makes it). **Cancel** closes the room (everyone in it is told) and takes you back to the Load game
+box. Each player gets the colony the save remembers for them (a new player the next free one); the room reads that from
+the save and shows each player's colony and its faction. Guests join as for a new game, from the main menu or from
+their game. A guest's game (also after its connection was lost) has no **Host co-op game** in its Load game box: its
+copy may be out of step.
 
 For a shared save the page also shows the New Game page's **Separate colonies** checkbox, unticked, with **Separate
 science and unlocks** under it, also unticked. Ticked, the game becomes a separate-colonies game at Start, for good:
@@ -121,13 +129,17 @@ and unlocks, as a split does, unless you tick **Separate science and unlocks**: 
 on, what was earned so far stays with yours, and your friends' colonies start with none. Your friends' pages say which
 it will be.
 
-**4. From inside a game.** Playing alone, open the game menu (Esc) and choose **Host co-op game**: the game is saved,
-as a new save, and its **Co-op Game** page opens in the main menu, as in step 3. Hosting a co-op game, the same button
-reads **Save and Rehost**: everyone leaves the game, it is saved, and its page opens; the others choose **Rejoin** (or
-**Reconnect** after a desync), go to their main menu, and land on the page as soon as it opens; when everyone is ready,
-**Start Game** loads it for all of you. A guest has no hosting button, also after the connection is lost: their copy
-of the game may be out of step. **Load game** only loads, and a game's menu has no **Join co-op game**: a Co-op Game
-page is joined from the main menu.
+**4. Host the game you're in.** Playing alone, open the game menu (Esc) and choose **Host co-op game**: the game is
+saved, as a new save, and its **Co-op Game** room opens over it, as in step 3 (no exit save at Start: it was just
+saved). Hosting a co-op game, the same button reads **Save and Rehost**: the game is saved and its room opens over it,
+and your guests come with you by themselves. Their session ends quietly (no *connection lost*), and the room opens over
+each guest's own game, already joined: they press **Ready**, you press **Start Game**. Choosing **Load game** → **Host
+co-op game** while you host a co-op game brings your guests into that save's room the same way. Over Steam your lobby
+is kept for the room, so your guests come straight back, even when it is invite-only; a direct-IP guest reconnects to
+the same address. A guest who missed it (a slow connection) sees *The multiplayer connection was lost* and chooses
+**Rejoin**, which waits in their game and joins the room when it opens; after a desync the guests choose **Reconnect
+(wait for Rehost)**, which does the same. A guest has no hosting button, also after the connection is lost: their copy
+of the game may be out of step. Nobody goes through the main menu.
 
 **5. Guest without a colony: found yours.** As soon as you are in, a message offers to **place your district
 center** (or press **Ctrl+K** later, whenever you are ready). Place it **anywhere its roads won't join another colony's** (other colonies' roads show in their colors). It
@@ -379,9 +391,9 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   `Walker mismatch`) so a later desync says when the games first differed. In a separate-colonies game, colony state
   (owners, marks, science, exchanges) is compared with the host's every tick too, and in full once a day, so
   one is caught when it happens. The host uses **Save and Rehost** and the guests **Reconnect (wait for Rehost)**, in
-  any order: each guest goes to the main menu and joins the host's Co-op Game page as soon as it opens, the way they
-  joined (a direct-IP guest redials the address it used; a Steam guest joins the host's Steam lobby when Steam shows it,
-  with **Allow Friends to Join Directly via Steam** on, or accepts the host's invite).
+  any order: each guest waits in their game and joins the host's Co-op Game room, a window over it, as soon as it
+  opens, the way they joined (a direct-IP guest redials the address it used; a Steam guest joins the host's Steam lobby
+  when Steam shows it, with **Allow Friends to Join Directly via Steam** on, or accepts the host's invite).
 - **Direct connections send at once:** Nagle's algorithm is off on every direct (IP) socket, and only the save sent to
   a joining player is paced.
 
@@ -390,12 +402,15 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
 - **Can't join / stuck on "Receiving map…":** every player must have the same zip. Reinstall from the same file and restart.
   *Multiplayer build mismatch* names what differs (the game or mod version, or the mod's `Buildings` and
   `TemplateCollections` files).
-- **A friend lost the connection, or joins late:** they choose **Rejoin** (or wait in Join co-op game), and the host
-  chooses **Save and Rehost** in the game menu: everyone meets on the Co-op Game page, and Start Game carries on.
+- **A friend lost the connection, or joins late:** they choose **Rejoin** (or join from **Join co-op game**), and the
+  host chooses **Save and Rehost** in the game menu: everyone meets in the Co-op Game room, and Start Game carries on.
 - **A guest's game failed to load after the waiting room's Start:** nobody can join a started game; the host uses
   **Save and Rehost**, and the guest joins that.
 - **"… invited you to their co-op game. You are in a co-op game now":** a co-op game is not ended for an invite.
   Leave it from the game menu (Esc), then accept the invite again, or join from **Join co-op game**.
+- **The Co-op Game window over your game:** the game is paused under it. **Cancel** (the host) or **Leave** (a guest),
+  or its close button or Esc, returns you to your game as it was. Only the host's **Start Game** replaces your game,
+  after its exit save.
 - **Ctrl+K says this is one shared colony:** the save is a shared game. A player other than the host splits it from
   the game menu (Esc → **Found your own colony**); that makes it separate for good.
 - **A desync dialog with `Colony state differs` in the log:** the every-tick colony check disagreed. It
@@ -455,8 +470,14 @@ not to the original BeaverBuddies project.
   actions. At **Start Game** the host's computer makes the world as a single-player game, saves it at tick 0, sends
   those bytes to every player in the room, and loads the same bytes itself as the hosted game, as **Host co-op game**
   on a save does. The colony slot table is filled in the room's order before that first save.
+- **A room opened in a game** is the same room in a window. A guest who joins from a game keeps playing alone until the
+  host's save arrives: the join is held apart from the game (the game is not a co-op game while its player waits).
+  A host moving a running co-op game to a room first tells every guest (a small message of its own, never a game
+  action), then ends the session and opens the room on the same port, handing its Steam lobby to the room; each guest
+  ends its session quietly and joins the room by itself.
 
 Design notes and the plans: [design/PRE-GAME-LOBBY-PLAN.md](design/PRE-GAME-LOBBY-PLAN.md) (the waiting room),
+[design/IN-GAME-HOSTING-PLAN.md](design/IN-GAME-HOSTING-PLAN.md) (the room in a game),
 [design/TRADING-EXCHANGE-PLAN.md](design/TRADING-EXCHANGE-PLAN.md),
 [design/TWO-COLONY-ALPHA-PLAN.md](design/TWO-COLONY-ALPHA-PLAN.md); the desync and network review:
 [design/REVIEW-FINDINGS-1.4.0-beta11.md](design/REVIEW-FINDINGS-1.4.0-beta11.md); Wonders on the tick:

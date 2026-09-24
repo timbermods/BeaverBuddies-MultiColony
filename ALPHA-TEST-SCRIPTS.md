@@ -1,12 +1,14 @@
 # Separate colonies: test scripts
 
 For the 1.4.0 betas and release candidates (separate colonies, trading posts and barter, colony handover, since
-1.4.0-rc1 the late-game playtest, since 1.4.0-rc3 Script S: separate or shared, chosen on the New Game page, and since
-1.4.0-rc4 Script H: hosting a save, and hosting from a game, with 1.4.0-rc5's fixes marked *(rc5)*). The scripts began with
-the alphas; a label such as *(alpha13)* or *(beta2)* says which build a line was added for. Please report a
-result for **every line**: *works*, *fails* (what you saw), or *not tried*. A screenshot helps for anything drawn on
-screen (the trading-post panel, a notice, the connection panel, the toolbar). Send `Player.log` at the end
-(`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`). Lines from this mode start with `[Colony]`.
+1.4.0-rc1 the late-game playtest, since 1.4.0-rc3 Script S: separate or shared, chosen on the New Game page, since
+1.4.0-rc4 Script H: hosting a save, and hosting from a game, with 1.4.0-rc5's fixes marked *(rc5)*, and since
+1.4.0-rc7 Script G: hosting and joining from inside a game, with the steps of older scripts it changed marked
+*(rc7)*). The scripts began with the alphas; a label such as *(alpha13)* or *(beta2)* says which build a line was
+added for. Please report a result for **every line**: *works*, *fails* (what you saw), or *not tried*. A screenshot
+helps for anything drawn on screen (the trading-post panel, a notice, the connection panel, the toolbar). Send
+`Player.log` at the end (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`). Lines from this mode
+start with `[Colony]`.
 
 Install: remove every other BeaverBuddies folder from `Documents\Timberborn\Mods` (including the Stability Fork),
 copy in `BeaverBuddies-MultiColony`, enable **BeaverBuddies MultiColony (beta)**, restart the game. If another
@@ -416,22 +418,22 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
 10b. **Start at once (beta21).** Host opens a room and presses **Start Game** straight away (yes to starting alone): on a
     friend's Steam friends list the host shows no *Join game*.
 11. **Cancel.** Host opens a waiting room, the guest joins, host **Cancel** → confirm: the guest sees *Kyler closed
-    the waiting room.* The host is back on the difficulty page; the main menu's **Host co-op game** on any save still
-    works (the guest sees a *Connecting* box, then that save's page).
-12. **From a game.** Guest plays a solo game and accepts a waiting-room invite: a box says to go back to the main menu
-    and accept it again; nothing else changes.
-12b. **From a co-op game (beta21, known limit).** Guest is in someone else's co-op game and accepts a waiting-room
-    invite: the same box shows, and the game they were in has lost its connection. Say what that game does.
+    the waiting room.* The host is back on the difficulty page; **Load game** → any save → **Host co-op game** still
+    works (the guest sees a *Connecting* box, then that save's page) *(rc7)*.
+12. **From a game** *(rc7)*. Guest plays a solo game and accepts a waiting-room invite: the room opens as a window over
+    the guest's game (Script G, step 6).
+12b. **From a co-op game** *(rc6)*. Guest is in someone else's co-op game and accepts a waiting-room invite: a box says
+    to leave that game first, and that game carries on undisturbed.
 13. **Waiting.** Leave the guest on the page three minutes before Start: nothing drops. Pull the host's network
     cable for two minutes while the guest waits: the guest is asked *Keep waiting* / *Leave*.
-15. **A save (beta19, rc4).** Host, from the main menu: **Host co-op game** → a separate-colonies save you both
-    played → **Host co-op game**. The same page opens: the plate says the settlement, the gold line the save's name (an autosave
+15. **A save (beta19, rc7).** Host, from the main menu: **Load game** → a separate-colonies save you both
+    played → **Host co-op game** (right of Load). The same page opens: the plate says the settlement, the gold line the save's name (an autosave
     reads *Autosave*) and its date as the Load Game box writes it; each row names the player's colony, with its
     faction's logo.
     The guest joins from the main menu and readies up; **Start Game**: both load the save, paused, and each is in the
-    colony the save remembers (`[Colony] Player … plays slot …`). **Cancel** instead goes back to the Host co-op game box.
-15a. **From a game (beta19; rc4).** The old dialog (connected players, Invite Friends, Start Game) is gone: hosting from
-    a game goes through its page in the main menu (Script H).
+    colony the save remembers (`[Colony] Player … plays slot …`). **Cancel** instead goes back to the Load game box.
+15a. **From a game (beta19; rc7).** The old dialog (connected players, Invite Friends, Start Game) is gone: hosting from
+    a game opens the same room as a window over the game (Script G).
 15b. **A player new to the save (beta19).** A third player who never played the save joins its waiting room: in the
     game they take the next free colony (or found one), as before.
 16. Send both `Player.log` files. Lines from the waiting room start with `[Lobby]`.
@@ -735,8 +737,8 @@ and no text may overlap or run off.
    been founded and the shared colony is theirs. Both logs: `[Colony] Separate colonies switched on: slot 1 founded a
    colony in a shared game`. The top bar's science is the same number on both (one pool). Neither game menu has the
    button any more.
-9. **For good.** The host's Save and Rehost; the guest chooses **Rejoin**, Ready, Start: still two colonies, no
-   button, and the guest's Ctrl+K says they already have a colony.
+9. **For good.** The host's Save and Rehost: the guest is brought into the room over their game *(rc7)*; Ready,
+   Start: still two colonies, no button, and the guest's Ctrl+K says they already have a colony.
 10. **A separate room.** New game, **Separate colonies** ticked and **Separate science and unlocks** unticked → Host co-op
     game: the gold line reads *Separate colonies: each player builds their own colony.* In the game, the guest is offered
     to place a district center as before, and the colonies share one pool of science.
@@ -745,21 +747,22 @@ and no text may overlap or run off.
 ## Script H: hosting a save, and hosting from a game (two players, about 40 minutes) *(1.4.0-rc4)*
 
 Every game is hosted through a Co-op Game page since 1.4.0-rc4, and the original BeaverBuddies hosting dialog is gone.
-Screenshots help for every box and page here: nothing may overlap or run off.
+Since 1.4.0-rc7 a save is hosted from the Load game box, in the main menu or in a game, and the room opens over a game
+as a window (Script G). Screenshots help for every box and page here: nothing may overlap or run off.
 
-1. **The main menu.** Under **Load game**: **Host co-op game**, then **Join co-op game**, all one size, and each clicks
-   like the game's buttons *(rc5)*. With a save (so **Continue** shows), the whole menu, its frame and the Discord logo
-   sit inside the brown band, clear of its bottom bar: the band grows to fit on a screen with room *(rc5)*.
-   Screenshot.
-2. **The Host co-op game box.** Press **Host co-op game**: the game's own save box opens, titled *Host co-op game*,
-   with **Host co-op game** where Load was (Delete settlement and Delete save as usual). Pick saves and read the gold
-   line under the picture: a separate-colonies save you both played says *Separate colonies: 2 players*, one made
-   alone with Separate colonies ticked *… only yours so far*, a shared one *One shared colony. When you host it, you can
-   make it separate colonies.* The save list doesn't move as you click through. Screenshot.
-3. **The Load Game box is itself.** Close it (Esc) and open **Load game**: titled *Load game*, with **Load**, no gold
-   line, and Enter or a double-click loads. Back in the Host co-op game box, pick a shared save, **Host co-op game**,
-   then **Cancel** on its page: the box comes back with the save's gold line still there *(rc5)*.
-4. **A shared save, made separate at Start.** Host co-op game → a shared save → **Host co-op game**. The page shows
+1. **The main menu** *(rc7)*. Under **Load game**: **Join co-op game** only (no Host co-op game), the same size, and it
+   clicks like the game's buttons. With a save (so **Continue** shows), the whole menu, its frame and the Discord logo
+   sit inside the brown band, clear of its bottom bar, the band its usual size. Screenshot.
+2. **The Load game box** *(rc7)*. Press **Load game**: the game's own box, titled *Load game*, with **Delete settlement**,
+   **Delete save**, **Load** and, right of it, **Host co-op game**, all one size in one row, nothing overlapping (the box
+   is a little wider than the game's). Pick saves and read the gold line under the picture: a separate-colonies save you
+   both played says *Separate colonies: 2 players*, one made alone with Separate colonies ticked *… only yours so far*,
+   a shared one *One shared colony. When you host it, you can make it separate colonies.* The save list doesn't move as
+   you click through. Screenshot.
+3. **Load still loads** *(rc7)*. Enter or a double-click on a save loads it, as **Load** does. Back in the box, pick a
+   shared save, **Host co-op game**, then **Cancel** on its page: the box comes back with the save's gold line still
+   there.
+4. **A shared save, made separate at Start.** Load game → a shared save → **Host co-op game**. The page shows
    **Separate colonies** (unticked) under the gold line *One shared colony…*, lined up like the New Game page's. Tick
    it: **Separate science and unlocks** appears under it, and the gold line reads *Separate colonies from Start…* on
    the host's page and, at once, on the guest's. Untick: back. Tick again, with separate science unticked, and **Start
@@ -774,34 +777,90 @@ Screenshots help for every box and page here: nothing may overlap or run off.
 4b. **Load game in a hosted game** *(rc5)*. In that game the host presses Esc → **Load game** → an autosave → **Load**:
    it loads (it used to do nothing after hosting from the box).
 5. **A separate save's page** shows no checkboxes: it is separate already.
-6. **From a game played alone.** Load any save with **Load game** and play a minute. Esc: **Host co-op game** is under
-   Load game (rc4 left it out: fixed in *rc5*), and there is no **Join co-op game** in a game *(rc5)*. Press it: a box
-   says the game is saved and its page opens in the main menu. **Host co-op game**: the main menu comes, then the page
-   for a save named *… Co-op*. The friend joins; Ready; **Start Game**: both in the game you left.
+6. **From a game played alone** *(rc7)*. Load any save with **Load game** and play a minute. Esc: **Host co-op game**
+   and **Join co-op game** are under Load game. **Host co-op game**: a box says the game is saved and its room opens
+   over it. Confirm: a save named *… Co-op*, and its room as a window over the game (Script G, step 9). The friend
+   joins; Ready; **Start Game**: both in the game you left.
 7. **The menu in co-op.** In that game, the host's Esc menu has **Save and Rehost** where Host co-op game was; the
    guest's has neither. After step 8's lost connection, a guest who chooses **Stay here** still has neither *(rc5)*.
-8. **Save and Rehost.** The host chooses Esc → **Save and Rehost** and confirms. The guest's game says the connection
-   was lost, with **Rejoin** and **Stay here**. **Rejoin**: the guest's main menu comes with *Waiting for the host's
-   Co-op Game page…* (over Steam: *…or when you accept the host's Steam invite*) and lands on the host's page as soon as
-   it opens (a few seconds at most). The guest's menu stays smooth while it waits *(rc5)*. Ready; **Start Game**: both
-   carry on where they were, each in their own colony.
-9. **The guest first** *(rc5)*. Rejoin comes only once the host has left, so to press first the guest needs the desync
-   dialog's **Reconnect (wait for Rehost)** (step 10), or drops their own network for a minute while the host plays on,
-   then **Rejoin**. The guest waits in the main menu while the host is still in the game: no error, and the host gets
-   at most one *mods differ* message, not one every few seconds. Then the host's **Save and Rehost**: the guest joins
+8. **Save and Rehost** *(rc7)*. The host chooses Esc → **Save and Rehost** and confirms. The guest is brought into the
+   host's room over their own game, with no *connection lost* (Script G, step 10). Ready; **Start Game**: both carry on
+   where they were, each in their own colony.
+9. **The guest first** *(rc5; rc7)*. To press first the guest needs the desync dialog's **Reconnect (wait for Rehost)**
+   (step 10), or drops their own network for a minute while the host plays on, then **Rejoin**. The guest waits in
+   their game, under *Waiting for the host's Co-op Game room…*, while the host is still in the game: no error, the
+   guest's game stays smooth, and the host gets at most one *mods differ* message, not one every few seconds. Then the host's **Save and Rehost**: the guest joins
    as the page opens. Once more, and the guest presses **Cancel** while waiting: it stops, and **Join co-op game** still
    works. Also once with the Steam overlay open (Shift+Tab) as the guest gets in: the waiting box goes away once the
    overlay closes, and **Cancel** always works.
 10. **After a desync** (if one happens): the desync dialog's **Save and Rehost** and **Reconnect (wait for Rehost)** do
     the same as step 8.
 11. **Both ways of joining.** Do step 8 once with the guest joined over Steam and once by IP address.
-12. **An invite in a game** *(rc6)*. The guest plays a save alone; the host opens a Co-op Game page and invites them
-    over Steam. The guest accepts (Shift+Tab): once the overlay closes, a box asks *… Co-op games are joined from the
-    main menu: save this game and go there to join them?* **Stay here**: nothing happens, and the game plays on.
-    Invite again, **Save and join**: an autosave of the guest's game appears in Load game later, and the main menu
-    lands on the host's page by itself (a *Connecting* box first). Once more while the guest is in a co-op game with
-    someone else: a box says to leave that game first, and that game carries on undisturbed.
+12. **An invite in a game** *(rc6; rc7)*. The guest plays a save alone; the host opens a Co-op Game page and invites
+    them over Steam. The guest accepts (Shift+Tab): once the overlay closes, the host's room opens as a window over the
+    guest's game (Script G, step 6; rc6's *Save and join* box is gone). Once more while the guest is in a co-op game
+    with someone else: a box says to leave that game first, and that game carries on undisturbed.
 13. **A direct join that finds nobody** *(rc6)*. Main menu → Join co-op game → an address where nothing hosts (for
     example a friend's IP while they are in the main menu): the *Connecting* box shows at once, the menu stays smooth,
     and after about 3 seconds it says the connection failed.
 14. Send both `Player.log` files. Lines start with `[Lobby]`, `[Join]` and `[Colony]`.
+
+## Script G: hosting and joining from inside a game (two players, about 60 minutes) *(1.4.0-rc7)*
+
+The Co-op Game room also opens as a window over a running game: a save is hosted from the Load game box in a game,
+the game menu hosts the game you're in, a guest joins from their game, and a host's guests are carried into its room.
+Nobody goes through the main menu. **Not played yet**: every line is new, and nothing of it has been seen in the game.
+Screenshots matter here: the window and the Load game box are built from the game's own templates without a look at
+them, so please screenshot each one named below, at your usual resolution and at the smallest window you use.
+
+1. **The Load game box, main menu.** Main menu → **Load game**: **Delete settlement**, **Delete save**, **Load**,
+   **Host co-op game**, one size, one row, centred, nothing overlapping or cut, the box a little wider than the game's.
+   The gold line under the picture for every save you pick; the list doesn't move. **Screenshot 1.**
+2. **The Load game box, in a game.** Load any save alone, Esc → **Load game**: the same box, the same buttons and line.
+   **Screenshot 2.** Load, Enter and a double-click still load.
+3. **The host's window.** In that game, Esc → **Load game** → another save → **Host co-op game**. The window opens over
+   the game, which pauses (the clock stops, the speed buttons are locked): the capsule title *Co-op Game*, a close
+   button, the plate (the settlement), the gold line (the save's name and date), **Players (1)** with your row (*Host*),
+   **Invite Friends**, the IP line, the status line, and **Cancel** / **Start Game** at the bottom. Nothing overlaps,
+   the window fits the screen, and any long line wraps within two lines. **Screenshot 3** (usual size) and **3b** (the
+   smallest window). The log has `[Lobby] Waiting room open for the save`.
+4. **Cancel returns.** **Cancel**: back to the Load game box, its gold line there; Esc → the game menu; Esc → the game,
+   at the speed it had. Open the room again; with a guest in it (step 6), the close button and Esc ask first.
+5. **A shared save and a mixed save.** Host a shared save from a game: the **Separate colonies** checkboxes in the
+   window line up, nothing overlaps (**Screenshot 5**). A mixed save (if you have one): each row's faction logo.
+6. **Joining from a game.** The guest plays a save alone. The host invites them (**Invite Friends**); the guest accepts
+   (Shift+Tab): a *Connecting* box over the guest's game, then the *Kyler's Game* window over it, the game paused, with
+   **Ready** and **Leave**. **Screenshot 6.** The guest's log: `[Lobby] Joining from a game: this game stays
+   single-player until the host's save arrives`. **Ready**, **Not ready**: the host's row follows. **Leave** (asks):
+   back to the guest's game as it was.
+7. **Join co-op game in a game.** The guest, Esc → **Join co-op game**: the Join box over the game menu, the host's row
+   listed (**Screenshot 7**); **Join** → the window. Leave, and join by IP from the same box. Also: a co-op game's menu
+   has no **Join co-op game**, and neither has the menu of a player whose room is open.
+8. **Start from games.** Both in the room (host from a game, guest from a game), **Start Game**: both load the hosted
+   save, paused, each in their colony, without the main menu. Afterwards **Load game** shows an exit save of each game
+   that was replaced (as Exit to menu makes); logs: `[Lobby] This game's exit save is made`.
+9. **Host the game you're in.** Play alone, Esc → **Host co-op game** → confirm: a save *… Co-op* and its window over
+   the game. The guest joins; **Start Game**: no exit save of the host's game this time (log: `No exit save of this
+   game at Start (it was just saved for the room)`).
+10. **Carried, over Steam.** In a co-op game joined over Steam, the host: Esc → **Save and Rehost** → confirm. The guest
+    sees no *connection lost*: a box *The host is moving this game to a Co-op Game room…*, then, within a few seconds,
+    the host's window over their game, already in the room. Host log: `[Lobby] Moving to a waiting room: told 1
+    guest(s); Steam lobby … kept for the room`, `Steam lobby … kept from the game and reopened`; guest log: `[Lobby] The
+    host is moving this game to a waiting room; following it`, then `connecting to the host`. Ready, **Start Game**:
+    carry on; no exit save of the guest's game (`it was loaded as a guest`). Once more with the host's **Allow Friends
+    to Join Directly via Steam** off: the guest still comes back.
+11. **Carried, by IP.** The same with the guest joined by IP address: the guest comes back within a few seconds.
+12. **Carried to another save.** In a co-op game, the host: Esc → **Load game** → another save → **Host co-op game**:
+    the guest is carried into that save's room the same way. At Start the host's co-op game gets its exit save, the
+    guest's does not.
+13. **A lost connection.** In a co-op game the guest pulls their network cable for a minute: *The multiplayer connection
+    was lost* with **Rejoin** and **Stay here**. **Rejoin**: a box over the guest's game, *Waiting for the host's Co-op
+    Game room…*. The host: **Save and Rehost**: the guest's window opens over their game. Once more, and the guest
+    presses **Cancel** while waiting: the wait stops, and **Join co-op game** in the game menu still works.
+14. **After a desync** (if one happens): the host's **Save and Rehost** carries any guest still connected; the desynced
+    guest's **Reconnect (wait for Rehost)** waits in their game and joins the room.
+15. **Refusals.** A guest in someone else's co-op game accepts an invite: a box says to leave that game first; that game
+    carries on. The host, with a room open, accepts someone else's invite: a box says to close the room first.
+16. **Removed.** The host removes the guest (the red cross): the guest's window closes, *Kyler removed you from the
+    waiting room.*, and the guest is back in their game, which plays on.
+17. Send both `Player.log` files, with the screenshots (1, 2, 3, 3b, 5, 6, 7). Lines start with `[Lobby]` and `[Join]`.
