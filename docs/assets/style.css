@@ -270,22 +270,38 @@ pre code { background: none; border: 0; padding: 0; font-size: inherit; overflow
 .map-labels .end { transform: translateX(-100%); }
 .map-labels .mid { transform: translateX(-50%); }
 .map-labels .n { display: none; }
-/* goods crossing at the Trading Post: each side is carried to its own half, both wait, then both cross together.
-   The hero's one moving part: still under reduced motion, paused while the map is off screen. */
+/* goods at the Trading Post, never beavers: a crate with the game's own icon, edged in its owner's colour. Each is
+   carried along its own road to its own half; when both are in, the post lights, they swap halves (one over, one
+   under, as in the Barter plate) and the edge turns the new owner's colour at the divider; then they are taken in.
+   Nothing moves on the other colony's road. The hero's one moving part: still under reduced motion (the crates
+   wait on their own roads), paused while the map is off screen. */
+.map .crate { fill: var(--navy); stroke-width: 2.5; } /* dark, like the game's item slots: its icons are drawn for a dark UI */
+.map .crate.new { opacity: 0; }
 .map .good { opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
-  .map .good { animation: barter 9s cubic-bezier(.45, 0, .2, 1) infinite; }
+  .map .good { animation: barter 9s infinite; }
+  .map .good .hop { animation: hop 9s infinite; }
+  .map .good .crate.own { animation: owner-out 9s infinite; }
+  .map .good .crate.new { animation: owner-in 9s infinite; }
   @keyframes barter {
-    0%, 8% { opacity: 0; transform: translateX(0); }
-    14% { opacity: 1; }
-    42% { opacity: 1; transform: translateX(var(--run)); }
-    52%, 62% { opacity: 1; transform: translateX(var(--run)); }
-    86% { opacity: 1; transform: translateX(var(--cross)); }
-    94%, 100% { opacity: 0; transform: translateX(var(--cross)); }
+    0%, 6% { opacity: 0; transform: translateX(0); animation-timing-function: ease-out; }
+    12% { opacity: 1; transform: translateX(0); animation-timing-function: cubic-bezier(.45, 0, .25, 1); }
+    40% { opacity: 1; transform: translateX(var(--in)); }
+    52% { opacity: 1; transform: translateX(var(--in)); animation-timing-function: cubic-bezier(.45, 0, .35, 1); }
+    66% { opacity: 1; transform: translateX(var(--swap)); }
+    80% { opacity: 1; transform: translateX(var(--swap)); animation-timing-function: ease-in; }
+    88%, 100% { opacity: 0; transform: translateX(var(--swap)); }
   }
+  @keyframes hop {
+    0%, 52% { transform: translateY(0); animation-timing-function: cubic-bezier(.2, .7, .4, 1); }
+    59% { transform: translateY(var(--hop)); animation-timing-function: cubic-bezier(.6, 0, .8, .3); }
+    66%, 100% { transform: translateY(0); }
+  }
+  @keyframes owner-out { 0%, 58% { opacity: 1; } 60%, 100% { opacity: 0; } }
+  @keyframes owner-in { 0%, 58% { opacity: 0; } 60%, 100% { opacity: 1; } }
   .map .post-glow { animation: post-glow 9s ease-in-out infinite; }
-  .map.at-rest .good, .map.at-rest .post-glow { animation-play-state: paused; }
-  @keyframes post-glow { 0%, 58% { opacity: 0; } 66% { opacity: .9; } 80%, 100% { opacity: 0; } }
+  .map.at-rest .good, .map.at-rest .good *, .map.at-rest .post-glow { animation-play-state: paused; }
+  @keyframes post-glow { 0%, 42% { opacity: 0; } 48%, 56% { opacity: .9; } 64%, 100% { opacity: 0; } }
 }
 @media (prefers-reduced-motion: reduce) {
   .map .good { opacity: 1; }
