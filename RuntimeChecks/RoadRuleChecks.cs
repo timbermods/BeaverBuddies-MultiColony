@@ -78,7 +78,7 @@ internal static class RoadRuleChecks
                 "Buildings/DistrictManagement/DistrictCenter/DistrictCenter.Folktails.blueprint.json" })
                 if (!Carries(road)) throw new Exception(road + " no longer carries PathSpec: the rule would not see it as a road");
             if (Carries("Buildings/DistrictManagement/DistrictCrossing/DistrictCrossing.Folktails.blueprint.json"))
-                throw new Exception("the District Crossing (the Trading Post's model) now carries PathSpec");
+                throw new Exception("the District Crossing (the building the Trading Post copies) now carries PathSpec");
             string post = Path.Combine(modDirectory, "Buildings", "DistrictManagement", "MultiColonyTradingPost", "MultiColonyTradingPost.Folktails.blueprint.json");
             if (JsonNode.Parse(File.ReadAllText(post))!["PathSpec"] != null) throw new Exception("the Trading Post carries PathSpec");
             // The game's own test for a path is the same: an object in the cell's path layer with PathSpec.

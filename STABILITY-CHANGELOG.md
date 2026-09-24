@@ -5,6 +5,45 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc10
+
+**The Trading Post has a model of its own, and each half is 3 × 2.** Asked for by Kyler after rc9, with the models he
+provided. No change to how trading works or to the wire; everyone needs this build (the join checks the version).
+Built against Timberborn 1.1.2.4: both configurations with 0 warnings; StabilityTests 503 and RuntimeChecks 458 pass.
+**Not played.**
+
+- **Its own model, per faction.** A hall of dark timber and plank walls under one roof, thatched for Folktails and
+  roofed with green planks for Iron Teeth, a sign over the door and a clear walkway through the middle; a timber frame
+  while it is built. Four models in `Buildings/DistrictManagement/MultiColonyTradingPost/`
+  (`TradingPost.<Faction>.Model` and `.ConstructionStage0.Model`, `.timbermesh`): 2,182 and 508 triangles, only the
+  game's own material atlases (each faction's and the common ones), a `#Slot#Entrance` node just inside the door (the
+  blueprint's worker slot, turned to face out as the game's crossing's is), and an all-white vertex colour layer (the
+  game's building shader, EnvironmentURP, multiplies by it). The only change to the delivered files: this build adds
+  that layer to the two construction models. `.gitattributes` marks `.timbermesh` binary.
+- **Each half is 3 × 2 (the District Crossing's is 3 × 1), so the whole post is 3 wide and 4 deep, and its two doors
+  are 5 cells apart.** Both blueprints: size 3 × 2 × 3 (18 blocks, the crossing's own ground and upper blocks); the
+  door where it was, in front of the middle block; the walkway out of the door, along the middle column and into the
+  other half; the cursor holding the pair by the line where the halves meet (custom pivot 1.5, 2); goods taken to the
+  middle of that line (local access 1.5, 0, 2); one collider per model; and the game's `ConstructionBase3x2`.
+  Everything else stays the game's District Crossing's: 10 logs, no science, 10 workers (4 by default), the crossing
+  and link specs, the district obstacle. The game places, links and walls a half two blocks deep the same way:
+  `AreaPicker.HalvesCoordinates` and `BlockObject.CoordinatesBehind` read the size.
+- **The two halves of a new post are judged together again.** The host judges both halves placed in one batch
+  together, so one can't be built while the other is refused (a lone half never finishes). It paired halves one cell
+  apart, but the game lays the second half (width − 1, 2 × depth − 1) from the first, 3 cells for the old half and 5
+  for the new, so it never paired them. `ColonyRulesService.JudgePairs` now pairs them where the game puts them
+  (`ColonyGameWorld.SecondHalf`, `AreHalvesOfOnePost`).
+- **RuntimeChecks, 5 new (458):** the half's shape, against the crossing's blocks and the game's 3 × 2 construction
+  base; each faction's models, read by the game's own `TimbermeshReader` (materials a game of that faction loads,
+  inside the half's blocks, a colour for every vertex, the worker slot inside the door); and the pairing, against the
+  game's own `HalvesCoordinates` in every orientation, for the new half and the crossing's. The District Crossing
+  comparison now leaves out the shape.
+- **Docs and site since rc9 (PRs #20 to #26):** the README, the guides and the site rewritten short and plain for
+  players (the README down to about 200 lines, developer detail in `DEVELOPING.md`); example players are Player 1 and
+  Player 2; the hero map shows goods changing hands at the Trading Post; settings open from the Mods list; *Choose your
+  start* draws the **Separate colonies** checkbox. The Trading Post's model and halves join *Not played yet* in the
+  README and on the site; Script A step 22h walks through them.
+
 ## 1.4.0-rc9
 
 **Ready for a Workshop page of its own, with the credits in every copy.** Asked for by Kyler after rc8. No change to

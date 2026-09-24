@@ -88,7 +88,7 @@ on one map, links them only through Trading Post barter, and still offers ordina
 5. **Every player has the same game version and the exact same download. Update together:** a different build
    cannot join (*Multiplayer build mismatch*).
 
-**Status:** beta, current version **1.4.0-rc9** (a release candidate). The site names the newest published release,
+**Status:** beta, current version **1.4.0-rc10** (a release candidate). The site names the newest published release,
 and `docs/assets/release.js` fills the version badges from GitHub. 1.4.0 has not been released yet. It is built for
 Timberborn **1.1.2.4**, and only the Steam version on Windows has been tested. It passes a large automated test
 suite, but real-game play is still limited: many features are covered by checks, not yet played. Players should play

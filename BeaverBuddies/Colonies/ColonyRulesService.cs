@@ -308,8 +308,9 @@ namespace BeaverBuddies.Colonies
         /// <summary>
         /// Host only, before a tick's actions are judged one by one: a Trading Post is two placements, one per half,
         /// and each is judged on its own. One half could be accepted and the other refused, leaving a lone half that
-        /// can never finish (its construction waits to be linked). Two halves placed together by one player (side by
-        /// side, in the same batch) are judged here first, and if either fails, both are refused with that reason.
+        /// can never finish (its construction waits to be linked). Two halves placed together by one player (where the
+        /// game's tool lays one post's pair down, in the same batch) are judged here first, and if either fails, both
+        /// are refused with that reason.
         /// </summary>
         public static void JudgePairs(List<ReplayEvent> events)
         {
@@ -329,8 +330,8 @@ namespace BeaverBuddies.Colonies
                     for (int j = i + 1; j < halves.Count; j++)
                     {
                         BuildingPlacedEvent a = halves[i], b = halves[j];
-                        if (paired.Contains(b) || a.player != b.player || a.coordinates.z != b.coordinates.z) continue;
-                        if (Math.Abs(a.coordinates.x - b.coordinates.x) + Math.Abs(a.coordinates.y - b.coordinates.y) != 1) continue;
+                        if (paired.Contains(b) || a.player != b.player) continue;
+                        if (!service.world.AreHalvesOfOnePost(a.prefabName, PlacementOf(a), PlacementOf(b))) continue;
                         paired.Add(a);
                         paired.Add(b);
                         int slot = ColonySession.SlotOfPlayer(a.player);
@@ -350,6 +351,16 @@ namespace BeaverBuddies.Colonies
                 Plugin.LogWarning("[Colony] Could not judge the Trading Post halves together: " + error.Message);
             }
         }
+
+        private static Timberborn.Coordinates.Placement PlacementOf(BuildingPlacedEvent placed) => ColonyGameWorld.ToPlacement(new ColonyPlacement
+        {
+            TemplateName = placed.prefabName,
+            X = placed.coordinates.x,
+            Y = placed.coordinates.y,
+            Z = placed.coordinates.z,
+            Orientation = (int)placed.orientation,
+            IsFlipped = placed.isFlipped,
+        });
 
         private static bool IsDevShortcut(ReplayEvent replayEvent) =>
             (replayEvent is BuildingUnlockedEvent building && building.free)

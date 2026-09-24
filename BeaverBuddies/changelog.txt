@@ -1,3 +1,8 @@
+v1.4.0-rc10 (Timber Together)
+* The Trading Post has a model of its own for each faction: a hall under one roof, with a door at each end and a walkway through the middle.
+* Each colony's half is now 3 by 2, so a whole Trading Post is 3 wide and 4 deep, with its two doors 5 cells apart.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc9 (Timber Together)
 * Build apart. Thrive together. A picture of its own in the mod list, and the license and full credits in the mod folder (License.txt, CREDITS.md): Timber Together is built on BeaverBuddies by Thomas Price (thomaswp) and contributors.
 * The first-run message opens the install guide on the Timber Together website, and the help links its troubleshooting page.

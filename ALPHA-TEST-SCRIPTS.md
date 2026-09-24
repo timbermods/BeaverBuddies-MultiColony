@@ -38,8 +38,8 @@ Tutorial; since 1.4.0-rc3, a Mod Setting before). Save, then from the main menu 
    nothing is refused. As colony 1, lay a path up to colony 2's road: the tile beside it is red, *That would join
    another colony's roads…* A house of colony 1 with its door facing colony 2's road, right beside it: red; the same
    house turned round: placed. Drag the demolish tool over colony 2's crop fields: their planting marks stay.
-7. **A trading post.** Open District Management: after the District Crossing there is a **Trading Post** (the
-   crossing's model, its own icon; hover it: 10 logs, no science). The District Crossing shows the game's own price
+7. **A trading post.** Open District Management: after the District Crossing there is a **Trading Post** (its
+   own model and icon; hover it: 10 logs, no science). The District Crossing shows the game's own price
    and science. Try to place a District Crossing with one half's door on colony 2's road: red, *That would join
    another colony's roads*. Place a **Trading Post** where the two colonies will meet, before either road is there:
    it is placed. Bring a road from each district to one half's door each (flip to colony 2 to build colony 2's road).
@@ -145,6 +145,12 @@ Tutorial; since 1.4.0-rc3, a Mod Setting before). Save, then from the main menu 
     between two of colony 1's districts shows room for 30 of a good in its inventory; a Trading Post half, 100.
 22g. **Home in a shared game (beta7).** In step 22's shared game, press **Home**: the camera goes to the biggest
     district center.
+22h. **The Trading Post's own model (rc10).** In a Folktails game and in an Iron Teeth game, pick the **Trading Post**:
+    the preview is two 3 × 2 halves back to back under the cursor, held by the line where they meet, with the doors 5
+    cells apart. While it's built, each half is a timber frame on the 3 × 2 construction base. Finished: one hall under
+    one roof (Folktails thatch, Iron Teeth planks), a door at each end, and nothing floating, flickering or see-through;
+    its colours match the game's own buildings. Its workers wait just inside their own door. A beaver traded across
+    walks straight through the middle. Clicking anywhere on either half selects that half.
 23. Send `Player.log`.
 
 ## Script B: two players (about 45 minutes)

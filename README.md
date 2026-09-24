@@ -16,10 +16,10 @@ science and working hours. The colonies meet only at **Trading Posts**, where th
 >   Trading Posts exchanging goods and beavers; opening the Co-op Game room and joining it; and the Stability Fork's
 >   Steam invites, connection panel, cursors and desync fixes, over hours of two-player play.
 > - **Not played yet:** starting a game from the Co-op Game room; the **Separate colonies** checkbox and splitting a
->   shared game; hosting a save or the game you're in, joining from inside a game, and rejoining a rehost; Folktails
->   and Iron Teeth together; looking after an away player's colony, and hand-overs; most of the road rule; Trading
->   Posts at scale; and the late game (automation, the HTTP API, water automation, power, dynamite and tunnels, both
->   Wonders, bots).
+>   shared game; hosting a save or the game you're in, joining from inside a game, and rejoining a rehost; Folktails and
+>   Iron Teeth together; looking after an away player's colony, and hand-overs; the Trading Post's own model and its
+>   3 × 2 halves; most of the road rule; Trading Posts at scale; and the late game (automation, the HTTP API, water
+>   automation, power, dynamite and tunnels, both Wonders, bots).
 
 Built on [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies) by Thomas Price (thomaswp) and contributors,
 through the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork)

@@ -61,7 +61,7 @@
         </a>
         <a class="btn ghost" href="#install">Install guide</a>
       </div>
-      <p class="status-tag plate caution"><span><span data-release="version">1.4.0-rc9</span></span><span>Timberborn 1.1.2.4</span><span>Beta: back up your saves</span></p>
+      <p class="status-tag plate caution"><span><span data-release="version">1.4.0-rc10</span></span><span>Timberborn 1.1.2.4</span><span>Beta: back up your saves</span></p>
     </div>
 
     <figure class="map-figure plate enamel">
@@ -242,7 +242,7 @@
     <ol class="steps">
       <li><div>
         <h3>Download the zip</h3>
-        <p>From the <a href="https://github.com/timbermods/TimberTogether/releases" data-release-href="notes">newest release</a>, download <code><span data-release="asset-name">TimberTogether-1.4.0-rc9.zip</span></code> under <b>Assets</b> (not "Source code"). Got a zip from your host? Use that one.</p>
+        <p>From the <a href="https://github.com/timbermods/TimberTogether/releases" data-release-href="notes">newest release</a>, download <code><span data-release="asset-name">TimberTogether-1.4.0-rc10.zip</span></code> under <b>Assets</b> (not "Source code"). Got a zip from your host? Use that one.</p>
       </div></li>
       <li><div>
         <h3>Close Timberborn</h3>
@@ -268,7 +268,7 @@
       <h3>Before you join: compare three things with your host</h3>
       <p>All three must match.</p>
       <dl class="readings">
-        <div><dt>The mod</dt><dd class="val" data-release="version">1.4.0-rc9</dd><dd class="why">The mod list shows <b>Timber Together</b> with its version.</dd></div>
+        <div><dt>The mod</dt><dd class="val" data-release="version">1.4.0-rc10</dd><dd class="why">The mod list shows <b>Timber Together</b> with its version.</dd></div>
         <div><dt>The game</dt><dd class="val">Timberborn 1.1.2.4</dd><dd class="why">The same Timberborn version for everyone.</dd></div>
         <div><dt>The download</dt><dd class="val">The same zip</dd><dd class="why">The same file, not only the same number.</dd></div>
       </dl>
@@ -417,7 +417,7 @@
         <p class="tp-fine"><span data-clock>Cycle 3, day 12</span> &middot; A replica for illustration, not part of the game. Goods icons are Timberborn's; nothing here is saved.</p>
       </div>
     </div>
-    <p class="muted" style="margin-top:2rem;max-width:72ch">In the game: build a <b>Trading Post</b> (District Management, 10 logs, no science) between your road and another colony's, one half's door on each road. It trades once both roads reach it; until then its panel says <i>Not trading yet</i>. <kbd>Ctrl</kbd>+<kbd>T</kbd> lists all your posts and every colony, with what each is <b>looking for</b>.</p>
+    <p class="muted" style="margin-top:2rem;max-width:72ch">In the game: build a <b>Trading Post</b> (District Management, 10 logs, no science) between your road and another colony's, one half's door on each road. Its two halves make it 3 wide and 4 deep, with a door at each end. It trades once both roads reach it; until then its panel says <i>Not trading yet</i>. <kbd>Ctrl</kbd>+<kbd>T</kbd> lists all your posts and every colony, with what each is <b>looking for</b>.</p>
   </div>
 </section>
 
@@ -470,6 +470,7 @@
           <li>Hosting a save or the game you're in, joining from inside a game, and rejoining a rehost.</li>
           <li>Folktails and Iron Teeth together.</li>
           <li>Looking after an away player's colony, and hand-overs.</li>
+          <li>The Trading Post's own model and its 3 × 2 halves.</li>
           <li>Most of the road rule, and Trading Posts at scale.</li>
           <li>The late game: automation, the HTTP API, water automation, power, dynamite and tunnels, both Wonders, bots.</li>
         </ul>
@@ -548,23 +549,21 @@
   <div class="wrap">
     <div class="head">
       <div class="marker" aria-hidden="true"><i></i><b></b><i></i></div>
-      <h2 id="release-h">What's in <span data-release="version">1.4.0-rc9</span></h2>
+      <h2 id="release-h">What's in <span data-release="version">1.4.0-rc10</span></h2>
     </div>
     <div class="release">
       <div class="plate grommets">
-        <span class="ver" data-release="version">1.4.0-rc9</span>
+        <span class="ver" data-release="version">1.4.0-rc10</span>
         <p>The release candidate for 1.4.0. Everyone in a game needs this build.</p>
         <div class="btn-row">
           <a class="btn ghost" href="https://github.com/timbermods/TimberTogether/releases" data-release-href="notes">Release notes</a>
         </div>
         <p style="margin:1.1rem 0 0"><a href="https://github.com/timbermods/TimberTogether/releases">All releases</a> &middot; <a href="https://github.com/timbermods/TimberTogether/blob/main/STABILITY-CHANGELOG.md">Changelog</a></p>
       </div>
-      <div class="measure" data-release-pinned="1.4.0-rc9">
-        <h3>Host and join from wherever you are</h3>
-        <p>Host a save from <b>Load game</b>, in the main menu or in a game. Playing alone, <b>Host co-op game</b> and <b>Join co-op game</b> in the game menu open the room over your game, which waits until <b>Start Game</b>. <b>Save and Rehost</b> brings everyone back to the room by themselves.</p>
-        <h3>Its own name, with full credit</h3>
-        <p>Timber Together has its own picture in the mod list, and carries the BeaverBuddies license and credits in its folder.</p>
-        <p class="muted">Hosting and joining from inside a game haven't been played yet; <a href="https://github.com/timbermods/TimberTogether/blob/main/ALPHA-TEST-SCRIPTS.md">Script G</a> walks through them with two players.</p>
+      <div class="measure" data-release-pinned="1.4.0-rc10">
+        <h3>A Trading Post of its own</h3>
+        <p>Each faction's Trading Post has its own model: a hall under one roof, thatched for Folktails and roofed with planks for Iron Teeth. Each colony's half is 3 × 2, so the whole post is 3 wide and 4 deep, with a door at each end.</p>
+        <p class="muted">The new model hasn't been played yet; <a href="https://github.com/timbermods/TimberTogether/blob/main/ALPHA-TEST-SCRIPTS.md">Script A</a> walks through it.</p>
       </div>
     </div>
   </div>
