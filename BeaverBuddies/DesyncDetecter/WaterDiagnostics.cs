@@ -111,7 +111,7 @@ namespace BeaverBuddies.DesyncDetecter
             if (written || failed || snapshots.Count == 0) return;
             try
             {
-                string directory = Path.Combine(Application.persistentDataPath, "BeaverBuddiesDiagnostics");
+                string directory = Path.Combine(Application.persistentDataPath, "TimberTogether-Diagnostics");
                 string path = WriteArchive(directory);
                 Plugin.Log($"Water desync diagnostics saved locally: {path}");
             }

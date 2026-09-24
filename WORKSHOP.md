@@ -1,62 +1,80 @@
 # Publishing on the Steam Workshop
 
-This is the text for the mod's own Workshop page, and how to publish it. Nothing here has been uploaded.
+How to publish Timber Together on the Steam Workshop, and the text for its page. Nothing here has been uploaded.
 
 ## Before the first upload
 
-- The mod has its own id (`timbermods.BeaverBuddiesMultiColony`), and there is no `workshop_data.json` in the mod
-  folder, so Timberborn's uploader creates a **new** Workshop item. (Earlier builds carried the original
-  BeaverBuddies item's number; that file is gone.) After the first upload, Timberborn writes a new
-  `workshop_data.json` into the uploaded folder: keep that one for later updates.
-- Upload from the built mod folder (`BeaverBuddies-MultiColony`, as in the release zip), from Timberborn's mod
-  manager.
-- Tags: Multiplayer, Gameplay. Dependencies: Harmony, Mod Settings.
-- Preview image: `thumbnail.png` (consider one of your own; the current one is inherited).
-- Credit the original authors in the description (below).
-
-## Title
-
-BeaverBuddies MultiColony (beta): co-op with a colony each
+- The mod's id is `timbermods.TimberTogether`, and there is no `workshop_data.json` in the mod folder, so Timberborn's
+  uploader creates a **new** Workshop item. After the first upload, Timberborn writes a `workshop_data.json` into the
+  uploaded folder: keep that one for later updates.
+- Upload the built mod folder (`TimberTogether`, as in the release zip) from Timberborn's mod manager. It carries
+  `License.txt` and `CREDITS.md` next to `thumbnail.png`: the GPL-3.0 asks for the license and the credits to travel
+  with every copy.
+- Title: **Timber Together**. Tags: Multiplayer, Gameplay. Required items: Harmony, Mod Settings.
+- Preview image: `thumbnail.png` (800 x 450, Timber Together's own art).
+- Description: paste [`BeaverBuddies/Doc/WorkshopDescription.txt`](BeaverBuddies/Doc/WorkshopDescription.txt) (Steam's
+  BBCode). It ends with the credits to BeaverBuddies; keep them. The same text in Markdown is below.
+- Links: the original BeaverBuddies item (https://steamcommunity.com/sharedfiles/filedetails/?id=3293380223) is linked
+  from the Credits section. Don't list it under Required items: the two cannot run together.
 
 ## Description
 
-Play Timberborn together, each with your own colony, on one map.
+### Build apart. Thrive together.
 
-**Each player runs their own colony:** their own districts, beavers, stock, working hours and (if the host chooses)
-science and unlocks. Your screen shows your colony; your beavers work for your colony only; nobody can change anyone
-else's colony.
+Co-op Timberborn with a colony each: every player runs their own districts, beavers and science on one shared map,
+and the colonies trade at Trading Posts. Co-op, not a race.
 
-**No borders:** build and plant anywhere, right up to another colony's buildings. The one rule: two colonies' roads
-never join, except through a trading post. Ctrl+L shows each colony's roads in its color.
+**A colony each:** your own districts, beavers, stock, working hours and (if the host chooses) your own science and
+unlocks. Your screen shows your colony, your beavers work for your colony only, and nobody can change anyone else's
+buildings. The river, the weather and the droughts are shared by everyone.
 
-**Colonies meet at trading posts:** a building of its own (10 logs, no science), placed between two colonies' roads,
-one road end on each side. Offer "100 logs for 25 gears, 4 rounds" (or science, or beavers, or a gift), the other
-player accepts, and both colonies' beavers carry it out: each side's goods wait on its own half and cross all at
-once when both are in. Standing deals repeat by themselves, with a reserve so they never starve you; ending one early
-takes both players. Say what your colony is looking for, see at a glance how many days of food and water each colony
-has, and offer the last exchange again in one click.
+**Trading Posts:** the one place two colonies' roads meet. Offer "100 logs for 25 gears, 4 rounds" (or science, or
+beavers, or a gift), the other player accepts, and both colonies' beavers carry it out: each side's goods wait on its
+own half and cross together once both are in. Standing deals repeat by themselves, with a reserve so they never
+starve you.
 
-**Away for the evening?** Ask a friend to look after your colony: they switch into it and back, and it is not handed
-over while they are in the game.
+**Start together:** choose **Host co-op game** on the New Game page and a Co-op Game room opens. Invite Steam friends
+or give your IP address, everyone readies up, and the world loads for everyone at once. Any save can be hosted the
+same way. On a standard map the other players found their colony wherever they like; a BeaverBuddies multi-start map
+gives each player a start.
 
-**Found your colony anywhere:** on a standard map the host starts with the colony that is there; every other player
-founds theirs once the host unpauses (after a new game's waiting room, at once), free and already built, with starting beavers. Colonies are remembered by
-Steam account, whoever hosts. A colony whose player stops playing, or that dies out, is handed to another player,
-and its player can found again.
+**Folktails and Iron Teeth together:** with *Mixed factions* ticked, each player picks their own faction in the room.
 
-**Desyncs are caught at once:** colony state is compared with the host's every tick, so a game that drifts stops
-the tick it happens instead of much later.
+**Away for the evening?** Ask a friend to look after your colony (Ctrl+T); it is kept for you.
 
-**Or one shared colony:** turn *Separate colonies for new games* off and a game is the Stability Fork's shared
-co-op, with none of the colony model running.
+**Out of step? It stops at once:** every computer checks its colonies against the host's as the game runs, so a game
+that drifts stops the moment it happens instead of much later.
 
-Up to four colonies. Built on BeaverBuddies by thomaswp and contributors, and on the BeaverBuddies Stability Fork.
+**Or one shared colony:** untick *Separate colonies* on the New Game page and everyone builds one colony together, as
+in ordinary BeaverBuddies co-op.
 
-**Beta:** please play on a copy of your save and report problems (with every player's Player.log) at
-https://github.com/timbermods/BeaverBuddies-MultiColony/issues
+- Up to four colonies; more players join as helpers of the host's colony.
+- Steam friend invites (no port forwarding), or direct IP.
+- A connection panel with chat, teammates' cursors and selections, and map pings.
 
-**Do not enable another BeaverBuddies at the same time:** they cannot run together (the main menu tells you if one
-is enabled). Every player needs the same version, and the same files: a copy with the Trading Post's files missing
-or edited is refused at the join. Join while the host waits, paused, before they build anything.
+#### Before you play
 
-Requires Harmony and Mod Settings.
+- Requires **Harmony** and **Mod Settings**.
+- Every player needs the same version of Timber Together and the same game version.
+- Do not enable another BeaverBuddies at the same time (the original or the Stability Fork): they change the same
+  parts of the game and cannot run together. The main menu tells you if one is enabled.
+- Play on a copy of your save, and report problems (with every player's Player.log) at
+  https://github.com/timbermods/TimberTogether/issues
+
+Guides: https://timbermods.github.io/TimberTogether/
+
+#### Credits
+
+Timber Together is a modified version of **BeaverBuddies**, created by **Thomas Price (thomaswp)** with contributions
+from Robin, Slide, Phil Lehmkuhl, SamuZad, Joe Stead, Zibo Ye, Dasker and Tarensaror. The multiplayer at its heart is
+theirs (keeping every player's game in step, the connections, the desync checks), and so is much of the code. This
+mod would not exist without their work.
+
+- BeaverBuddies on the Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3293380223
+- BeaverBuddies source: https://github.com/thomaswp/BeaverBuddies
+- The BeaverBuddies Stability Fork, which Timber Together is built on:
+  https://github.com/timbermods/BeaverBuddies-Stability-Fork
+
+Free software under the GPL-3.0, like the original. The license and the full credits (License.txt, CREDITS.md) are
+in the mod folder, and the complete source is at https://github.com/timbermods/TimberTogether. An unofficial community
+mod, not affiliated with or endorsed by Mechanistry or by the authors of BeaverBuddies.

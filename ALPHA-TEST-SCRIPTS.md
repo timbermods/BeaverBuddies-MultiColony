@@ -11,12 +11,12 @@ helps for anything drawn on screen (the trading-post panel, a notice, the connec
 start with `[Colony]`.
 
 Install: remove every other BeaverBuddies folder from `Documents\Timberborn\Mods` (including the Stability Fork),
-copy in `BeaverBuddies-MultiColony`, enable **BeaverBuddies MultiColony (beta)**, restart the game. If another
+copy in `TimberTogether`, enable **Timber Together**, restart the game. If another
 BeaverBuddies is still enabled, the main menu names it (please check that message appears if you try it).
 
 ## Script A: host alone (about 30 minutes)
 
-Setup: in **Mod Settings → BeaverBuddies** tick **Always Use Detailed Logging** (debug mode). Start a **new game** on a
+Setup: in **Mod Settings → Timber Together** tick **Always Use Detailed Logging** (debug mode). Start a **new game** on a
 **standard map**, with **Separate colonies** and **Separate science and unlocks** ticked on the difficulty page (under
 Tutorial; since 1.4.0-rc3, a Mod Setting before). Save, then from the main menu **Host co-op game** → select the save →
 **Host co-op game** → **Start Game** (yes to starting alone).
@@ -502,7 +502,7 @@ happen and, in brackets, the review finding it checks (`design/REVIEW-FINDINGS-1
 - The host turns on **Always Use Detailed Logging** only for Script T and small tests. From 200 beavers and bots it
   costs too much, and the desync dialog no longer offers it.
 - After each part, send both players' `Player.log` and the Ctrl+Shift+J report (press it just before leaving; it is
-  saved in `BeaverBuddies-Reports` next to `Player.log`).
+  saved in `TimberTogether-Reports` next to `Player.log`).
 - **Building a late game quickly:** use dev mode (Alt+Shift+Z) **in single player** (placing finished buildings,
   adding beavers and science), save, then host that save. In co-op only three dev tools are shared: Ctrl-click
   unlock, *Finish now* and *Add 1000 Science*. Turn dev mode off before the tests.
@@ -668,13 +668,13 @@ goes on with no desync dialog (D-new-2; before rc1, switching it on mid-game rea
 - Send the session folders (`Documents\Timberborn\PerformanceLog\`), `Player.log`, and in co-op the Ctrl+Shift+J
   reports. Compare pairs with `python tools/perflog.py compare <A> <B>`.
 
-1. **P1, single player, with and without MultiColony** (B1, S10). The late save with MultiColony disabled (restart),
-   then enabled (restart). Tick time within 1 % of each other; PerformanceLog no longer lists MultiColony on
+1. **P1, single player, with and without Timber Together** (B1, S10). The late save with Timber Together disabled (restart),
+   then enabled (restart). Tick time within 1 % of each other; PerformanceLog no longer lists Timber Together on
    `TickableEntity.Tick`.
 2. **P2, hosting with nobody joined** (B2, B3, C3, S9). Host the late save from the main menu, start alone, and record.
    Then Esc → **Save and Rehost**; a guest joins the page; Start; the guest splits it (Esc → **Found your own
-   colony**), let a day pass, and record again. In each, also hold a path tool over roads for 30 s. MultiColony's share of tick time: at most 5 % shared and
-   7 % split. No MultiColony method among the top allocators.
+   colony**), let a day pass, and record again. In each, also hold a path tool over roads for 30 s. Timber Together's share of tick time: at most 5 % shared and
+   7 % split. No Timber Together method among the top allocators.
 3. **P3, with a guest** (B4, S2, S5). The late save split into two colonies, a guest joined. Three minutes each at
    speed 2, speed 3, and speed 3 with a boost of 15. Both players record.
    - At speeds 2 and 3, the guest stays within 4 ticks of the host 95 % of the time.

@@ -229,7 +229,7 @@ namespace BeaverBuddies.Events
                 }
                 if (method == null)
                 {
-                    Plugin.LogError($"This game version has no {type.Name}.{name} to share: co-op is refused until MultiColony is updated");
+                    Plugin.LogError($"This game version has no {type.Name}.{name} to share: co-op is refused until Timber Together is updated");
                     MissingRecorders.Add($"{type.Name}.{name}");
                 }
             }

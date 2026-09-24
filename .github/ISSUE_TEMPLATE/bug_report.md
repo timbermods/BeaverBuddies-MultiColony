@@ -20,7 +20,7 @@ assignees: ''
 **Logs**: On every player's computer, do the following steps:
 1. Go to the Timberborn data folder, `%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn` (paste it into the Explorer address bar).
 2. Rename the Player.log file to host.txt (for the host) and guest.txt (for a guest; number them if there are several).
-3. Upload these files to this issue. In a separate-colonies game, also upload each computer's newest report from the `BeaverBuddies-Reports` folder there.
+3. Upload these files to this issue. In a separate-colonies game, also upload each computer's newest report from the `TimberTogether-Reports` folder there.
 
 **To Reproduce**: If you have been able to reproduce this bug multiple times, describe the steps (or delete this section)
 1. Go to '...'
@@ -34,4 +34,4 @@ If this is an unexpected behavior, or there is something unique about your map t
 **Desktop (please complete the following information for **every** player):**
  - OS: [e.g. Windows 11]
  - Timberborn version: [visible from main menu in the bottom-left corner]
- - BeaverBuddies MultiColony version: [shown in the mod list, e.g. 1.4.0-beta11]
+ - Timber Together version: [shown in the mod list, e.g. 1.4.0-beta11]

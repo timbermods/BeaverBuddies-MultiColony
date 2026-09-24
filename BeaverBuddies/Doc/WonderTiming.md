@@ -2,10 +2,10 @@
 
 Code: `BeaverBuddies/Fixes/WonderTimingFix.cs`. Checks: `RuntimeChecks/WonderChecks.cs`.
 
-MultiColony 1.4.0-beta12 ports this from the Stability Fork's PR #46 (branch `claude/wonder-plane-ticks`, `7391560`),
-which the fork closed without merging; the fork then shipped MultiColony's version in its 1.1.14. What MultiColony
-changed is in [In MultiColony](#in-multicolony) at the end; the rest of this note is the fork's, with its wording about
-"this fork" read as MultiColony.
+Timber Together 1.4.0-beta12 ports this from the Stability Fork's PR #46 (branch `claude/wonder-plane-ticks`, `7391560`),
+which the fork closed without merging; the fork then shipped Timber Together's version in its 1.1.14. What Timber Together
+changed is in [In Timber Together](#in-timber-together) at the end; the rest of this note is the fork's, with its wording about
+"this fork" read as Timber Together.
 
 ## The problem
 
@@ -20,7 +20,7 @@ the game runs on render-frame time (Timberborn 1.1.2.4, `Timberborn.Wonders`, `T
 | The plane on the runway | `Plane.Update` (per frame, `Time.deltaTime`) | where the catapult measures it next |
 | The launcher's turn between planes | `PlaneLauncherRotator.Update` (per frame, `Time.deltaTime` twice) | `RotationFinished`: the next plane, or `Wonder.Deactivate()` (the Wonder's need effect stops, the unlock countdown starts) and a 0.5-hour trigger that destroys every pilot |
 
-Before 1.4.0-beta12 MultiColony, like the fork, only replayed the activation itself (`WonderActivatedEvent`). Everything after it lands on
+Before 1.4.0-beta12 Timber Together, like the fork, only replayed the activation itself (`WonderActivatedEvent`). Everything after it lands on
 whatever tick each player's frames happen to reach it: a player at a lower frame rate, or a guest whose
 frames go on while it waits for the host's next tick, deactivates the Wonder and kills its 8 pilots on a
 different tick, and the Wonder's effect on beavers lasts a different number of ticks. The planes are also
@@ -65,7 +65,7 @@ Transpilers replace `Time.deltaTime` in `PlaneCatapult.UpdatePlane` (1 read),
 `PlaneLauncherRotator.UpdateRotation` (2) and `Plane.Update` (2) with `WonderTiming.GetDeltaTime`, which
 reads the tick interval inside the tick hook and the frame clock anywhere else. A body with a different number of
 reads (a game update) is left as the game has it, and switches the whole takeover off (see
-[In MultiColony](#in-multicolony)).
+[In Timber Together](#in-timber-together)).
 
 In multiplayer the frame updates no longer run the logic. Their prefixes (`[HarmonyPriority(Priority.Last)]`)
 skip `WonderAnimationController.Update` and `PlaneCatapult.Update`, and draw instead of running
@@ -93,7 +93,7 @@ end call, and those are raised only from the two frame updates the tick now runs
 IL). So in multiplayer the planes are created inside the tick, from the game's random numbers, with the
 same IDs for everyone. (The fork's note said entity creation then interrupts the bucket loop through
 `EntityComponentInstantiatePatcher`; in 1.1.2.4 that patch only acts on entities loaded with an ID, and a new entity
-needs no frame of its own, since the game initialises it at once. Deletions do: see MultiColony's
+needs no frame of its own, since the game initialises it at once. Deletions do: see Timber Together's
 `EntityDeletionEndsFramePatcher`, which covers the pilots' and planes' deletion too.)
 
 ## Drawing between ticks
@@ -156,7 +156,7 @@ in co-op a Wonder's animator time only moves on the tick.
   plane or its pilot. The pilots are hidden and have every component a dead character does not need
   disabled (`DeadComponentDisabler`), and destroying them later drops nothing at their position
   (`GoodCarrier.OnDied` empties their hands). Their root transform rides the plane's seat, so their
-  position differs between players. MultiColony's always-on walker hash (`TEBPatcher`, logged only) leaves out
+  position differs between players. Timber Together's always-on walker hash (`TEBPatcher`, logged only) leaves out
   walkers that are switched off, which the pilots' are, so a launch does not log a `Walker mismatch`.
 - `TimbermeshAnimator.Play` restores an interrupted animation's time when the same animation is played
   twice in one render frame (`Time.frameCount`). A Wonder only plays its animation on activation (blocked
@@ -197,7 +197,7 @@ postfix regardless, passing `__state`. That model was checked against Lib.Harmon
 - After the session ends, the animation runs on the game's frames alone and ends where the game ends it.
 - No Save or Load is replaced (a guard: this holds before the fix too).
 
-In game (MultiColony: Script B line 8t, owed): two players on an Iron Teeth map, one capped at a low frame
+In game (Timber Together: Script B line 8t, owed): two players on an Iron Teeth map, one capped at a low frame
 rate (for example 15 FPS) and one uncapped, activate a finished Earth Repopulator with 8 pilots. Watch
 all 8 planes launch, the Wonder deactivate and the pilots disappear half an hour later with no desync;
 save and rehost once while a plane is on the runway and once while the launcher turns; and activate a
@@ -206,7 +206,7 @@ deactivates. Repeat the launch with LateGamePerformance installed on both comput
 one player's camera turned away from the Wonder while it activates. Also check that the launch looks smooth
 at speed 1.
 
-## In MultiColony
+## In Timber Together
 
 What 1.4.0-beta12 changed from the fork's PR #46, and what it added around it:
 

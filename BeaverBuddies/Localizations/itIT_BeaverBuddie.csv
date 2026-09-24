@@ -1,7 +1,7 @@
 ID,Text,Comment
 BeaverBuddies.Menu.JoinCoopGame,"Unisciti al gioco cooperativo","Join co-op game"
 BeaverBuddies.JoinCoopGame.EnterIp,"Inserisci l'indirizzo IP globale dell'host:","Enter the global IP address of the Host:"
-BeaverBuddies.FirstTimer.Message,"Sembra che sia la prima volta che usi BeaverBuddies. Ti consigliamo di dare un'occhiata veloce alla nostra guida per assicurarti di essere pronto a giocare. Vuoi farlo ora?","It looks like this is your first time using BeaverBuddies. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
+BeaverBuddies.FirstTimer.Message,"Sembra che sia la prima volta che usi Timber Together. Ti consigliamo di dare un'occhiata veloce alla nostra guida per assicurarti di essere pronto a giocare. Vuoi farlo ora?","It looks like this is your first time using Timber Together. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
 BeaverBuddies.Saving.HostCoopGame,"Ospita gioco cooperativo","Host co-op game"
 BeaverBuddies.JoinCoopGame.ConnectionFailedMessageWithError,"Connessione fallita con errore:
 {0}
@@ -80,7 +80,7 @@ BeaverBuddies.JoinCoopGame.Error.InvalidFormat,"Formato dell’indirizzo non val
 BeaverBuddies.JoinCoopGame.Error.InvalidAddress,"L’indirizzo non era un indirizzo IP valido.
 Si è tentato di risolverlo come nome host, ma non è stato possibile ottenere un indirizzo IP.",""
 BeaverBuddies.JoinCoopGame.Error.CouldNotConnect,"Impossibile connettersi all’host. Controlla l’indirizzo e la porta e assicurati che l’host stia effettivamente ospitando e che la porta sia inoltrata, se necessario. Dettagli errore:",""
-BeaverBuddies.KeyBindings.Group,"BeaverBuddies",""
+BeaverBuddies.KeyBindings.Group,"Timber Together",""
 BeaverBuddies.KeyBindings.Ping,"Segnala posizione",""
 BeaverBuddies.Settings.PingPlayerName,"Nome visualizzato dei segnali",""
 BeaverBuddies.Settings.PingPlayerName.Tooltip,"Il nome mostrato agli altri giocatori accanto ai tuoi segnali.",""

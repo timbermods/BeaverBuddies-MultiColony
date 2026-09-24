@@ -225,8 +225,8 @@ Done means:
   - `Timberborn.GameStartup: StartingBeaversInitializer.Initialize(position, …)`
   - `Timberborn.BotsUpkeep: BotManufactory.OnProductionFinished` → `BotFactory.Create(pos, rot, init)`
   - dev tools in `Timberborn.BeaversUI` and `Timberborn.BotsUI`
-  - MultiColony's founding and multi-start
-- **Starting goods** are hard-coded `"Berries"` and `"Water"`, both Common. MultiColony's founding hard-codes them too.
+  - Timber Together's founding and multi-start
+- **Starting goods** are hard-coded `"Berries"` and `"Water"`, both Common. Timber Together's founding hard-codes them too.
 - **Per-entity `Current` uses and what is in hand at each:**
 
   | Use | Where | In hand |
@@ -244,7 +244,7 @@ Done means:
   | Population box | `PopulationWellbeingBox` (the only global needs list) | — |
   | Faction icon | `BasicStatisticsPanelFactory.Create` | — |
   | Game over, Wonder, tutorials | `GameOverBox`; `GameWonderCompletion(UI)`; `GameSound.PlayWonderLaunchSound`; `TutorialSystem` | — |
-  | Starting district center | `StartingBuildingSpawner.Load` (`Current.StartingBuildingId`); used for the first colony and by MultiColony's founding | — |
+  | Starting district center | `StartingBuildingSpawner.Load` (`Current.StartingBuildingId`); used for the first colony and by Timber Together's founding | — |
   | Fine with the union | `Attractions`, `Effects`, `NeedApplication`, `SoakedEffects`, `FactionGoalsSystem`, `GameFactionSystemUI`, `Achievements` (D25), menus and editor | — |
 
 - **Storage.**
@@ -837,7 +837,7 @@ Record the answers in §14:
   `SHA256SUMS`.
 - Commit, fetch, and check that `origin/trading-exchange` is an ancestor. Push `HEAD` to `trading-exchange`, `main`
   and the branch, with an annotated tag.
-- `gh release create --repo timbermods/BeaverBuddies-MultiColony --prerelease --verify-tag`, with notes from the
+- `gh release create --repo timbermods/TimberTogether --prerelease --verify-tag`, with notes from the
   previous release's.
 - Verify the asset hash, the CI Tests run, and the Pages build. Say plainly that it is **not seen in a game**.
 
@@ -871,7 +871,7 @@ Record the answers in §14:
   - In the waiting room: the optional summary fields `mixed` and `factions`, the optional row field `faction`, and
     `LobbyFaction`.
   - The handshake already requires the same mod version.
-- **A mixed save outside MultiColony** loses the other faction's buildings and characters (the game's "loading
+- **A mixed save outside Timber Together** loses the other faction's buildings and characters (the game's "loading
   issues"). Document it; it can't be prevented.
 
 | # | Risk | Mitigation |
@@ -988,7 +988,7 @@ Link `FactionSets.cs`, `FactionRules.cs`, `FactionTable.cs` and `SaveColonyReade
 
 ## 12. Known limits
 
-- A mixed save needs MultiColony (§9).
+- A mixed save needs Timber Together (§9).
 - Only new games can be mixed.
 - After a handover between factions, a colony runs what it received but builds only its own faction's buildings.
 - Achievements, the unlock goal and the load menu's metadata use the base faction.

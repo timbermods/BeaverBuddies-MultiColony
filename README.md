@@ -1,4 +1,6 @@
-# BeaverBuddies MultiColony
+# Timber Together
+
+***Build apart. Thrive together.***
 
 **Two players, one map, a colony each.** A Timberborn co-op mod where each player runs their own colony (their own
 districts, beavers, stock, science and working hours) on a shared map. The colonies meet only at **trading posts**:
@@ -27,9 +29,10 @@ Works on the game's standard maps and on BeaverBuddies multi-start maps.
 > in that check would also stop a healthy game; the log line says which it was. Play on a copy of your save, keep
 > backups, and please report what you find ([how](#troubleshooting-and-reporting-problems)).
 
-MultiColony is built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork),
-which is built on the original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies). Everything those do
-still works: Steam invites, the connection panel and chat, pings, player cursors, and ordinary
+Timber Together is a modified version of [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies), the co-op mod
+by Thomas Price (thomaswp) and contributors, built through the
+[BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork) ([credits](#credits-and-license)).
+Everything those do still works: Steam invites, the connection panel and chat, pings, player cursors, and ordinary
 shared-colony co-op, which plays as in the Stability Fork (see [One shared colony](#one-shared-colony)).
 
 ## Install
@@ -38,15 +41,15 @@ shared-colony co-op, which plays as in the Stability Fork (see [One shared colon
 **Mod Settings** mods enabled. **Every player** installs the same version of the mod (**the exact same download**) and
 runs the same game version.
 
-1. On the [Releases page](https://github.com/timbermods/BeaverBuddies-MultiColony/releases), open the newest release
-   (the releases are pre-releases) and download `BeaverBuddies-MultiColony-….zip` under **Assets**
+1. On the [Releases page](https://github.com/timbermods/TimberTogether/releases), open the newest release
+   (the releases are pre-releases) and download `TimberTogether-….zip` under **Assets**
    (not "Source code"). Or use the zip you were sent.
 2. **Close Timberborn.**
 3. In `Documents\Timberborn\Mods`, **delete every other BeaverBuddies folder** (the Stability Fork, the Workshop
-   version, any other copy of MultiColony), and unsubscribe from the Workshop BeaverBuddies if you have it. They change
+   version, any other copy of Timber Together), and unsubscribe from the Workshop BeaverBuddies if you have it. They change
    the same parts of the game and cannot run together; if one is still enabled, the main menu tells you which.
-4. Extract the zip and copy the `BeaverBuddies-MultiColony` folder into `Documents\Timberborn\Mods`.
-5. Start Timberborn and enable **BeaverBuddies MultiColony (beta)** in the mod list.
+4. Extract the zip and copy the `TimberTogether` folder into `Documents\Timberborn\Mods`.
+5. Start Timberborn and enable **Timber Together** in the mod list.
 
 
 To update, replace the folder with the new download. Every player must update together: a player with a different
@@ -67,7 +70,7 @@ page, under the game's own **Tutorial** checkbox:
     waiting room (see [Folktails and Iron Teeth together](#folktails-and-iron-teeth-together)). It needs every faction
     unlocked on your computer, and the game's two factions only: otherwise the box is greyed, and its tooltip says why.
 
-In **Mod Settings → BeaverBuddies**, the host's one colony setting is **Hand over a colony after its player is away
+In **Mod Settings → Timber Together**, the host's one colony setting is **Hand over a colony after its player is away
 (days)**: 0 (never) by default. A player stepping away asks a friend to look after their colony instead (Ctrl+T). Set
 a number of days for a group where someone may not come back (see
 [when a colony is handed over](#when-a-colony-is-handed-over)).
@@ -300,7 +303,7 @@ being played): unless the absent player is in the game the next day, the colony 
 | **Ctrl+Shift+J** | Write a diagnostics report (also a button in the Ctrl+T window) |
 | **Ctrl+Shift+K** | *Debug only:* the host acts as the next colony, for testing alone (needs **Always Use Detailed Logging** and nobody connected) |
 
-All can be changed under **Options → Bindings → BeaverBuddies**. The co-op keys **Ping Location**, **Toggle
+All can be changed under **Options → Bindings → Timber Together**. The co-op keys **Ping Location**, **Toggle
 connection panel** and **Chat: start typing** are unbound until you set them there.
 
 ## Good to know
@@ -326,9 +329,9 @@ connection panel** and **Chat: start typing** are unbound until you set them the
   own game does not have; a player whose game lacks one the host used leaves the game with a message (the others play
   on).
 - **Other mods that change the simulation** (LateGamePerformance, for one): every player needs the same version, with
-  the same settings. MultiColony only warns when the players' mod lists differ.
-- **After a Timberborn update:** if the update changes a part of the game MultiColony corrects for co-op, co-op stops
-  at load with a message naming it, instead of going out of step; single player carries on. Update MultiColony.
+  the same settings. Timber Together only warns when the players' mod lists differ.
+- **After a Timberborn update:** if the update changes a part of the game Timber Together corrects for co-op, co-op stops
+  at load with a message naming it, instead of going out of step; single player carries on. Update Timber Together.
 - **Single player:** without a co-op session nothing is refused and no colony can be founded. Host the game (even
   alone) to play the mode.
 - **Performance:** more colonies mean more to simulate. Prefer a smaller map; the host can ease off for a slow guest
@@ -355,11 +358,11 @@ founds their own (Ctrl+K) or looks after the host's.
 
 Nothing of the colony model runs in a shared game: no owners or colony rules, no Trading Post (not even in dev
 mode), District Crossings holding the game's 30 of a good, no colony check on the heartbeat or once a day, and a
-save with nothing of this mod's in it, the same as the Stability Fork's. What does apply is what MultiColony adds to
+save with nothing of this mod's in it, the same as the Stability Fork's. What does apply is what Timber Together adds to
 co-op in general: its desync fixes (gates, automation, planting on sliced views, dev mode's shortcuts, Tick once,
 joined district roads), the performance pass, a guest's pending actions, the host being asked before joining
 closes, the speed boost, going to a player and **Home**, your own chat color, and the diagnostics report on
-**Ctrl+Shift+J**. Every player still needs MultiColony: it and the Stability Fork cannot join each other's games.
+**Ctrl+Shift+J**. Every player still needs Timber Together: it and the Stability Fork cannot join each other's games.
 
 ## Co-op basics
 
@@ -424,7 +427,7 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   send the logs.
 - **Diagnostics report:** press **Ctrl+Shift+J** (or *Diagnostics report* in the Ctrl+T window) when something
   looks wrong: slow, stuck beavers, a colony misbehaving. The report is copied to the clipboard, ready to paste into
-  a chat or an issue, and saved in `%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\BeaverBuddies-Reports`.
+  a chat or an issue, and saved in `%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\TimberTogether-Reports`.
   In a separate-colonies game it is also written by itself when a computer desyncs: then send **every player's**
   latest report. It covers the
   frame and tick rate and the time spent in this mod's code, each colony's districts, homeless and jobless beavers,
@@ -434,7 +437,7 @@ and [PLAYER-ACTIVITY.md](PLAYER-ACTIVITY.md).
   (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`), plus screenshots for anything on screen.
   Lines from this mode start with `[Colony]`. Step-by-step [test scripts](ALPHA-TEST-SCRIPTS.md) say what to try and what to expect.
 
-Report issues at [github.com/timbermods/BeaverBuddies-MultiColony/issues](https://github.com/timbermods/BeaverBuddies-MultiColony/issues),
+Report issues at [github.com/timbermods/TimberTogether/issues](https://github.com/timbermods/TimberTogether/issues),
 not to the original BeaverBuddies project.
 
 ## How it works
@@ -502,7 +505,15 @@ These checks can't start Unity or prove full multiplayer determinism; in-game te
 
 ## Credits and license
 
-Built on the [BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork) and the
-original [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies) by thomaswp and contributors, who designed the
-multiplayer this all rests on. Licensed under GPL-3.0 ([License.txt](License.txt)); authorship is preserved in the
-repository history. Every change is listed in [STABILITY-CHANGELOG.md](STABILITY-CHANGELOG.md).
+Timber Together is a modified version of [BeaverBuddies](https://github.com/thomaswp/BeaverBuddies)
+([Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3293380223)), created by **Thomas Price (thomaswp)** with contributions from Robin, Slide, Phil Lehmkuhl,
+SamuZad, Joe Stead, Zibo Ye, Dasker and Tarensaror. The multiplayer this all rests on is theirs (keeping every
+player's game in step, the connections, the desync checks) and so is much of the code: this mod would not exist
+without their work. It is built through the
+[BeaverBuddies Stability Fork](https://github.com/timbermods/BeaverBuddies-Stability-Fork).
+[CREDITS.md](CREDITS.md) has the full credits.
+
+Licensed under GPL-3.0, like the original ([License.txt](License.txt)); `License.txt` and `CREDITS.md` ship in the mod
+folder. Every original commit keeps its author in the repository history, and every change is listed in
+[STABILITY-CHANGELOG.md](STABILITY-CHANGELOG.md). An unofficial community mod for Timberborn, not affiliated with or
+endorsed by Mechanistry or by the authors of BeaverBuddies.

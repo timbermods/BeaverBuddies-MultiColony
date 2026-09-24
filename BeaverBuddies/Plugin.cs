@@ -162,11 +162,14 @@ namespace BeaverBuddies
     public class Plugin : IModStarter
     {
         public static readonly string Version = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? Assembly.GetExecutingAssembly().GetName().Version.ToString();
-        public const string Name = "BeaverBuddies MultiColony";
+        public const string Name = "Timber Together";
         /// <summary>This mod's own id (manifest.json). Mod Settings keeps its settings under it.</summary>
-        public const string ID = "timbermods.BeaverBuddiesMultiColony";
+        public const string ID = "timbermods.TimberTogether";
         /// <summary>The id of the original BeaverBuddies and of the Stability Fork, which cannot run alongside this.</summary>
         public const string OtherBeaverBuddiesID = "beaverbuddies";
+        /// <summary>The Harmony id of this mod's own builds from before it had a Workshop id of its own. One of those still
+        /// enabled beside this one patches the same game code, so it counts as another BeaverBuddies.</summary>
+        public const string EarlierBuildID = "timbermods.BeaverBuddiesMultiColony";
 
         /// <summary>
         /// Another BeaverBuddies started first: this one patches nothing and binds nothing but the main menu's warning,
@@ -188,9 +191,9 @@ namespace BeaverBuddies
 
             // Another BeaverBuddies already patched the game: patching it again would break both. The main menu says
             // why (DuplicateModWarning) and this copy stays out of the way.
-            if (Harmony.HasAnyPatches(OtherBeaverBuddiesID))
+            if (Harmony.HasAnyPatches(OtherBeaverBuddiesID) || Harmony.HasAnyPatches(EarlierBuildID))
             {
-                LogError("Another BeaverBuddies mod is enabled and already running; BeaverBuddies MultiColony will not start. Disable the other one and restart.");
+                LogError("Another BeaverBuddies mod is enabled and already running; Timber Together will not start. Disable the other one and restart.");
                 Disabled = true;
                 return;
             }
@@ -226,7 +229,7 @@ namespace BeaverBuddies
             catch (Exception error)
             {
                 FailedPatches.Add(name);
-                LogError($"Could not apply {name} to this game version (a game update?): co-op is refused until MultiColony is updated. {error}");
+                LogError($"Could not apply {name} to this game version (a game update?): co-op is refused until Timber Together is updated. {error}");
             }
         }
 
@@ -252,7 +255,7 @@ namespace BeaverBuddies
                 {
                     FailedPatches.Add(type.FullName);
                     LogError($"Could not apply {type.FullName} to this game version (a game update?): co-op is refused until " +
-                        $"MultiColony is updated. {error}");
+                        $"Timber Together is updated. {error}");
                 }
             }
             try

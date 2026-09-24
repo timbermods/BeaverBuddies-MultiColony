@@ -1,7 +1,7 @@
 # Player activity indicators
 
 Other players' cursors, selections and building activity are
-shown on your screen, and you can restyle each player's cursor. In a MultiColony game (a colony each, see
+shown on your screen, and you can restyle each player's cursor. In a Timber Together game (a colony each, see
 [TWO-COLONIES.md](TWO-COLONIES.md)) all of this works across colonies: you see the other colony's player at work on
 their side of the map as you would a teammate.
 

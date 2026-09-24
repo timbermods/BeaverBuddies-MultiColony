@@ -1,4 +1,4 @@
-# Review plan: the waiting room and mixed factions, MultiColony 1.4.0-beta18 to beta20
+# Review plan: the waiting room and mixed factions, Timber Together 1.4.0-beta18 to beta20
 
 **Status:** approved 2026-09-22 (three reviewers plus the main one; fixes, then released as 1.4.0-beta21). Findings:
 [REVIEW-FINDINGS-1.4.0-beta18-20.md](REVIEW-FINDINGS-1.4.0-beta18-20.md).

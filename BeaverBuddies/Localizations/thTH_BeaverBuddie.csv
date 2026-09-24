@@ -1,7 +1,7 @@
 ID,Text,Comment
 BeaverBuddies.Menu.JoinCoopGame,"เข้าร่วมเกมแบบร่วมมือ","Join co-op game"
 BeaverBuddies.JoinCoopGame.EnterIp,"ป้อนที่อยู่ IP สากลของโฮสต์:","Enter the global IP address of the Host:"
-BeaverBuddies.FirstTimer.Message,"ดูเหมือนว่านี่จะเป็นครั้งแรกที่คุณใช้ BeaverBuddies เราขอแนะนำให้ดูคำแนะนำของเราอย่างรวดเร็วเพื่อให้แน่ใจว่าคุณพร้อมที่จะเล่นแล้ว คุณต้องการทำเช่นนั้นตอนนี้หรือไม่?","It looks like this is your first time using BeaverBuddies. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
+BeaverBuddies.FirstTimer.Message,"ดูเหมือนว่านี่จะเป็นครั้งแรกที่คุณใช้ Timber Together เราขอแนะนำให้ดูคำแนะนำของเราอย่างรวดเร็วเพื่อให้แน่ใจว่าคุณพร้อมที่จะเล่นแล้ว คุณต้องการทำเช่นนั้นตอนนี้หรือไม่?","It looks like this is your first time using Timber Together. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
 BeaverBuddies.Saving.HostCoopGame,"โฮสต์เกมแบบร่วมมือ","Host co-op game"
 BeaverBuddies.JoinCoopGame.ConnectionFailedMessageWithError,"การเชื่อมต่อล้มเหลวพร้อมข้อผิดพลาด:
 {0}
@@ -80,7 +80,7 @@ BeaverBuddies.JoinCoopGame.Error.InvalidFormat,"รูปแบบที่อ�
 BeaverBuddies.JoinCoopGame.Error.InvalidAddress,"ที่อยู่นั้นไม่ใช่ที่อยู่ IP ที่ถูกต้อง
 พยายามแปลงเป็นชื่อโฮสต์แล้ว แต่ไม่สามารถแปลงเป็นที่อยู่ IP ได้",""
 BeaverBuddies.JoinCoopGame.Error.CouldNotConnect,"ไม่สามารถเชื่อมต่อกับโฮสต์ได้ โปรดตรวจสอบที่อยู่และพอร์ต และตรวจสอบให้แน่ใจว่าโฮสต์กำลังโฮสต์อยู่และมีการส่งต่อพอร์ตหากจำเป็น รายละเอียดข้อผิดพลาด:",""
-BeaverBuddies.KeyBindings.Group,"BeaverBuddies",""
+BeaverBuddies.KeyBindings.Group,"Timber Together",""
 BeaverBuddies.KeyBindings.Ping,"ปักหมุดตำแหน่ง",""
 BeaverBuddies.Settings.PingPlayerName,"ชื่อที่แสดงบนการปักหมุด",""
 BeaverBuddies.Settings.PingPlayerName.Tooltip,"ชื่อที่แสดงให้ผู้เล่นคนอื่นเห็นข้างๆ การปักหมุดของคุณ",""

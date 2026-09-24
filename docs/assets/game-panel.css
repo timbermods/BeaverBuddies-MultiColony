@@ -1,5 +1,5 @@
 /*
- * A replica of Timberborn's entity window (its greens, wood and captions nudged darker or lighter so text passes WCAG AA) with the MultiColony Trading Post panel, for the site's interactive demo.
+ * A replica of Timberborn's entity window (its greens, wood and captions nudged darker or lighter so text passes WCAG AA) with the Timber Together Trading Post panel, for the site's interactive demo.
  * 1 CSS px = 1 UI unit (the game's entity window is 325 units wide plus its frame). The panel's pieces follow
  * Colonies/TradingPostFragment.cs and Util/NativeElements.cs: a green section (entity-sub-panel bg-sub-box--green),
  * blue cards (bg-sub-box--blue), captions in the game's yellow (text--yellow), wooden and red buttons, square −/+

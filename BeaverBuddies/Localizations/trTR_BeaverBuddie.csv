@@ -1,7 +1,7 @@
 ID,Text,Comment
 BeaverBuddies.Menu.JoinCoopGame,"Eşli oyuna katıl","Join co-op game"
 BeaverBuddies.JoinCoopGame.EnterIp,"Ev sahibinin global IP adresini girin:","Enter the global IP address of the Host:"
-BeaverBuddies.FirstTimer.Message,"Görünüşe göre BeaverBuddies'i ilk kez kullanıyorsunuz. Oynamaya hazır olduğunuzdan emin olmak için kılavuzumuzu hızlıca gözden geçirmenizi öneririz. Şimdi yapmak ister misiniz?","It looks like this is your first time using BeaverBuddies. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
+BeaverBuddies.FirstTimer.Message,"Görünüşe göre Timber Together'i ilk kez kullanıyorsunuz. Oynamaya hazır olduğunuzdan emin olmak için kılavuzumuzu hızlıca gözden geçirmenizi öneririz. Şimdi yapmak ister misiniz?","It looks like this is your first time using Timber Together. We recommend taking a quick look through our guide to make sure you are set up to play. Would you like to do that now?"
 BeaverBuddies.Saving.HostCoopGame,"Eşli oyunu barındır","Host co-op game"
 BeaverBuddies.JoinCoopGame.ConnectionFailedMessageWithError,"Hata ile katılma başarısız oldu:
 {0}
@@ -80,7 +80,7 @@ BeaverBuddies.JoinCoopGame.Error.InvalidFormat,"Geçersiz adres biçimi. Port ç
 BeaverBuddies.JoinCoopGame.Error.InvalidAddress,"Adres geçerli bir IP adresi değildi.
 Ana bilgisayar adı olarak çözümlemeye çalışıldı, ancak bir IP adresine çözümlenmedi.",""
 BeaverBuddies.JoinCoopGame.Error.CouldNotConnect,"Ana bilgisayara bağlanılamadı. Adresi ve portu kontrol edin ve ana bilgisayarın gerçekten sunucuyu barındırdığından ve gerekiyorsa port yönlendirmesinin etkin olduğundan emin olun. Hata ayrıntıları:",""
-BeaverBuddies.KeyBindings.Group,"BeaverBuddies",""
+BeaverBuddies.KeyBindings.Group,"Timber Together",""
 BeaverBuddies.KeyBindings.Ping,"Konum işaretle",""
 BeaverBuddies.Settings.PingPlayerName,"İşaret görünen ad",""
 BeaverBuddies.Settings.PingPlayerName.Tooltip,"Diğer oyunculara işaretlerinizin yanında gösterilen ad.",""

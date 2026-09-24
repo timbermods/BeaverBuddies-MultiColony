@@ -1,8 +1,13 @@
-v1.4.0-rc8 (BeaverBuddies MultiColony)
+v1.4.0-rc9 (Timber Together)
+* Build apart. Thrive together. A picture of its own in the mod list, and the license and full credits in the mod folder (License.txt, CREDITS.md): Timber Together is built on BeaverBuddies by Thomas Price (thomaswp) and contributors.
+* The first-run message opens the install guide on the Timber Together website, and the help links its troubleshooting page.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
+v1.4.0-rc8 (Timber Together)
 * The Co-op Game room says what kind of game it is in two words: Shared colony, or Separate colony.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-rc7 (BeaverBuddies MultiColony)
+v1.4.0-rc7 (Timber Together)
 * Host a save from Load game, in the main menu or in a game: pick a save and press Host co-op game, right of Load. The main menu's own Host co-op game is gone.
 * The Co-op Game room opens over your game as a window, and the game pauses under it; Cancel or Leave takes you back to your game as it was. Nobody goes through the main menu any more.
 * Join from inside a game: the game menu has Join co-op game again, and a friend's invite accepted while you play alone opens their room over your game.
@@ -10,12 +15,12 @@ v1.4.0-rc7 (BeaverBuddies MultiColony)
 * At Start Game, the game you leave gets its exit save, as Exit to menu makes it.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-rc6 (BeaverBuddies MultiColony)
+v1.4.0-rc6 (Timber Together)
 * Accept a friend's invite while playing alone: Save and join saves your game and takes you to their Co-op Game page. In a co-op game the invite waits until you leave it.
 * Joining by IP address no longer freezes the menu while it connects.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-rc5 (BeaverBuddies MultiColony)
+v1.4.0-rc5 (Timber Together)
 * Playing alone, the game menu's Host co-op game is there now (it was missing in rc4).
 * Rejoining a rehost is steadier: over Steam you join the host's new Co-op Game page, not the old game; by IP the menu no longer stalls while you wait; the waiting box always goes away and its Cancel always works.
 * After hosting a save from the Host co-op game box, Load game in that game works again.
@@ -23,26 +28,26 @@ v1.4.0-rc5 (BeaverBuddies MultiColony)
 * The main menu fits its co-op buttons, the co-op buttons click like the game's, and in a custom difficulty the colony checkboxes sit in the settings list.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-rc4 (BeaverBuddies MultiColony)
+v1.4.0-rc4 (Timber Together)
 * Host co-op game on the main menu: pick a save in the game's own save box (it says whether each save is separate colonies or one shared colony), then invite your friends on its Co-op Game page; Start Game loads it for everyone once they're ready. Load game only loads.
 * Playing alone, the game menu's Host co-op game saves your game and opens its Co-op Game page, so friends can join the game you're in.
 * Save and Rehost goes through the same page: your friends choose Rejoin (or Reconnect after a desync) and join it as soon as it opens.
 * A shared save can become separate colonies when you host it: tick Separate colonies on its page (and Separate science and unlocks if you like). Everything built so far is yours, and each friend founds their own.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-rc3 (BeaverBuddies MultiColony)
+v1.4.0-rc3 (Timber Together)
 * Choose separate colonies or one shared colony when you make the game: a Separate colonies checkbox on the New Game difficulty page, beside Tutorial, with Separate science and unlocks and Mixed factions under it. The page remembers your choice; the old Mod Settings for these are gone.
 * The waiting room says which kind of game it is, under its plate.
 * A shared game stays shared, but another player can split off once: in the game menu (Esc), Found your own colony. It asks first, since the game then has separate colonies for good; the shared colony stays the host's, and science stays shared.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-rc2 (BeaverBuddies MultiColony)
+v1.4.0-rc2 (Timber Together)
 * A colony whose player steps away is no longer handed to someone else by default: Hand over a colony after its player is away now starts at 0 (never). Ask a friend to look after your colony instead (Ctrl+T, Let ... look after it).
 * In a Folktails and Iron Teeth game, an away player's colony only ever goes to a colony of its own faction; with none in the game it waits, and nobody is warned.
 * A colony with no beavers left, and the host's Hand to ... button, work as before. Across factions, the button's tooltip says what the receiver can't do.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-rc1 (BeaverBuddies MultiColony)
+v1.4.0-rc1 (Timber Together)
 * The release candidate for 1.4.0: a review read the late game (automation and the HTTP API, water automation, power, dynamite, both Wonders, bots), Folktails and Iron Teeth together and Trading Posts at scale against the game's own code, and fixed what it found. Not played yet: a two-player late-game playtest comes next.
 * Desyncs fixed: a pump's flow rate, a throttling valve's limit switched on or off by its slider, and the dev power generator's panel now change every computer's game.
 * No longer stops the game for everyone: a Folktails bot flying an Earth Repopulator's plane, and a crop, good or recipe from a mod only one player has (the host refuses it; a guest missing it leaves quietly).
@@ -53,20 +58,20 @@ v1.4.0-rc1 (BeaverBuddies MultiColony)
 * Lighter at late-game size, a daily [Perf] line in the log for long sessions, and after a Timberborn update co-op stops with a message instead of going out of step.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta24 (BeaverBuddies MultiColony)
+v1.4.0-beta24 (Timber Together)
 * Join co-op game in the main menu lists your Steam friends' co-op games: pick one and press Join (or double-click it) to go straight into their waiting room. The IP address is still there, under the list.
 * In the waiting room both buttons are one size (Cancel / Start Game, Leave / Ready), and a guest's button reads Ready.
 * Everyone needs this version: the list shows a friend on another version, but can't join them.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta23 (BeaverBuddies MultiColony)
+v1.4.0-beta23 (Timber Together)
 * The waiting room opens: Host co-op game names the settlement in the game's own naming box, and Next opens the Co-op Game page. In beta18 to beta21 the name box was drawn without its frame and Next crashed the game.
 * A friend who accepts the invite in the Steam overlay gets the whole page once the overlay closes (it shared the screen with the main menu).
 * A cleaner page: the summary plate is centred, each player's row says Ready or Not ready once on its right, the host's remove button sits apart, and an empty room has no extra line.
 * Seen in a game for the first time (the host's and a guest's pages); starting a game from it is next.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta21 (BeaverBuddies MultiColony)
+v1.4.0-beta21 (Timber Together)
 * The waiting room works: before this, no guest could get from a waiting room into the game (beta18 to beta20: its load failed at once and it was left on an empty main menu).
 * Mixed factions: switching an untouched colony's faction no longer leaves the old beavers behind in the game's lists, which crashed the game at the next explosion or Beehive check; a switch at the very start now takes the colony's beavers too.
 * The waiting room is sturdier: a guest removed as the game starts is never let in as a new player, one guest can no longer flood the others, and the start message no longer carries the last session's speed boost (also for Save and Rehost).
@@ -74,46 +79,46 @@ v1.4.0-beta21 (BeaverBuddies MultiColony)
 * From a review of beta18 to beta20 (design/REVIEW-FINDINGS-1.4.0-beta18-20.md). Not played yet.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta20 (BeaverBuddies MultiColony)
+v1.4.0-beta20 (Timber Together)
 * Folktails and Iron Teeth together: turn on Mixed factions for new games (Mod Settings, host) and each player picks their faction in the waiting room, with the game's own faction arrows. Each colony gets its faction's toolbar, beavers, bots, buildings and storage. Colonies of different factions trade the goods both factions use, and science, but not beavers. Needs every faction unlocked on the host's computer. Not played yet.
 * A save hosted from the main menu now shows each player's colony and its faction in the waiting room.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta19 (BeaverBuddies MultiColony)
+v1.4.0-beta19 (Timber Together)
 * The waiting room for saves too: in the main menu, Load Game -> Host co-op game opens the same Co-op Game page for the save. Friends join and ready up, and Start Game loads the save for everyone at once. Each player keeps the colony the save remembers. Hosting from inside a game (Options -> Load, Save and Rehost) works as before. Not played yet.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta18 (BeaverBuddies MultiColony)
+v1.4.0-beta18 (Timber Together)
 * A waiting room for new co-op games: on the New Game difficulty page choose Host co-op game (beside Start) and name your settlement. Friends join by Steam invite or IP from the main menu and press I'm ready; you press Start Game, and everyone loads the new world together. Each friend can place their district center at once, even while paused. Not played yet.
 * Joining now shows a "Connecting to ..." box with Cancel, and the host's connection panel marks a guest still loading.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta17 (BeaverBuddies MultiColony)
+v1.4.0-beta17 (Timber Together)
 * In the Migration tab, another colony's district's automatic migration settings, and the manual migration buttons between it and yours, are now greyed out. (Changes there were already refused, but the toggles looked changed.)
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta16 (BeaverBuddies MultiColony)
+v1.4.0-beta16 (Timber Together)
 * A Trading Post can be placed before the roads are there. It starts trading once your road reaches one end and another colony's road the other.
 * Other mods' settings on a building (MixedStorage's warehouse and pile goods) can no longer be changed on another colony's building.
 * The trading posts window can be dragged by its title, and opens where you left it. The All Posts button no longer covers the panel's scroll bar.
 * Ctrl+L now draws each colony's roads as bright squares in its color, easy to see by day or night. They show by themselves while you place a building.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta15 (BeaverBuddies MultiColony)
+v1.4.0-beta15 (Timber Together)
 * No more land or borders in separate colonies: build and mark anywhere, right next to another colony's buildings. The one rule left: your roads never join another colony's, except through a Trading Post.
 * A Trading Post now needs a road at each end when you place it: yours at one, another colony's at the other. Build both roads up to the spot first.
 * Ctrl+L (and any building tool) now shows each colony's roads in its color instead of land outlines. Founding no longer has to keep 20 tiles away.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta14 (BeaverBuddies MultiColony)
+v1.4.0-beta14 (Timber Together)
 * Dev mode's "Add 1000 Science" is now shared in multiplayer (while the host has dev mode on), so buying a building with that science no longer desyncs the game. The science goes to the colony of the player who clicked.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta13 (BeaverBuddies MultiColony)
+v1.4.0-beta13 (Timber Together)
 * Clearer Mod Settings tooltips for the two colony choices. "Separate colonies for new games" is only for new games: on, each player gets their own colony; off, everyone shares one. "Allow founding colonies in a shared game" is for a shared save you already have: it lets a player found their own colony, which splits the save for good.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta12 (BeaverBuddies MultiColony)
+v1.4.0-beta12 (Timber Together)
 * The Earth Repopulator's plane launch, and every Wonder's animation, now run on the game's ticks in multiplayer, so they no longer desync.
 * Something deleted during a tick (a tree an explosion took, a demolished building) is gone on every computer at the same moment.
 * When the host slows down for a slow player, everyone else follows its pace instead of stopping and starting at every tick.
@@ -122,11 +127,11 @@ v1.4.0-beta12 (BeaverBuddies MultiColony)
 * Spring-return levers switch off at once on every computer; saves no longer catch the water simulation half done.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta11 (BeaverBuddies MultiColony)
+v1.4.0-beta11 (Timber Together)
 * Two players joining by IP at the same moment no longer freeze the host until the first one's save has arrived.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta10 (BeaverBuddies MultiColony)
+v1.4.0-beta10 (Timber Together)
 * Built on the Stability Fork 1.1.12. Each guest now compares all of the host's random-number state every tick (it was one word of four), and which entities tick and where every walking character stands (a difference there is logged once).
 * Direct (IP) connections send each message at once, and the host's game thread no longer pauses while sending a large tick.
 * After a desync, a guest's Reconnect joins the way it joined: a Steam guest through the host's new lobby, a direct-IP guest to the address it used.
@@ -134,14 +139,14 @@ v1.4.0-beta10 (BeaverBuddies MultiColony)
 * The period key on a computer waiting for the others pauses everyone; after a failed multiplayer action it no longer ticks the game.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta9 (BeaverBuddies MultiColony)
+v1.4.0-beta9 (Timber Together)
 * A guest that gets an action it cannot read (from a mod only the host has) now leaves the game on its own, with a message saying nothing was played and how to join again. The host and the other players play on; before, everyone was stopped and told to reload a save.
 * The host refuses only the action of a guest it cannot read, not everything else that guest did in the same moment.
 * Another colony's beaver that died tragically is no longer in your alert panel, and its death no longer makes your alert row blink.
 * A desync's list of colony changes starts, on every computer, after the last count the colony checks agreed on, and keeps up to 16384 changes: two players' lists line up from their first line.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta8 (BeaverBuddies MultiColony)
+v1.4.0-beta8 (Timber Together)
 * Over Steam the host checks a guest's Steam ID against its connection before seating it in a colony: a guest can no longer take another player's colony by saying their id. Direct IP joins are still taken at their word.
 * A multiplayer frame can only create the mod's actions and what they carry. A guest that gets an action it cannot read (say, from a mod only the host has) stops with a message naming it, instead of drifting out of step; the host refuses a guest's unreadable action and tells that guest.
 * Each player's notification journal lists only their own colony's entries, deaths and reloads included.
@@ -149,21 +154,21 @@ v1.4.0-beta8 (BeaverBuddies MultiColony)
 * On a desync in a separate-colonies game, every computer logs its last 256 colony changes, to find the first one that differs.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta7 (BeaverBuddies MultiColony)
+v1.4.0-beta7 (Timber Together)
 * With separate colonies off, a game plays as in the Stability Fork: no colony bookkeeping, checks or save data, no Trading Post, and District Crossings hold the game's 30 again (a Trading Post half still holds 100).
 * Founding a colony in a shared save is its own host setting, "Allow founding colonies in a shared game", off by default. "Separate colonies for new games" decides new games only.
 * Home goes to the biggest district in a shared game; after a desync, picking the old speed again works.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta6 (BeaverBuddies MultiColony)
+v1.4.0-beta6 (Timber Together)
 * Options, Player cursors: a card at the top, "You, in the chat", lets you pick the color you see your own name in. Only you see it; others still see your Ping Color, or the color for your player number.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta5 (BeaverBuddies MultiColony)
+v1.4.0-beta5 (Timber Together)
 * A speed boost at the top of the chat box: - and + (or a typed number) add a constant to the speed picked at the top right, for everyone in the game, so the fastest button (7x) with +0.5 runs at 7.5x. From -6.5 to +23; the game never runs below 0.5x or above 30x. A guest catching up above speed 7 is no longer capped below its speed.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
-v1.4.0-beta4 (BeaverBuddies MultiColony)
+v1.4.0-beta4 (Timber Together)
 * From the Stability Fork 1.1.11: every player gets a colour of their own on the cursors and in the chat until they choose one (the host orange, then blue, green, pink, purple, teal, red, lime), and only the name is coloured in the chat. Colony colours stay the game's own.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
 
@@ -177,7 +182,7 @@ v1.4.0-beta2
 * A Trading Post remembers its last exchange (Offer again; a ledger row puts a round's terms in the form); Decline leaves the offer's terms in your form for a counter-offer; Keep at least sets a reserve so a standing deal never starves you.
 * The host is asked before its first change while players can still join; a guest's change then is refused; the panel says Joining: open.
 
-v1.4.0-beta1 (BeaverBuddies MultiColony)
+v1.4.0-beta1 (Timber Together)
 * A performance pass with the guest (player 2) in mind: events are hashed and compressed once and never written out twice; Steam is served before the game's frame; cursor frames go out only when something changed; the profiler, working-hours, placement-preview and top-bar patches no longer take a lock or allocate on every call. Nothing simulated changed.
 * The mod list and the two settings now say (beta).
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
@@ -186,7 +191,7 @@ v1.4.0-alpha22
 * The Trading Post's ledger names both sides: "You gave 100 Logs, Sarah gave 25 Gears", the partner in their colour.
 
 v1.4.0-alpha21
-* Documentation only: this in-game changelog and the Doc folder describe MultiColony. Nothing in the game changed since alpha14.
+* Documentation only: this in-game changelog and the Doc folder describe Timber Together. Nothing in the game changed since alpha14.
 
 v1.4.0-alpha15 to alpha20 (documentation)
 * The test scripts, README, TWO-COLONIES, CONNECTION-PANEL, STEAM-INVITES, PLAYER-ACTIVITY and WORKSHOP guides, and the docs site, brought up to date with alpha11 to alpha14. No code change.
@@ -218,11 +223,11 @@ v1.4.0-alpha1 to alpha9
 * Exchanges between colonies, the colonies window (Ctrl+T), land outlines (Ctrl+L), a diagnostics report (Ctrl+Shift+J).
 * A guest sees its own actions sooner, with its click marked until the host answers and refusals explained.
 
-v1.1.10 to v1.1.14 (BeaverBuddies Stability Fork, which MultiColony is built on)
+v1.1.10 to v1.1.14 (BeaverBuddies Stability Fork, which Timber Together is built on)
 * Steam friend invites over Valve's current networking API, a connection panel with chat, player cursors and selections, and fixes for water, animation, random-number, saving, demolition and input desyncs and crashes.
-* 1.1.11 (in MultiColony since 1.4.0-beta4): every player gets a colour of their own until they choose one, and only the name is coloured in the chat.
-* 1.1.12 (in MultiColony since 1.4.0-beta10): the fuller desync check, direct connections sending at once, the desync dialog's reconnect; its other fixes came from MultiColony.
-* 1.1.13 and 1.1.14 came from MultiColony: the speed boost and your own chat color (1.4.0-beta5 and beta6), and beta12's fixes.
+* 1.1.11 (in Timber Together since 1.4.0-beta4): every player gets a colour of their own until they choose one, and only the name is coloured in the chat.
+* 1.1.12 (in Timber Together since 1.4.0-beta10): the fuller desync check, direct connections sending at once, the desync dialog's reconnect; its other fixes came from Timber Together.
+* 1.1.13 and 1.1.14 came from Timber Together: the speed boost and your own chat color (1.4.0-beta5 and beta6), and beta12's fixes.
 
 v1.1.0-1.0.1
 * Fixed a build bug where Steam options were not included

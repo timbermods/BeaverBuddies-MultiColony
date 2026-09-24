@@ -34,7 +34,7 @@ and nothing else; your own row (Kyler here) is in bold, with a dash where the pi
 button at the right of the header, `[-]` here, is drawn in a small box so it is not mistaken for that dash, which
 sits at the same edge.
 
-In a **separate-colonies game** (MultiColony, see [TWO-COLONIES.md](TWO-COLONIES.md)) each name carries the
+In a **separate-colonies game** (Timber Together, see [TWO-COLONIES.md](TWO-COLONIES.md)) each name carries the
 colony that player runs, *(colony N)*, as the host seated them: the number is the save's, the same whoever
 hosts, and a player who joins once every colony is taken shows the host's colony (they help run it). A guest
 shows no colony until the host has seated it, a moment after joining. In a shared-colony game the rows are
@@ -42,8 +42,8 @@ names only, as before.
 
 | Item | Meaning |
 | --- | --- |
-| **Status** | *In sync* is normal. *Catching up* (guests): this game is a few ticks behind the host. *Waiting for host* (guests): this game has been held at the start of a tick for a moment, waiting for the host's word for it (since 1.4.0-alpha5; before, it meant nothing had arrived from the host for a moment). *Connection unstable*: someone has stopped responding for five seconds. *Out of sync*: a desync was detected: the game's random state differed from the host's at an action, or, in MultiColony, the colony state differed (the every-tick digest since 1.4.0-alpha13, or the daily colony check since alpha11; the log says which). *Disconnected*: the session has ended. The dot beside it follows the status: green when in sync, yellow while catching up or waiting for the host, red when unstable, out of sync or disconnected. |
-| **Players** | Everyone in the session, host first, each as a name and a ping (and, with separate colonies, their colony: the one they act as, so a steward running a friend's colony shows that colony's number). Your own row is bold and shows a dash instead of a ping. On the host, a guest still loading the save says *(loading)* after its name until its game has loaded and said hello (since 1.4.0-beta18): useful after a waiting room, to unpause once everyone is in. **Click a row** to take your camera to that player (their cursor on the map, or what they have selected; a notice says if neither is known); your own row takes you back to your colony, as the Home key does. A guest who leaves drops off the list; in MultiColony their colony counts as away from the next day (see [TWO-COLONIES.md](TWO-COLONIES.md#when-a-colony-is-handed-over)). |
+| **Status** | *In sync* is normal. *Catching up* (guests): this game is a few ticks behind the host. *Waiting for host* (guests): this game has been held at the start of a tick for a moment, waiting for the host's word for it (since 1.4.0-alpha5; before, it meant nothing had arrived from the host for a moment). *Connection unstable*: someone has stopped responding for five seconds. *Out of sync*: a desync was detected: the game's random state differed from the host's at an action, or, in Timber Together, the colony state differed (the every-tick digest since 1.4.0-alpha13, or the daily colony check since alpha11; the log says which). *Disconnected*: the session has ended. The dot beside it follows the status: green when in sync, yellow while catching up or waiting for the host, red when unstable, out of sync or disconnected. |
+| **Players** | Everyone in the session, host first, each as a name and a ping (and, with separate colonies, their colony: the one they act as, so a steward running a friend's colony shows that colony's number). Your own row is bold and shows a dash instead of a ping. On the host, a guest still loading the save says *(loading)* after its name until its game has loaded and said hello (since 1.4.0-beta18): useful after a waiting room, to unpause once everyone is in. **Click a row** to take your camera to that player (their cursor on the map, or what they have selected; a notice says if neither is known); your own row takes you back to your colony, as the Home key does. A guest who leaves drops off the list; in Timber Together their colony counts as away from the next day (see [TWO-COLONIES.md](TWO-COLONIES.md#when-a-colony-is-handed-over)). |
 | **Joining** | Host only, and only while players can still join (the game waits at its start and nothing has changed it): *open: unpausing, or any change, closes it*. The line disappears once the game has started. A game started from a waiting room (a new game, or since 1.4.0-beta19 a save hosted from the main menu) never shows it: joining closed at **Start Game**. |
 | **Ping** | Round-trip time between you and that player, in milliseconds. Normal text: 80 ms or less. Yellow: up to 160 ms. Red: more, or **No response**. `...`: not measured yet. |
 | **Tick rate** | Simulation ticks per second right now, averaged over about three seconds. Around 1.7 at normal speed; it rises with game speed and drops to 0 when paused. |
@@ -62,12 +62,12 @@ matters for keeping in sync.
 ## Showing, collapsing and hiding
 
 - **Click the title** to collapse or expand the panel. Your choice is remembered.
-- **Mod Settings -> BeaverBuddies -> Connection panel:** Expanded, Collapsed or Hidden.
-- **Mod Settings -> BeaverBuddies -> Connection panel position:** top left (default), top
+- **Mod Settings -> Timber Together -> Connection panel:** Expanded, Collapsed or Hidden.
+- **Mod Settings -> Timber Together -> Connection panel position:** top left (default), top
   right, bottom left or bottom right.
-- **Options -> Bindings -> BeaverBuddies -> Toggle connection panel:** an optional key to
+- **Options -> Bindings -> Timber Together -> Toggle connection panel:** an optional key to
   hide and show the panel. It is unbound until you choose a key.
-- **Options -> Bindings -> BeaverBuddies -> Chat: start typing:** an optional key that shows
+- **Options -> Bindings -> Timber Together -> Chat: start typing:** an optional key that shows
   the panel if it was collapsed or hidden and puts the cursor in the chat box. It is unbound
   until you choose a key; clicking the box always works.
 
@@ -265,8 +265,8 @@ was added, the collapse button's dash sat directly above your own row's dash, wh
 
 **Played:** the fork owner played Stability Fork 1.1.10 in multiplayer over Steam invites for more than an hour, in large colonies (300+), and
 reported that it worked very well. 1.1.11, which only changes the colors on top of it (each player a color of their own, the name alone colored
-in the chat), was played too and works without issues. MultiColony carries those changes since 1.4.0-beta4; they have not been seen in a
-MultiColony game yet.
+in the chat), was played too and works without issues. Timber Together carries those changes since 1.4.0-beta4; they have not been seen in a
+Timber Together game yet.
 
 **Not checked one by one.** That play was not a checklist, so these have not been confirmed individually: that the panel matches the counters'
 width (and to what), that the chat clears the alerts, that the panel is drawn in front of them while you type, where the panel sits in each corner

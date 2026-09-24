@@ -5,7 +5,7 @@ primary_target: "docs/index.html"
 related_targets: ["docs/install.html","docs/faq.html","docs/troubleshooting.html"]
 ---
 
-# Surface brief: MultiColony site (docs/index.html, with install, faq, troubleshooting)
+# Surface brief: Timber Together site (docs/index.html, with install, faq, troubleshooting)
 
 Scope: the whole static site in docs/. Home page mode: Persuade. install/faq/troubleshooting: Read.
 
@@ -25,7 +25,7 @@ OWN-WORLD: River-stone ground (#e2e6e3 light, #0f1a1c night). Colony 1 amber ena
 
 STORY: In one glance: one map, a colony each, trade at a Trading Post, unlike ordinary BeaverBuddies' one shared colony. Then which setting starts which game, then both players install the same build and cross-check it, then play, then report.
 
-FIRST VIEWPORT: Left, a timber post carrying a name plate "BeaverBuddies MultiColony" (display, ~3.2rem), a one-line pitch, the one-line difference from ordinary co-op, a navy enamel Download plate with arrow (navy, not amber: each colony color is used only for its colony, per OWN-WORLD), a secondary "Install guide" plate, and a riveted status tag (version from release.js · Timberborn 1.1.2.4 · Beta: back up your saves). Right, the map of two colonies across a river, roads meeting only at the Trading Post, labelled with leader lines. On phones the map follows the pitch directly, reduced in height.
+FIRST VIEWPORT: Left, a timber post carrying a name plate "Timber Together" (display, ~3.2rem), a one-line pitch, the one-line difference from ordinary co-op, a navy enamel Download plate with arrow (navy, not amber: each colony color is used only for its colony, per OWN-WORLD), a secondary "Install guide" plate, and a riveted status tag (version from release.js · Timberborn 1.1.2.4 · Beta: back up your saves). Right, the map of two colonies across a river, roads meeting only at the Trading Post, labelled with leader lines. On phones the map follows the pitch directly, reduced in height.
 
 FORM: River Station Signage, candidate 7 of 7 on the ordered list (seed 4dae0276). Raises: install steps one per full-width row marked like chalk measurements (forge); leader-line annotations on the map (tensegrity); every section a painted field (lowbrow); host-and-friend cross-check of three readings (six-pack); Choose your start keeps both paths present, the chosen one struck forward (cathode). Signature interaction: the two-arm signpost for Choose your start. Motion grammar: goods sliding along the road through the Trading Post, one slow loop, off under reduced motion.
 

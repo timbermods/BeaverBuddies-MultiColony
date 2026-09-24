@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-BeaverBuddies MultiColony: a Timberborn co-op mod (C#, Harmony) where each player runs their own colony on one map and
+Timber Together: a Timberborn co-op mod (C#, Harmony) where each player runs their own colony on one map and
 the colonies trade only at Trading Posts. Built on the BeaverBuddies Stability Fork, itself built on thomaswp's
 BeaverBuddies (GPL-3.0). Mod source in `BeaverBuddies/`, networking in `TimberNet/`, headless checks in
 `StabilityTests/`, game-assembly checks in `RuntimeChecks/`, plans and reviews in `design/`, the changelog in
@@ -26,12 +26,21 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
 - Fresh games only: no save-compatibility notes, no old-settings notes. 1.4.0 counts as unreleased, so player-facing
   text never says which version added or changed something.
 - Tooltips in Mod Settings don't wrap (≤112 chars per line), if site copy is reused in game.
+- **Name and credits.** The mod is **Timber Together** (tagline *Build apart. Thrive together.*), id
+  `timbermods.TimberTogether`, folder and zip `TimberTogether`. Write it as if it always had that name (no "renamed",
+  no "formerly"). "BeaverBuddies" stays wherever it names the original work: the credits, "built on", the
+  Stability Fork, the other-BeaverBuddies warnings, BeaverBuddies multi-start maps. Internal identifiers stay as they
+  are: the `BeaverBuddies` namespaces, project folder and DLL, the `BeaverBuddies.*` loc keys, the building id
+  `MultiColonyTradingPost`, and `Plugin.EarlierBuildID` (this mod's earlier Harmony id, refused at start). The credit
+  to BeaverBuddies by Thomas Price (thomaswp) and contributors is kept in `CREDITS.md` (shipped in the mod folder
+  with `License.txt`, GPL-3.0), the manifest description, the README, the Workshop text and every site page's
+  footer; never drop or shorten it. The thumbnail is drawn by `design/thumbnail/make_thumbnail.py`.
 
 ## Website
 
 - **Where:** `docs/`: `index.html` (home), `install.html`, `troubleshooting.html`, `faq.html`. No 404 page. Shared
   `assets/style.css` + `site.js`; the Trading Post demo is `assets/trade-demo.js` + `assets/game-panel.css` with item
-  icons in `assets/goods/`. Live at https://timbermods.github.io/BeaverBuddies-MultiColony/.
+  icons in `assets/goods/`. Live at https://timbermods.github.io/TimberTogether/.
 - **Published:** GitHub Pages serves `main:/docs`, so merging to main publishes; a build takes about a minute.
 - **Latest releases update themselves:** when a release becomes GitHub's Latest, `.github/workflows/latest-release.yml`
   (the shared timbermods workflow) appends the standard footer to its notes, sets the site's
@@ -77,7 +86,7 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
   Gears, Berries, Carrots from the MixedStorage site), used only inside the demo. Never add stock or generated
   imagery; a new raster needs provenance via Impeccable `embed-prompt <file> --prompt "Origin: …"`.
 - Themes: light and dark follow `prefers-color-scheme` only (no toggle, no theme storage key). Check both. The only
-  localStorage key is release.js's cache `tbmods.release.v2.timbermods/BeaverBuddies-MultiColony` (30 min); clear it
+  localStorage key is release.js's cache `tbmods.release.v2.timbermods/TimberTogether` (30 min); clear it
   when checking version badges.
 - Phones: no horizontal scroll at 390px, tap targets ≥ 44px (menu links 48px). Breakpoints 1060/940/760/640/520.
 - Motion: the one barter loop on the hero map (goods slide to the Trading Post and cross, 9s
@@ -100,12 +109,12 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
 - Keep the credits (Stability Fork → thomaswp's BeaverBuddies, GPL-3.0) and the "unofficial, not affiliated with or
   endorsed by Mechanistry" line in every footer.
 - Terminology: **Trading Posts** (never "District Crossings"). No land, borders or territory: roads never join except
-  through a Trading Post. Mod name in game: **BeaverBuddies MultiColony (beta)**. Setting and button names exactly
+  through a Trading Post. Mod name in game: **Timber Together**. Setting and button names exactly
   as in game.
 - The Trading Post demo must keep matching the mod (`Colonies/TradingPostFragment.cs`, `ExchangeTerms`,
   `TradeOfferForm`): a colony is named by its player (Kyler = colony 1, Sarah = colony 2); ledger stamp
   `cycle-day` ("3-13"); 0–100 of an item per round, steps 10 / Shift 1 (beavers 1 / Shift 10); rounds 1–99.
-- `docs/assets/release.js` is MultiColony's own variant of the timbermods release script (the other sites share one
+- `docs/assets/release.js` is Timber Together's own variant of the timbermods release script (the other sites share one
   byte-identical copy, SHA-1 f771fa55…). This copy fills `data-release` / `data-release-href` from the most recently
   *published* pre-release, because GitHub's release list sorts tags as text. The HTML's static values are the
   fallback. Don't overwrite it with the shared copy, and change it only for a real bug.
@@ -113,8 +122,8 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
 ### Update the website for a new release
 
 When asked to "update the website for the latest release, consistent with the design":
-1. Read what changed: `gh release list -R timbermods/BeaverBuddies-MultiColony -L 5`, `gh release view <tag> -R
-   timbermods/BeaverBuddies-MultiColony`, the README, the top entries of `STABILITY-CHANGELOG.md`, `TWO-COLONIES.md`.
+1. Read what changed: `gh release list -R timbermods/TimberTogether -L 5`, `gh release view <tag> -R
+   timbermods/TimberTogether`, the README, the top entries of `STABILITY-CHANGELOG.md`, `TWO-COLONIES.md`.
    List every player-facing change: settings moved/removed, hosting steps, keys, played status, game version.
 2. Update every place the site states a changed fact:
    - Static version fallbacks: `grep -rn "<old version>" docs` (index: hero `.status-tag`, install step asset name,
@@ -157,8 +166,8 @@ When asked to "update the website for the latest release, consistent with the de
 8. Update the README if it repeats the facts.
 9. Ship: branch → commit → push → `gh pr create`. Once its checks pass: `gh pr merge <n> --merge` (that publishes),
    then verify:
-   - `gh api repos/timbermods/BeaverBuddies-MultiColony/pages/builds/latest -q .status` is `built`;
-   - `curl -s https://timbermods.github.io/BeaverBuddies-MultiColony/ | grep -c "<a changed string>"` finds it.
+   - `gh api repos/timbermods/TimberTogether/pages/builds/latest -q .status` is `built`;
+   - `curl -s https://timbermods.github.io/TimberTogether/ | grep -c "<a changed string>"` finds it.
 
 ### Full redesign
 

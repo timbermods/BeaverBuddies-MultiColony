@@ -102,7 +102,7 @@ MIXED-FACTIONS-PLAN.md:884) was never measured.
 
 ## 4. Documented limits
 
-- TWO-COLONIES *Known limits*: a mixed save needs MultiColony and a new game (:446-448); more memory and a longer load
+- TWO-COLONIES *Known limits*: a mixed save needs Timber Together and a new game (:446-448); more memory and a longer load
   (:449); both Trading Post halves use the placer's model, and achievements, the unlock goal, the load menu and other
   mods see the host's faction (:450-452); no picks for a game hosted from inside a game (:453-454). "Not played yet"
   (:108). The *State of testing* paragraph (:7-16) doesn't list mixed factions among the unplayed parts.

@@ -1,4 +1,4 @@
-# Review findings: desyncs and network, MultiColony 1.4.0-beta11 → fixed in 1.4.0-beta12
+# Review findings: desyncs and network, Timber Together 1.4.0-beta11 → fixed in 1.4.0-beta12
 
 **Reviewed:** `v1.4.0-beta11` (`29cad83`, plus the docs-only `5fc1c05`), Timberborn 1.1.2.4, following
 [REVIEW-PLAN-1.4.0-beta11.md](REVIEW-PLAN-1.4.0-beta11.md).
@@ -89,7 +89,7 @@ reads no longer throws out of the mod's single `PatchAll`, which would have left
 method as it is, logs once, and sets `WonderTiming.Unavailable`, which switches the whole takeover off. The Wonders
 then run on frame time as in beta11.
 
-**MultiColony additions:**
+**Timber Together additions:**
 - `TEBPatcher` leaves switched-off walkers out of the walker hash. A pilot riding its plane (frame time, as in the
   game) otherwise logs a false `Walker mismatch`.
 - D3 below.

@@ -1,4 +1,4 @@
-The changelog of BeaverBuddies MultiColony is STABILITY-CHANGELOG.md at the repository root, one entry per
+The changelog of Timber Together is STABILITY-CHANGELOG.md at the repository root, one entry per
 version, newest first, back to the Stability Fork's first change over the original BeaverBuddies v1.1 branch.
 
 The short in-game version (the text the changelog dialog would show; the dialog is off in this fork, see

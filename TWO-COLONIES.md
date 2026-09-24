@@ -249,7 +249,7 @@ Stability Fork) the game is the Stability Fork's shared co-op: one colony that e
 player other than the host splits it from the game menu (*Starting*, step 3). Nothing on the rest of this page
 applies until then. There are no owners and no Trading Post (not even in dev
 mode); District Crossings hold the game's 30 of a good; nothing of the colony model is kept, compared on the
-heartbeat or checked once a day; and the save holds nothing of this mod's. What does apply is what MultiColony adds
+heartbeat or checked once a day; and the save holds nothing of this mod's. What does apply is what Timber Together adds
 to co-op in general (the README's *One shared colony*).
 
 ## Trading posts
@@ -547,7 +547,7 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 ## Known limits
 
 - Up to four colonies; more players join as helpers of the host's colony.
-- **Mixed factions** (1.4.0-beta20) is only for new games; a save keeps its mode. A mixed save needs MultiColony:
+- **Mixed factions** (1.4.0-beta20) is only for new games; a save keeps its mode. A mixed save needs Timber Together:
   opened in the plain game or the Stability Fork it loads one faction, and the other faction's buildings and
   characters are dropped as the game's "loading issues" (and gone if that copy is saved).
 - Mixed factions loads both factions' models and data: more memory, a longer load.
@@ -612,9 +612,9 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - With detailed logging on, the log has one trade line a day: the exchanges, the goods held and waiting to be hauled
   away, what crossed since yesterday and each colony's stock of it. A line `[Colony] Trade check:` is a bug: please
   send the log.
-- **A Timberborn update** that changes a part of the game MultiColony corrects for co-op no longer stops the mod from
+- **A Timberborn update** that changes a part of the game Timber Together corrects for co-op no longer stops the mod from
   starting: single player carries on, and a co-op game is stopped at load with a message naming what is missing,
-  instead of going out of step. Update MultiColony then.
+  instead of going out of step. Update Timber Together then.
 - While a co-op game is paused, what was just built or removed updates its district (the district badge and highlight,
   and which district's builders a new construction site waits for) when the game resumes, at the same moment on every
   computer. Gates open and close, and automation reacts to a changed input, at the tick rather than the frame, for
@@ -650,7 +650,7 @@ pressed on, and desync the game. A notice says so; unpause to play on.
 - A speed boost the computers can't carry leaves a guest a few seconds behind the host (the host eases off until the
   guest keeps up), so the guest's own actions take that long to show.
 - Other mods that change the simulation (LateGamePerformance, for one) need the same version, with the same settings,
-  on every player's computer; MultiColony only warns when the players' mod lists differ.
+  on every player's computer; Timber Together only warns when the players' mod lists differ.
 - The daily colony check (`[Colony] Check` in the log) is taken as the host's day reaches each computer, one tick
   after the turn of the day, the same on every computer.
 - A half of a paused Trading Post (no colony's road reaches it) belongs to no colony, so any colony may remove it.

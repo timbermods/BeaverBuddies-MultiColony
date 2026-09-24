@@ -16,8 +16,8 @@ and report what breaks.
 
 ## Product Purpose
 
-The website for **BeaverBuddies MultiColony**, a co-op multiplayer mod for Timberborn
-(repo and releases: https://github.com/timbermods/BeaverBuddies-MultiColony).
+The website for **Timber Together**, a co-op multiplayer mod for Timberborn
+(repo and releases: https://github.com/timbermods/TimberTogether).
 
 The big idea: **two players, one map, a colony each.** Each player runs their own colony on a shared map: their own
 districts, beavers, stock, science and working hours. The colonies meet only at **Trading Posts**, a building
@@ -26,13 +26,13 @@ co-op mods mean sharing one colony, and this one lets you be neighbors who trade
 
 Success, in order:
 1. **Both players end up on the exact same build and in a two-colony game.** This is the primary goal.
-2. **Good bug reports:** every player's `Player.log`, plus the `BeaverBuddies-Reports` folder next to it after a
+2. **Good bug reports:** every player's `Player.log`, plus the `TimberTogether-Reports` folder next to it after a
    desync, sent as a GitHub issue.
 
 ## Positioning
 
 Separate colonies that trade, not one shared colony. Other co-op mods, including the original BeaverBuddies and
-the Stability Fork it is built on, put every player in one colony. MultiColony gives each player their own colony
+the Stability Fork it is built on, put every player in one colony. Timber Together gives each player their own colony
 on one map, links them only through Trading Post barter, and still offers ordinary shared-colony co-op too.
 
 ## Operating Context
@@ -52,9 +52,9 @@ on one map, links them only through Trading Post barter, and still offers ordina
     - Either way **the existing colony, with its science and unlocks, stays whole as the host's. Each other player
       starts from scratch** (a new district center with starting beavers, food and water). Nothing divides a
       300-beaver colony into halves.
-  - **One shared colony:** *Separate colonies* unticked; ordinary BeaverBuddies co-op, with MultiColony's
+  - **One shared colony:** *Separate colonies* unticked; ordinary BeaverBuddies co-op, with Timber Together's
     improvements.
-  - The host's one colony setting in **Mod Settings → BeaverBuddies** is *Hand over a colony after its player is
+  - The host's one colony setting in **Mod Settings → Timber Together** is *Hand over a colony after its player is
     away (days)*, 0 (never) by default.
 - **Features the site must include** (confirmed by the maintainer, 2026-09-23), alongside separate colonies and
   Trading Posts:
@@ -71,19 +71,19 @@ on one map, links them only through Trading Post barter, and still offers ordina
 - Inherited from the Stability Fork: Steam invites, the connection panel and chat, pings, player cursors, desync
   fixes.
 - Reporting: `%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log` from every player. In a
-  separate-colonies game a desync also writes a diagnostics report to `BeaverBuddies-Reports` in that same folder
+  separate-colonies game a desync also writes a diagnostics report to `TimberTogether-Reports` in that same folder
   (Ctrl+Shift+J writes one on demand). Issues go to this repo, not to the original BeaverBuddies.
 
 ## Capabilities and Constraints
 
 **Install facts the site must make impossible to miss:**
-1. Download the `BeaverBuddies-MultiColony-….zip` from **GitHub Releases** (under Assets, not "Source code"), or use
+1. Download the `TimberTogether-….zip` from **GitHub Releases** (under Assets, not "Source code"), or use
    the zip a friend sent. The releases are pre-releases, so link to `/releases`, never `/releases/latest`.
 2. **Close Timberborn.**
 3. In `Documents\Timberborn\Mods`, **delete every other BeaverBuddies folder** (the Stability Fork, the Workshop
-   version, any other MultiColony download). They conflict. **Unsubscribe from the Workshop BeaverBuddies.**
-4. Copy the `BeaverBuddies-MultiColony` folder into `Documents\Timberborn\Mods` and enable
-   **BeaverBuddies MultiColony (beta)**. Requires the **Harmony** and **Mod Settings** mods.
+   version, any other Timber Together download). They conflict. **Unsubscribe from the Workshop BeaverBuddies.**
+4. Copy the `TimberTogether` folder into `Documents\Timberborn\Mods` and enable
+   **Timber Together**. Requires the **Harmony** and **Mod Settings** mods.
 5. **Every player has the same game version and the exact same download. Update together:** a different build
    cannot join (*Multiplayer build mismatch*).
 
@@ -101,7 +101,7 @@ version history lives in the changelog only.
 colonies is that their roads never join, except through a Trading Post.
 
 **Stack and hosting:** static site in `docs/` (plain HTML, CSS and small vanilla JS; no build step), served by GitHub
-Pages from `main:/docs` at https://timbermods.github.io/BeaverBuddies-MultiColony/. It must stay fast, lightweight
+Pages from `main:/docs` at https://timbermods.github.io/TimberTogether/. It must stay fast, lightweight
 and mobile-friendly. It is one of the timbermods sites (the Stability Fork's and MixedStorage's are siblings).
 
 **Sources of truth:** the repo `README.md`, `TWO-COLONIES.md` (full rules) and the release notes. Where the site and
@@ -116,7 +116,7 @@ the README disagree, flag the mismatch; don't guess.
   status, never overpromising.
 - **No official Timberborn logos or key art.** Small in-game item icons (goods, the beaver) are allowed in UI
   replicas such as the Trading Post demo.
-- Mod name as shown in game: **BeaverBuddies MultiColony (beta)**.
+- Mod name as shown in game: **Timber Together**.
 
 ## Evidence on Hand
 

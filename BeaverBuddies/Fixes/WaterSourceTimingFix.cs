@@ -39,7 +39,7 @@ namespace BeaverBuddies.Fixes
             {
                 Unavailable = $"WaterDepthStrengthModifier.GetStrengthModifier reads the frame clock {found} times, where Timberborn 1.1.2.4 read it once";
                 Plugin.LogError("[Fixes] Water seep timing is not corrected for co-op on this game version (" + Unavailable
-                    + "): the method is left as the game has it, and a co-op game with water seeps is stopped at load until MultiColony is updated");
+                    + "): the method is left as the game has it, and a co-op game with water seeps is stopped at load until Timber Together is updated");
                 return result;
             }
             Unavailable = null;

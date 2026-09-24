@@ -280,12 +280,12 @@ a copy of `mods20/Release/version-1.1`.
     nothing there.
 - Side note for the LGP repo (not a beta18–20 regression): `SaveSnapshot.Allowed` pins
   `BeaverBuddies.Colonies.ColonyStamp` by an FNV hash of `Save`'s raw IL bytes (`ae23955dc80c940f`, read at beta2).
-  - IL bytes embed metadata tokens, so every MultiColony rebuild hashes differently: beta20 Release `db077342cbaf071b`,
+  - IL bytes embed metadata tokens, so every Timber Together rebuild hashes differently: beta20 Release `db077342cbaf071b`,
     ReleaseSteam `0f633081a3c941dc`, the installed beta15 `ae77e00996060228` (`rig savehash`).
   - So LGP keeps every building with a ColonyStamp on the main thread, and logs a warning, in every separate-colonies
     game.
   - Fix in LGP: hash the IL with tokens resolved to member names.
-- Fix: none in MultiColony.
+- Fix: none in Timber Together.
 
 ### C-C3: Saves
 - Status: **Refuted** (safe), by trace.

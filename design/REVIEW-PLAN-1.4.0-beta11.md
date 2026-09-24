@@ -1,4 +1,4 @@
-# Review plan: desyncs and network, MultiColony 1.4.0-beta11
+# Review plan: desyncs and network, Timber Together 1.4.0-beta11
 
 **Status:** approved 2026-09-22 (two review agents besides the main one, fixes implemented, released as 1.4.0-beta12).
 Findings: [REVIEW-FINDINGS-1.4.0-beta11.md](REVIEW-FINDINGS-1.4.0-beta11.md).

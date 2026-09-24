@@ -5,6 +5,34 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc9
+
+**Ready for a Workshop page of its own, with the credits in every copy.** Asked for by Kyler after rc8. No change to
+play, the wire or saves; everyone needs this build (the join checks the version). Built against Timberborn 1.1.2.4:
+both configurations with 0 warnings; StabilityTests 503 and RuntimeChecks 453 pass. **Not played.**
+
+- **The credits and the license travel with the mod.** `CREDITS.md` (new, at the repository root) credits
+  BeaverBuddies to its author, Thomas Price (thomaswp), and its contributors, links the original's source and Workshop
+  item and the Stability Fork, and gives the GPL-3.0 terms: a modified version, since when, and where the complete
+  source is. The build copies it and `License.txt` into the mod folder beside `thumbnail.png`
+  (`RootDirFilesToCopy`), so the release zip and a Workshop upload carry both. The manifest's description, the README,
+  the FAQ and every site page's footer credit the original the same way.
+- **A picture of its own.** `thumbnail.png` (800 x 450, the preview in the mod list and on the Workshop) is new art,
+  drawn by `design/thumbnail/make_thumbnail.py` in the site's look: the name plate with *Build apart. Thrive
+  together.* over two colonies whose roads meet at one Trading Post, logs and gears crossing it.
+- **The Workshop text** (`WORKSHOP.md`, `Doc/WorkshopDescription.txt`) is rewritten for the game as it is: the New
+  Game page's *Separate colonies*, the Co-op Game room, mixed factions, keeping an away player's colony, and a
+  Credits section linking the original BeaverBuddies.
+- **Links to the site.** The first-run message's guide opens the site's install guide (`LinkHelper.GuideURL`), the
+  troubleshooting link its troubleshooting page; bug reports go to the repository's issues.
+- **Names the player sees:** the mod list, the Mod Settings section and the key-binding group (all 15 languages) say
+  *Timber Together*, as do the first-run and other-BeaverBuddies messages, the changelog popup's heading, the log line
+  (`Timber Together v… is loaded!`), and the diagnostics report, saved in `TimberTogether-Reports`; the walker and
+  water diagnostics go to `TimberTogether-Diagnostics`.
+- **A copy of this mod with its earlier id** (`Plugin.EarlierBuildID`), enabled beside this one, patches the same game
+  code: it is refused at start like the original BeaverBuddies, and the main menu's warning names it
+  (`DuplicateModWarning`, by id as well as by name).
+
 ## 1.4.0-rc8
 
 **The room's gold line is two words.** Asked for by Kyler after rc7: the line under the Co-op Game room's plate
@@ -1006,7 +1034,7 @@ was fixed or refuted. The plan and the full report, with the evidence for every 
 [design/REVIEW-FINDINGS-1.4.0-beta11.md](design/REVIEW-FINDINGS-1.4.0-beta11.md). **Wire change.**
 
 **Built on the Stability Fork 1.1.14.** After this release, the same day, the fork took these fixes as its 1.1.14
-(its PR #55), without the separate-colony one. MultiColony records 1.1.14 as merged (MC11, a merge with no file
+(its PR #55), without the separate-colony one. Timber Together records 1.1.14 as merged (MC11, a merge with no file
 changes): the fork's own additions (its host check for a building it lacks, its quiet guest leave) were already here.
 
 Desyncs:
@@ -1116,9 +1144,9 @@ paced, so this happened over direct IP only.
 ## 1.4.0-beta10
 
 **Built on the Stability Fork 1.1.12**, and on the change the fork merged after it (its PR #50). Most of 1.1.12 was
-MultiColony's own fixes ported into the fork (planting with sliced views, the placement replay validator, tick once,
+Timber Together's own fixes ported into the fork (planting with sliced views, the placement replay validator, tick once,
 dev mode's Ctrl keys, closing joining at tick 0, the frame type binder); the fork's own changes are ported here, with
-the fixes the fork's reviews made to MultiColony's code. MultiColony keeps its own behaviour where it went further (a
+the fixes the fork's reviews made to Timber Together's code. Timber Together keeps its own behaviour where it went further (a
 guest that cannot read the host's action leaves quietly, and the host keeps a group's readable actions; beta9).
 - **A fuller desync check** (fork SF6, SF-NF1). A guest compared only `Random.state.s0`, one of the xorshift state's
   four words. Every event now also carries a hash of all four (`ReplayEvent.randomStateHashBefore`), and every
@@ -1128,27 +1156,27 @@ guest that cannot read the host's action leaves quietly, and the host keeps a gr
   differs stops the session as before; an entity or walker difference alone is logged once per game (`Entity
   mismatch`, `Walker mismatch`) and the game goes on, so a later desync says when the games first differed.
   `TEBPatcher` keeps its hashes in every multiplayer game now, reset as a game loads. What the check found travels as
-  the desync's trace, so the host's log and the report name it; MultiColony's colony-digest line does the same. The
+  the desync's trace, so the host's log and the report name it; Timber Together's colony-digest line does the same. The
   colony digest, the daily colony check and beta9's lists of colony changes are unchanged.
   `ReplayService.HandleDesync(reason, colonyHostChanges)` is one method for both. **Wire change.**
 - **Direct TCP sends at once** (SF7): `NoDelay` on every socket the mod makes or accepts (`TCPClientWrapper`), and
   `SendDataWithLength` sleeps between chunks only for the save sent to a joining guest (on that guest's own thread);
   a gameplay frame over one chunk used to stall the host's game thread about 31 ms per extra 32 KB. Ending the
-  session no longer waits for a joining guest's paced save. MultiColony's single first write (the length and the
+  session no longer waits for a joining guest's paced save. Timber Together's single first write (the length and the
   frame's start together) stays.
 - **The desync dialog** (SF5): the sentence asking to press Enable Logging shows only with that button (public builds
   have no upload token), and a guest's **Reconnect (wait for Rehost)** joins the way it joined: the address it
   typed, or the host's new Steam lobby when Steam shows it, else a notice to accept a fresh invite
   (`Connect/DesyncDialogPlan.cs`, `ClientConnectionService.Reconnect`). It used to dial the saved direct-IP address,
   127.0.0.1 unless changed, for a Steam guest too.
-- **Every recording prefix runs first** (the fork's #50, done for MultiColony by its own PR #9, whose version and
+- **Every recording prefix runs first** (the fork's #50, done for Timber Together by its own PR #9, whose version and
   check this build keeps). A prefix that records a player's action carries `[HarmonyPriority(Priority.First)]` (65,
   tick once's shared pause among them): another mod's prefix on the same method now runs inside the replay on every
   computer, not at the click on one, and cannot stop the action from being recorded (Harmony skips later bool
   prefixes after one returns false). MixedStorage's `SingleGoodAllower` prefixes rely on it. Prefixes that replace
   the game's method run `Priority.Last` (now also `DistrictPreviewsValidatorReplayPatcher` and dev mode's two
   Ctrl-key prefixes). RuntimeChecks finds the recording prefixes in the compiled IL and requires First.
-- **From the fork's reviews of MultiColony's code:** tick once after a failed multiplayer action no longer ticks the
+- **From the fork's reviews of Timber Together's code:** tick once after a failed multiplayer action no longer ticks the
   stopped game, and pressed on a computer held at speed 0 while the shared game runs (a guest waiting for the host,
   a host easing off) it records the shared pause instead of the *Tick once is off* notice. Closing joining is safe
   inside a replay (a server that never started, a Steam lobby that throws). A guest refused because joining closed
@@ -1159,7 +1187,7 @@ guest that cannot read the host's action leaves quietly, and the host keeps a gr
 - The unused file-replay classes are gone (`RecordToFileService`, `FileWriteIO`, `FileReadIO`; fork #42). Tests: the
   status-traffic check waits for the init event and the two ping sessions run one after the other (fork #40, both
   flaky on a runner); CI pins the .NET 8 SDK and restores from nuget.org.
-- Not ported: the fork's identity, version and site changes; its end-to-end planting check (MultiColony's planting
+- Not ported: the fork's identity, version and site changes; its end-to-end planting check (Timber Together's planting
   code is the fork's, and its own checks cover the colony parts). History: the fork's `main` at `3a2cc2f` is recorded
   as merged (an ours-merge, as for 1.1.11).
 - Checks: StabilityTests 347 (25 new), RuntimeChecks 278 (8 new). Not played.
@@ -1205,7 +1233,7 @@ guest that cannot read the host's action leaves quietly, and the host keeps a gr
 
 ## 1.4.0-beta8
 
-**Seven reviewed pull requests** (timbermods/BeaverBuddies-MultiColony#2 to #8), each reviewed again before merging;
+**Seven reviewed pull requests** (timbermods/TimberTogether#2 to #8), each reviewed again before merging;
 the review's small fixes went onto the pull requests' branches first.
 - **Over Steam, the host checks who a guest is (MC3, #2).** The host seated a guest by whatever stable id its
   `PlayerHelloEvent` claimed, and every player's id is sent to the whole session and kept in the save, so a guest
@@ -1310,7 +1338,7 @@ separate-colonies games only, so a shared game plays, checks itself and saves as
   beta5 slip, in every game).
 - Still in a shared game, because it is co-op in general: the desync fixes (gates, automation, planting on sliced
   views, dev mode's shortcuts, Tick once, joined district roads), the performance pass, a guest's pending actions,
-  the start prompt, the speed boost, going to a player, your own chat color and the diagnostics key. MultiColony and
+  the start prompt, the speed boost, going to a player, your own chat color and the diagnostics key. Timber Together and
   the Stability Fork still cannot join each other's games.
 - Docs: README (a *One shared colony* section), TWO-COLONIES.md, ALPHA-TEST-SCRIPTS.md (A22, A22f, A22g, B8m, B8n),
   the site, `Doc/ToTestV6.md` and the in-game changelog.
@@ -1401,7 +1429,7 @@ number); the mod's limits are what its lockstep can be expected to keep up with.
 
 ## 1.4.0-beta4
 
-**The Stability Fork's 1.1.11 chat and cursor colors.** MultiColony is now built on Stability Fork 1.1.11 (it was
+**The Stability Fork's 1.1.11 chat and cursor colors.** Timber Together is now built on Stability Fork 1.1.11 (it was
 1.1.10). That release changes only how players are colored on the cursors and in the chat; nothing that is
 simulated, sent or saved changes, and its author played it and reported that it works. Brought over as it is:
 - **Every player gets a color of their own.** Ping Color starts as the same yellow for everyone, so until someone
@@ -1416,7 +1444,7 @@ simulated, sent or saved changes, and its author played it and reported that it 
   `ConnectionPanelService.ChatColorOf`.
 - **Only the name is colored in the chat.** A whole line, name and message, took the player's color; now only the
   name does, and the message is in the panel's normal text color (`Panel/ChatFormat.Line`).
-- **MultiColony's colony colors are a different set** and stay so: the land outlines, the *(colony N)* beside a
+- **Timber Together's colony colors are a different set** and stay so: the land outlines, the *(colony N)* beside a
   name and the trading window use the game's own start colors, one per colony. A player's cursor color and their
   colony's color need not match (PLAYER-ACTIVITY.md and CONNECTION-PANEL.md say so).
 - The Ping Color tooltip says what the color is for, in two short lines (the Stability Fork's is one long one).
@@ -1426,7 +1454,7 @@ simulated, sent or saved changes, and its author played it and reported that it 
   and none is yellow, light enough to read, a chosen color is kept and only the default yellow replaced, two players
   on the default differ and every machine picks the same, numbers past the palette start over; the chat-line check
   expects only the name colored); RuntimeChecks 233.
-- Not seen in a MultiColony game: the colors were played in the Stability Fork, not here. Script B line 8j is this
+- Not seen in a Timber Together game: the colors were played in the Stability Fork, not here. Script B line 8j is this
   release's.
 
 ## 1.4.0-beta3
@@ -1586,10 +1614,10 @@ and a long name is cut short with an ellipsis instead of pushing the amounts out
 
 ## 1.4.0-alpha21
 
-**The in-game changelog and the Doc folder describe MultiColony.** No code change.
+**The in-game changelog and the Doc folder describe Timber Together.** No code change.
 
 - `BeaverBuddies/changelog.txt` (the ChangeLog resource the in-game changelog dialog reads; the dialog stays off in
-  this fork, `Help/ChangeLogService.cs`) now begins with MultiColony's versions, alpha21 back to alpha1, then the
+  this fork, `Help/ChangeLogService.cs`) now begins with Timber Together's versions, alpha21 back to alpha1, then the
   Stability Fork, above the original project's entries.
 - `BeaverBuddies/Doc/` gains a README saying what each file is and which are the original project's historical
   lists; `Changelog.txt`, `WorkshopDescription.txt` (Steam BBCode, from WORKSHOP.md) and `ToTestV6.md` (what is owed
@@ -1602,13 +1630,13 @@ and a long name is cut short with an ellipsis instead of pushing the amounts out
 
 **Every guide and page is current.** No code change.
 
-- **PLAYER-ACTIVITY.md** covers MultiColony: activity across colonies, an *Editing* notice for a change the host
+- **PLAYER-ACTIVITY.md** covers Timber Together: activity across colonies, an *Editing* notice for a change the host
   then refuses, cursor colors versus colony colors, selections and pings across colonies, the check counts, and a
   playtest step.
 - **WORKSHOP.md**'s description says what the Trading Post is now (its own building, 100 an item a round, rounds,
   both sides in before anything crosses, ending takes both), when a colony is founded, that desyncs are caught at
   once, and that the mod's files are part of the join check.
-- **The docs site** (`docs/`) was still the Stability Fork's: it now describes MultiColony (a colony each, trading
+- **The docs site** (`docs/`) was still the Stability Fork's: it now describes Timber Together (a colony each, trading
   posts, founding, the every-tick check), links to this repository's releases (every release is a pre-release, so
   the pages link to the release list and the page script picks the newest), names the mod's folder and mod-list
   entry, and says in the FAQ, install guide and troubleshooting when joining closes, what the desync messages
@@ -1620,7 +1648,7 @@ and a long name is cut short with an ellipsis instead of pushing the amounts out
 
 ## 1.4.0-alpha19
 
-**STEAM-INVITES.md covers MultiColony.** No code change.
+**STEAM-INVITES.md covers Timber Together.** No code change.
 
 - The host waits paused and changes nothing until everyone is in; when joining closes over Steam (the first tick or
   the first change) and what an old invite says; the lobby's closed state.
@@ -1633,7 +1661,7 @@ and a long name is cut short with an ellipsis instead of pushing the amounts out
 
 ## 1.4.0-alpha18
 
-**CONNECTION-PANEL.md covers MultiColony.** No code change.
+**CONNECTION-PANEL.md covers Timber Together.** No code change.
 
 - The player rows with each player's colony, *(colony N)*: where the number comes from, a helper, a guest not yet
   seated, and shared-colony games.
@@ -2121,7 +2149,7 @@ could not build its entity panel.
 ## 1.4.0-alpha2
 
 **A diagnostics report.** Press Ctrl+Shift+J (or *Diagnostics report* in the Ctrl+T window): a plain-text report is
-copied to the clipboard and saved in `BeaverBuddies-Reports` next to `Player.log`. A computer that desyncs writes one
+copied to the clipboard and saved in `TimberTogether-Reports` next to `Player.log`. A computer that desyncs writes one
 by itself. It holds:
 
 - **Performance:** frame rate (average, slowest 5%, slowest frame), ticks per second, entity and beaver counts, and
@@ -2156,11 +2184,11 @@ two-colony alphas load.
   who lost their colony may found a new one.
 - **Founding keeps its distance:** at least 20 tiles from another colony's buildings and paths, so both have room to
   grow. The founding preview says so.
-- **Its own identity:** mod id `timbermods.BeaverBuddiesMultiColony`, name *BeaverBuddies MultiColony (alpha)*, links to
+- **Its own identity:** mod id `timbermods.TimberTogether`, name *Timber Together (alpha)*, links to
   this project. The `workshop_data.json` that still pointed at the original BeaverBuddies Workshop item is gone: a
   first Workshop upload makes a new item. If another BeaverBuddies is enabled too, the main menu names it; if it
   started first, this one stays out of the way instead of patching the game twice. Mod Settings start from their
-  defaults once (they are kept under the new id). A development build now deploys to `Mods\BeaverBuddies-MultiColony`.
+  defaults once (they are kept under the new id). A development build now deploys to `Mods\TimberTogether`.
 - **Trading:** the offer form picks goods from a grid of icons with each colony's stock; **Repeat** makes a standing
   deal that starts again each time it completes; **science and adult beavers** can be exchanged too (they move by
   themselves, in step: science 25 at a time, beavers one at a time, the last adult always staying); the new **trading posts and colonies
@@ -2326,7 +2354,7 @@ Adds **founding on standard maps**. Not yet played in a game. Every player must 
 ## 1.2.0-two-colony-alpha1
 
 An alpha of **separate colonies** ([TWO-COLONIES.md](TWO-COLONIES.md)), on top of 1.1.10, in the new
-BeaverBuddies-MultiColony repository. Not yet played in a game. Every player must install this build: the join
+TimberTogether repository. Not yet played in a game. Every player must install this build: the join
 check compares the mod build, and each action now carries who sent it.
 
 - **Opt-in per new game.** A host setting, *Separate colonies for new multi-start games*, gives each start of a new
@@ -2350,7 +2378,7 @@ check compares the mod build, and each action now carries who sent it.
 - **No automatic migration between colonies**; manual migration to the other colony is refused.
 - **Border display** (key **K**, and whenever a tool is active), the colony beside each name in the connection
   panel, and a debug key for a host testing alone (**Ctrl+Shift+K**, debug mode only).
-- Mod renamed *BeaverBuddies - MultiColony (alpha)* in the mod list; the mod ID is unchanged, so remove other
+- Mod renamed *BeaverBuddies - Timber Together (alpha)* in the mod list; the mod ID is unchanged, so remove other
   BeaverBuddies copies before installing.
 
 ## 1.1.10
@@ -2664,7 +2692,7 @@ can differ by a tick.
 
 While debug mode is on, every walking character's position, path (next corner, corner count, last
 corner, corner speed), speed inputs (base speed, bonus multiplier) and both zipline flags are kept
-for the last 192 ticks, and written to `BeaverBuddiesDiagnostics/walkers-*.tsv` on both computers
+for the last 192 ticks, and written to `TimberTogether-Diagnostics/walkers-*.tsv` on both computers
 when a desync is reported. Floats are written as exact bits. 192 ticks because the host is ten to
 twenty ticks ahead of a guest by the time a desync is reported, and the first difference is
 several ticks before that; the water snapshots of the two computers did not overlap at all.
@@ -3134,7 +3162,7 @@ For a diagnostic session, enable **Always Use Detailed Logging** on both peers. 
 overhead. If a desync occurs, keep both Player.log files and the newest water ZIP from each
 peer under:
 
-`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\BeaverBuddiesDiagnostics`
+`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\TimberTogether-Diagnostics`
 
 Large maps may retain fewer snapshots; peers running far apart may have no shared retained
 ticks. Old ZIPs remain until removed. See `RuntimeChecks/compare_water_snapshots.py` for

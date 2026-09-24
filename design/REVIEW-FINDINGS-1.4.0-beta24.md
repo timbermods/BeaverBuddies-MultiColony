@@ -1,4 +1,4 @@
-# Review findings: the late game, mixed factions and trading at scale, MultiColony 1.4.0-beta24 → fixed in 1.4.0-rc1
+# Review findings: the late game, mixed factions and trading at scale, Timber Together 1.4.0-beta24 → fixed in 1.4.0-rc1
 
 **Reviewed:** `v1.4.0-beta24` (`e7adcf4`), with the plan committed on top (`7d3eaa8`), against Timberborn 1.1.2.4. The
 review followed [REVIEW-PLAN-1.4.0-beta24.md](REVIEW-PLAN-1.4.0-beta24.md). Its fixes and docs shipped as
@@ -162,7 +162,7 @@ someone classifies it.
 
 ### Content from one player's mod: three ways to stop everyone's game (E-1, E-2, H1-1)
 
-MultiColony only warns when players' mod lists differ. beta9 made the host refuse a *building* it doesn't have. The
+Timber Together only warns when players' mod lists differ. beta9 made the host refuse a *building* it doesn't have. The
 same hole was open for:
 - a crop (`TemplateNameMapper` throws inside the game's `CanPlant`);
 - a good's distribution setting (`GetGoodDistributionSetting` throws);
@@ -266,7 +266,7 @@ game, the check, or the script step) is in that reviewer's report, §2.
 A few reviewers' cell ids use their own lead names (S2, F8, D3 and so on); §1 maps them.
 
 **Every cell is filled.** The only **Plausible** desync or crash cells are LateGamePerformance's (C1-7, C1-8, C1-9, row
-*With LateGamePerformance*). They are findings in that mod, for Kyler (§7). MultiColony's side is the doc line that every
+*With LateGamePerformance*). They are findings in that mod, for Kyler (§7). Timber Together's side is the doc line that every
 player needs the same version of any mod that changes the simulation.
 
 | Area | Feature | Desync | Crash | Cross-colony | Mixed | Cost | Save/rehost |
@@ -511,7 +511,7 @@ open until a person plays them:
 
 ## 7. For Kyler: findings in other mods
 
-MultiColony can't fix these. They are in LateGamePerformance 0.4.28 and in Kyler's other mods; read, not edited. With
+Timber Together can't fix these. They are in LateGamePerformance 0.4.28 and in Kyler's other mods; read, not edited. With
 every player on the same versions and settings, none desyncs except as noted.
 
 **LateGamePerformance:**
@@ -519,7 +519,7 @@ every player on the same versions and settings, none desyncs except as noted.
   so the pin no longer matches: LateGamePerformance warns each session and saves every building on the main thread.
   Nothing is lost. Re-read and re-pin.
 - **C1-6.** Route maps, terrain maps and terrain search need the same LateGamePerformance on every player. A player
-  without it, on another version, or with a feature that turned itself off, desyncs. MultiColony only warns on a mod
+  without it, on another version, or with a feature that turned itself off, desyncs. Timber Together only warns on a mod
   list difference; its docs now say every player needs the same version and settings.
 - **C1-7 (plausible, low).** The `DistrictMap` postfixes don't check which map they are on. The preview district map
   calls them as a player drags, so one computer can scan its caches alone. Check the instance, as
