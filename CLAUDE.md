@@ -36,6 +36,30 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
   with `License.txt`, GPL-3.0), the manifest description, the README, the Workshop text and every site page's
   footer; never drop or shorten it. The thumbnail is drawn by `design/thumbnail/make_thumbnail.py`.
 
+## Writing README and website text
+
+Kyler, 2026-09-24: "simplicity and elegance is effective and desirable." Every change to `README.md` or the text in
+`docs/` follows these rules. PR #22 (the rc9 copy pass) is the model.
+
+- **Write for a Timberborn player** who wants to download, install and play. Developer detail belongs in
+  `DEVELOPING.md`, the full colony rules in `TWO-COLONIES.md`, and history in `STABILITY-CHANGELOG.md` and the
+  release notes. Link to them rather than repeating them.
+- **Short.** Put one idea in each sentence and keep most sentences under about 20 words. A paragraph is one to three
+  sentences, a FAQ answer one to three sentences, and a troubleshooting answer a few numbered steps. The README stays
+  around 200 lines.
+- **Lead with the action.** Write menu paths as arrow chains: Load game → pick a save → **Host co-op game**. Bold
+  on-screen labels, spelled exactly as in `BeaverBuddies/Localizations/enUS_BeaverBuddie.csv`.
+- **Say each thing once**, where a player would look for it; everywhere else, link to it.
+- **Plain words.** Never name classes, ids, messages between computers or other internals. Explain how something
+  works only when the player needs that to act.
+- **Cut** filler ("in order to", "note that", "as the game does"), repeated caveats, edge cases a player won't meet,
+  and any history ("since rc7", "no longer", "used to", older builds). Describe the mod as it is now.
+- **Check every flow against the code** (and the English strings) before writing it: the changelog can lag. If a
+  button, message or screen isn't in the current build, it isn't on the page.
+- **Keep, briefly:** the credits, the unofficial line, the played / not-played status (README WARNING and site
+  `#status` word for word), and the safety facts (back up saves; direct IP joins are unverified).
+- **Before publishing, reread as a new player.** Every step must work as written, and nothing may be said twice.
+
 ## Website
 
 - **Where:** `docs/`: `index.html` (home), `install.html`, `troubleshooting.html`, `faq.html`. No 404 page. Shared
@@ -105,6 +129,8 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
 
 ### Content rules
 
+- Write every text change by [Writing README and website text](#writing-readme-and-website-text): short, plain and
+  checked against the code.
 - Describe the mod as it is now for a fresh game. No "New in", "added in", version history or old-save caveats on
   player pages; that belongs in `STABILITY-CHANGELOG.md` and the release notes.
 - Played / Not played on the site matches the README's top WARNING block exactly. Never invent numbers, reviews,
@@ -146,7 +172,7 @@ When asked to "update the website for the latest release, consistent with the de
    - `<meta name="description">` and `og:` tags on each page.
    - PRODUCT.md, in the same pass: Operating Context (ways to play, setting names and where they live, features)
      and the Status paragraph (current version, played status).
-3. Put new content into existing components: a feature → a `.plate.enamel` article in `#play .stack` (add
+3. Write it by [Writing README and website text](#writing-readme-and-website-text), and put new content into existing components: a feature → a `.plate.enamel` article in `#play .stack` (add
    `<span class="not-played">Not played yet</span>` in its h3 if unplayed); a colony rule → `.rules li`; a setting →
    a row in install.html `#settings`; a question → a `details.q` with an `id` in the right faq/troubleshooting
    section (and its TOC); a note → `.note.plate.enamel` or `.caution` with a `.sign-label`. Don't restyle anything.
