@@ -27,6 +27,14 @@ namespace BeaverBuddies.IO
         // attempt; after it, a game exists that belongs to this session.
         private bool mapDelivered = false;
 
+        /// <summary>
+        /// A join made in a game, held apart from it (not the game's EventIO) until its save arrives (1.4.0-rc7,
+        /// ClientConnectionService.LoadMap): the game played alone stays a single-player game while the guest waits in the
+        /// host's room. Its errors are still reported as a join's (ConnectionErrorPlanner), and nothing it hears reaches
+        /// the game in this scene. Set and cleared on the game's thread.
+        /// </summary>
+        public bool HeldJoin { get; set; }
+
         private ClientEventIO(ISocketStream socket, MapReceived mapReceivedCallback,
             Action<string, TimberClient> onError)
         {
@@ -39,7 +47,11 @@ namespace BeaverBuddies.IO
                 CompatibilityAdvisory = ModCompatibility.CreateAdvisory(),
             };
             NetBase.DetailedLoggingEnabled = () => Settings.Debug && Settings.VerboseLogging;
-            NetBase.OnSessionFault += reason => SingletonManager.GetSingleton<ReplayService>()?.AbortReplay(reason, leaveQuietly: LeftOverUnreadableAction);
+            // A held join has no game yet: the game in this scene is not its to stop.
+            NetBase.OnSessionFault += reason =>
+            {
+                if (!HeldJoin) SingletonManager.GetSingleton<ReplayService>()?.AbortReplay(reason, leaveQuietly: LeftOverUnreadableAction);
+            };
             NetBase.OnMapReceived += OnMapReceivedByNet;
             ModWarnings.Clear();
             NetBase.OnPeerAdvisory += ModCompatibility.OnPeerAdvisory;
@@ -101,12 +113,14 @@ namespace BeaverBuddies.IO
             FailedToConnect = true;
 
             bool isCurrent = ReferenceEquals(EventIO.Get(), this);
-            switch (ConnectionErrorPlanner.Decide(isCurrent, mapDelivered, ReplayService.HasReplayFailure))
+            switch (ConnectionErrorPlanner.Decide(isCurrent, HeldJoin, mapDelivered, ReplayService.HasReplayFailure))
             {
                 case ConnectionErrorPlan.ReportWhileJoining:
                     // Nothing came of this join, so nothing should stay installed: a session that is over but still
-                    // installed turns the next game loaded from this menu into one that is paused for good.
+                    // installed turns the next game loaded from this menu into one that is paused for good. (A held
+                    // join never was, and is closed above.)
                     EventIO.ResetIf(this);
+                    HeldJoin = false;
                     onError(error, net);
                     break;
                 case ConnectionErrorPlan.EndRunningGame:

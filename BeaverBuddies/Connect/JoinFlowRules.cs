@@ -7,8 +7,11 @@ namespace BeaverBuddies.Connect
         Nothing,
         /// <summary>The guest is in the main menu, where its page (LobbyGuestPanel) shows the room.</summary>
         ShowRoom,
-        /// <summary>The guest is in a game, which a waiting room can't be entered from (D20): leave it and say why.</summary>
-        LeaveForGame,
+        /// <summary>
+        /// The guest is in a game: the room shows as a window over it (LobbyGuestPanel, 1.4.0-rc7). Until rc6 a game's join
+        /// left the room and asked the player to go to the main menu (D20).
+        /// </summary>
+        ShowWindow,
     }
 
     /// <summary>
@@ -19,14 +22,22 @@ namespace BeaverBuddies.Connect
         /// <summary>
         /// CheckWaitingRoom's decision. <paramref name="saveReceived"/>: LoadMap has been given the host's save. From then on
         /// the room is over for this guest, whatever the registry says: LoadMap empties it (SingletonManager.Reset) as the
-        /// game loads, so the guest page is no longer found, and taking that for "in a game" dropped every waiting-room
-        /// guest in the frame its save arrived (1.4.0-beta18 to beta20).
+        /// game loads (1.4.0-beta18 to beta20 took the empty registry for "in a game" and dropped every waiting-room guest in
+        /// the frame its save arrived). <paramref name="inGame"/>: the join was made in a game, whose room is a window.
         /// </summary>
-        public static WaitingRoomStep CheckWaitingRoom(bool connected, bool welcomed, bool saveReceived, bool guestPageBound)
+        public static WaitingRoomStep CheckWaitingRoom(bool connected, bool welcomed, bool saveReceived, bool inGame)
         {
             if (!connected || !welcomed || saveReceived) return WaitingRoomStep.Nothing;
-            return guestPageBound ? WaitingRoomStep.ShowRoom : WaitingRoomStep.LeaveForGame;
+            return inGame ? WaitingRoomStep.ShowWindow : WaitingRoomStep.ShowRoom;
         }
+
+        /// <summary>
+        /// Whether a join is held apart from the game (1.4.0-rc7): a join made in a game is not the game's EventIO until
+        /// its save arrives (LoadMap). Installed at once, the game played alone would turn co-op while the guest waits in
+        /// the room: its actions sent to the host instead of played, its ticks waiting for the host's. The main menu has
+        /// no game to spoil, and installs the join at once, as before.
+        /// </summary>
+        public static bool HoldJoin(bool inGame) => inGame;
 
         /// <summary>
         /// Whether a join that failed is reported by the join's own dialog. Not when a waiting room ended it and the guest's
@@ -70,8 +81,11 @@ namespace BeaverBuddies.Connect
     {
         /// <summary>In the main menu: join the host's page now.</summary>
         Join,
-        /// <summary>In a game played alone: ask, then save it and join from the main menu.</summary>
-        OfferFromGame,
+        /// <summary>
+        /// In a game played alone (or one whose session has ended): join the host's room now, in this game, its window over
+        /// it (1.4.0-rc7; rc6 asked, then saved the game and joined from the main menu).
+        /// </summary>
+        JoinInGame,
         /// <summary>In a co-op game: its session is not ended for an invite; the player leaves it first.</summary>
         LeaveCoopGameFirst,
         /// <summary>Hosting a Co-op Game page (or loading its game): closed first, not replaced by a join.</summary>
@@ -81,16 +95,27 @@ namespace BeaverBuddies.Connect
     public static class InviteRules
     {
         /// <summary>
-        /// An accepted invite to an open Co-op Game page. A page is joined only from the main menu (D20); a game played
-        /// alone is saved and left for it after asking (1.4.0-rc6); a co-op game or a page this player hosts is never
-        /// ended or replaced by a join (the in-game join used to take over the running session's connection).
+        /// An accepted invite to an open Co-op Game room. The main menu joins its page; a game played alone joins in the game
+        /// (1.4.0-rc7), the join held until its save arrives; a co-op game or a room this player hosts is never ended or
+        /// replaced by a join (the in-game join used to take over the running session's connection).
         /// </summary>
         public static InviteStep Decide(bool inMainMenu, bool inCoopSession, bool hostingPage)
         {
             if (hostingPage) return InviteStep.StopHostingFirst;
             if (inMainMenu) return InviteStep.Join;
-            return inCoopSession ? InviteStep.LeaveCoopGameFirst : InviteStep.OfferFromGame;
+            return inCoopSession ? InviteStep.LeaveCoopGameFirst : InviteStep.JoinInGame;
         }
+    }
+
+    /// <summary>Whether the menu has Join co-op game (ClientConnectionUI).</summary>
+    public static class JoinButtonRules
+    {
+        /// <summary>
+        /// The main menu always. A game's menu (1.4.0-rc7) when no co-op session is live in it and this player hosts no
+        /// room: a live session is left first (InviteRules), and a host's room is closed first. A game whose session ended
+        /// (a desync, a lost connection) may join, as a game played alone does.
+        /// </summary>
+        public static bool Show(bool mainMenu, bool sessionLive, bool hostingRoom) => mainMenu || (!sessionLive && !hostingRoom);
     }
 
     /// <summary>

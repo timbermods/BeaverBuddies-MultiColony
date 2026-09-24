@@ -123,14 +123,20 @@ namespace BeaverBuddies.Connect
         private bool TryToConnect(ISocketStream socket)
         {
             Plugin.Log("Connecting client");
+            // One join at a time: one still under way ends (a held one is not EventIO, so installing this one would not
+            // close it).
+            EndJoin(client);
             // Only a waiting room this join enters names the loading screen.
             lobbyHostName = null;
             saveReceived = false;
             // An earlier session's host factions mean nothing to this one (the host's first message brings its own).
             BeaverBuddies.Colonies.ColonySession.ForgetHostFactions();
             bool quiet = quietJoin;
-            client = ClientEventIO.Create(socket, LoadMap, (error, net) =>
+            ClientEventIO joining = null;
+            joining = ClientEventIO.Create(socket, bytes => LoadMap(bytes, joining), (error, net) =>
             {
+                // Nothing came of this join (ClientEventIO closed it and took it out of EventIO): it is no longer under way.
+                if (ReferenceEquals(client, joining)) client = null;
                 // A rejoin's try that found no host yet (its page not open): the next try comes, and nothing is said.
                 if (quiet && (net == null || !net.Lobby.View().Welcomed))
                 {
@@ -167,14 +173,41 @@ namespace BeaverBuddies.Connect
                 });
             });
             
+            client = joining;
             if (client == null)
             {
                 Plugin.Log("Client creation failed.");
                 return false;
             }
 
+            // In a game the join is held apart from it until its save arrives (LoadMap); the main menu installs it now.
+            if (JoinFlowRules.HoldJoin(InGameLobby.InGame))
+            {
+                client.HeldJoin = true;
+                Plugin.Log("[Lobby] Joining from a game: this game stays single-player until the host's save arrives");
+                return true;
+            }
             EventIO.Set(client);
             return true;
+        }
+
+        /// <summary>The join under way (installed in the main menu, held in a game), also once its save has come; or null.</summary>
+        public ClientEventIO CurrentJoin => client;
+
+        /// <summary>The join under way whose save has not come yet, still connected; or null (LobbyGuestPanel shows its room).</summary>
+        public ClientEventIO JoinUnderWay => client?.NetBase != null && !client.NetBase.IsStopped && !saveReceived ? client : null;
+
+        /// <summary>
+        /// Ends a join (the player left the room or cancelled, the host's room ended, another join replaces it, or the player
+        /// hosts instead): taken out of EventIO if it is installed, closed if it is held.
+        /// </summary>
+        public void EndJoin(ClientEventIO join)
+        {
+            if (join == null) return;
+            if (ReferenceEquals(client, join)) client = null;
+            join.HeldJoin = false;
+            if (ReferenceEquals(EventIO.Get(), join)) EventIO.Reset();
+            else join.Close();
         }
 
         public void ConnectOrShowFailureMessage()
@@ -341,9 +374,7 @@ namespace BeaverBuddies.Connect
             if (box != null && !box.IsClosed) CloseBox(box, "rejoin");
             if (!resetJoin) return;
             Plugin.Log("[Lobby] The player stopped waiting to rejoin");
-            ClientEventIO joining = client;
-            client = null;
-            if (joining != null) EventIO.ResetIf(joining);
+            EndJoin(client);
         }
 
         // Takes a Connecting box away: now, or, if something covers it, once it is on top again (polled every frame).
@@ -405,8 +436,7 @@ namespace BeaverBuddies.Connect
                 connectingBox = ConnectingBox.Show(_visualElementLoader, _panelStack, message, () =>
                 {
                     Plugin.Log("The player cancelled joining");
-                    EventIO.ResetIf(joining);
-                    if (ReferenceEquals(client, joining)) client = null;
+                    EndJoin(joining);
                 });
             });
         }
@@ -490,7 +520,7 @@ namespace BeaverBuddies.Connect
                 .Show();
         }
 
-        private void LoadMap(byte[] mapBytes)
+        private void LoadMap(byte[] mapBytes, ClientEventIO joined)
         {
             // The waiting room is over for this guest from here, whatever happens below (see CheckWaitingRoom).
             saveReceived = true;
@@ -516,6 +546,14 @@ namespace BeaverBuddies.Connect
             {
                 try { tip = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Tip.GuestLoading", waitingRoomHost); }
                 catch (Exception error) { Plugin.LogWarning("Could not word the loading screen's tip: " + error.Message); }
+            }
+
+            // A join held apart from a game becomes the session only now, with this game about to be replaced (1.4.0-rc7);
+            // in the main menu it has been EventIO since it connected.
+            if (joined != null && joined.HeldJoin)
+            {
+                joined.HeldJoin = false;
+                EventIO.Set(joined);
             }
 
             // Clean up our current co-op state before loading,
@@ -552,32 +590,20 @@ namespace BeaverBuddies.Connect
         }
 
         /// <summary>
-        /// A host's waiting room has welcomed this guest. In the main menu its page takes over (LobbyGuestPanel); in a
-        /// game (an invite accepted while playing, or the in-game Join) the guest leaves it and says why (D20).
+        /// A host's waiting room has welcomed this guest: its room shows (LobbyGuestPanel), the main menu's page or, in a
+        /// game, a window over it (1.4.0-rc7; rc6 and before left a room joined from a game, D20). Only the host's name is
+        /// kept here, for the loading screen.
         /// </summary>
         private void CheckWaitingRoom()
         {
             TimberClient net = client?.NetBase;
             LobbyView view = net?.Lobby.View();
-            // Once the save has come the room is over, and LoadMap has emptied the registry, so the page is not found:
-            // taking that for "in a game" dropped every waiting-room guest as its save loaded (1.4.0-beta18 to beta20).
+            // Once the save has come the room is over, and LoadMap has emptied the registry (1.4.0-beta18 to beta20 took that
+            // for "in a game" and dropped every waiting-room guest as its save loaded).
             WaitingRoomStep step = JoinFlowRules.CheckWaitingRoom(net != null && !net.IsStopped, view?.Welcomed == true,
-                saveReceived, SingletonManager.GetSingleton<LobbyGuestPanel>() != null);
+                saveReceived, InGameLobby.InGame);
             if (step == WaitingRoomStep.Nothing) return;
             lobbyHostName = view.Summary?.HostName;
-            if (step == WaitingRoomStep.ShowRoom) return;
-            Plugin.Log("[Lobby] A host's waiting room answered while this player is in a game; leaving it");
-            ClientEventIO joining = client;
-            client = null;
-            lobbyHostName = null;
-            EventIO.ResetIf(joining);
-            ShowSafely(() =>
-            {
-                CloseConnectingBox();
-                _dialogBoxShower.Create()
-                    .SetMessage(RegisteredLocalizationService.T("BeaverBuddies.Lobby.InGameInvite", view.Summary?.HostName ?? ""))
-                    .Show();
-            });
         }
 
         /// <summary>

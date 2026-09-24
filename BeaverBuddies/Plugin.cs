@@ -56,6 +56,8 @@ namespace BeaverBuddies
             containerDefinition.Bind<BeaverBuddies.Lobby.InGameLobby>().AsSingleton();
             containerDefinition.Bind<BeaverBuddies.Lobby.LobbyHostPanel>().AsSingleton();
             containerDefinition.Bind<BeaverBuddies.Factions.NewGameFactionCapture>().AsSingleton();
+            // And a host's room joined from this game (an invite, the game menu's Join co-op game): its window over it.
+            containerDefinition.Bind<BeaverBuddies.Lobby.LobbyGuestPanel>().AsSingleton();
 
             // EventIO gets set before load, so if it's null, this is a regular
             // game, so don't initialize these services.

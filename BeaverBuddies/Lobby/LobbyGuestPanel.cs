@@ -16,10 +16,12 @@ using UnityEngine.UIElements;
 namespace BeaverBuddies.Lobby
 {
     /// <summary>
-    /// A guest's page in a host's waiting room: the same page as the host's (LobbyPage), titled with the host's name,
-    /// with Ready / Not ready and Leave (D7). Opened when the host's welcome arrives on a join from the main menu
-    /// (ClientConnectionService keeps the connection); closed when the save arrives (the scene changes), when the guest
-    /// leaves, or when the host ends the room, which says why in the game's own box. Main menu only (D20).
+    /// A guest's room in a host's waiting room: the same content as the host's (LobbyPage), titled with the host's name,
+    /// with Ready / Not ready and Leave (D7). The main menu's page, or in a game (1.4.0-rc7; the main menu's only until
+    /// rc6, D20) a window over it, which pauses the game until it closes. Opened when the host's welcome arrives on the
+    /// join ClientConnectionService has under way (installed in the main menu, held apart from a game); closed when the
+    /// save arrives (the scene changes), when the guest leaves, or when the host ends the room, which says why in the
+    /// game's own box. Bound in both scenes.
     /// </summary>
     public class LobbyGuestPanel : RegisteredSingleton, IPanelController, IUpdatableSingleton
     {
@@ -91,7 +93,9 @@ namespace BeaverBuddies.Lobby
             {
                 // A page still waiting to come off the stack is not opened again on top of itself.
                 if (popWhenOnTop) return;
-                if (!(EventIO.Get() is ClientEventIO current) || current.NetBase == null || current.NetBase.IsStopped) return;
+                // The join under way (not EventIO: a join made in a game is held apart from it until its save arrives).
+                ClientEventIO current = _clientConnectionService.JoinUnderWay;
+                if (current == null) return;
                 LobbyView welcome = current.NetBase.Lobby.View();
                 if (!welcome.Welcomed || welcome.Ended) return;
                 // The Connecting box goes first; then the page takes the place of the page under it (the main menu).
@@ -108,8 +112,8 @@ namespace BeaverBuddies.Lobby
                 ShowEnd(view);
                 return;
             }
-            // The connection is gone without a word from the host: the join's own error box says so.
-            if (!ReferenceEquals(EventIO.Get(), io) || net.IsStopped)
+            // The connection is gone without a word from the host, or the join was replaced: the join's own error box says so.
+            if (!ReferenceEquals(_clientConnectionService.CurrentJoin, io) || net.IsStopped)
             {
                 Close();
                 return;
@@ -131,13 +135,16 @@ namespace BeaverBuddies.Lobby
         }
 
         /// <summary>
-        /// Whether a page (not an overlay or a dialog) is on top of the main menu's panel stack. HideAndPush hides only the
-        /// top panel: an invite accepted in the Steam overlay leaves the game's SteamOverlayInputBlocker on top while the
-        /// overlay is open, and a page pushed then hid the blocker, left the main menu showing, and shared the screen with
-        /// it (each half its height, the page's buttons cut off: the first playtest). The game pops the blocker as the
-        /// overlay closes, if it is still on top; the page waits for that.
+        /// Whether the room can be shown now (LobbyRules.GuestRoomPush): not while an overlay is on top. HideAndPush hides
+        /// only the top panel: an invite accepted in the Steam overlay leaves the game's SteamOverlayInputBlocker on top
+        /// while the overlay is open, and a page pushed then hid the blocker, left the main menu showing, and shared the
+        /// screen with it (each half its height, the page's buttons cut off: the first playtest). The game pops the blocker
+        /// as the overlay closes, if it is still on top; the room waits for that.
         /// </summary>
-        private bool PageOnTop() => _panelStack._stack.Count == 0 || !_panelStack.TopPanel.IsOverlay;
+        private bool PageOnTop() => HowToPush() != RoomPush.Wait;
+
+        private RoomPush HowToPush() => LobbyRules.GuestRoomPush(InGameLobby.InGame, _panelStack._stack.Count,
+            _panelStack._stack.Count > 0 && _panelStack.TopPanel.IsOverlay);
 
         private void Open(ClientEventIO current, LobbyView view)
         {
@@ -156,11 +163,16 @@ namespace BeaverBuddies.Lobby
             LocalFactionPick.Clear();
             picker = null;
             pickerShown = false;
-            page = new LobbyPage(_loader, _initializer, _tooltipRegistrar, "BeaverBuddies.Lobby.Header.Guest");
+            // In a game, a window over it (its sheets added: a game has not the main menu's); in the main menu, the page.
+            InGameLobby inGame = InGameLobby.Current;
+            page = new LobbyPage(_loader, _initializer, _tooltipRegistrar, "BeaverBuddies.Lobby.Header.Guest",
+                inGame != null ? LobbyFrame.Window : LobbyFrame.Page, inGame != null ? inGame.AttachStyles : (Action<VisualElement>)null);
             page.SetHeader(RegisteredLocalizationService.T("BeaverBuddies.Lobby.Header.Guest", hostName));
             page.Back.text = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Button.Leave");
             page.Next.text = RegisteredLocalizationService.T("BeaverBuddies.Lobby.Button.Ready");
             page.Back.clicked += AskToLeave;
+            // The window's close button is its Leave (asking first).
+            if (page.Close != null) page.Close.clicked += AskToLeave;
             page.Next.clicked += () => SetReady(!ready);
             page.Invite.ToggleDisplayStyle(false);
             page.DirectIp.ToggleDisplayStyle(false);
@@ -172,8 +184,11 @@ namespace BeaverBuddies.Lobby
             ShowNote(view);
             shown = true;
             popWhenOnTop = false;
-            Plugin.Log($"[Lobby] In {hostName}'s waiting room as player {view.You}");
-            _panelStack.HideAndPush(this);
+            Plugin.Log($"[Lobby] In {hostName}'s waiting room as player {view.You}{(inGame != null ? ", over this game" : "")}");
+            // In place of the page or box on top (Leave returns there), or over the game when nothing is open (an invite
+            // accepted while playing, a guest carried into its host's room). A game pauses under it until it closes.
+            if (HowToPush() == RoomPush.Push) _panelStack.Push(this);
+            else _panelStack.HideAndPush(this);
             Pump();
         }
 
@@ -283,7 +298,7 @@ namespace BeaverBuddies.Lobby
             Plugin.Log($"[Lobby] Left {hostName}'s waiting room");
             ClientEventIO leaving = io;
             Close();
-            EventIO.ResetIf(leaving);
+            _clientConnectionService.EndJoin(leaving);
         }
 
         // The connection whose room's end this page last showed.
@@ -308,9 +323,9 @@ namespace BeaverBuddies.Lobby
         private void ShowEnd(LobbyView view)
         {
             // Said once: the join's error report (ClientConnectionService) may reach this room's end as well.
-            if (ReferenceEquals(endShownFor, net)) { EventIO.ResetIf(io); return; }
+            if (ReferenceEquals(endShownFor, net)) { _clientConnectionService.EndJoin(io); return; }
             endShownFor = net;
-            EventIO.ResetIf(io);
+            _clientConnectionService.EndJoin(io);
             ShowEndBox(view);
         }
 

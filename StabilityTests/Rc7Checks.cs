@@ -211,5 +211,107 @@ static class Rc7Checks
             Check(attach.Contains("!root.styleSheets.Contains(sheet)"), "a sheet is added twice");
             Check(lobby.Contains("public static bool InGame => Current != null;"), "the scene test changed");
         });
+
+        // ---- Joining from a game: the held join (plan §4.3, flow D) ----
+
+        yield return ("rc7: a join made in a game is held apart from it, and becomes the game's EventIO only when its save arrives, before the reset", () =>
+        {
+            Check(JoinFlowRules.HoldJoin(inGame: true) && !JoinFlowRules.HoldJoin(inGame: false), "a game's join is installed at once, or the main menu's held");
+            string service = Source("BeaverBuddies", "Connect", "ClientConnectionService.cs");
+            string connect = Body(service, "private bool TryToConnect(ISocketStream socket)");
+            InOrder(connect, "a join", "EndJoin(client);", "ClientEventIO.Create(socket, bytes => LoadMap(bytes, joining),", "client = joining;",
+                "if (JoinFlowRules.HoldJoin(InGameLobby.InGame))", "client.HeldJoin = true;", "return true;", "EventIO.Set(client);");
+            string load = Body(service, "private void LoadMap(byte[] mapBytes, ClientEventIO joined)");
+            InOrder(load, "the save's arrival", "saveReceived = true;", "if (joined != null && joined.HeldJoin)", "joined.HeldJoin = false;",
+                "EventIO.Set(joined);", "SingletonManager.Reset();");
+            // Nothing else in the mod installs a join: the running game stays single-player while its player waits in a room.
+            foreach (string file in Directory.GetFiles(Path.Combine(Root(), "BeaverBuddies"), "*.cs", SearchOption.AllDirectories))
+            {
+                string text = File.ReadAllText(file);
+                if (text.Contains("EventIO.Set(client)") || text.Contains("EventIO.Set(joined)"))
+                    Check(Path.GetFileName(file) == "ClientConnectionService.cs", Path.GetFileName(file) + " installs a join");
+            }
+        });
+
+        yield return ("rc7: every place that took a guest's join for EventIO follows the held join: errors, the room, Leave, Cancel, the rejoin", () =>
+        {
+            // The error planner: a held join is not the session, but its error is still the join's to report.
+            Check(ConnectionErrorPlanner.Decide(false, true, false, false) == ConnectionErrorPlan.ReportWhileJoining, "a held join's failure says nothing");
+            Check(ConnectionErrorPlanner.Decide(false, false, false, false) == ConnectionErrorPlan.Ignore, "a replaced join still reports");
+            Check(ConnectionErrorPlanner.Decide(true, false, false, false) == ConnectionErrorPlanner.Decide(true, false, false),
+                "the three-argument rule no longer means a join that is not held");
+            string io = Source("BeaverBuddies", "IO", "ClientEventIO.cs");
+            Check(Body(io, "private void OnConnectionError(string error, Action<string, TimberClient> onError)").Contains("ConnectionErrorPlanner.Decide(isCurrent, HeldJoin, mapDelivered,"),
+                "the join's error ignores that it is held");
+            Check(io.Contains("if (!HeldJoin) SingletonManager.GetSingleton<ReplayService>()?.AbortReplay("), "a held join can stop the game in this scene");
+            // The guest's room reads the service's join, and ends it through the service.
+            string guest = Source("BeaverBuddies", "Lobby", "LobbyGuestPanel.cs");
+            Check(!guest.Contains("EventIO.Get()") && !guest.Contains("EventIO.ResetIf"), "the guest's room still takes the join for EventIO");
+            Check(Body(guest, "private void Pump()").Contains("_clientConnectionService.JoinUnderWay") && Body(guest, "private void Pump()").Contains("_clientConnectionService.CurrentJoin"),
+                "the guest's room does not watch the join under way");
+            Check(Body(guest, "private void Leave()").Contains("_clientConnectionService.EndJoin(leaving);"), "Leave does not end a held join");
+            // The service: Cancel, stopping a rejoin, and a new join end the old one, installed or held.
+            string service = Source("BeaverBuddies", "Connect", "ClientConnectionService.cs");
+            Check(!service.Contains("EventIO.ResetIf("), "the service still ends a join only if it is installed");
+            string end = Body(service, "public void EndJoin(ClientEventIO join)");
+            InOrder(end, "ending a join", "if (ReferenceEquals(client, join)) client = null;", "join.HeldJoin = false;",
+                "if (ReferenceEquals(EventIO.Get(), join)) EventIO.Reset();", "else join.Close();");
+            Check(Body(service, "public void ShowConnecting(string host)").Contains("EndJoin(joining);"), "Cancel leaves a held join connected");
+            Check(Body(service, "private void StopRejoin(bool resetJoin)").Contains("EndJoin(client);"), "stopping a rejoin leaves its held try connected");
+            Check(Body(service, "public ClientEventIO JoinUnderWay").Contains("!saveReceived"), "the room reopens once the save has come");
+            // Hosting instead ends a join under way.
+            Check(Body(Source("BeaverBuddies", "Connect", "ServerHostingUtils.cs"), "internal static void EndSessionForRoom()").Contains("joins?.EndJoin(joins.CurrentJoin);"),
+                "a held join stays connected when its player hosts instead");
+        });
+
+        yield return ("rc7: a guest's room is a window over a game, never over an overlay, and its close button is Leave", () =>
+        {
+            Check(JoinFlowRules.CheckWaitingRoom(true, true, false, inGame: true) == WaitingRoomStep.ShowWindow, "a room joined in a game is left (D20)");
+            Check(LobbyRules.GuestRoomPush(true, 0, false) == RoomPush.Push, "a room welcomed while playing hides nothing");
+            Check(LobbyRules.GuestRoomPush(true, 1, false) == RoomPush.HideAndPush, "a room joined from the game menu does not take its place");
+            Check(LobbyRules.GuestRoomPush(true, 1, true) == RoomPush.Wait && LobbyRules.GuestRoomPush(false, 1, true) == RoomPush.Wait,
+                "a room opens over the Steam overlay's input blocker");
+            Check(LobbyRules.GuestRoomPush(false, 1, false) == RoomPush.HideAndPush && LobbyRules.GuestRoomPush(false, 0, false) == RoomPush.HideAndPush,
+                "the main menu's page is no longer pushed as before");
+            string guest = Source("BeaverBuddies", "Lobby", "LobbyGuestPanel.cs");
+            string open = Body(guest, "private void Open(ClientEventIO current, LobbyView view)");
+            Check(open.Contains("inGame != null ? LobbyFrame.Window : LobbyFrame.Page") && open.Contains("inGame.AttachStyles"), "the guest's room does not pick its frame by the scene");
+            Check(open.Contains("if (page.Close != null) page.Close.clicked += AskToLeave;"), "the window's close button is not Leave");
+            Check(open.Contains("if (HowToPush() == RoomPush.Push) _panelStack.Push(this);"), "the guest's room is not pushed by the rule");
+            Check(Body(Source("BeaverBuddies", "Connect", "ClientConnectionService.cs"), "private void CheckWaitingRoom()").Contains("InGameLobby.InGame"),
+                "the waiting-room check does not know the scene");
+        });
+
+        yield return ("rc7: an invite accepted in a game joins the room in the game; rc6's Save and join and the main menu's pending join are gone", () =>
+        {
+            Check(InviteRules.Decide(inMainMenu: false, inCoopSession: false, hostingPage: false) == InviteStep.JoinInGame, "a game played alone does not join in place");
+            Check(InviteRules.Decide(false, true, false) == InviteStep.LeaveCoopGameFirst, "an invite takes over a running co-op game");
+            Check(InviteRules.Decide(false, false, true) == InviteStep.StopHostingFirst, "an invite replaces the room this player hosts");
+            string steam = Source("BeaverBuddies", "Steam", "SteamOverlayConnectionService.cs");
+            string join = Body(steam, "private void JoinHostLobby(CSteamID lobby, CSteamID owner)");
+            Check(join.Contains("!BeaverBuddies.Lobby.InGameLobby.InGame"), "a game is taken for the main menu (the guest's room is bound in both)");
+            Check(join.Contains("case InviteStep.JoinInGame:") && join.IndexOf("_clientConnectionService.TryToConnect(owner)", StringComparison.Ordinal) > join.IndexOf("case InviteStep.JoinInGame:", StringComparison.Ordinal),
+                "an invite in a game does not connect");
+            foreach (string gone in new[] { "SaveAndOpenMainMenu", "_mainMenuSceneLoader", "pendingInviteLobby" })
+                Check(!steam.Contains(gone), gone + " is back");
+            foreach (string key in new[] { "BeaverBuddies.Invite.FromGame", "BeaverBuddies.Invite.SaveAndJoin", "BeaverBuddies.Lobby.InGameInvite" })
+                Check(Csv(key) == null, key + " is in the English texts, but nothing shows it");
+        });
+
+        yield return ("rc7: a game's menu has Join co-op game while no session is live and no room is hosted; its box gets the main menu's sheets", () =>
+        {
+            Check(JoinButtonRules.Show(mainMenu: false, sessionLive: false, hostingRoom: false), "a game played alone has no Join co-op game");
+            Check(!JoinButtonRules.Show(false, true, false), "a live co-op game offers Join (it would take over the session)");
+            Check(!JoinButtonRules.Show(false, false, true), "a host's own room offers Join");
+            Check(JoinButtonRules.Show(true, true, true), "the main menu hides Join");
+            string box = Source("BeaverBuddies", "Connect", "JoinCoopBox.cs");
+            InOrder(Body(box, "private JoinCoopBox(PanelStack panelStack"), "the box's root", "_root.AddToClassList(\"content-row-centered\");",
+                "attachStyles?.Invoke(_root);", "_root.Add(box);");
+            Check(Body(Source("BeaverBuddies", "Connect", "ClientConnectionUI.cs"), "private void ShowJoinBox()").Contains("inGame != null ? inGame.AttachStyles"),
+                "the game menu's Join box gets no sheets in a game");
+            string configure = Body(Source("BeaverBuddies", "Plugin.cs"), "public class ReplayConfigurator");
+            int bind = configure.IndexOf("Bind<BeaverBuddies.Lobby.LobbyGuestPanel>()", StringComparison.Ordinal);
+            Check(bind > 0 && bind < configure.IndexOf("if (EventIO.IsNull) return;", StringComparison.Ordinal), "a game has no guest's room to show");
+        });
     }
 }

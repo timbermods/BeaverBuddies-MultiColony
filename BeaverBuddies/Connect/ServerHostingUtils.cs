@@ -191,6 +191,9 @@ namespace BeaverBuddies.Connect
         /// </summary>
         internal static void EndSessionForRoom()
         {
+            // A join under way ends: held apart from a game it is not EventIO, and nothing else would close it.
+            ClientConnectionService joins = SingletonManager.GetSingleton<ClientConnectionService>();
+            joins?.EndJoin(joins.CurrentJoin);
             if (EventIO.IsNull) return;
             SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
             // A desync or a failed action ended the session already, and may have left its connection installed.

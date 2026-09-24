@@ -82,7 +82,7 @@ internal static class Rc7RuntimeChecks
 
         // ---- The room's window in a game (plan §3, §4.1) ----
 
-        test("rc7: every class the room's window uses is in CoreStyle, CommonStyle or a main-menu sheet it adds to its root", () =>
+        test("rc7: every class the room's window and the Join box use is in CoreStyle, CommonStyle or a main-menu sheet added to their root", () =>
         {
             using ZipArchive ui = OpenUi();
             // The main menu's sheets, as its title screen loads them.
@@ -97,6 +97,8 @@ internal static class Rc7RuntimeChecks
             var defined = Classes(ui, attached.Concat(new[] { ByName("CoreStyle.uss"), ByName("CommonStyle.uss") }));
             var used = Strings("BeaverBuddies.Lobby.LobbyPage", "ClassesUsed").Concat(Strings("BeaverBuddies.Lobby.LobbyPage", "WindowClassesUsed"))
                 .Concat(Strings("BeaverBuddies.Lobby.LobbyFactionPicker", "ClassesUsed")).Concat(Strings("BeaverBuddies.Lobby.NewGameColonyOptions", "ClassesUsed"))
+                // The game menu's Join co-op game box gets the same sheets.
+                .Concat(Strings("BeaverBuddies.Connect.JoinCoopBox", "ClassesUsed"))
                 .Distinct().ToList();
             var missing = used.Where(c => !defined.Contains(c)).ToList();
             if (missing.Count > 0) throw new Exception("the window uses classes no sheet it has defines: " + string.Join(", ", missing));
@@ -122,12 +124,12 @@ internal static class Rc7RuntimeChecks
                 throw new Exception("the game side of the room no longer takes only the asset loader");
         });
 
-        test("rc7: every game binds the host's room, its game side and the faction capture before the co-op return", () =>
+        test("rc7: every game binds the host's and the guest's rooms, their game side and the faction capture before the co-op return", () =>
         {
             var configure = IlScan.Instructions(Only(Mod("BeaverBuddies.ReplayConfigurator"), "Configure"));
             int coopOnly = configure.FindIndex(i => i.Calls && i.Member?.Name == "get_IsNull");
             if (coopOnly < 0) throw new Exception("the configurator no longer tells co-op games apart");
-            foreach (string bound in new[] { "LobbyHostPanel", "InGameLobby", "NewGameFactionCapture" })
+            foreach (string bound in new[] { "LobbyHostPanel", "InGameLobby", "NewGameFactionCapture", "LobbyGuestPanel" })
             {
                 int at = configure.FindIndex(i => i.Calls && i.Member is MethodInfo m && m.Name == "Bind" && m.IsGenericMethod
                     && m.GetGenericArguments()[0].Name == bound);
@@ -152,6 +154,62 @@ internal static class Rc7RuntimeChecks
             int end = load.FindIndex(i => i.Calls && i.Member?.Name == "EndSessionForRoom");
             int open = load.FindIndex(i => i.Calls && i.Is("BeaverBuddies.Lobby.LobbyHostPanel", "OpenForSave"));
             if (end < 0 || open < end) throw new Exception("the room opens before this game's session has ended (its server holds the port)");
+        });
+
+        // ---- Joining from a game: the held join (plan §4.3) ----
+
+        test("rc7: a join made in a game is held apart from it, and installed as EventIO in LoadMap before the registry's reset", () =>
+        {
+            Type service = Mod("BeaverBuddies.Connect.ClientConnectionService");
+            MethodInfo connect = service.GetMethods(All).Single(m => m.Name == "TryToConnect" && m.GetParameters().Length == 1
+                && m.GetParameters()[0].ParameterType.Name == "ISocketStream");
+            var code = IlScan.Instructions(connect);
+            int hold = code.FindIndex(i => i.Calls && i.Is("BeaverBuddies.Connect.JoinFlowRules", "HoldJoin"));
+            int held = code.FindIndex(i => i.Calls && i.Member?.Name == "set_HeldJoin");
+            int install = code.FindIndex(i => i.Calls && i.Is("BeaverBuddies.IO.EventIO", "Set"));
+            if (hold < 0 || held < hold || install < 0) throw new Exception("a game's join is not held, or the main menu's not installed");
+            MethodInfo loadMap = service.GetMethod("LoadMap", All) ?? throw new Exception("LoadMap is gone");
+            if (loadMap.GetParameters().Length != 2) throw new Exception("LoadMap no longer knows which join its save is for");
+            var load = IlScan.Instructions(loadMap);
+            int set = load.FindIndex(i => i.Calls && i.Is("BeaverBuddies.IO.EventIO", "Set"));
+            int reset = load.FindIndex(i => i.Calls && i.Is("BeaverBuddies.SingletonManager", "Reset"));
+            int scene = load.FindLastIndex(i => i.Calls && (i.Member?.Name == "LoadScene" || i.Member?.Name == "StartSaveGame"));
+            if (set < 0 || reset < set || scene < reset) throw new Exception("the held join is not installed just before the registry's reset and the load");
+            if (Mod("BeaverBuddies.IO.ClientEventIO").GetProperty("HeldJoin") == null) throw new Exception("ClientEventIO.HeldJoin is gone");
+            if (Mod("BeaverBuddies.Connect.ConnectionErrorPlanner").GetMethods(All).All(m => m.Name != "Decide" || m.GetParameters().Length != 4))
+                throw new Exception("the error planner no longer knows a held join");
+        });
+
+        test("rc7: nothing on the guest's side takes a join for EventIO; every way a join ends goes through EndJoin", () =>
+        {
+            Type guest = Mod("BeaverBuddies.Lobby.LobbyGuestPanel");
+            foreach (var pair in IlScan.Of(guest))
+                if (pair.Value.Any(m => m.DeclaringType?.FullName == "BeaverBuddies.IO.EventIO" && (m.Name == "Get" || m.Name == "ResetIf")))
+                    throw new Exception($"LobbyGuestPanel.{pair.Key.Name} still takes the join for EventIO");
+            Type service = Mod("BeaverBuddies.Connect.ClientConnectionService");
+            foreach (var pair in IlScan.Of(service))
+                if (pair.Value.Any(m => m.DeclaringType?.FullName == "BeaverBuddies.IO.EventIO" && m.Name == "ResetIf"))
+                    throw new Exception($"ClientConnectionService.{pair.Key.Name} ends a join only if it is installed");
+            if (!IlScan.Instructions(Only(guest, "Leave")).Any(i => i.Calls && i.Is("BeaverBuddies.Connect.ClientConnectionService", "EndJoin")))
+                throw new Exception("Leave does not end a held join");
+            if (!IlScan.Instructions(Only(Mod("BeaverBuddies.Connect.ServerHostingUtils"), "EndSessionForRoom")).Any(i => i.Calls && i.Member?.Name == "EndJoin"))
+                throw new Exception("hosting leaves a held join connected");
+        });
+
+        test("rc7: an invite in a game joins in place (JoinInGame), and the game menu's Join box is the one in the main menu", () =>
+        {
+            Type step = Mod("BeaverBuddies.Connect.InviteStep");
+            if (!Enum.GetNames(step).Contains("JoinInGame") || Enum.GetNames(step).Contains("OfferFromGame"))
+                throw new Exception("the invite's steps are not rc7's: " + string.Join(", ", Enum.GetNames(step)));
+            object? decided = Mod("BeaverBuddies.Connect.InviteRules").GetMethod("Decide")!.Invoke(null, new object[] { false, false, false });
+            if (decided?.ToString() != "JoinInGame") throw new Exception("a game played alone does not join in place: " + decided);
+            Type ui = Mod("BeaverBuddies.Connect.ClientConnectionUI");
+            if (!IlScan.Instructions(Only(ui, "AddJoinButton")).Any(i => i.Calls && i.Is("BeaverBuddies.Connect.JoinButtonRules", "Show")))
+                throw new Exception("the game menu's Join co-op game does not follow its rule");
+            if (!IlScan.Instructions(Only(ui, "ShowJoinBox")).Any(i => i.Loads == false && i.Member?.Name == "AttachStyles"))
+                throw new Exception("the game menu's Join box gets no style sheets in a game");
+            using ZipArchive zip = OpenUi();
+            if (!Read(zip, "Views/Game/GameOptionsBox.uxml").Contains("name=\"LoadGameButton\"")) throw new Exception("the game menu has no Load game button to add Join under");
         });
     }
 }

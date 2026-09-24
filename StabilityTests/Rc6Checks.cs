@@ -49,10 +49,10 @@ static class Rc6Checks
 
     public static IEnumerable<(string Name, Action Run)> Tests()
     {
-        yield return ("rc6: an invite accepted in a game never connects from it: alone, the game is saved and the page joined from the main menu", () =>
+        yield return ("rc6: an invite accepted in a game never takes over a co-op game or a host's room (rc7: alone, it joins in the game)", () =>
         {
             Check(InviteRules.Decide(inMainMenu: true, inCoopSession: false, hostingPage: false) == InviteStep.Join, "the main menu no longer joins");
-            Check(InviteRules.Decide(false, false, false) == InviteStep.OfferFromGame, "a game played alone is not offered the join");
+            Check(InviteRules.Decide(false, false, false) == InviteStep.JoinInGame, "a game played alone does not join the room in the game");
             Check(InviteRules.Decide(false, true, false) == InviteStep.LeaveCoopGameFirst, "an invite takes over a running co-op game's connection");
             Check(InviteRules.Decide(true, false, true) == InviteStep.StopHostingFirst && InviteRules.Decide(false, false, true) == InviteStep.StopHostingFirst,
                 "a host's own Co-op Game page is replaced by a join");
@@ -63,18 +63,14 @@ static class Rc6Checks
             int connect = join.IndexOf("_clientConnectionService.TryToConnect(owner)", StringComparison.Ordinal);
             Check(decide > 0 && connect > decide, "a lobby entered in a game still connects before anything is asked");
             Check(Body(steam, "private void OnLobbyEntered(LobbyEnter_t callback)").Contains("JoinHostLobby(lobby, owner);"), "an entered lobby no longer goes through the invite's rule");
-            string offer = Body(steam, "private void OfferJoinFromGame(CSteamID lobby, string host)");
-            int pending = offer.IndexOf("pendingInviteLobby = lobby.m_SteamID;", StringComparison.Ordinal);
-            int leave = offer.IndexOf("_mainMenuSceneLoader.SaveAndOpenMainMenu();", StringComparison.Ordinal);
-            Check(pending > 0 && leave > pending, "the game is not saved and left, or the invite is forgotten on the way");
-            Check(offer.Contains("SetCancelButton(() => LeaveSafely(lobby)"), "staying keeps this player in the invite's lobby");
-            string menu = Body(steam, "private void JoinPendingInvite()");
-            Check(menu.Contains("LobbyGuestPanel>() == null) return;") && menu.Contains("_panelStack.TopPanel.IsOverlay) return;")
-                && menu.Contains("JoinHostLobby(lobby, owner);"), "the main menu does not join the invite once it is up");
-            Check(Body(steam, "public void UpdateSingleton()").Contains("if (done) JoinPendingInvite();"), "nothing joins the invite in the main menu");
+            // rc7: no Save-and-join box and no join waiting for the main menu: the room is joined in the game.
+            foreach (string gone in new[] { "OfferJoinFromGame", "pendingInviteLobby", "JoinPendingInvite", "SaveAndOpenMainMenu" })
+                Check(!steam.Contains(gone), gone + " is back: an invite in a game goes through the main menu again");
             string csv = Source("BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv");
-            foreach (string key in new[] { "FromGame", "SaveAndJoin", "InCoopGame", "WhileHosting" })
+            foreach (string key in new[] { "InCoopGame", "WhileHosting" })
                 Check(csv.Contains("\nBeaverBuddies.Invite." + key + ",\""), "no text for BeaverBuddies.Invite." + key);
+            foreach (string key in new[] { "FromGame", "SaveAndJoin" })
+                Check(!csv.Contains("\nBeaverBuddies.Invite." + key + ",\""), "the unused text BeaverBuddies.Invite." + key + " is back");
         });
 
         yield return ("rc6: a direct join is connected on the network thread, never waited for on the game thread", () =>

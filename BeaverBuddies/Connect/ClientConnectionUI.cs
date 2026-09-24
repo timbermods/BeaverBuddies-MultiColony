@@ -77,8 +77,9 @@ namespace BeaverBuddies.Connect
         /// <summary>
         /// The mod's buttons under Load game. The main menu has Join co-op game alone: a save is hosted from the Load game
         /// box (its Host co-op game, right of Load, 1.4.0-rc7). A game's menu has Host co-op game (a game played alone) or
-        /// Save and Rehost (the host of a co-op game), which host this game; a guest has neither. Join co-op game is not in
-        /// a game's menu: a Co-op Game page is joined from the main menu (D20).
+        /// Save and Rehost (the host of a co-op game), which host this game; a guest has neither. Join co-op game is in a
+        /// game's menu too (1.4.0-rc7) while no co-op session is live in it and this player hosts no room: the room joined
+        /// opens over the game (JoinButtonRules).
         /// </summary>
         public void AddJoinButton(VisualElement __result, bool mainMenu)
         {
@@ -101,9 +102,9 @@ namespace BeaverBuddies.Connect
                     else ShowBox();
                 };
             }, _visualElementInitializer);
-            // In a game every host is in a waiting room or a started game, and neither can be joined from a game (1.4.0-rc5
-            // review, C6): the main menu's Join co-op game is the way in.
-            button.ToggleDisplayStyle(mainMenu);
+            // rc5 (C6) took it out of a game's menu, where nothing could be joined; rc7 joins rooms in a game.
+            button.ToggleDisplayStyle(JoinButtonRules.Show(mainMenu, sessionLive: !EventIO.IsNull,
+                hostingRoom: BeaverBuddies.Lobby.LobbySession.Current != null));
         }
 
         // A game's menu: Host co-op game alone, Save and Rehost as the host of a co-op game, nothing as a guest (also after
@@ -144,7 +145,10 @@ namespace BeaverBuddies.Connect
         {
             try
             {
+                // In a game the box gets the main menu's sheets its classes come from (InGameLobby); the main menu has them.
+                BeaverBuddies.Lobby.InGameLobby inGame = BeaverBuddies.Lobby.InGameLobby.Current;
                 JoinCoopBox.Show(_panelStack, _visualElementLoader, _visualElementInitializer, _inputService,
+                    inGame != null ? inGame.AttachStyles : (Action<VisualElement>)null,
                     _settings.ClientConnectionAddress.Value,
                     lobby => SteamMatchmaking.JoinLobby(new CSteamID(lobby)),
                     ip =>

@@ -156,6 +156,19 @@ namespace BeaverBuddies.Lobby
         /// </summary>
         public static RoomPush HostRoomPush(int panelsOpen) => panelsOpen == 0 ? RoomPush.Push : RoomPush.HideAndPush;
 
+        /// <summary>
+        /// How a guest's room is shown once its host welcomes it: never over an overlay (an invite accepted in the Steam
+        /// overlay leaves its input blocker on top until the overlay closes: a page pushed then hid the blocker and shared
+        /// the screen with the main menu, the first playtest), else in place of the panel on top (the main menu's page, the
+        /// game menu it was joined from), or, in a game with nothing open (an invite accepted while playing, a guest carried
+        /// into its host's room), over the game (1.4.0-rc7).
+        /// </summary>
+        public static RoomPush GuestRoomPush(bool inGame, int panelsOpen, bool overlayOnTop)
+        {
+            if (panelsOpen > 0 && overlayOnTop) return RoomPush.Wait;
+            return panelsOpen == 0 && inGame ? RoomPush.Push : RoomPush.HideAndPush;
+        }
+
         /// <summary>The name of the new world's first save, in the settlement the host named (like a Rehost save's).</summary>
         public static string SaveName(string timestamp) => (timestamp ?? "").Replace(",", "") + " Co-op start";
 

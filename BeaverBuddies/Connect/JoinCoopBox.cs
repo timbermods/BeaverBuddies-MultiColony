@@ -11,13 +11,14 @@ using UnityEngine.UIElements;
 namespace BeaverBuddies.Connect
 {
     /// <summary>
-    /// The main menu's Join co-op game box (1.4.0-beta24): the Steam friends who are hosting a game you can join, and
-    /// under them the direct IP address, as before.
+    /// The Join co-op game box (1.4.0-beta24; in a game's menu too since 1.4.0-rc7): the Steam friends who are hosting a
+    /// game you can join, and under them the direct IP address, as before.
     /// <para>
     /// It is the game's own Load Game box, piece by piece: the named box (Common/NamedBoxTemplate: frame, capsule title,
     /// close button), a list title, a ListView of the Load Game box's save rows (Options/GameSaveItemElement: the name, and
     /// two small gold lines; the game's own hover and selected art), and a row of medium buttons. The address part is
-    /// the game's input box (Core/InputBox): its message, field and button. Only the style sheets the main menu loads.
+    /// the game's input box (Core/InputBox): its message, field and button. Only the style sheets the main menu loads;
+    /// in a game, those it lacks are added to the box's root (InGameLobby.AttachStyles).
     /// </para>
     /// <para>
     /// A friend's game is found from Steam alone: a friend playing Timberborn in a lobby (a host's lobby is friends-only
@@ -58,7 +59,7 @@ namespace BeaverBuddies.Connect
         private bool closed;
 
         private JoinCoopBox(PanelStack panelStack, VisualElementLoader loader, VisualElementInitializer initializer,
-            InputService inputService, string lastAddress, Action<ulong> joinLobby, Action<string> connect)
+            InputService inputService, Action<VisualElement> attachStyles, string lastAddress, Action<ulong> joinLobby, Action<string> connect)
         {
             _panelStack = panelStack;
             _joinLobby = joinLobby;
@@ -70,6 +71,7 @@ namespace BeaverBuddies.Connect
             box.style.width = BoxWidth;
             _root = new VisualElement { pickingMode = PickingMode.Ignore };
             _root.AddToClassList("content-row-centered");
+            attachStyles?.Invoke(_root);
             _root.Add(box);
             if (box.Q<Label>("Header") is LocalizableLabel header) header._textLocKey = HeaderLocKey;
             box.Q<Button>("CloseButton").clicked += OnUICancelled;
@@ -132,11 +134,14 @@ namespace BeaverBuddies.Connect
             Refresh();
         }
 
-        /// <summary>Shows the box in place of the main menu (as the game's Load Game box is shown).</summary>
+        /// <summary>
+        /// Shows the box in place of the main menu or the game menu (as the game's Load Game box is shown).
+        /// <paramref name="attachStyles"/>: in a game, adds the main menu's sheets to the box's root.
+        /// </summary>
         public static void Show(PanelStack panelStack, VisualElementLoader loader, VisualElementInitializer initializer,
-            InputService inputService, string lastAddress, Action<ulong> joinLobby, Action<string> connect)
+            InputService inputService, Action<VisualElement> attachStyles, string lastAddress, Action<ulong> joinLobby, Action<string> connect)
         {
-            var box = new JoinCoopBox(panelStack, loader, initializer, inputService, lastAddress, joinLobby, connect);
+            var box = new JoinCoopBox(panelStack, loader, initializer, inputService, attachStyles, lastAddress, joinLobby, connect);
             panelStack.HideAndPush(box);
         }
 
