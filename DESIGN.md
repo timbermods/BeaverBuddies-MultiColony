@@ -42,10 +42,10 @@ colors:
 typography:
   display:
     fontFamily: "Barlow Semi Condensed, Bahnschrift SemiCondensed, DIN Condensed, Roboto Condensed, Arial Narrow, sans-serif"
-    fontSize: "min(4.6rem, calc((100cqi - 4.4rem) / 6.7))"
-    fontWeight: 700
+    fontSize: "min(4.6rem, calc((100cqi - 3.4rem - 26px) / 7.05))"
+    fontWeight: 900
     lineHeight: 0.92
-    letterSpacing: "-0.01em"
+    letterSpacing: "0"
   headline:
     fontFamily: "Barlow Semi Condensed, Bahnschrift SemiCondensed, DIN Condensed, Roboto Condensed, Arial Narrow, sans-serif"
     fontSize: "clamp(1.9rem, 4.2vw, 2.75rem)"
@@ -205,14 +205,14 @@ The palette is a painted-enamel set on river-stone: two colony enamels, a navy d
 
 ## Typography
 
-**Display Font:** Barlow Semi Condensed 600/700, self-hosted under the SIL OFL (fallbacks Bahnschrift SemiCondensed, DIN Condensed, Roboto Condensed, Arial Narrow)
+**Display Font:** Barlow Semi Condensed 600/700 (900 for the name alone), self-hosted under the SIL OFL (fallbacks Bahnschrift SemiCondensed, DIN Condensed, Roboto Condensed, Arial Narrow)
 **Body Font:** system-ui (with -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial)
 **Label/Mono Font:** ui-monospace (with Cascadia Code, SF Mono, Consolas) for paths, settings and keys
 
 **Character:** Road-sign lettering over plain reading text. The condensed face is used for anything short enough to be painted on a plate. Long text stays in the reader's own system face.
 
 ### Hierarchy
-- **Display** (700, at most 4.6rem, line-height 0.92): the name plate's title only. "Timber Together" is always one line: its size follows the hero column (a container query on `.post`) so it never wraps.
+- **Display** (900, at most 4.6rem, line-height 0.92): the name plate's title only, in capitals and small letters. "Timber Together" is always one line: its size follows the hero column (a container query on `.post`) so it never wraps. Its edges are hand-cut (a light SVG displacement filter, `#hewn`, over the live text), and its o is a log end: a white disc with growth rings split amber (colony 1) and teal (colony 2), bright by day and deep at night, with the pith and a crack in the plate's navy. The real "o" stays in the text, visually hidden.
 - **Headline** (700, clamp 1.9–2.75rem, 1.08): section headings on the home page. Guide pages use the page title (clamp 2.4–3.8rem) and prose h2s at clamp 1.8–2.3rem.
 - **Title** (700, 1.2–1.6rem, 1.15): plate titles, step titles, rail steps and questions (1.2rem).
 - **Body** (400, 17px / 16.5px under 640px, 1.65): prose at a 68–72ch measure. Bold is set at 650.
@@ -294,6 +294,7 @@ Buttons are plates you can press.
 ### Timber Post and Rail Vocabulary
 Timber is the structure every sign hangs on:
 - **Hero post:** a 12px grained timber post down the left of the hero column, carrying the name plate.
+- **Name plate:** the one enamel plate with no white keyline. It sits in a 13px mitred timber frame, nailed at the corners (`name-frame-day.svg` / `name-frame-night.svg`, a 96px nine-slice with 16px boards: lighter wood by day, darker at night), with the mount shadow on the frame. The motto starts under the left edge of the name's T stem, at 0.22 of the name's size (at least 0.78rem).
 - **Section marker:** an amber half and a teal half meeting on a 5px timber post (26×12px each). Decorative and aria-hidden. It is the only mark above a section heading.
 - **Rail:** a 10px timber-deep beam behind the three How it works plates, with caution arrows between them. It turns vertical on phones.
 - **Install step rules:** each step is a full-width row between 2px timber rules. A large display numeral sits under painted measuring ticks.
