@@ -92,7 +92,7 @@ Done means all of this holds:
 
 - **D7: The waiting room is the fourth page of the game's New Game wizard.** It is the game's `MainMenu/NewGameTemplate`
   (banner, capsule title, Back and Next buttons), pushed with `PanelStack.HideAndPush` after the Game Mode page, as
-  each wizard page pushes the next. Title **Co-op Game** for the host; **Kyler's Game** (the host's name) for a guest,
+  each wizard page pushes the next. Title **Co-op Game** for the host; **Player 1's Game** (the host's name) for a guest,
   who sees the same page. Back = **Cancel** / **Leave**; Next = **Start Game** / **I'm ready** (**Not ready** once
   ready).
 - **D8: The settlement is named first, in the game's own settlement-name box.** Clicking **Host co-op game** shows
@@ -122,7 +122,7 @@ Done means all of this holds:
   someone is in it). Each guest is told why in a plain native box, not the "Joining failed" dialog.
 - **D15: The new world is never seen.** The loading screen stays up from **Start Game** until the reloaded save has
   loaded: the game's own `LoadingScreen`, with the mod's text as its tip (`Creating the world for your co-op game…`,
-  then `Loading your co-op game…`; guests: `Loading Kyler's co-op game…`). The save is
+  then `Loading your co-op game…`; guests: `Loading Player 1's co-op game…`). The save is
   `"<timestamp> Co-op start"` in the named settlement.
 - **D16: Founding, handing over and colony switching no longer wait for the first tick in a waiting-room game.** A new
   session flag, `ColonySession.JoiningClosedAtStart`, is true on the host from **Start Game** and told to guests in the
@@ -173,12 +173,12 @@ Done means all of this holds:
 1. Accepts the Steam invite (or the host's lobby from the friends list), or **Join co-op game** → address, from the main
    menu. The **Connecting** box shows (D21).
 2. The build check passes; the host's first word is the waiting room's welcome. The Connecting box closes and the
-   **Kyler's Game** page opens: the host's faction, map and difficulty, the settlement name, and the players.
+   **Player 1's Game** page opens: the host's faction, map and difficulty, the settlement name, and the players.
 3. **I'm ready** toggles ready (the button then reads **Not ready**; the guest's own row checkbox toggles it too).
    **Leave** (confirmed) disconnects and returns to the main menu.
 4. After the host's **Start Game**: the status reads "Kyler is creating the world…", then "Receiving the world…"; the
    ready button is disabled.
-5. The save arrives and loads ("Loading Kyler's co-op game…"). The game opens paused at tick 0. Once the guest is
+5. The save arrives and loads ("Loading Player 1's co-op game…"). The game opens paused at tick 0. Once the guest is
    seated, a guest without a start colony is offered **Place your district center** at once, and may place it while
    paused.
 6. If the host cancels, removes the guest, or fails to create the world, the page closes and a plain box says why.
@@ -475,7 +475,7 @@ Show the page with `_panelStack.HideAndPush(this)` right after the name box pops
 ### 5.5 The guest's page — see `pre-game-lobby/lobby-guest.jpg`
 
 The same builder, with these differences:
-- Header: "Kyler's Game" (`BeaverBuddies.Lobby.Header.Guest`, `{0}` = the host's name).
+- Header: "Player 1's Game" (`BeaverBuddies.Lobby.Header.Guest`, `{0}` = the host's name).
 - Summary: built by the guest from the host's ids (§6.1 `LobbyWelcome`), in the guest's language: faction display name
   from `FactionSpecService`, the map's name as the host sent it, the difficulty from its loc key (custom: the game's own
   custom-mode name **(verify the key)**). Logo from the guest's `FactionSpec`.
@@ -934,7 +934,7 @@ Built on the in-memory `PipeStream` / `PipeListener` (`Preview5Checks.cs:108-144
 2. The Co-op Game page matches `design/pre-game-lobby/lobby-host.jpg`: banner, capsule, summary plate with the logo
    ring, Players board, status line, Invite Friends (enabled after a moment), IP line, Cancel / Start Game. Screenshot
    it at 1920×1080 and at the smallest window you use.
-3. Guest: accept the invite from the main menu → Connecting box → the Kyler's Game page (compare with
+3. Guest: accept the invite from the main menu → Connecting box → the Player 1's Game page (compare with
    `lobby-guest.jpg`). Toggle ready from the button and from the row checkbox; the host's row updates within a second.
 4. Host: remove the guest (confirm); the guest sees "removed". Guest rejoins by invite. Guest: Leave; rejoin by IP.
 5. Host: Start with the guest not ready → the confirm; Keep waiting; guest ready; Start. Both see the loading screen

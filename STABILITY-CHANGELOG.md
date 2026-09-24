@@ -1502,7 +1502,7 @@ nothing simulated changes unless a player uses it. All new text is English only.
   **Make offer**.
 - **A wishlist per colony.** Up to three items a colony is looking for, set from its own row in the trading window
   with the game's goods grid (opened unticked, beside the window). Shown beside the colony in every player's window,
-  under the header of a Trading Post with that colony (*Sarah is looking for: [icons]*), and in the goods grid when a
+  under the header of a Trading Post with that colony (*Player 2 is looking for: [icons]*), and in the goods grid when a
   partner chooses what to give (the count in yellow, a word in the tooltip). Saved; `Colonies/ColonyWishlist.cs`,
   `WishlistTerms.cs` (pure); `WishlistChangedEvent` (the actor's own colony, like working hours).
 - **A reserve on an exchange.** **Keep at least** (shown for more than one round) sets what a side keeps back: its
@@ -1605,7 +1605,7 @@ Reviewed, left as they are (and why):
 ## 1.4.0-alpha22
 
 **The Trading Post's ledger names both sides.** Each row read *gave [icon] 100 · got [icon] 25*; it now reads
-*You gave [icon] 100 · Sarah gave [icon] 25*, with the partner's name in their colour, as the rest of the panel
+*You gave [icon] 100 · Player 2 gave [icon] 25*, with the partner's name in their colour, as the rest of the panel
 names them (the player who runs the colony, or *Colony N* while nobody does). The two parts share the row's width
 and a long name is cut short with an ellipsis instead of pushing the amounts out. The cycle-day stamp is unchanged.
 - Strings: `Colony.Trade.LedgerYouGave`, `Colony.Trade.LedgerTheyGave` (English only, like the rest).

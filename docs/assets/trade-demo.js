@@ -24,7 +24,7 @@
   function amountOf(n, id) { return n + ' ' + nameOf(id, n); }
 
   // The panel names a colony by its player (the seat table), as the mod does; 'Colony N' only for an unclaimed one.
-  var COLONY = ['Kyler', 'Sarah'];
+  var COLONY = ['Player 1', 'Player 2'];
   var CLS = ['tp-c1', 'tp-c2'];
   function colored(slot) { return '<b class="' + CLS[slot] + '">' + COLONY[slot] + '</b>'; }
 

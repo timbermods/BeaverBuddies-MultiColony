@@ -380,12 +380,12 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
    Colony 1*, a green tick and **Ready** on the right), **Invite Friends** (usable after a moment), the IP line,
    **Cancel** and **Start Game** *(beta23: seen)*. Screenshot it at your usual resolution and at the smallest window
    you use.
-4. **Joining.** Guest, from the main menu: accept the invite. A *Connecting to …* box, then the **Kyler's Game** page:
+4. **Joining.** Guest, from the main menu: accept the invite. A *Connecting to …* box, then the **Player 1's Game** page:
    the same plate and players, your row marked *(you)*, **Ready** and **Leave**. The host's row for you shows
    *Joining…*, then your name, *Colony 2* and **Not ready**, within a second. The host's page has a red cross for your
    row, in a column of its own to the right of *Not ready*.
 4b. **Accepted in the Steam overlay (beta23).** Guest accepts the invite inside the Steam overlay (Shift+Tab) and
-   closes the overlay: the whole screen is the **Kyler's Game** page, with **Leave** and **Ready** at the bottom,
+   closes the overlay: the whole screen is the **Player 1's Game** page, with **Leave** and **Ready** at the bottom,
    and no main menu showing. (In beta22 the page shared the screen with the main menu.)
 4c. **From the list (beta24).** Guest, main menu → **Join co-op game**: a box like the Load Game box, titled *Join
    co-op game*, lists *Friends' games* with the host's row (their name, *Folktails - map - Normal* in gold, *Waiting
@@ -402,7 +402,7 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
    say after how many.)
 7. **Start with someone not ready.** Guest joins again and is not ready. Host: **Start Game** → *Not everyone is
    ready (…)* → **Keep waiting**: nothing happens. Guest: ready. Host: **Start Game**. Both see the loading screen
-   with the mod's line (*Creating the world…*, *Loading your co-op game…*, *Loading Kyler's co-op game…*). The host
+   with the mod's line (*Creating the world…*, *Loading your co-op game…*, *Loading Player 1's co-op game…*). The host
    never sees the new world before it.
 7a. **The guest gets in (beta21).** The guest's game loads (its log has `Loading map` and no `NullReferenceException`).
    In beta18 to beta20 no guest got past Start: its game never loaded and it was left on an empty main menu (review
@@ -446,7 +446,7 @@ waiting room and of each colony help.
 
 1. **The checkbox.** Host: New Game → Folktails → a map → the difficulty page: **Separate colonies** ticked, and
    **Mixed factions** ticked under it (since 1.4.0-rc3; a Mod Setting before). Its tooltip is on screen.
-2. **The room.** New Game → Folktails → a BeaverBuddies multi-start map with 3 starts → Normal → **Host co-op game**.
+2. **The room.** New Game → Folktails → a multi-start map with 3 starts → Normal → **Host co-op game**.
    The page shows the plate *map - Normal* (no faction), a gold line *Separate colony* *(rc8)*, then **Your
    faction** with the faction page's arrows, ring and name plate reading *Folktails*. Log: `[Factions]` nothing yet.
 3. **Picking.** Guest joins from the main menu: the same switcher, showing Folktails. Guest presses the right arrow:
@@ -828,7 +828,7 @@ them, so please screenshot each one named below, at your usual resolution and at
 5. **A shared save and a mixed save.** Host a shared save from a game: the **Separate colonies** checkboxes in the
    window line up, nothing overlaps (**Screenshot 5**). A mixed save (if you have one): each row's faction logo.
 6. **Joining from a game.** The guest plays a save alone. The host invites them (**Invite Friends**); the guest accepts
-   (Shift+Tab): a *Connecting* box over the guest's game, then the *Kyler's Game* window over it, the game paused, with
+   (Shift+Tab): a *Connecting* box over the guest's game, then the *Player 1's Game* window over it, the game paused, with
    **Ready** and **Leave**. **Screenshot 6.** The guest's log: `[Lobby] Joining from a game: this game stays
    single-player until the host's save arrives`. **Ready**, **Not ready**: the host's row follows. **Leave** (asks):
    back to the guest's game as it was.

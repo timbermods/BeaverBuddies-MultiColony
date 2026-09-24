@@ -29,7 +29,7 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
 - **Name and credits.** The mod is **Timber Together** (tagline *Build apart. Thrive together.*), id
   `timbermods.TimberTogether`, folder and zip `TimberTogether`. Write it as if it always had that name (no "renamed",
   no "formerly"). "BeaverBuddies" stays wherever it names the original work: the credits, "built on", the
-  Stability Fork, the other-BeaverBuddies warnings, BeaverBuddies multi-start maps. Internal identifiers stay as they
+  Stability Fork, the other-BeaverBuddies warnings. Multi-start maps are just "multi-start maps". Internal identifiers stay as they
   are: the `BeaverBuddies` namespaces, project folder and DLL, the `BeaverBuddies.*` loc keys, the building id
   `MultiColonyTradingPost`, and `Plugin.EarlierBuildID` (this mod's earlier Harmony id, refused at start). The credit
   to BeaverBuddies by Thomas Price (thomaswp) and contributors is kept in `CREDITS.md` (shipped in the mod folder
@@ -112,7 +112,7 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
   through a Trading Post. Mod name in game: **Timber Together**. Setting and button names exactly
   as in game.
 - The Trading Post demo must keep matching the mod (`Colonies/TradingPostFragment.cs`, `ExchangeTerms`,
-  `TradeOfferForm`): a colony is named by its player (Kyler = colony 1, Sarah = colony 2); ledger stamp
+  `TradeOfferForm`): a colony is named by its player (Player 1 = colony 1, Player 2 = colony 2); ledger stamp
   `cycle-day` ("3-13"); 0–100 of an item per round, steps 10 / Shift 1 (beavers 1 / Shift 10); rounds 1–99.
 - `docs/assets/release.js` is Timber Together's own variant of the timbermods release script (the other sites share one
   byte-identical copy, SHA-1 f771fa55…). This copy fills `data-release` / `data-release-href` from the most recently

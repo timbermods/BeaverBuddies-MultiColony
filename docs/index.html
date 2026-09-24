@@ -115,8 +115,8 @@
              <circle class="pin" cx="200" cy="356" r="11"/><text class="pin-n" x="200" y="356">4</text></g>
         </svg>
         <ol class="map-labels">
-          <li class="l1" style="--x:2.5%;--y:3%"><span class="n" aria-hidden="true">1</span><span><b>Colony 1</b>Kyler's districts, beavers and science</span></li>
-          <li class="l2 end" style="--x:97.5%;--y:3%"><span class="n" aria-hidden="true">2</span><span><b>Colony 2</b>Sarah's, right next door</span></li>
+          <li class="l1" style="--x:2.5%;--y:3%"><span class="n" aria-hidden="true">1</span><span><b>Colony 1</b>Player 1's districts, beavers and science</span></li>
+          <li class="l2 end" style="--x:97.5%;--y:3%"><span class="n" aria-hidden="true">2</span><span><b>Colony 2</b>Player 2's, right next door</span></li>
           <li class="l3 mid" style="--x:50%;--y:3%"><span class="n" aria-hidden="true">3</span><span><b>Trading Post</b>The only place their roads meet</span></li>
           <li class="l4" style="--x:2.5%;--y:86%"><span class="n" aria-hidden="true">4</span><span><b>One river</b>Water and droughts reach everyone</span></li>
         </ol>
@@ -142,7 +142,7 @@
           <path d="M1 76 H249 M125 1 V149" stroke="var(--map-grid)" stroke-width="1"/>
         </svg>
         <h3>One map</h3>
-        <p>Host any map: one of the game's own or a BeaverBuddies multi-start map. The river, the weather and the droughts are shared by everyone.</p>
+        <p>Host any map: one of the game's own or a multi-start map. The river, the weather and the droughts are shared by everyone.</p>
       </li>
       <li class="plate enamel">
         <svg viewBox="0 0 250 150" aria-hidden="true">
@@ -348,9 +348,9 @@
   <div class="wrap">
     <div class="head">
       <div class="meet" aria-hidden="true">
-        <span class="plate c1 grommets">Kyler's colony</span>
+        <span class="plate c1 grommets">Player 1's colony</span>
         <b class="meet-post"><span>Trading Post</span></b>
-        <span class="plate c2 grommets">Sarah's colony</span>
+        <span class="plate c2 grommets">Player 2's colony</span>
       </div>
       <h2 id="trading-h">Barter at a Trading Post</h2>
       <p>No prices and no currency: "this many of one thing for that many of another, so many times", and nothing is given before what it was exchanged for is in. This is a working copy of the Trading Post's panel with the mod's own rules. Make an offer, watch each colony's workers bring its side to its own half, and see the round cross when both are in.</p>
@@ -362,8 +362,8 @@
           <div>
             <span class="tp-ctl-label" id="tp-me-label">You are</span>
             <div class="tp-ctl-group" role="group" aria-labelledby="tp-me-label">
-              <button class="tp-ctl" type="button" data-me="0" aria-pressed="true">Kyler (colony 1)</button>
-              <button class="tp-ctl c2" type="button" data-me="1" aria-pressed="false">Sarah (colony 2)</button>
+              <button class="tp-ctl" type="button" data-me="0" aria-pressed="true">Player 1 (colony 1)</button>
+              <button class="tp-ctl c2" type="button" data-me="1" aria-pressed="false">Player 2 (colony 2)</button>
               <label class="tp-ctl" style="display:inline-flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" data-auto checked style="margin:0"> the other player answers by itself</label>
             </div>
           </div>
@@ -387,8 +387,8 @@
         </div>
         <h3>Things to try</h3>
         <ol class="tp-tips">
-          <li>Press <strong>Make offer</strong>. Sarah accepts after a moment; your workers bring the logs to <strong>your half</strong> and hers bring the gears to hers. The round crosses only when both bars are full, and the <strong>ledger</strong> gets a line.</li>
-          <li>Untick <strong>answers by itself</strong>, make an offer, then switch to <strong>Sarah</strong>: you see the offer from her side, with <strong>Accept</strong> and <strong>Decline</strong>. Every exchange in the game is agreed this way, one player per side. (The panel names a colony by the player who runs it, as the game does.)</li>
+          <li>Press <strong>Make offer</strong>. Player 2 accepts after a moment; your workers bring the logs to <strong>your half</strong> and theirs bring the gears to theirs. The round crosses only when both bars are full, and the <strong>ledger</strong> gets a line.</li>
+          <li>Untick <strong>answers by itself</strong>, make an offer, then switch to <strong>Player 2</strong>: you see the offer from their side, with <strong>Accept</strong> and <strong>Decline</strong>. Every exchange in the game is agreed this way, one player per side. (The panel names a colony by the player who runs it, as the game does.)</li>
           <li>Set <strong>Workers on your half</strong> to 0 during a round: your side stops arriving and the status line says why. Nothing crosses until it is in.</li>
           <li>Press <strong>Cancel exchange</strong> mid-round. The other player must agree; until then nothing moves. Once it ends, what waited on each half goes back home.</li>
           <li>Type <strong>150</strong> in an amount box: the line turns red and <strong>Make offer</strong> grays out. Set <strong>Rounds</strong> higher instead, or tick <strong>Repeat until cancelled</strong>.</li>
@@ -405,7 +405,7 @@
             </div>
             <div class="tp-sec tp-header">
               <svg viewBox="0 0 24 24"><path d="M3 20h18M4 20V9l4-4 4 4v11M12 20V9l4-4 4 4v11"/><path d="M8 20v-5M16 20v-5"/></svg>
-              <div><h3>Trading Post</h3><p data-tp-half>Kyler's half (colony 1)</p></div>
+              <div><h3>Trading Post</h3><p data-tp-half>Player 1's half (colony 1)</p></div>
               <span></span>
             </div>
             <div class="tp-sec tp-desc">

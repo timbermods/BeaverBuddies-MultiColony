@@ -5,7 +5,7 @@
 **Two players, one map, a colony each.** A Timberborn co-op mod where each player runs their own colony (their own
 districts, beavers, stock, science and working hours) on a shared map. The colonies meet only at **trading posts**:
 a building placed between their two roads, through which they barter goods. Co-op, not a race.
-Works on the game's standard maps and on BeaverBuddies multi-start maps.
+Works on the game's standard maps and on multi-start maps.
 
 ![Timberborn 1.1.2.4](https://img.shields.io/badge/Timberborn-1.1.2.4-2a4034?labelColor=172620&style=flat-square) ![Status: beta](https://img.shields.io/badge/status-beta-e0812f?labelColor=172620&style=flat-square) [![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-2a4034?labelColor=172620&style=flat-square)](License.txt)
 
@@ -105,7 +105,7 @@ a number of days for a group where someone may not come back (see
 
 **Or host a save** (any save, new or old, on any map, including a new game you started alone):
 
-- **A new game on a BeaverBuddies multi-start map:** start 1 is the host's colony, start 2 the next player's, and so on.
+- **A new game on a multi-start map:** start 1 is the host's colony, start 2 the next player's, and so on.
 - **A new game on a standard map, or a separate-colonies save:** the district centers already there are the host's
   colony. Every other player founds theirs after joining (step 5).
 - **A shared save** (a single-player game made with **Separate colonies** unticked, a shared co-op save, or a
