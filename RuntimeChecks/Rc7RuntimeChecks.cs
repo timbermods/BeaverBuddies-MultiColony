@@ -211,5 +211,74 @@ internal static class Rc7RuntimeChecks
             using ZipArchive zip = OpenUi();
             if (!Read(zip, "Views/Game/GameOptionsBox.uxml").Contains("name=\"LoadGameButton\"")) throw new Exception("the game menu has no Load game button to add Join under");
         });
+
+        // ---- Rejoining in a game, and carrying the guests (plan §4.3, §4.4) ----
+
+        test("rc7: TimberNet carries the host's move notice: the host sends it, a guest reads it before the end and raises no error for it", () =>
+        {
+            Assembly net = Assembly.Load("TimberNet");
+            Type frames = net.GetType("TimberNet.MoveFrames", true)!;
+            if ((string?)frames.GetField("Type")?.GetValue(null) != "HostMoving") throw new Exception("the notice's type changed (every player runs the same build, but check it)");
+            Type server = net.GetType("TimberNet.TimberServer", true)!;
+            if (server.GetMethod("SendMoveNotice") == null) throw new Exception("the host cannot tell its guests it is moving");
+            Type client = net.GetType("TimberNet.TimberClient", true)!;
+            foreach (string member in new[] { "HostMoved", "MovedToSteamLobby", "OnHostMoving", "HandleConnectionFailure" })
+                if (client.GetMember(member, All).Length == 0) throw new Exception("TimberClient." + member + " is gone");
+            if (net.GetType("TimberNet.TimberNetBase", true)!.GetEvent("OnHostMoved") == null) throw new Exception("nothing raises the move on the update thread");
+            var failure = IlScan.Instructions(client.GetMethod("HandleConnectionFailure", All)!);
+            int queue = failure.FindIndex(i => i.Calls && i.Member?.Name == "QueueHostMoved");
+            int close = failure.FindIndex(i => i.Calls && i.Member?.Name == "Close");
+            if (queue < 0 || close < queue) throw new Exception("a moved guest's end is not queued before its close (the game could see the session over first)");
+        });
+
+        test("rc7: the host's move: notice before the save, then the quiet end and the server's close, then the room; the Steam lobby is kept", () =>
+        {
+            Type utils = Mod("BeaverBuddies.Connect.ServerHostingUtils");
+            var end = IlScan.Instructions(Only(utils, "EndSessionForRoom"));
+            int tell = end.FindIndex(i => i.Calls && i.Member?.Name == "TellGuestsMoving");
+            int quiet = end.FindIndex(i => i.Calls && i.Is("BeaverBuddies.ReplayService", "EndSession"));
+            int reset = end.FindLastIndex(i => i.Calls && i.Is("BeaverBuddies.IO.EventIO", "Reset"));
+            if (tell < 0 || quiet < tell || reset < quiet) throw new Exception("the guests are not told before the session ends and its server closes");
+            if (!IlScan.Instructions(Only(utils, "TellGuestsMoving")).Any(i => i.Calls && i.Is("BeaverBuddies.IO.ServerEventIO", "MoveToRoom")))
+                throw new Exception("the host's move tells nobody");
+            var move = IlScan.Instructions(Only(Mod("BeaverBuddies.IO.ServerEventIO"), "MoveToRoom"));
+            int send = move.FindIndex(i => i.Calls && i.Member?.Name == "SendMoveNotice");
+            int keep = move.FindIndex(i => i.Calls && i.Member?.Name == "KeepLobbyForNextServer");
+            if (send < 0 || keep < send) throw new Exception("the lobby is kept before the guests are told, or not at all");
+            Type rehosting = Mod("BeaverBuddies.Connect.RehostingService");
+            MethodInfo save = Only(rehosting, "SaveRehostFile");
+            if (!save.GetParameters().Any(p => p.Name == "beforeSave")) throw new Exception("Save and Rehost can no longer tell the guests before its save");
+            var saving = IlScan.Instructions(save);
+            int before = saving.FindIndex(i => i.Calls && i.Member?.Name == "Invoke" && i.Member.DeclaringType == typeof(Action));
+            int saved = saving.FindIndex(i => i.Calls && i.Member?.Name == "SaveInstantlySkippingNameValidation");
+            if (before < 0 || saved < before) throw new Exception("the guests are told after the save");
+            // The Steam calls the handover makes.
+            Assembly steam = Assembly.Load("com.rlabrecque.steamworks.net");
+            foreach (var (type, member) in new[] { ("SteamMatchmaking", "GetLobbyOwner"), ("SteamMatchmaking", "SetLobbyType"), ("SteamMatchmaking", "SetLobbyJoinable"),
+                ("SteamMatchmaking", "GetNumLobbyMembers"), ("SteamMatchmaking", "LeaveLobby"), ("SteamUser", "GetSteamID") })
+                Has(steam.GetType("Steamworks." + type, true)!, member, "the Steam lobby kept for the room");
+            Type listener = Mod("BeaverBuddies.Steam.SteamListener");
+            foreach (string member in new[] { "KeepLobbyForNextServer", "LeaveHandedOverLobby", "Reopen", "handedOver" })
+                Has(listener, member, "the Steam lobby kept for the room");
+        });
+
+        test("rc7: a guest told of the move ends quietly and follows; a rejoin waits in the game and never goes to the main menu", () =>
+        {
+            Type io = Mod("BeaverBuddies.IO.ClientEventIO");
+            var moved = IlScan.Instructions(Only(io, "OnHostMoved"));
+            int quiet = moved.FindIndex(i => i.Calls && i.Is("BeaverBuddies.ReplayService", "EndSession"));
+            int follow = moved.FindIndex(i => i.Calls && i.Is("BeaverBuddies.Connect.ClientConnectionService", "FollowHost"));
+            if (quiet < 0 || follow < quiet) throw new Exception("a moved guest does not end its session and follow the host");
+            // EndSession(null): the message (null) and offerRejoin (false) are its two arguments.
+            if (quiet < 2 || moved[quiet - 2].Op != OpCodes.Ldnull || moved[quiet - 1].Op != OpCodes.Ldc_I4_0)
+                throw new Exception("a moved guest's session ends with a message, or offers Rejoin");
+            Type service = Mod("BeaverBuddies.Connect.ClientConnectionService");
+            if (service.GetConstructors().Single().GetParameters().Any(p => p.ParameterType.Name == "MainMenuSceneLoader"))
+                throw new Exception("ClientConnectionService still asks for the main menu's loader");
+            var watch = IlScan.Instructions(Only(service, "WatchRejoin"));
+            if (!watch.Any(i => i.Calls && i.Is("BeaverBuddies.Connect.JoinFlowRules", "BoxCanShow"))) throw new Exception("the rejoin's box waits for a panel a game may never have");
+            Type plan = Mod("BeaverBuddies.Connect.ReconnectStep");
+            if (!Enum.GetNames(plan).Contains("ConnectInLobby")) throw new Exception("a Steam guest cannot go straight to the host in the kept lobby");
+        });
     }
 }

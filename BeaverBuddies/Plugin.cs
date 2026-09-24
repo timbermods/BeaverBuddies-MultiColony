@@ -107,6 +107,8 @@ namespace BeaverBuddies
             SingletonManager.Reset();
             // A new game's waiting room left over from a scene the flow did not expect (its guests are told why).
             BeaverBuddies.Lobby.LobbySession.EndStale("the host went back to the main menu");
+            // And a Steam lobby a host moving its game kept for a room that never took it (1.4.0-rc7).
+            SteamListener.LeaveHandedOverLobby();
             EventIO.Reset();
             // A faction picked in an earlier waiting room is not this next game's.
             BeaverBuddies.Factions.LocalFactionPick.Clear();

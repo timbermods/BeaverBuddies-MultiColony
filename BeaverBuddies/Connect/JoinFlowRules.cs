@@ -74,6 +74,24 @@ namespace BeaverBuddies.Connect
         /// described yet are waited out.
         /// </summary>
         public static bool RejoinEntersLobby(FriendGameState state) => state == FriendGameState.WaitingRoom;
+
+        /// <summary>
+        /// Whether a join's box (Connecting, the rejoin's wait) can go on the panel stack now: never over an overlay (the
+        /// Steam overlay's input blocker, the Load game box), and in the main menu only once it is up (a panel is there). A
+        /// game with nothing open takes it at once (1.4.0-rc7: a rejoin waits in the game, over it).
+        /// </summary>
+        public static bool BoxCanShow(bool inGame, int panelsOpen, bool overlayOnTop) => panelsOpen == 0 ? inGame : !overlayOnTop;
+
+        /// <summary>
+        /// How long a rejoin waits between tries: a few seconds, as it waits for a host to rehost; every second for the first
+        /// minute of following a host's move to its room (1.4.0-rc7, K1), which opens a moment after the move.
+        /// </summary>
+        public static double RejoinEveryMs(bool followingMove, double msSinceStart) =>
+            followingMove && msSinceStart < FollowFastForMs ? FollowEveryMs : WaitEveryMs;
+
+        public const double WaitEveryMs = 3000;
+        public const double FollowEveryMs = 1000;
+        public const double FollowFastForMs = 60000;
     }
 
     /// <summary>What an accepted Steam invite does (SteamOverlayConnectionService).</summary>

@@ -313,5 +313,152 @@ static class Rc7Checks
             int bind = configure.IndexOf("Bind<BeaverBuddies.Lobby.LobbyGuestPanel>()", StringComparison.Ordinal);
             Check(bind > 0 && bind < configure.IndexOf("if (EventIO.IsNull) return;", StringComparison.Ordinal), "a game has no guest's room to show");
         });
+
+        // ---- Rejoining in a game, and carrying the guests into the host's room (plan §4.3, §4.4, flows C, E, G) ----
+
+        yield return ("rc7: the host's move notice reaches a guest before its connection closes, and that guest reports no connection error", () =>
+        {
+            // A real host and guest over an in-memory pipe: the guest has its save (it is in the game), the host says it is
+            // moving, then closes, as ending its session does.
+            (int Moved, string? Error, TimberClient Guest) Run(bool notice)
+            {
+                var (hostStream, guestStream) = PipeStream.Pair();
+                var host = new TimberServer(new PipeListener(hostStream), () => Task.FromResult(new byte[] { 7, 8, 9 }), null);
+                var guest = new TimberClient(guestStream);
+                int maps = 0, moved = 0;
+                string? error = null;
+                guest.OnMapReceived += _ => maps++;
+                guest.OnError += e => error = e;
+                guest.OnHostMoved += () => moved++;
+                try
+                {
+                    host.Start();
+                    guest.Start();
+                    Check(SpinWait.SpinUntil(() => { host.Update(); guest.Update(); return maps > 0; }, 3000), "the guest never got its save");
+                    // Once the guest has finished joining (the host no longer queues for it), it is told.
+                    if (notice) Check(SpinWait.SpinUntil(() => host.SendMoveNotice(4242) == 1, 3000), "the host told nobody");
+                    host.Close();
+                    Check(SpinWait.SpinUntil(() => { guest.Update(); return moved > 0 || error != null; }, 3000), "the guest heard nothing of the end");
+                    // Said once.
+                    guest.Update();
+                    return (moved, error, guest);
+                }
+                finally { host.Close(); guest.Close(); }
+            }
+            var (moved, error, told) = Run(notice: true);
+            Check(moved == 1 && error == null, $"a guest told of the move reported {(error != null ? "a connection error: " + error : moved + " moves")}");
+            Check(told.HostMoved && told.MovedToSteamLobby == 4242, "the guest did not keep what the notice said");
+            // Without the notice the same end is the connection lost it always was.
+            var (movedAnyway, lost, untold) = Run(notice: false);
+            Check(movedAnyway == 0 && lost != null && !untold.HostMoved, "a guest never told reads the host's end as a move");
+        });
+
+        yield return ("rc7: a move notice is the host's control frame: never replayed or hashed, dropped from a guest, and its lobby validated", () =>
+        {
+            Check(MoveFrames.TryParse(MoveFrames.Notice(76561198000000000UL), out ulong? lobby) && lobby == 76561198000000000UL, "the lobby is lost on the way");
+            Check(MoveFrames.TryParse(MoveFrames.Notice(null), out ulong? none) && none == null, "a notice without a lobby is refused");
+            Check(MoveFrames.TryParse(MoveFrames.Notice(0), out ulong? zero) && zero == null, "lobby 0 is taken for a lobby");
+            var bad = new[]
+            {
+                new Newtonsoft.Json.Linq.JObject { ["type"] = MoveFrames.Type, ["lobby"] = 5 },
+                new Newtonsoft.Json.Linq.JObject { ["type"] = MoveFrames.Type, ["lobby"] = "12a" },
+                new Newtonsoft.Json.Linq.JObject { ["type"] = MoveFrames.Type, ["lobby"] = "123456789012345678901" },
+                new Newtonsoft.Json.Linq.JObject { ["type"] = MoveFrames.Type, ["lobby"] = "1", ["extra"] = true },
+                new Newtonsoft.Json.Linq.JObject { ["type"] = "Heartbeat" },
+            };
+            foreach (var frame in bad) Check(!MoveFrames.TryParse(frame, out _), "a malformed notice is read: " + frame.ToString(Newtonsoft.Json.Formatting.None));
+            string net = Source("TimberNet", "TimberNetBase.cs");
+            string receive = Body(net, "private void ReceiveMessages(ISocketStream client, bool isClient)");
+            InOrder(receive, "the receive loop", "if (MoveFrames.IsMoveType(controlType))", "if (!isClient) continue;", "OnHostMoving(", "return;",
+                "StampReceivedEvent(client, control);");
+            string client = Source("TimberNet", "TimberClient.cs");
+            InOrder(Body(client, "protected override void HandleConnectionFailure(ISocketStream stream, string message)"), "a moved guest's end",
+                "if (hostMoved)", "QueueHostMoved();", "Close();", "return;", "QueueError(message);");
+        });
+
+        yield return ("rc7: the host's move goes notice, then save (Save and Rehost), then the session's quiet end and its server's close, then the room", () =>
+        {
+            string rehosting = Source("BeaverBuddies", "Connect", "RehostingService.cs");
+            Check(Body(rehosting, "public bool RehostGame()").Contains("beforeSave: () => ServerHostingUtils.TellGuestsMoving()"), "Save and Rehost does not tell the guests first");
+            InOrder(Body(rehosting, "public bool SaveRehostFile("), "Save and Rehost", "if (ReplayService.HasReplayFailure)", "beforeSave?.Invoke();",
+                "_gameSaver.SaveInstantlySkippingNameValidation(");
+            string hosting = Source("BeaverBuddies", "Connect", "ServerHostingUtils.cs");
+            InOrder(Body(hosting, "public static void LoadAndHost(GameSaveRepository repository, SaveReference saveReference, bool savedForRoom)"),
+                "hosting", "EndSessionForRoom();", "waitingRoom.OpenForSave(");
+            InOrder(Body(hosting, "internal static void EndSessionForRoom()"), "ending the session", "TellGuestsMoving();",
+                "GetSingleton<ReplayService>()?.EndSession(null);", "EventIO.Reset();");
+            string tell = Body(hosting, "internal static void TellGuestsMoving()");
+            Check(tell.Contains("EventIO.Get() is ServerEventIO server) || server.IsSessionOver) return;") && tell.Contains("server.MoveToRoom();"),
+                "the move is told for a session this game does not host, or not at all");
+            string server = Source("BeaverBuddies", "IO", "ServerEventIO.cs");
+            InOrder(Body(server, "public void MoveToRoom()"), "the host's notice", "if (moving ||", "NetBase.SendMoveNotice(lobby);",
+                "SteamNet.PumpBetweenTicks(force: true);", "steam?.KeepLobbyForNextServer();");
+            // The room's server is started after the old one is closed (EndSession resets EventIO, which closes it and its
+            // listeners), so the port and the Steam lobby are free for it.
+            Check(Source("BeaverBuddies", "ReplayService.cs").Contains("EventIO.Reset();"), "ending the session leaves its server open");
+            Check(Csv("BeaverBuddies.Host.Rehost.Confirm")!.Contains("brought into the room"), "Save and Rehost's question still says the players leave");
+        });
+
+        yield return ("rc7: the host keeps its Steam lobby for the room: the old listener hands it over, the room's reopens it, an unused one is left", () =>
+        {
+            string listener = Source("BeaverBuddies", "Steam", "SteamListener.cs");
+            string stop = Body(listener, "public void Stop()");
+            InOrder(stop, "the old listener's stop", "if (keepLobby)", "LeaveHandedOverLobby();", "handedOver = LobbyID;", "else SteamMatchmaking.LeaveLobby(LobbyID);");
+            string create = Body(listener, "private void CreateLobby()");
+            InOrder(create, "the room's listener", "CSteamID kept = handedOver;", "handedOver = CSteamID.Nil;",
+                "SteamMatchmaking.GetLobbyOwner(kept) == SteamUser.GetSteamID()", "Reopen(kept);", "return;", "SteamMatchmaking.CreateLobby(");
+            string reopen = Body(listener, "private void Reopen(CSteamID lobby)");
+            foreach (string step in new[] { "SetLobbyType(", "SetLobbyJoinable(LobbyID, !closed)", "SetLobbyData(LobbyID, OpenKey, closed ? \"0\" : \"1\")", "WriteDetails();" })
+                Check(reopen.Contains(step), "the kept lobby is not reopened as a new one is: " + step);
+            // A room that never took it: its server did not start, or a server without Steam started, or the main menu came.
+            Check(Source("BeaverBuddies", "Lobby", "LobbySession.cs").Contains("BeaverBuddies.Steam.SteamListener.LeaveHandedOverLobby();"), "a room that failed keeps the lobby");
+            Check(Source("BeaverBuddies", "IO", "ServerEventIO.cs").Contains("if (!listeners.OfType<SteamListener>().Any()) BeaverBuddies.Steam.SteamListener.LeaveHandedOverLobby();"),
+                "a server without Steam keeps the lobby for nobody");
+            Check(Body(Source("BeaverBuddies", "Plugin.cs"), "public class ConnectionMenuConfigurator").Contains("SteamListener.LeaveHandedOverLobby();"), "the main menu keeps the lobby");
+            // Guests connect only as members of the host's current lobby: the kept lobby is it.
+            Check(Body(listener, "private bool IsInLobby(ulong steamId)").Contains("CSteamID lobby = LobbyID;"), "the host no longer lets in its lobby's members");
+        });
+
+        yield return ("rc7: a guest told of the move ends its session quietly and follows the host at once, in its game", () =>
+        {
+            string io = Source("BeaverBuddies", "IO", "ClientEventIO.cs");
+            Check(io.Contains("NetBase.OnHostMoved += OnHostMoved;") && io.Contains("NetBase.OnHostMoved -= OnHostMoved;"), "the guest does not hear of the move");
+            InOrder(Body(io, "private void OnHostMoved()"), "the guest's move", "ulong? keptLobby = NetBase?.MovedToSteamLobby;", "CleanUp();",
+                "FailedToConnect = true;", "if (!isCurrent || !mapDelivered) return;", "GetSingleton<ReplayService>()?.EndSession(null);",
+                "EventIO.ResetIf(this);", "ClientConnectionService.FollowHost(keptLobby);");
+            Check(!Body(io, "private void OnHostMoved()").Contains("SessionEndMessages") && !Body(io, "private void OnHostMoved()").Contains("offerRejoin"),
+                "the guest is told its connection was lost, or offered Rejoin, for a move");
+            string service = Source("BeaverBuddies", "Connect", "ClientConnectionService.cs");
+            InOrder(Body(service, "public static void FollowHost(ulong? keptLobby)"), "following", "GetSingleton<ClientConnectionService>()",
+                "service.StartRejoin(following: true, keptLobby);");
+            string start = Body(service, "private void StartRejoin(bool following, ulong? keptLobby)");
+            Check(start.Contains("nextRejoinMs = 0;") && start.Contains("followLobby = keptLobby;"), "the follow waits before its first try, or forgets the kept lobby");
+            Check(Csv("BeaverBuddies.Rejoin.Following") != null, "the carried guest's box has no text");
+        });
+
+        yield return ("rc7: a rejoin waits in the game, its box over the paused game; a move is tried every second, a Steam guest straight to the host", () =>
+        {
+            Check(JoinFlowRules.BoxCanShow(inGame: true, panelsOpen: 0, overlayOnTop: false), "a game with nothing open never shows the rejoin's box");
+            Check(!JoinFlowRules.BoxCanShow(inGame: false, panelsOpen: 0, overlayOnTop: false), "the main menu's box shows before the menu is up");
+            Check(!JoinFlowRules.BoxCanShow(true, 1, true) && JoinFlowRules.BoxCanShow(true, 1, false), "the box goes over an overlay, or not over the game menu");
+            Check(JoinFlowRules.RejoinEveryMs(true, 0) == JoinFlowRules.FollowEveryMs && JoinFlowRules.FollowEveryMs <= 1000, "a move is not followed at once");
+            Check(JoinFlowRules.RejoinEveryMs(true, JoinFlowRules.FollowFastForMs + 1) == JoinFlowRules.WaitEveryMs, "a move is tried every second for ever");
+            Check(JoinFlowRules.RejoinEveryMs(false, 0) == JoinFlowRules.WaitEveryMs && JoinFlowRules.WaitEveryMs == 3000, "a rejoin's pace changed");
+            ReconnectPlan kept = DesyncDialogPlan.Reconnect(JoinRoute.ViaSteam(7), "127.0.0.1", _ => 99, keptLobby: 55);
+            Check(kept.Step == ReconnectStep.ConnectInLobby && kept.Lobby == 55, "a Steam guest looks for a new lobby though it is in the kept one");
+            Check(DesyncDialogPlan.Reconnect(JoinRoute.ViaSteam(7), "127.0.0.1", _ => 99).Step == ReconnectStep.JoinSteamLobby, "a lost connection no longer finds the host's lobby");
+            Check(DesyncDialogPlan.Reconnect(JoinRoute.ViaAddress("host:1"), "x", _ => null, keptLobby: 55).Step == ReconnectStep.DialAddress,
+                "a direct guest dials a Steam lobby");
+            string service = Source("BeaverBuddies", "Connect", "ClientConnectionService.cs");
+            Check(!service.Contains("OpenMainMenu") && !service.Contains("MainMenuSceneLoader"), "a rejoin goes to the main menu again");
+            string watch = Body(service, "private void WatchRejoin()");
+            Check(watch.Contains("JoinFlowRules.BoxCanShow(InGameLobby.InGame,"), "the rejoin's box waits for a panel a game with nothing open never has");
+            int from = watch.IndexOf("case ReconnectStep.ConnectInLobby:", StringComparison.Ordinal);
+            Check(from > 0, "the rejoin has no step for the kept lobby");
+            string inLobby = watch.Substring(from, watch.IndexOf("case ReconnectStep.JoinSteamLobby:", from, StringComparison.Ordinal) - from);
+            InOrder(inLobby, "the kept lobby", "if (!RejoinLobbyOpen(plan.Lobby)", "quietJoin = true;", "TryToConnect(new CSteamID(host));", "quietJoin = false;");
+            Check(SessionEndMessages.ConnectionLost(null).Contains("Rejoin waits here"), "the lost connection still sends the player to the main menu");
+            Check(Csv("BeaverBuddies.Rejoin.Waiting")!.Contains("Co-op Game room"), "the rejoin's box still names a page in the main menu");
+        });
     }
 }

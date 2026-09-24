@@ -90,6 +90,28 @@ namespace BeaverBuddies.IO
         /// <summary>The Steam listener, when this host is reachable over Steam (for Invite Friends).</summary>
         public SteamListener SteamListener => (SocketListener as MultiSocketListener)?.GetListener<SteamListener>();
 
+        private bool moving;
+
+        /// <summary>
+        /// The host moves this running game's players to a waiting room (1.4.0-rc7, K1): every guest is told (MoveFrames,
+        /// naming the Steam lobby the room keeps), the word is handed to Steam at once, and the Steam lobby is kept for the
+        /// room's listener instead of being left as this server closes. The caller then ends the session and opens the
+        /// room; a guest follows it by itself. Once per session.
+        /// </summary>
+        public void MoveToRoom()
+        {
+            if (moving || NetBase == null || NetBase.IsStopped) return;
+            moving = true;
+            SteamListener steam = SteamListener;
+            ulong? lobby = steam != null && steam.LobbyID.IsValid() ? steam.LobbyID.m_SteamID : (ulong?)null;
+            int told = NetBase.SendMoveNotice(lobby);
+            // A Steam guest's copy waits for the next pump otherwise, and its connection closes before then (it lingers to
+            // drain what it has, so it is sent).
+            SteamNet.PumpBetweenTicks(force: true);
+            steam?.KeepLobbyForNextServer();
+            Plugin.Log($"[Lobby] Moving to a waiting room: told {told} guest(s){(lobby.HasValue ? $"; Steam lobby {lobby} kept for the room" : "")}");
+        }
+
         private void StartServer(Func<Task<byte[]>> mapProvider, LobbyRoom room)
         {
             // Seats for separate colonies are fixed for the whole session, like the other host choices.
@@ -112,6 +134,8 @@ namespace BeaverBuddies.IO
                     }
                 }
                 foreach (SteamListener steam in listeners.OfType<SteamListener>()) steam.SetDetails(room != null, SteamDescription);
+                // A lobby kept for a room is this server's Steam listener's to reopen; without one, nobody takes it.
+                if (!listeners.OfType<SteamListener>().Any()) BeaverBuddies.Steam.SteamListener.LeaveHandedOverLobby();
                 SocketListener = new MultiSocketListener(listeners.ToArray());
                 NetBase = new TimberServer(SocketListener, mapProvider, CreateInitEvent());
                 if (room != null) NetBase.OpenLobby(room);

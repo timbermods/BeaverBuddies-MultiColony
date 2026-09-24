@@ -94,7 +94,10 @@ static class Rc5Checks
             Check(plan > 0, "the rejoin changed shape");
             string steps = watch.Substring(plan);
             Check(steps.Contains("probe = System.Threading.Tasks.Task.Run(() => HostListening(typed, port));"), "the address is not asked off the menu's thread");
-            Check(!steps.Contains("TryToConnect("), "a rejoin's try connects on the menu's thread before anything listens");
+            // The address's step only probes (rc7's ConnectInLobby connects over Steam, which starts in the background).
+            string dial = steps.Substring(steps.IndexOf("default:", StringComparison.Ordinal));
+            Check(!dial.Contains("TryToConnect("), "a rejoin's try connects on the menu's thread before anything listens");
+            Check(!steps.Substring(0, steps.IndexOf("default:", StringComparison.Ordinal)).Contains("TryToConnect(typed") , "a Steam step dials an address");
             // A socket that never connected has no stream; closing it still closes the socket.
             var wrapper = new TimberNet.TCPClientWrapper("127.0.0.1", 9);
             var inner = (System.Net.Sockets.TcpClient)typeof(TimberNet.TCPClientWrapper)
@@ -313,7 +316,7 @@ static class Rc5Checks
             Check(Csv("BeaverBuddies.Colony.Overview.AwayNoSameFaction")!.Contains("being played"), "the status says no colony of its faction is in the game");
             Check(Csv("BeaverBuddies.Colony.Overview.HandToOtherFactionTooltip")!.StartsWith("The colonies of {0} and {1}"), "the tooltip calls two players factions");
             Check(Csv("BeaverBuddies.Colony.Handover.Tomorrow")!.Contains("nearest colony of its faction"), "the warning names any nearest colony in a mixed game");
-            Check(Csv("BeaverBuddies.Rejoin.Waiting")!.StartsWith("Waiting for the host's Co-op Game page"), "the rejoin's text is the old one");
+            Check(Csv("BeaverBuddies.Rejoin.Waiting")!.StartsWith("Waiting for the host's Co-op Game room"), "the rejoin's text is the old one");
             Check(!Csv("BeaverBuddies.Lobby.Colonies.SharedToSeparate")!.Contains("is the host's colony, and each player"), "the host's own page tells the host to found");
             Check(!Source("BeaverBuddies", "Connect", "SessionEndMessages.cs").Contains("(Save and Rehost)"), "the lost connection names only Save and Rehost");
             Check(!Csv("BeaverBuddies.Colony.Refused.NotStartedYet")!.Contains("unpause"), "the wait's refusal asks the host to unpause");

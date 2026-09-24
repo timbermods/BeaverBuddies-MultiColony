@@ -57,6 +57,7 @@ namespace BeaverBuddies.IO
             NetBase.OnPeerAdvisory += ModCompatibility.OnPeerAdvisory;
             NetBase.OnLog += Plugin.Log;
             NetBase.OnError += (error) => OnConnectionError(error, onError);
+            NetBase.OnHostMoved += OnHostMoved;
             try
             {
                 NetBase.Start();
@@ -132,11 +133,34 @@ namespace BeaverBuddies.IO
             }
         }
 
+        /// <summary>
+        /// The host said it is moving this game to a waiting room (TimberNet's MoveFrames), and the connection has ended as
+        /// it closed (1.4.0-rc7, K1). No error: the game's session ends quietly (no connection lost, no Rejoin box) and this
+        /// player follows the host into its room at once, in this game, its window opening when the room welcomes it
+        /// (ClientConnectionService.FollowHost). Reached on the update thread, from wherever the session is updated.
+        /// </summary>
+        private void OnHostMoved()
+        {
+            if (FailedToConnect) return;
+            ulong? keptLobby = NetBase?.MovedToSteamLobby;
+            bool isCurrent = ReferenceEquals(EventIO.Get(), this);
+            CleanUp();
+            FailedToConnect = true;
+            // Only a running game's session is moved: a join still waiting in a room has no game of its host's to move.
+            if (!isCurrent || !mapDelivered) return;
+            Plugin.Log("[Lobby] The host is moving this game to a waiting room; following it");
+            // Quietly (no message): the game stays, played alone, until the room's Start.
+            SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
+            EventIO.ResetIf(this);
+            ClientConnectionService.FollowHost(keptLobby);
+        }
+
         private void CleanUp()
         {
             if (NetBase == null) return;
             NetBase.Close();
             NetBase.OnMapReceived -= OnMapReceivedByNet;
+            NetBase.OnHostMoved -= OnHostMoved;
             NetBase.OnLog -= Plugin.Log;
             NetBase.OnPeerAdvisory -= ModCompatibility.OnPeerAdvisory;
             NetBase = null;

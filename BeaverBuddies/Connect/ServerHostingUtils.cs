@@ -185,9 +185,10 @@ namespace BeaverBuddies.Connect
         }
 
         /// <summary>
-        /// Before a room opens, whatever session this game still has ends, so that the room's server can take the port: a
-        /// co-op game's session ends quietly (its host chose to host again; the game stays, played alone until Start), and a
-        /// join left from before is closed.
+        /// Before a room opens, whatever session this game still has ends, so that the room's server can take the port and
+        /// the Steam lobby: a co-op game this player hosts tells its guests first, who follow into the room (1.4.0-rc7,
+        /// K1), then its session ends quietly (no message on either side; the game stays, played alone until Start), and its
+        /// server closes, releasing the port, its Steam lobby kept for the room. A join left from before is closed.
         /// </summary>
         internal static void EndSessionForRoom()
         {
@@ -195,9 +196,23 @@ namespace BeaverBuddies.Connect
             ClientConnectionService joins = SingletonManager.GetSingleton<ClientConnectionService>();
             joins?.EndJoin(joins.CurrentJoin);
             if (EventIO.IsNull) return;
+            // Once only: a Save and Rehost told them before its save.
+            TellGuestsMoving();
             SingletonManager.GetSingleton<ReplayService>()?.EndSession(null);
             // A desync or a failed action ended the session already, and may have left its connection installed.
             EventIO.Reset();
+        }
+
+        /// <summary>
+        /// A running co-op game this player hosts is moving to a waiting room (1.4.0-rc7, K1): its guests are told, and its
+        /// Steam lobby is kept for the room (ServerEventIO.MoveToRoom). Nothing when this game hosts no live session. The
+        /// session is ended by the caller, after (a Save and Rehost saves between the two).
+        /// </summary>
+        internal static void TellGuestsMoving()
+        {
+            if (!(EventIO.Get() is ServerEventIO server) || server.IsSessionOver) return;
+            try { server.MoveToRoom(); }
+            catch (Exception error) { Plugin.LogWarning("[Lobby] Could not tell the guests the game is moving to a waiting room: " + error.Message); }
         }
     }
 }

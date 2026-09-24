@@ -73,6 +73,16 @@ namespace TimberNet
         public event MessageReceived? OnError;
         public event MapReceived? OnMapReceived;
 
+        /// <summary>
+        /// A guest's host said it is moving its game to a waiting room (MoveFrames, 1.4.0-rc7), and the connection has
+        /// ended: raised once on the update thread, instead of <see cref="OnError"/>.
+        /// </summary>
+        public event Action? OnHostMoved;
+        private int hostMovePending;
+
+        /// <summary>Queues <see cref="OnHostMoved"/> for the next Update (any thread).</summary>
+        protected void QueueHostMoved() => Interlocked.Exchange(ref hostMovePending, 1);
+
         private readonly ConcurrentQueue<JObject> receivedEventQueue = new ConcurrentQueue<JObject>();
         // A guest hashes every event it receives, as the host hashed it when it sent it: the same bytes. The hash is
         // taken from the message's bytes on the receive thread, as it arrives, and kept here until the game thread
@@ -585,6 +595,14 @@ namespace TimberNet
                 // Waiting-room frames are never actions: one that comes late (a ready toggled as the save went out) is
                 // dropped.
                 if (LobbyFrames.IsLobbyType(controlType)) continue;
+                // The host moving its game to a waiting room (MoveFrames): a guest stops reading here, before the host
+                // closes its end, and its connection's end is no error. Only a host says it: a guest's is dropped.
+                if (MoveFrames.IsMoveType(controlType))
+                {
+                    if (!isClient) continue;
+                    OnHostMoving(MoveFrames.TryParse(control, out ulong? lobby) ? lobby : null);
+                    return;
+                }
                 if ((string?)control[TYPE_KEY] == "SessionFault")
                 {
                     sessionFaults.Enqueue("A peer could not replay a multiplayer action. Reload a known-good save before rehosting.");
@@ -598,6 +616,9 @@ namespace TimberNet
                 messageCount++;
             }
         }
+
+        /// <summary>A guest read its host's move notice (MoveFrames), on its receive thread; it stops reading after this.</summary>
+        protected virtual void OnHostMoving(ulong? steamLobby) { }
 
         // ---- Waiting room (presentation only; see LobbyFrames) ----
 
@@ -759,6 +780,9 @@ namespace TimberNet
                 string message = fault;
                 NotifyEach(OnSessionFault, handler => ((MessageReceived)handler)(message), "a session fault");
             }
+            // The host moved its game to a waiting room: the connection's end, which would otherwise be an error.
+            if (Interlocked.Exchange(ref hostMovePending, 0) == 1)
+                NotifyEach(OnHostMoved, handler => ((Action)handler)(), "the host's move to a waiting room");
             // UI subscribers must only run on the caller's update thread.
             while (errorQueue.TryDequeue(out string? error))
             {

@@ -153,10 +153,18 @@ namespace BeaverBuddies.Lobby
             }
             // Friends' Join co-op game boxes show the page's plate (a save: its settlement).
             var io = new ServerEventIO { SteamDescription = setup.IsSave ? setup.Settlement : setup.SummaryText };
-            io.StartLobby(room);
-            if (io.NetBase == null)
+            try { io.StartLobby(room); }
+            catch (Exception error)
+            {
+                // Its port still taken, say: the room says it could not open, and nothing is left listening.
+                Plugin.LogError("[Lobby] The waiting room's server could not start: " + error);
+                io.Close();
+            }
+            if (io.NetBase == null || io.NetBase.IsStopped)
             {
                 Plugin.LogError("[Lobby] The waiting room could not start its server");
+                // A Steam lobby kept for this room (a host moving its game here) is left, not kept for ever.
+                BeaverBuddies.Steam.SteamListener.LeaveHandedOverLobby();
                 return null;
             }
             Current = new LobbySession(io, setup, room);

@@ -55,7 +55,8 @@ namespace BeaverBuddies.Connect
         // that Autosaver uses, both here and in general when a client joins to avoid
         // saving when it could corrupt things. Hopefully the save would fail if
         // there's a real issue, rather than corrupting, but I don't know...
-        public bool SaveRehostFile(Action<SaveReference> callback, bool waitUntilAccessible, string suffix = " Rehost")
+        /// <param name="beforeSave">Run once the game may be saved, just before it is (the host's move notice to its guests).</param>
+        public bool SaveRehostFile(Action<SaveReference> callback, bool waitUntilAccessible, string suffix = " Rehost", Action beforeSave = null)
         {
             if (ReplayService.HasReplayFailure)
             {
@@ -64,6 +65,7 @@ namespace BeaverBuddies.Connect
                     .SetDefaultCancelButton().Show();
                 return false;
             }
+            beforeSave?.Invoke();
             if (waitUntilAccessible)
             {
                 Action<SaveReference> originalCallback = callback;
@@ -105,11 +107,13 @@ namespace BeaverBuddies.Connect
 
         /// <summary>
         /// Save and Rehost (the desync dialog, and the host's game menu in co-op): this game is saved and its Co-op Game room
-        /// opens over it; its players rejoin it (Reconnect, Rejoin).
+        /// opens over it. Its guests, while its session still runs, are told first and follow into the room by themselves
+        /// (1.4.0-rc7, K1: the notice, then the save, then the session's end, then the room); after a desync or a lost
+        /// connection they come back to it with Reconnect or Rejoin.
         /// </summary>
         public bool RehostGame()
         {
-            return SaveRehostFile(save => HostSaved(save, rehost: true), true);
+            return SaveRehostFile(save => HostSaved(save, rehost: true), true, beforeSave: () => ServerHostingUtils.TellGuestsMoving());
         }
 
         /// <summary>Host co-op game in single player's game menu: this game, saved, in its Co-op Game room over it.</summary>

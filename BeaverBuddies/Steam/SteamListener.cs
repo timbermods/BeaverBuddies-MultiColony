@@ -34,6 +34,12 @@ namespace BeaverBuddies.Steam
         private readonly SteamLinkListener link;
         private bool stopped;
 
+        // The lobby a listener stopped for a move kept for the next one (1.4.0-rc7): the host moving its running game to a
+        // waiting room keeps its guests' lobby, so the room's listener reopens it instead of making one. The guests are
+        // still members, so IsInLobby lets them straight in, even when the lobby is invite-only. Game thread only.
+        private static CSteamID handedOver = CSteamID.Nil;
+        private bool keepLobby;
+
         public SteamListener()
         {
             if (!SteamOverlayConnectionService.IsSteamEnabled)
@@ -67,8 +73,60 @@ namespace BeaverBuddies.Steam
         private void CreateLobby()
         {
             if (stopped) return;
+            // A lobby the previous listener kept for this one (a move to a waiting room), if it is still this player's.
+            CSteamID kept = handedOver;
+            handedOver = CSteamID.Nil;
+            if (kept.IsValid())
+            {
+                if (SteamMatchmaking.GetLobbyOwner(kept) == SteamUser.GetSteamID())
+                {
+                    Reopen(kept);
+                    return;
+                }
+                Plugin.LogWarning($"The Steam lobby {kept} kept for the waiting room is no longer this player's; making a new one");
+                LeaveSafely(kept);
+            }
             callbacks.Add(Callback<LobbyCreated_t>.Create(OnLobbyCreated));
             SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, 8);
+        }
+
+        // The kept lobby, opened again as this listener's, as OnLobbyCreated opens a new one: its type, whether it takes
+        // players, and what friends' Join co-op game boxes read of it (now a waiting room).
+        private void Reopen(CSteamID lobby)
+        {
+            LobbyID = lobby;
+            var type = Settings.LobbyJoinable ? ELobbyType.k_ELobbyTypeFriendsOnly : ELobbyType.k_ELobbyTypeInvisible;
+            SteamMatchmaking.SetLobbyType(LobbyID, type);
+            SteamMatchmaking.SetLobbyJoinable(LobbyID, !closed);
+            SteamMatchmaking.SetLobbyData(LobbyID, OpenKey, closed ? "0" : "1");
+            WriteDetails();
+            Plugin.Log($"Steam lobby {LobbyID} kept from the game and reopened ({SteamMatchmaking.GetNumLobbyMembers(LobbyID)} member(s)); " +
+                $"joinable by friends={Settings.LobbyJoinable}{(closed ? "; closed, the game has started" : "")}");
+        }
+
+        /// <summary>
+        /// This listener's lobby goes to the next listener when it stops, instead of being left (the host moving its running
+        /// game to a waiting room, 1.4.0-rc7): the guests stay members, and come straight back.
+        /// </summary>
+        public void KeepLobbyForNextServer() => keepLobby = true;
+
+        /// <summary>
+        /// Leaves a lobby kept for a waiting room that never took it (the room could not start, or a server without Steam
+        /// started instead). Game thread only.
+        /// </summary>
+        public static void LeaveHandedOverLobby()
+        {
+            CSteamID kept = handedOver;
+            handedOver = CSteamID.Nil;
+            if (!kept.IsValid()) return;
+            Plugin.Log($"Leaving the Steam lobby {kept}, kept for a waiting room that did not open");
+            LeaveSafely(kept);
+        }
+
+        private static void LeaveSafely(CSteamID lobby)
+        {
+            try { SteamMatchmaking.LeaveLobby(lobby); }
+            catch (Exception error) { Plugin.LogWarning("Could not leave the Steam lobby: " + error.Message); }
         }
 
         private void OnLobbyCreated(LobbyCreated_t callback)
@@ -153,7 +211,17 @@ namespace BeaverBuddies.Steam
             link.Stop();
             SteamNet.RunOnMain(() =>
             {
-                if (LobbyID.IsValid()) SteamMatchmaking.LeaveLobby(LobbyID);
+                if (LobbyID.IsValid())
+                {
+                    if (keepLobby)
+                    {
+                        // Kept for the waiting room the host is moving to, which opens next (ServerEventIO.MoveToRoom).
+                        LeaveHandedOverLobby();
+                        handedOver = LobbyID;
+                        Plugin.Log($"Steam lobby {LobbyID} kept for the waiting room");
+                    }
+                    else SteamMatchmaking.LeaveLobby(LobbyID);
+                }
                 foreach (IDisposable callback in callbacks) callback.Dispose();
                 callbacks.Clear();
             });

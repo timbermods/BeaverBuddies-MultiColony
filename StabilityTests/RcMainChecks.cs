@@ -301,7 +301,7 @@ static class RcMainChecks
             // Both ways a game hosts itself: saved, then its room over this game (rc7; rc4 to rc6 went to the main menu).
             Check(!File.Exists(Path.Combine(Root(), "BeaverBuddies", "Connect", "HostCoopFlow.cs")), "a game hands its save to the main menu again");
             string rehosting = Source("BeaverBuddies", "Connect", "RehostingService.cs");
-            Check(Body(rehosting, "public bool RehostGame()").Contains("SaveRehostFile(save => HostSaved(save, rehost: true), true)"),
+            Check(Body(rehosting, "public bool RehostGame()").Contains("SaveRehostFile(save => HostSaved(save, rehost: true), true,"),
                 "Save and Rehost must save and open the Co-op Game room");
             Check(Body(rehosting, "public bool HostThisGame()").Contains("SaveRehostFile(save => HostSaved(save, rehost: false), true, \" Co-op\")"),
                 "Host co-op game in a game must save a new Co-op save and open its room");
@@ -375,14 +375,15 @@ static class RcMainChecks
                 Check(csv.Contains("\nBeaverBuddies." + key + ",\""), "no English line for " + key);
         });
 
-        yield return ("rc4: a guest rejoins a rehost in the main menu: Reconnect and Rejoin go there, wait quietly, and join the host's page when it opens", () =>
+        yield return ("rc4: a guest rejoins a rehost (rc7: in its game, no main menu): Reconnect and Rejoin wait quietly and join the host's room when it opens", () =>
         {
             string service = Source("BeaverBuddies", "Connect", "ClientConnectionService.cs");
-            string reconnect = Body(service, "public void Reconnect()");
-            Check(reconnect.Contains("rejoinPending = true;") && reconnect.Contains("_mainMenuSceneLoader.OpenMainMenu();"),
-                "from a game, a rejoin must go to the main menu, where the host's page is");
+            Check(Source("BeaverBuddies", "Connect", "ClientConnectionService.cs").Contains("public void Reconnect() => StartRejoin(following: false, keptLobby: null);"),
+                "Reconnect and Rejoin no longer start the rejoin");
+            string start = Body(service, "private void StartRejoin(bool following, ulong? keptLobby)");
+            Check(start.Contains("rejoinPending = true;") && !service.Contains("OpenMainMenu"), "a rejoin goes to the main menu again (rc7 waits in the game)");
             string watch = Body(service, "private void WatchRejoin()");
-            Check(watch.Contains("StopRejoin(resetJoin: false)") && watch.Contains("RejoinEveryMs") && watch.Contains("quietJoin = true;"),
+            Check(watch.Contains("StopRejoin(resetJoin: false)") && watch.Contains("JoinFlowRules.RejoinEveryMs(") && watch.Contains("quietJoin = true;"),
                 "the rejoin must wait, try every few seconds, quietly, and stop once in");
             Check(watch.Contains("() => StopRejoin(resetJoin: true)"), "the player must be able to stop waiting");
             Check(service.Contains("if (quiet && (net == null || !net.Lobby.View().Welcomed))"), "a quiet try that finds nobody must not show an error");
