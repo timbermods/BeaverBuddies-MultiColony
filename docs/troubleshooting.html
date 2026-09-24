@@ -69,13 +69,13 @@
 
     <section id="first">
       <h2>Check these first</h2>
-      <p>Most multiplayer problems come from a difference between the players. Before anything else, check that everyone has:</p>
+      <p>Most multiplayer problems are a difference between the players. Check that everyone has:</p>
       <ul>
-        <li>the <b>exact same download</b> of the mod (the mod list shows the version, and it must be the same zip, not just the same number),</li>
-        <li>the <b>same version of Timberborn</b>,</li>
-        <li>the <b>same other mods</b> enabled, at the same versions,</li>
-        <li>only <b>one BeaverBuddies</b> installed,</li>
-        <li>and has <b>fully restarted the game</b> since installing or updating.</li>
+        <li>the <b>same zip</b> of the mod, not only the same version number,</li>
+        <li>the <b>same Timberborn version</b>,</li>
+        <li>the <b>same other mods</b>, at the same versions,</li>
+        <li><b>one BeaverBuddies</b> only,</li>
+        <li>and has <b>restarted the game</b> since installing or updating.</li>
       </ul>
     </section>
 
@@ -85,13 +85,12 @@
       <details class="q" id="not-loading">
         <summary>The mod doesn't load, or doesn't show in the mod list</summary>
         <div class="answer">
-          <p class="sub">Try this</p>
           <ol>
-            <li>Check the folder. You should have <code>Documents\Timberborn\Mods\TimberTogether\version-1.1\manifest.json</code>. A common mistake is an extra nested folder after extracting the zip.</li>
-            <li>Make sure <b>Harmony</b> and <b>Mod Settings</b> are installed and enabled. The mod needs both.</li>
+            <li>Check the folder: you should have <code>Documents\Timberborn\Mods\TimberTogether\version-1.1\manifest.json</code>. Extracting a zip often adds an extra folder level.</li>
+            <li>Install and enable <b>Harmony</b> and <b>Mod Settings</b>.</li>
             <li>Enable <b>Timber Together</b> in the mod manager and restart the game.</li>
-            <li>The mod is built for Timberborn 1.1 (tested on 1.1.2.4). Older game versions won't run it.</li>
-            <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> and search for <code>Timber Together v<span data-release="version">1.4.0-rc4</span> is loaded!</code>. If it's there, the mod loaded and the problem is elsewhere.</li>
+            <li>Check the game version: Timberborn 1.1 (tested on 1.1.2.4).</li>
+            <li>Search <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> for <code>Timber Together v<span data-release="version">1.4.0-rc9</span> is loaded!</code>. If it's there, the mod loaded.</li>
           </ol>
         </div>
       </details>
@@ -99,17 +98,14 @@
       <details class="q" id="duplicates">
         <summary>There are two BeaverBuddies in the mod list, or the main menu names another one</summary>
         <div class="answer">
-          <p class="sub">Why</p>
-          <p>Only one BeaverBuddies can run at a time: Timber Together, the Workshop BeaverBuddies and the Stability Fork all change the same parts of the game. If another one is enabled, the main menu names it and Timber Together doesn't start. A second copy of Timber Together in your <code>Mods</code> folder, or a <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder, conflicts the same way.</p>
-          <p class="sub">Try this</p>
-          <p>Keep exactly one BeaverBuddies. Unsubscribe from the Workshop version, delete any extra copy and any <code>BeaverBuddies-Stability-Fork</code> or <code>BeaverBuddies-StabilityPreview</code> folder from <code>Documents\Timberborn\Mods</code>, then restart the game. Your saves aren't kept in the <code>Mods</code> folder.</p>
+          <p>Only one BeaverBuddies can run: Timber Together, the Stability Fork and the Workshop BeaverBuddies change the same parts of the game. Unsubscribe from the Workshop version, delete any other BeaverBuddies folder from <code>Documents\Timberborn\Mods</code> (the Stability Fork, or an older copy of this mod), and restart the game. Your saves aren't in that folder.</p>
         </div>
       </details>
 
       <details class="q" id="game-update">
         <summary>After a Timberborn update, co-op stops at load with a message</summary>
         <div class="answer">
-          <p>The update changed a part of the game Timber Together corrects for co-op. Rather than let the game go out of step, co-op stops at load and the message names the part; single player carries on. Update Timber Together when a new build is out, all of you together.</p>
+          <p>The update changed something Timber Together corrects for co-op, so co-op stops rather than drift out of step; the message names it. Single player carries on. Update Timber Together when a new build is out, all of you together.</p>
         </div>
       </details>
     </section>
@@ -121,12 +117,12 @@
         <summary>Joining is refused: "Multiplayer build mismatch"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>When someone joins, the mod compares the game version, the mod version and the mod's own files (<code>Buildings</code> and <code>TemplateCollections</code> among them), before the save is sent. It refuses any difference, because two different builds can't stay in sync, and the message names what differs. A copy someone built themselves can be refused even when the version number matches, and an old version still running in memory is detected too.</p>
+          <p>The game version, the mod version or the mod's own files differ from the host's, and the message names which. A copy someone built themselves is refused even with the same version number.</p>
           <p class="sub">Try this</p>
           <ol>
-            <li>Have everyone install the <b>same zip</b>: the host's, or the one from the <a href="https://github.com/timbermods/TimberTogether/releases" data-release-href="notes">newest release</a>.</li>
-            <li>Replace the <code>TimberTogether</code> folder, then <b>fully restart</b> Timberborn on every computer.</li>
-            <li><a href="install.html#compare">Compare the three readings</a> with your host: mod version, game version, same zip.</li>
+            <li>Everyone installs the same zip: the host's, or the newest release's.</li>
+            <li>Replace the <code>TimberTogether</code> folder and fully restart Timberborn on every computer.</li>
+            <li><a href="install.html#compare">Compare with your host</a> again.</li>
           </ol>
         </div>
       </details>
@@ -135,28 +131,25 @@
         <summary>A warning says my mods and the other player's mods aren't the same</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>When someone joins, both players' games compare their lists of enabled mods and warn you if any mod is on only one computer or at a different version. The host sees the warning before starting; a guest sees it as soon as the game has loaded. It's only a warning, because the mod can't tell which mods matter. A mod that changes the simulation (a housing or pathfinding mod, for example) will make the two games drift apart, which is a desync. A mod that sends its own multiplayer actions or adds content the host uses (MixedStorage, for example) must be on every computer: a guest without it leaves the game with a message naming the mod, and the host and the other players play on.</p>
+          <p>When someone joins, the games compare their enabled mods and warn if any is on only one computer or at another version. It's a warning, not a refusal: interface-only mods are usually harmless, but a mod that changes the simulation will make the games drift apart. A guest missing a mod the host uses (MixedStorage, for example) leaves the game with a message naming it.</p>
           <p class="sub">Try this</p>
           <ol>
-            <li>Read which mods are listed: "Only on your computer", "Only on &hellip;'s computer" and "Different versions".</li>
-            <li>Make both lists identical: install and enable the same mods at the same versions on every computer, or turn the listed mods off on both. Mods that only change the interface are usually harmless.</li>
-            <li>Restart Timberborn on the computers you changed, then host again.</li>
+            <li>Read the lists: <i>Only on your computer</i>, <i>Only on &hellip;'s computer</i>, <i>Different versions</i>.</li>
+            <li>Make them identical on every computer, or turn those mods off everywhere.</li>
+            <li>Restart the changed games, then host again. (The warning is also in <code>Player.log</code>: search for "Mod lists differ".)</li>
           </ol>
-          <p>The warning is also written to <code>Player.log</code>: search for "Mod lists differ".</p>
         </div>
       </details>
 
       <details class="q" id="steam-invite">
         <summary>Invite Friends does nothing, or my friend gets no invite</summary>
         <div class="answer">
-          <p class="sub">Try this</p>
           <ol>
-            <li>Right after hosting starts, the Steam lobby is still being created. Wait a moment and click <b>Invite Friends</b> again. The Steam overlay should open.</li>
-            <li>On the host, make sure <b>Enable Steam Networking</b> is on in Mod Settings (it is by default).</li>
-            <li>Both players need to be online in Steam. The friend must be on your Steam friends list and own Timberborn on Steam.</li>
-            <li>Your friend can also use <b>Join co-op game</b> on the main menu, which lists their Steam friends' co-op games.</li>
-            <li>Both of you need the <a href="#mismatch">same build</a> of the mod and the same game version.</li>
-            <li>If Steam still won't connect, host with a <a href="install.html#host">direct IP or Hamachi</a> instead. Steam problems never stop direct IP hosting.</li>
+            <li><b>Invite Friends</b> stays greyed until the Steam lobby is ready: give it a moment after you start hosting.</li>
+            <li>Check <b>Enable Steam Networking</b> is on in Mod Settings (the default).</li>
+            <li>Both of you must be online in Steam, be Steam friends, and own Timberborn on Steam.</li>
+            <li>Your friend can also find your game in <b>Join co-op game</b>.</li>
+            <li>Still stuck? Use direct IP or Hamachi instead.</li>
           </ol>
         </div>
       </details>
@@ -164,45 +157,39 @@
       <details class="q" id="already-started">
         <summary>The invite says the host has already started</summary>
         <div class="answer">
-          <p class="sub">Why</p>
-          <p>Nobody can join once the host presses <b>Start Game</b> on the Co-op Game page. An old invite explains that instead of hanging. A game that has started may also simply drop off the <b>Join co-op game</b> list.</p>
-          <p class="sub">Try this</p>
-          <p>The host chooses <b>Save and Rehost</b> in the game menu, and you choose <b>Rejoin</b> or wait in <b>Join co-op game</b>. Everyone meets on the Co-op Game page, and <b>Start Game</b> carries on.</p>
+          <p>Nobody can join once the host presses <b>Start Game</b>, and a started game may also drop off the <b>Join co-op game</b> list. The host chooses Esc &rarr; <b>Save and Rehost</b> and sends a new invite, or you join from <b>Join co-op game</b> once the room is open.</p>
         </div>
       </details>
 
       <details class="q" id="rejoin">
         <summary>A friend lost the connection</summary>
         <div class="answer">
-          <p>They choose <b>Rejoin</b> on the lost-connection message (or wait in <b>Join co-op game</b>), and the host chooses <b>Save and Rehost</b> in the game menu, in either order. The friend goes to the main menu and lands on the host's Co-op Game page as soon as it opens; when everyone is ready, <b>Start Game</b> carries on.</p>
+          <p>They choose <b>Rejoin</b> on the lost-connection message: it waits in their game and joins the host's room as soon as it opens. The host chooses Esc &rarr; <b>Save and Rehost</b>. Either can go first; when everyone is ready, <b>Start Game</b> carries on.</p>
         </div>
       </details>
 
-      <details class="q" id="waiting-room">
-        <summary>"&hellip; is waiting for you in a co-op waiting room"</summary>
+      <details class="q" id="invite-in-game">
+        <summary>"&hellip; invited you to their co-op game. You are in a co-op game now"</summary>
         <div class="answer">
-          <p>You accepted an invite, or used Join, while you were in a game, and the host is on a Co-op Game page. Go back to the main menu, then accept the invite again or join from there.</p>
+          <p>An invite doesn't end the co-op game you're in. Leave it from the game menu (Esc), then accept the invite again, or join from <b>Join co-op game</b>. If you're hosting a room of your own, close it first.</p>
         </div>
       </details>
 
       <details class="q" id="load-failed">
         <summary>My game failed to load after Start Game</summary>
         <div class="answer">
-          <p>Nobody can join a game that has started, so there's no way back into that one. The host uses <b>Save and Rehost</b>, and you join that. If it happens again, <a href="#logs">send every player's logs</a>.</p>
+          <p>Nobody can join a game that has started. The host uses <b>Save and Rehost</b>, and you join that room. If it happens again, send every player's logs.</p>
         </div>
       </details>
 
       <details class="q" id="steam-connect">
         <summary>Joining over Steam takes forever or fails with a Steam message</summary>
         <div class="answer">
-          <p class="sub">Why</p>
-          <p>Steam connects players directly when it can find a route and relays through its own network otherwise. Failures end with an explanation that includes Steam's own reason, for example <em>"The connection timed out. Steam could not find a working route between you."</em> The same detail is written to <code>Player.log</code>.</p>
-          <p class="sub">Try this</p>
+          <p>The message includes Steam's own reason (for example, no working route between you); so does <code>Player.log</code>.</p>
           <ol>
-            <li>Read the message. It says what Steam reported.</li>
-            <li>Make sure you're both on the <a href="#mismatch">exact same build</a>. If joining sits on "Receiving map&hellip;" and never finishes, that's the first thing to rule out.</li>
-            <li>Try again. If it repeats, use <a href="install.html#host">direct IP or Hamachi</a>.</li>
-            <li>If it keeps failing, <a href="#logs">collect every player's logs</a> and ask for help.</li>
+            <li>Check you're both on the exact same build: joining that never gets past "Receiving the world&hellip;" is usually that.</li>
+            <li>Try again. If it repeats, use direct IP or Hamachi.</li>
+            <li>Still failing? <a href="#logs">Collect every player's logs</a> and ask for help.</li>
           </ol>
         </div>
       </details>
@@ -210,12 +197,11 @@
       <details class="q" id="direct-ip">
         <summary>Direct IP won't connect</summary>
         <div class="answer">
-          <p class="sub">Try this</p>
           <ol>
-            <li>The host must already be hosting, and mustn't have started or changed anything yet.</li>
-            <li>Use the right address: your public IP for the internet, or the virtual-network address (for example from Hamachi) if you use one.</li>
-            <li>The default port is <b>25565</b>. Your router must forward it to the host's computer, and your firewall must allow Timberborn.</li>
-            <li>Port forwarding is the hard part. A virtual LAN such as Hamachi avoids it and has been tested. So does a <a href="install.html#host">Steam invite</a>.</li>
+            <li>The host must be hosting, with the room still open.</li>
+            <li>Use the right address: the host's public IP, or the Hamachi (virtual network) address if you use one.</li>
+            <li>Port 25565 must be forwarded to the host's computer, and the firewall must allow Timberborn.</li>
+            <li>Port forwarding is the hard part: Hamachi or a Steam invite avoids it.</li>
           </ol>
         </div>
       </details>
@@ -227,21 +213,21 @@
       <details class="q" id="roads">
         <summary>"That would join another colony's roads"</summary>
         <div class="answer">
-          <p>A path of yours would touch their road (finished or still being built), or a building's door would open onto or beside it. Keep your roads a cell apart from theirs, and away from their district center. To link the two colonies, put a Trading Post between them. <kbd>Ctrl</kbd>+<kbd>L</kbd> shows whose roads are whose.</p>
+          <p>A path of yours would touch their road (built or not yet), or a door would open onto it. Keep your roads a cell apart from theirs and from their district center; to link the colonies, put a Trading Post between them. <kbd>Ctrl</kbd>+<kbd>L</kbd> shows whose roads are whose.</p>
         </div>
       </details>
 
       <details class="q" id="not-trading">
         <summary>A Trading Post says "Not trading yet"</summary>
         <div class="answer">
-          <p>Each half needs a different colony's road at its door: yours at one end, theirs at the other. It starts trading as soon as both roads reach it. If a round waits, the panel says why: paused or flooded, no workers, no room, or nothing left to bring.</p>
+          <p>Each half needs a different colony's road at its door: yours at one, theirs at the other. Once it trades, a waiting round says why in the panel: paused or flooded, no workers, no room, or nothing left to bring.</p>
         </div>
       </details>
 
       <details class="q" id="shared">
         <summary><kbd>Ctrl</kbd>+<kbd>K</kbd> says this is one shared colony</summary>
         <div class="answer">
-          <p>The save is a shared game. To split it, a player other than the host opens the game menu (Esc) and chooses <b>Found your own colony</b>, or the host ticks <b>Separate colonies</b> on the save's Co-op Game page and hosts it again. Either makes it separate for good, and the colony you built together stays whole as the host's. <a href="index.html#start">Choose your start</a> explains both.</p>
+          <p>The save is a shared game. To split it, a player other than the host chooses Esc &rarr; <b>Found your own colony</b>, or the host rehosts the save and ticks <b>Separate colonies</b> in its room. Either is for good, and the shared colony stays the host's.</p>
         </div>
       </details>
 
@@ -249,7 +235,7 @@
       <details class="q" id="refused">
         <summary>Everything I do is refused right after joining</summary>
         <div class="answer">
-          <p>The host hasn't seated you in a colony yet; wait a moment. If it persists, <a href="#logs">send the logs</a>. Later on, "That belongs to another colony" means just that: you can only change your own colony's buildings, beavers, districts, marks and settings.</p>
+          <p>The host hasn't given you a colony yet: wait a moment, and send the logs if it lasts. Later, <i>That belongs to another colony</i> means just that: you can change only your own colony.</p>
         </div>
       </details>
     </section>
@@ -280,61 +266,46 @@
         <summary>A desync: "A connected player desynced and cannot continue playing"</summary>
         <div class="answer">
           <p class="sub">Why</p>
-          <p>The players' games have drifted apart. Every copy of the game must make exactly the same decisions, and something made one of them differ. Known causes are removed, but none of that is a promise. The log says which check caught it: <code>Random state mismatch</code> (the game's random state at an action) or <code>Colony state differs</code> (the colony check, in a separate-colonies game; a difference there may be a bug in the check itself, so send every player's logs). An earlier <code>Entity mismatch</code> or <code>Walker mismatch</code> line, which doesn't stop the game by itself, says when the two games first differed.</p>
+          <p>The players' games have drifted apart. The log says which check caught it: <i>Random state mismatch</i>, or <i>Colony state differs</i> in a separate-colonies game (that one may be a bug in the check itself, so please send the logs).</p>
           <p class="sub">Try this</p>
           <ol>
             <li>The host chooses <b>Save and Rehost</b>.</li>
-            <li>Guests choose <b>Reconnect (wait for Rehost)</b>, in any order: each goes to the main menu and lands on the host's Co-op Game page as soon as it opens. A direct IP guest redials the address it used, and a Steam guest joins the host's new lobby when Steam shows it (otherwise it accepts a fresh invite).</li>
-            <li>Everyone presses <b>Ready</b>, and the host presses <b>Start Game</b>.</li>
-            <li>You may need to restart the game if problems persist.</li>
+            <li>Guests choose <b>Reconnect (wait for Rehost)</b>, in any order: each waits in their game and joins the host's room when it opens.</li>
+            <li>Everyone presses <b>Ready</b>; the host presses <b>Start Game</b>.</li>
           </ol>
-          <p class="sub">Things that cause it</p>
+          <p class="sub">Common causes</p>
           <ul>
-            <li><b>Different mods, or different mod versions.</b> The game warns you about this when someone joins (see <a href="#mods-differ">the mod warning</a>), so take that warning seriously.</li>
-            <li><b>Different settings that affect the simulation</b>, for example <b>Reduce the number of forced pauses</b>. Keep them identical.</li>
-            <li><b>Dev mode's tools.</b> Only its instant unlock, <i>Finish now</i> and <i>Add 1000 Science</i> are shared; its other tools and keys desync the game.</li>
+            <li>Different mods or mod versions: take the mod warning seriously.</li>
+            <li>Different simulation settings, such as <b>Reduce the number of forced pauses</b>.</li>
+            <li>Dev mode's tools: only its instant unlock, <i>Finish now</i> and <i>Add 1000 Science</i> are shared.</li>
           </ul>
-          <p>Keep backups of your saves. In a separate-colonies game every computer writes a report when a desync happens: <a href="#logs">send them all</a>.</p>
+          <p>Keep backups. In a separate-colonies game every computer writes a report when a desync happens: send them all.</p>
         </div>
       </details>
 
       <details class="q" id="stopped">
         <summary>"Multiplayer has stopped because this action may have changed only part of the game state"</summary>
         <div class="answer">
-          <p class="sub">Why</p>
-          <p>A multiplayer action couldn't be completed on one player's game. Carrying on could leave two games different without anyone noticing, so the mod stops the session.</p>
-          <p>A guest can also see "An action from the host could not be read", ending "Nothing of that action was played here". The host sent an action, usually from a mod the guest doesn't have, which the message names. Nothing went wrong: that guest has left the game, and the host and the other players play on. Install the same mods on every computer (see <a href="#mods-differ">the mod warning</a>); the host then chooses <b>Save and Rehost</b> and the guest joins again. The steps below are for the other message.</p>
-          <p class="sub">Try this</p>
-          <ol>
-            <li>Press <b>Escape</b> to open the menu, return to the main menu and <b>reload a known-good save</b> before hosting again.</li>
-            <li><b>Don't overwrite your good save</b> with the session that stopped.</li>
-            <li>If it repeats with the same action, <a href="#logs">collect the logs</a> and say what you were doing.</li>
-          </ol>
+          <p>An action couldn't be completed on one player's game, so the session stops rather than let the games differ unnoticed. Open the menu (Esc), reload a known-good save, and don't overwrite it with the stopped session. If it repeats with the same action, send the logs and say what you were doing.</p>
+          <p>A guest who sees <i>An action from the host could not be read</i> is missing a mod the host uses, named in the message. That guest has left the game and the others play on: install the same mods, and the host uses <b>Save and Rehost</b> to let them back in.</p>
         </div>
       </details>
 
       <details class="q" id="lost">
         <summary>The connection dropped and the game is paused</summary>
         <div class="answer">
-          <p class="sub">What happens</p>
-          <p>When a guest loses the host, the game says why and stays paused, and the menu and controls work again. Nothing more will be played in that session.</p>
-          <p class="sub">Try this</p>
-          <ol>
-            <li>Press <b>Escape</b> to open the menu. You can save from there.</li>
-            <li>Return to the main menu and join again once the host has hosted again. Steam guests accept a fresh invite; direct IP guests reconnect.</li>
-          </ol>
+          <p>When a guest loses the host, the game says why and stays paused, with the menu working again. Choose <b>Rejoin</b> to wait in your game and join the host's room when they rehost, or <b>Stay here</b> and save this game alone from the menu.</p>
         </div>
       </details>
 
       <details class="q" id="lag">
         <summary>The game is laggy or my FPS is low in multiplayer</summary>
         <div class="answer">
-          <p class="sub">Try this</p>
           <ol>
-            <li>Turn off <b>Always Use Detailed Logging</b> in Mod Settings, on <b>every</b> computer. It records a lot of extra detail for diagnosing desyncs and noticeably slows the game. It's off by default.</li>
-            <li>Look at the connection panel. A red ping or a high <b>Behind host</b> value means the connection is the problem, not the game.</li>
-            <li>Try a lower game speed if a slower computer keeps falling behind, or, as the host, click <b>Ease off below</b> in the connection panel and pick a frame rate: the game then slows a little while a guest stays under it.</li>
-            <li>More colonies mean more to simulate: prefer a smaller map. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> writes a diagnostics report that shows where the time goes.</li>
+            <li>Turn off <b>Always Use Detailed Logging</b> in Mod Settings on every computer. It's off by default, and costly.</li>
+            <li>Check the connection panel: a red ping means the connection is the problem.</li>
+            <li>Try a lower game speed. The host can also click <b>Ease off below</b> in the connection panel to slow a little for a slow guest.</li>
+            <li>More colonies mean more to simulate: prefer a smaller map. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> writes a report showing where the time goes.</li>
           </ol>
         </div>
       </details>
@@ -346,13 +317,11 @@
       <details class="q" id="panel-missing">
         <summary>The connection panel is missing</summary>
         <div class="answer">
-          <p class="sub">Try this</p>
           <ul>
-            <li>The panel only appears <b>in multiplayer games</b>.</li>
-            <li>Check <b>Mod Settings, Timber Together, Connection panel</b>. It may be set to <b>Hidden</b>.</li>
-            <li>If you bound the <b>Toggle connection panel</b> key, you may have hidden it with that key.</li>
-            <li>It may be <b>collapsed</b> to a single line (a colored dot, the player count and one ping). Click the line to expand it.</li>
-            <li>It may be in a different corner. See <b>Connection panel position</b>.</li>
+            <li>It only appears in multiplayer games.</li>
+            <li>Check <b>Mod Settings, Timber Together, Connection panel</b>: it may be <b>Hidden</b>, or in another corner.</li>
+            <li>If you bound <b>Toggle connection panel</b>, you may have hidden it with that key.</li>
+            <li>It may be collapsed to one line: click it to expand.</li>
           </ul>
         </div>
       </details>
@@ -360,12 +329,11 @@
       <details class="q" id="activity">
         <summary>I can't see other players' cursors, labels or pings</summary>
         <div class="answer">
-          <p class="sub">Try this</p>
           <ul>
-            <li><b>Player activity indicators</b> must be on in Mod Settings. A player who turns sharing off disappears from your view until they turn it back on.</li>
-            <li>A cursor is hidden while it's over the game's interface, outside the game window, or off the map. Yours is hidden while the game window isn't focused.</li>
-            <li>Open <b>Options, Player cursors</b> and check that you haven't made that player's cursor tiny (size 50% is the minimum) or nearly invisible (transparency goes up to 90%). <b>Reset</b> restores the defaults.</li>
-            <li>For pings, bind a key for <b>Ping Location</b> in the game's keybinding settings.</li>
+            <li><b>Player activity indicators</b> must be on in Mod Settings, for them and for you.</li>
+            <li>A cursor hides over the game's interface, outside the window, or off the map.</li>
+            <li>In Options &rarr; <b>Player cursors</b>, check you haven't shrunk or faded that player's cursor. <b>Reset</b> restores the defaults.</li>
+            <li>For pings, bind <b>Ping Location</b> in the game's key bindings.</li>
           </ul>
         </div>
       </details>
@@ -373,32 +341,31 @@
 
     <section id="logs">
       <h2>Collecting logs</h2>
-      <p>Logs from <b>every player</b>, not just the one who saw the problem, are what make a problem diagnosable. Steam failures and desyncs record their details there.</p>
+      <p>Logs from <b>every player</b>, not only the one who saw the problem, are what make it fixable.</p>
       <ol>
         <li>Close the game so the log is complete.</li>
-        <li>Open <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn</code> in Explorer (paste it into the address bar).</li>
-        <li>Copy <code>Player.log</code>. If the problem happened in an earlier session, also copy <code>Player-prev.log</code>, the log of the session before.</li>
-        <li>Copy your newest report from the <code>TimberTogether-Reports</code> folder next to the logs. In a separate-colonies game every computer writes one by itself when a player desyncs; <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> writes one any time (it's also copied to your clipboard).</li>
-        <li>If a desync happened with detailed logging on, the water diagnostics are saved in the <code>TimberTogether-Diagnostics</code> folder next to the logs. They're written only on your computer and never uploaded.</li>
+        <li>Paste <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn</code> into Explorer's address bar.</li>
+        <li>Copy <code>Player.log</code>, and <code>Player-prev.log</code> if it happened in the session before.</li>
+        <li>Copy your newest report from the <code>TimberTogether-Reports</code> folder there. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> writes one any time (and copies it to your clipboard); a desync writes one on every computer.</li>
+        <li>After a desync with detailed logging on, also send the <code>TimberTogether-Diagnostics</code> folder.</li>
       </ol>
       <div class="note plate enamel">
         <span class="sign-label">Before you share</span>
         <p>Logs contain file paths, which include your Windows user name. Look through the file before you post it if that matters to you.</p>
       </div>
-      <p>The <b>Post Bug Report</b> button in the desync dialog doesn't upload anything in Timber Together's builds, because they contain no upload token. Send the files by hand instead.</p>
-      <p>Leave <b>Always Use Detailed Logging</b> off unless you're asked to turn it on. It costs performance.</p>
+      <p>Nothing is uploaded for you: send the files by hand. Leave <b>Always Use Detailed Logging</b> off unless you're asked to turn it on.</p>
     </section>
 
     <section id="help">
       <h2>Getting help</h2>
-      <p>Open an issue on the <a href="https://github.com/timbermods/TimberTogether/issues">project's GitHub page</a> (not the original BeaverBuddies project) and include:</p>
+      <p>Open an <a href="https://github.com/timbermods/TimberTogether/issues">issue</a> (here, not with the original BeaverBuddies) with:</p>
       <ul>
         <li>what you were doing and what you expected,</li>
-        <li>the mod version, the game version, and whether you connected over Steam or direct IP,</li>
-        <li><b>every player's</b> <code>Player.log</code> and newest <code>TimberTogether-Reports</code> report,</li>
+        <li>the mod and game versions, and whether you joined over Steam or direct IP,</li>
+        <li><b>every player's</b> <code>Player.log</code> and newest report,</li>
         <li>screenshots of anything on screen.</li>
       </ul>
-      <p>Also check the <a href="faq.html">FAQ</a>, which answers the common questions.</p>
+      <p>The <a href="faq.html">FAQ</a> answers the common questions.</p>
     </section>
 
   </div>
