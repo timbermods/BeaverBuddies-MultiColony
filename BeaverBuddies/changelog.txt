@@ -1,3 +1,7 @@
+v1.4.0-rc11 (Timber Together)
+* If another multiplayer mod is enabled, the main menu's warning says so in those words: "Another multiplayer mod is enabled", with its name.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc10 (Timber Together)
 * The Trading Post has a model of its own for each faction: a hall under one roof, with a door at each end and a walkway through the middle.
 * Each colony's half is now 3 by 2, so a whole Trading Post is 3 wide and 4 deep, with its two doors 5 cells apart.

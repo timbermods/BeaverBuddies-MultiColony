@@ -5,6 +5,19 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc11
+
+**The duplicate-mod warning says "multiplayer mod".** Asked for by Kyler, to match the website. Text only: no
+change to the game or the wire; everyone needs this build (the join checks the version). Built against Timberborn
+1.1.2.4: both configurations with 0 warnings; StabilityTests 503 and RuntimeChecks 458 pass. **Not played.**
+
+- **The main menu's warning** (`BeaverBuddies.DuplicateMod.Message`, enUS) opens with "Another multiplayer mod is
+  enabled: {0}." in place of "Another BeaverBuddies mod is enabled". The rest is unchanged, and it still lists the
+  other mods by name. No other language file has this message, as before.
+- **The log lines** say the same: "Other multiplayer mods are enabled: …" (`DuplicateModWarning`) and "Another
+  multiplayer mod is enabled and already running; Timber Together will not start." (`Plugin`).
+- **The website** says "one multiplayer mod" throughout, and its troubleshooting quotes the new warning.
+
 ## 1.4.0-rc10
 
 **The Trading Post has a model of its own, and each half is 3 × 2.** Asked for by Kyler after rc9, with the models he

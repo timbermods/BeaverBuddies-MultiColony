@@ -46,13 +46,13 @@ namespace BeaverBuddies.Help
                     .Select(mod => mod.Manifest.Name)
                     .ToList();
                 if (others.Count == 0) return;
-                Plugin.LogError("Other BeaverBuddies mods are enabled: " + string.Join(", ", others));
+                Plugin.LogError("Other multiplayer mods are enabled: " + string.Join(", ", others));
                 string message = string.Format(_dialogBoxShower._loc.T("BeaverBuddies.DuplicateMod.Message"), string.Join(", ", others));
                 _dialogBoxShower.Create().SetMessage(message).Show();
             }
             catch (Exception error)
             {
-                Plugin.LogWarning("Could not check for other BeaverBuddies mods: " + error.Message);
+                Plugin.LogWarning("Could not check for other multiplayer mods: " + error.Message);
             }
         }
     }
