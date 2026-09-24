@@ -33,6 +33,11 @@ Building the mod and `RuntimeChecks` need the game's assemblies: see README "Bui
   `assets/style.css` + `site.js`; the Trading Post demo is `assets/trade-demo.js` + `assets/game-panel.css` with item
   icons in `assets/goods/`. Live at https://timbermods.github.io/BeaverBuddies-MultiColony/.
 - **Published:** GitHub Pages serves `main:/docs`, so merging to main publishes; a build takes about a minute.
+- **Latest releases update themselves:** when a release becomes GitHub's Latest, `.github/workflows/latest-release.yml`
+  (the shared timbermods workflow) appends the standard footer to its notes, sets the site's
+  `data-release="version|tag|asset-name"` fallback text and the README lines ending in `<!-- latest -->` to the new
+  version, runs the site checks and commits to main. Pre-releases change nothing. Descriptions, status lists and FAQs
+  stay manual (the checklist below). Dry run: Actions → Latest release → Run workflow.
 - **Look:** "River Station Signage". The site is a small river station's signage: fired-enamel plates bolted to timber
   posts, telling two neighbours where to go and where to meet. The look is fixed: updates extend it, never restyle it.
 - **Design records (read these before any site change):**
