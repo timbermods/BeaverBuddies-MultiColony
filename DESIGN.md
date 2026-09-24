@@ -270,7 +270,7 @@ Buttons are plates you can press.
 ### Chips
 - **Status tag:** a caution plate with a dark rivet dot on the left. Version, game version and "back up your saves" are separated by middle dots.
 - **Not played:** a small caution tag (3px corners, 0.72rem label lettering), placed inline after a feature name.
-- **Switch state:** a navy "On" chip, or an "Off" chip outlined in ink-soft, inside a stone switch row that names the setting.
+- **Switch row:** a stone row naming a setting, led by the setting drawn as the game's ticked checkbox (a navy square with a white tick) and one line saying where it is and whether to change it. No word chips.
 
 ### Cards / Containers
 - **Corner Style:** the plate (7px).
