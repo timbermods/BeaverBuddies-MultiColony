@@ -40,7 +40,7 @@ on one map, links them only through Trading Post barter, and still offers ordina
 - The host reads the site first, then sends the zip or a link to a friend. Guests land on the site cold and need
   the install steps and nothing else.
 - Ways to play. The host chooses where the game is made, with the **Separate colonies** checkbox; none of this is
-  in Mod Settings.
+  in Timber Together's settings.
   - **New game, a colony each:** *Separate colonies* on the New Game difficulty page (under the game's own Tutorial
     checkbox), ticked by default; the page remembers the last choice. Under it: *Separate science and unlocks*
     (ticked) and *Mixed factions* (unticked).
@@ -54,7 +54,7 @@ on one map, links them only through Trading Post barter, and still offers ordina
       300-beaver colony into halves.
   - **One shared colony:** *Separate colonies* unticked; ordinary BeaverBuddies co-op, with Timber Together's
     improvements.
-  - The host's one colony setting in **Mod Settings → Timber Together** is *Hand over a colony after its player is
+  - The host's one colony setting in Timber Together's settings (**Mods** → the settings button beside it) is *Hand over a colony after its player is
     away (days)*, 0 (never) by default.
 - **Features the site must include** (confirmed by the maintainer, 2026-09-23), alongside separate colonies and
   Trading Posts:

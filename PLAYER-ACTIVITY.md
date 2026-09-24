@@ -38,7 +38,7 @@ display name, so a friend keeps their look next time.
 
 ## Settings
 
-In **Mod Settings → Timber Together**:
+In Timber Together's settings (**Mods** → the settings button beside it):
 
 - **Player activity indicators** (on): share your cursor, selection and edits, and show others'.
 - **Ping Display Name** and **Ping Color** (yellow): what others see for you. Left on "Player", the name becomes

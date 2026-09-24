@@ -13,7 +13,7 @@ alongside it.
 
 Nobody can join after **Start Game**. To let someone in later, choose Esc → **Save and Rehost** and invite them.
 Players already in the game come along by themselves. Friends without Steam join by IP (port 25565).
-**Enable Steam Networking** (Mod Settings, on by default) must be on.
+**Enable Steam Networking** (in Timber Together's settings, on by default) must be on.
 
 ## Friend
 

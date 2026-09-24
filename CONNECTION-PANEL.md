@@ -46,9 +46,9 @@ player runs (a steward shows the colony they're running). In a shared game the r
 ## Showing and hiding
 
 - **Click the title** to collapse or expand it. Collapsed, it shows **N new** for unread chat messages.
-- **Mod Settings → Timber Together → Connection panel**: Expanded, Collapsed or Hidden.
-- **Mod Settings → Timber Together → Connection panel position**: top left (default), top right, bottom left or
-  bottom right.
+- In Timber Together's settings (**Mods** → the settings button beside it): **Connection panel** is Expanded,
+  Collapsed or Hidden, and **Connection panel position** is top left (default), top right, bottom left or bottom
+  right.
 - **Options → Bindings → Timber Together → Toggle connection panel**: a key to hide and show it (none by default).
 
 It appears only in multiplayer games, and scales with your UI scale.

@@ -39,6 +39,9 @@ You need Timberborn **1.1.2.4** (tested on Windows, Steam version) and the **Har
 4. Extract the zip and copy the `TimberTogether` folder into `Documents\Timberborn\Mods`.
 5. Start Timberborn and enable **Harmony**, **Mod Settings** and **Timber Together**.
 
+**Settings:** open the **Mods** list (main menu, or Esc in a game) and press the settings button beside **Timber
+Together**.
+
 **To update**, replace the folder with the new zip. Everyone updates together: a different build can't join.
 
 ## Host a game
@@ -101,8 +104,8 @@ your colony: your friend presses **Run this colony** to play it, and **Back to y
 back** any time.
 
 **A colony changes hands** only when it has no beavers or bots left for a whole day, when the host hands it over from
-the Ctrl+T window, or after its player misses the host's limit in **Mod Settings → Timber Together → Hand over a
-colony after its player is away (days)** (0, never, by default). Its player can then found a new colony with
+the Ctrl+T window, or after its player misses the host's limit, **Hand over a colony after its player is away
+(days)** in Timber Together's settings (0, never, by default). Its player can then found a new colony with
 **Ctrl+K**.
 
 ## Trading Posts
