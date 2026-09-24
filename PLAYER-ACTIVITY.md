@@ -1,177 +1,51 @@
-# Player activity indicators
+# Player cursors
 
-Other players' cursors, selections and building activity are
-shown on your screen, and you can restyle each player's cursor. In a Timber Together game (a colony each, see
-[TWO-COLONIES.md](TWO-COLONIES.md)) all of this works across colonies: you see the other colony's player at work on
-their side of the map as you would a teammate.
+See your friends at work: their cursors, what they've selected, and which buildings they're changing. It works across
+colonies too.
 
 ## What you see
 
-- **Colored, translucent cursors** with a name label. Positions are shared in world
-  space, so cameras can be at different positions and zoom levels, and markers
-  interpolate between samples. A cursor over UI, outside the game window or off the
-  map is hidden; losing application focus hides yours too.
-- **Finding a player.** Click a player's row in the connection panel to take your camera to their cursor (or to
-  what they have selected, when their cursor is off the map); your own row, or the Home key, takes you back to your
-  own colony. Display only: nothing is sent.
-- **Remote selection outlines.** Remote selected entities use Timberborn's native
-  selection outline in that player's color. Each remote player has an independent
-  secondary highlighter, and your own selection/hover colors take priority when you
-  select the same object. Selecting an object never changes anyone else's selection
-  or camera. This shares entity selections, not construction ghosts or drag-to-paint
-  tool areas.
-- **Viewing / Editing labels.** A selected building shows **Viewing: player name**.
-  Issuing a building command through the mod's common entity-action path (recipes,
-  worker counts, rename, priorities, water settings, automation) shows **Editing:
-  player name** for three seconds after the most recent change. Viewing is never
-  reported as editing. This is an advisory notice, not a lock: both players can still
-  change a building, and the normal multiplayer command order decides the result.
-  Third-party UI that bypasses BeaverBuddies' entity-action path cannot emit an edit
-  notice, and zipline tools and global technology unlocks are not covered. In a separate-colonies game the notice is
-  sent when the command is made, before the host judges it: a change to another colony's building, which the host
-  refuses, can still show **Editing** on other screens for its three seconds, although nothing changes.
+- **Cursors** in each player's color, labelled with their name and tag, such as *Sam (Host)* or *Alex (P2)*. They
+  follow the map, whatever your camera does. A cursor over the game's interface, outside the window or off the map
+  is hidden.
+- **Selections**: what another player selects gets the game's selection outline in their color. Your own selection
+  color wins on your screen.
+- **Viewing / Editing**: a building another player has selected shows **Viewing:** and their name (other things
+  they select show **Selected:**). For three seconds after they change it (recipes, workers, names, priorities,
+  water or automation settings), it shows **Editing:**. It's a notice, not a lock.
+- **Finding a player**: click their row in the [connection panel](CONNECTION-PANEL.md) to go to their cursor or
+  selection. Your own row, or **Home**, takes you back to your colony.
+- **Pings** (bind **Ping Location** under Options → Bindings) mark a spot on everyone's map, in your **Ping Color**.
 
-## In a separate-colonies game
+In a separate-colonies game, cursor colors are each player's own, while colony colors (each colony's roads under
+Ctrl+L, and colony names in the trading window) are the colony's. The two needn't match.
 
-- **Cursor colors are the player's; colony colors are the colony's.** The colonies' roads (Ctrl+L, or while a building
-  is being placed; a brighter version of each color), the *(colony N)* beside a name in the connection panel and the
-  colony names in the trading window use the game's own start colors, one per colony. The cursor, name label, selection outline and chat name use the color
-  the player chose (or the one you set for them under **Player cursors**), or, while they have not chosen one, a
-  color by player number (see *Settings* below). A player and their colony need not match.
-- **Selection outlines cross colonies.** Selecting another colony's building shows it to everyone as any selection
-  is; opening its panels changes nothing (see *What you see* in TWO-COLONIES.md).
-- **Pings** are shared by everyone, whichever colony pinged.
-- **Who is who** is the connection panel's job: each name there carries the colony its player runs. The cursor
-  label shows the name only.
+## Restyling cursors
 
-## Customizing each player's cursor
-
-Open the in-game **Options** menu (Esc) and choose **Player cursors**. Each connected
-player who is sharing activity gets a card with:
+In a co-op game, open the game menu (Esc) → **Player cursors**. Each connected player gets a card:
 
 | Control | Range | Default |
 | --- | --- | --- |
-| Color | **Their color** (what they chose), 10 presets, or exact Red/Green/Blue sliders | Their color |
+| Color | **Their color**, 10 presets, or Red/Green/Blue sliders | Their color |
 | Size | 50%–300% | 100% |
 | Transparency | 0%–90% | 50% |
 
-The color also applies to that player's name label, their selection outline and their name in the
-chat in the connection panel, so a player always looks like one consistent color. The swatch in each card previews the
-color and transparency live, and **Reset** returns that player to the defaults.
+The color also applies to their name label, selection outline and chat name. **Reset** returns a card to the
+defaults. The first card, **You, in the chat**, sets the color you see your own name in, in the chat.
 
-The first card, **You, in the chat** (1.4.0-beta6), is for your own name in the chat as you see it: the
-**Default** swatch (what others see: your Ping Color, or the color for your player number while it is
-still the default), the same ten presets, or the Red/Green/Blue sliders; **Reset** returns to the default.
-It has no size or transparency, since there is no cursor of your own to draw, and it is on your screen
-only: nothing is sent, and other players' choices for you still win on their screens. It is saved with
-the other styles, under the key `#you`.
-
-These are **display-only, local choices**. They are never sent over the network, so
-each player can style everyone else differently, and they cannot affect the
-simulation.
-
-Styles are remembered **by display name** (for example "Player 2"), so a friend keeps the
-same look next time even though their player number changes. If two connected players
-share a name, each is keyed by name plus player number so they can be styled
-separately. Styles are saved as you edit, to
-`BeaverBuddiesCursorStyles.json` in the game's persistent data folder
-(`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn`). A missing, damaged or
-read-only file just means default styles; values are clamped when loaded.
-
-A player appears in the panel while they are connected and sharing. If someone turns
-sharing off, they disappear from the list until they turn it back on.
+These choices are yours alone: nothing is sent, so each player can style others differently. They're remembered by
+display name, so a friend keeps their look next time.
 
 ## Settings
 
-In Mod Settings, **Player activity indicators** turns sharing and display on or off.
-**Ping Display Name** and **Ping Color** are the name and color other players see for
-you here, and on your pings. Pick different names and colors for easier
-identification; connection labels distinguish players even if their names match.
-While **Ping Color** is left on its default yellow, other players see a color of their own by player
-number instead (the host orange, then blue, green, pink, purple, teal, red and lime for the guests as
-they join, repeating after eight), so players who never touch the setting still look different. Any
-other color, even a slightly different yellow, is kept as chosen. The swatch called **Their color** in
-**Player cursors** shows that color, and your own choices there still win. The color you see your own
-name in, in the chat, is the **You, in the chat** card's there (1.4.0-beta6). Pings always use the Ping
-Color as set, yellow by default. (From Stability Fork 1.1.11.)
-A host who disables their own display still relays other guests' activity.
+In **Mod Settings → Timber Together**:
 
-## Performance and synchronization
+- **Player activity indicators** (on): share your cursor, selection and edits, and show others'.
+- **Ping Display Name** and **Ping Color** (yellow): what others see for you. Left on "Player", the name becomes
+  your Steam name. Left on yellow, you get a color by player number (the host orange, then blue, green, pink, purple,
+  teal, red and lime), so players who never change it still look different.
 
-- At most ten samples per second using unscaled time, including while paused. No
-  catch-up bursts on slow frames, and no dependence on simulation speed.
-- Activity frames use the existing TCP/Steam connection but are handled **outside the
-  replay script and the desync hash**: they are intercepted on the receive thread
-  before they can reach the event queue, so they cannot change tick order, replay, or
-  hash state. The host assigns each guest's identity; a guest cannot claim another
-  player's id. The host is player 0.
-- Sending never blocks the game thread. Each connection keeps only the newest pending
-  state per player and is drained by a single pooled task, and every frame goes
-  through the same length-framed, stream-locked write path as gameplay events, so an
-  activity frame cannot split a reliable event.
-- A joining guest is not sent any activity until its map, state and init frames have
-  been written, and a guest does not send until it has received the map.
-- Incoming activity is validated (coordinates, ids, colors, name length, key count);
-  a malformed frame is dropped and never ends the session. The receive mailbox keeps
-  at most 64 latest states. Remote displays expire after three seconds without
-  updates, and reload, session change, disable and disconnect clear overlays and
-  highlights. Missing or deleted entities are ignored. No selectable objects, colliders
-  or input controls are created, and no per-frame scene scans or gameplay random calls
-  are used.
-- If the overlay ever throws, it disables itself for that scene rather than affecting
-  the game.
+A player who turns sharing off disappears from your screen until they turn it back on. Turning yours off also
+hides everyone else's.
 
-Because the build-compatibility handshake already requires identical mod builds,
-every player in a session has this feature or none of them do.
-
-## Validation
-
-`dotnet run --project StabilityTests` (348 checks in 1.4.0-beta11, of which the activity checks are described
-here) covers:
-
-- the production transport over in-memory streams with a host and two guests:
-  identity assignment (a guest claiming another id is ignored), relay without echo,
-  no change to hash / script / tick progress, dropped malformed frames, gameplay
-  ordering under an activity flood, a joining guest receiving map -> state -> init
-  before any activity, and disconnect cleanup;
-- message validation, name sanitizing, the latest-wins mailbox and its cap, and the
-  outgoing coalescing channel;
-- the per-player style store: clamping, hostile or damaged files, entry caps, atomic
-  save and reload, unwritable locations, and name-collision keys;
-- your own chat color (1.4.0-beta6): kept under a key no name can take, dropped when back to
-  the default, saved and reloaded, an older file read as before, and every string the dialog asks
-  for present in the English file.
-
-`dotnet run --project RuntimeChecks -- <BeaverBuddies.dll> <Timberborn Managed>
-<Harmony dir> <ModSettings Scripts dir>` (278 checks in 1.4.0-beta11) still passes against the
-compiled mod.
-
-**Not covered by automated tests:** how the cursor, labels and outlines actually
-render, and the settings dialog's layout and slider behavior. Those need the real
-game.
-
-## Two-player playtest
-
-1. Install the same build on every computer and restart. Confirm **Player activity
-   indicators** appears in Mod Settings, and pick distinct names and colors.
-2. Host and join normally. Move around the same building from different camera
-   angles; check cursor position on terrain and building surfaces.
-3. Select different buildings, then the same one. Check outlines and name labels,
-   that your own selection color wins, and that you can scroll and click through a
-   cursor marker.
-4. Change a recipe, worker count or automation setting. **Editing** should appear for
-   three seconds; merely leaving a panel open should show **Viewing**.
-5. Open Options -> **Player cursors**. Check the other player's card and that
-   dragging each slider updates their cursor live: color presets, RGB, Size and
-   Transparency. Use **Reset**, close and reopen the dialog, then restart the game and
-   confirm the style is remembered. In the first card, **You, in the chat**, pick a
-   preset: your own name in the chat changes on your screen within a moment and not on
-   the other player's; **Reset** returns it to the default.
-6. Have a third player join (or rename one) while the dialog is open and confirm the
-   list updates. Try two players with the same name.
-7. Repeat while paused and at faster speeds. Hover UI, alt-tab, disable and re-enable
-   activity, remove a selected building, and disconnect a guest; stale marks should
-   clear within about three seconds.
-8. In a separate-colonies game: select the other colony's building (the outline shows on their screen, in your
-   cursor color); try to change it: refused, and on their screen **Editing** shows for at most three seconds with
-   nothing changed; press Ctrl+L and check the roads are drawn in the colonies' colors, not the cursors'.
+How cursors are sent without touching the game: [DEVELOPING.md](DEVELOPING.md#connection-panel-chat-and-player-cursors).

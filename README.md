@@ -154,7 +154,7 @@ Change them under Options → Bindings → **Timber Together**. **Ping Location*
 - **Dev mode** desyncs the game, except its instant unlock, *Finish now* and *Add 1000 Science*.
 - **After a Timberborn update** that changes something this mod corrects, co-op stops at load and names it (single
   player carries on). Update Timber Together.
-- The game ends only when every beaver on the map is gone. Text added by this mod is English only.
+- The game ends only when every beaver on the map is gone. Much of the text this mod adds is English only.
 
 More: [Steam invites](STEAM-INVITES.md), [the connection panel](CONNECTION-PANEL.md),
 [player cursors](PLAYER-ACTIVITY.md), and the full colony rules in [TWO-COLONIES.md](TWO-COLONIES.md).
