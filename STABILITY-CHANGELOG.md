@@ -42,7 +42,7 @@ A session on Kyler's machine builds both configurations and runs RuntimeChecks b
   the load): the game stays single-player while its player waits in the room. Every place that took a guest's join for
   `EventIO` follows it: the error planner reports a held join's failure, a held join's session fault never reaches the
   game, the guest's room watches the service's join, and Leave, a room's end, Cancel, a stopped rejoin, a new join and
-  hosting instead all end it (`EndJoin`). A room welcomed in a game shows as its window (`CheckWaitingRoom`: no more D20
+  hosting instead all end it (`EndJoin`). A join still held when another scene is set up is closed (`DropHeldJoin`). A room welcomed in a game shows as its window (`CheckWaitingRoom`: no more D20
   leave, and `BeaverBuddies.Lobby.InGameInvite` goes).
 - **Invites and Join in a game.** An invite accepted while playing alone joins in place (`InviteRules`: `JoinInGame`);
   rc6's *Save and join* box, its pending join in the main menu and its two texts go. In a co-op game, or while hosting a
@@ -55,12 +55,18 @@ A session on Kyler's machine builds both configurations and runs RuntimeChecks b
   opens. A guest stops reading at the notice, and its connection's end is then no error (`TimberClient.HostMoved`,
   `OnHostMoved`, queued before the close): its session ends quietly (no *connection lost*, no Rejoin box) and it follows
   at once (`ClientConnectionService.FollowHost`), trying every second for a minute under a box that says the host is
-  moving the game. A guest that missed the notice sees *connection lost* with Rejoin, which reaches the same room.
-- **The Steam lobby is kept** (`SteamListener`). The stopping listener hands its lobby to the next instead of leaving it
-  (`KeepLobbyForNextServer`); the room's listener reopens it, if it is still the host's (joinable, `bb_open` 1, `bb_room`
-  1, a new description). The guests are still members, so a Steam guest connects straight to the host once the lobby says
-  the room is open, even when it is invite-only (`ReconnectStep.ConnectInLobby`). A room that fails to start, a server
-  without Steam, and the main menu leave a kept lobby. `LobbySession.Open` now survives a server that throws as it
+  moving the game. A guest told before its save was loaded follows too, and one told between scenes is followed by the
+  next scene. A guest reads its connection to the end, as a Steam link says it is closed as soon as the host's close
+  arrives, with the notice still unread. A guest that missed the notice sees *connection lost* with Rejoin, which
+  reaches the same room. A Save and Rehost whose save fails after the guests were told ends the session they left
+  quietly (`AbandonMove`); they wait under their box. Off Windows, the room's TCP listener may reuse its address, so it
+  takes the port again at once after the game's server closed on its guests.
+- **The Steam lobby is kept** (`SteamListener`). As the room opens, the stopping listener hands its lobby to the next
+  instead of leaving it (`HandLobbyToRoom`, `KeepLobbyForNextServer`); the room's listener reopens it, if it is still the
+  host's (joinable, `bb_open` 1, `bb_room` 1, a new description). The guests are still members, so a Steam guest connects
+  straight to the host once the lobby says the room is open, even when it is invite-only (`ReconnectStep.ConnectInLobby`),
+  and looks for the host's next lobby if the host has left that one. A room that fails to start, a Steam listener that
+  fails, a server without Steam, and the main menu leave a kept lobby. `LobbySession.Open` now survives a server that throws as it
   starts.
 - **Rejoin in the game.** Rejoin and the desync dialog's Reconnect wait in the game (no main menu), their box over the
   paused game (`JoinFlowRules.BoxCanShow`), and the host's room opens as a window when it welcomes the player. rc5's quiet
@@ -73,8 +79,8 @@ A session on Kyler's machine builds both configurations and runs RuntimeChecks b
 - **Texts:** the game menu's questions, a failed rehost, the lost connection, the rejoin's boxes, the desync message
   and the room's Cancel question no longer send the player to the main menu; new `BeaverBuddies.Rejoin.Following`;
   `Invite.FromGame`, `Invite.SaveAndJoin` and `Lobby.InGameInvite` removed.
-- **Checks:** StabilityTests 476 → **498** (22 new in `Rc7Checks.cs`, one a real host and guest over a pipe for the move
-  notice; the rc4, rc5 and rc6 checks, `JoinBoxChecks` and `JoinFixChecks` follow the change). RuntimeChecks: 13 new in
+- **Checks:** StabilityTests 476 → **502** (26 new in `Rc7Checks.cs`: real hosts and guests over pipes for the move
+  notice and for a guest reading its host's last frames after its link closed, a real port bound again; the rc4, rc5 and rc6 checks, `JoinBoxChecks` and `JoinFixChecks` follow the change). RuntimeChecks: 13 new in
   `Rc7RuntimeChecks.cs` (the game members used, the UI.zip numbers of the Load game box, every class the window uses in
   a sheet it has, the IL order of the move, the held join and the exit saves, the game context's bindings), and the rc4,
   rc5, rc6 and desync checks follow; **written, compiled, not run** (they need the game).

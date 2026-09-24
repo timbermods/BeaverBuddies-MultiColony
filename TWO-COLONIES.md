@@ -120,7 +120,8 @@ close button and Esc are Cancel or Leave, which ask first as the page's do.
   the host keeps its lobby for the room (reopened to players, now a waiting room), so its guests, still members,
   connect straight back even when the lobby is invite-only; a direct-IP guest reconnects to the address it used, where
   the room listens on the same port. A guest that missed the word (a slow or dropped link) sees *The multiplayer
-  connection was lost* with **Rejoin**, which reaches the same room.
+  connection was lost* with **Rejoin**, which reaches the same room. If the host's save fails after the guests were
+  told, the session ends and they keep waiting in their box until they cancel it or the host hosts again.
 - **Rejoin** (on the lost-connection message) and **Reconnect (wait for Rehost)** (on the desync dialog) wait in the
   game, in a box over it (Cancel stops waiting), and open the host's room as a window when it welcomes the player. A
   direct-IP guest asks the host's address every few seconds, off the game's thread, and joins once something listens
@@ -709,9 +710,10 @@ pressed on, and desync the game. A notice says so; unpause to play on.
   arrives (`LoadMap`, just before the scene changes): its errors are still the join's to report, and nothing it hears
   reaches the game. A host moving a running game sends each guest a control frame of its own (`MoveFrames`, never
   replayed or hashed) and flushes it before its server closes; a guest that read it takes its connection's end as the
-  move, not an error (`TimberClient.HostMoved`, `ClientEventIO.OnHostMoved`), and rejoins at once. The host's Steam
-  listener hands its lobby to the room's (`SteamListener.KeepLobbyForNextServer`); the room's server binds the same
-  port once the old one has closed. The exit save at Start is the game's own (`Autosaver.CreateExitSave`), made by
+  move, not an error (`TimberClient.HostMoved`, `ClientEventIO.OnHostMoved`), and rejoins at once. As the room opens,
+  the host's Steam listener hands its lobby to the room's (`ServerEventIO.HandLobbyToRoom`,
+  `SteamListener.KeepLobbyForNextServer`); the room's server binds the same port once the old one has closed (off
+  Windows its listener may reuse the address, which the old server's just-closed connections still hold). The exit save at Start is the game's own (`Autosaver.CreateExitSave`), made by
   `InGameLobby` as `ExitSaveRules` says.
 - **Every colony state change** (owners, marks, science and unlocks, exchanges and their ledger, traded
   beavers, presence, hand-overs, working hours) made inside a tick or a replayed action folds into a running digest.
