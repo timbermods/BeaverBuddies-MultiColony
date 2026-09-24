@@ -293,36 +293,26 @@ static class RcMainChecks
             string hosting = Source("BeaverBuddies", "Connect", "ServerHostingUtils.cs");
             Check(!hosting.Contains("new ServerEventIO") && !hosting.Contains("UpdateDialogBox"), "the original BeaverBuddies hosting dialog is back");
             Check(Body(hosting, "public static void LoadAndHost(").Contains("waitingRoom.OpenForSave(saveReference, data)"), "a save no longer opens its Co-op Game page");
-            // The Load Game box as the Host co-op game box: its Host button only then, its Enter and double-click host.
-            string flow = Source("BeaverBuddies", "Connect", "HostCoopFlow.cs");
-            string dress = Body(flow, "public void Dress(VisualElement root)");
-            Check(dress.Contains("root.Q<Button>(\"LoadButton\")?.ToggleDisplayStyle(!HostMode)") && dress.Contains("ToggleDisplayStyle(HostMode)"),
-                "the box's Load and Host co-op game must swap with the mode");
-            Check(Body(hosting, "static bool Prefix(LoadGameBox __instance, ref bool __result)").Contains("if (!HostCoopMenu.HostMode || HostCoopMenu.Instance == null) return true;"),
-                "Enter and a double-click must load in the Load Game box and host only in the Host co-op game box");
-            Check(hosting.Contains("static void Postfix() => HostCoopMenu.BoxClosed();"), "closing the box must end its host mode");
-            Check(hosting.Contains("else __result.Q<Button>(LoadGameBoxHostButton.Name)?.ToggleDisplayStyle(false);"),
-                "a game's Load Game box must not host");
+            // rc7: the Load game box has Host co-op game right of Load, wherever a room can open; the box itself only loads.
+            string patch = Body(hosting, "public static void Postfix(LoadGameBox __instance, ref VisualElement __result)");
+            Check(patch.Contains("DuplicateOrGetButton(__result, \"LoadButton\", LoadGameBoxHostButton.Name,") && patch.Contains("HostButtonRules.ShowOnLoadBox("),
+                "Host co-op game must be the box's own button, beside Load, shown by the hosting rule");
+            Check(!hosting.Contains("[HarmonyPatch(typeof(LoadGameBox), \"LoadGame\")]"), "Enter and a double-click must load, as the game made them");
             // A save a game handed over opens once the main menu is up, through the game's own save checks.
+            string flow = Source("BeaverBuddies", "Connect", "HostCoopFlow.cs");
             string update = Body(flow, "public void UpdateSingleton()");
             Check(update.Contains("_panelStack.TopPanel.IsOverlay") && update.Contains("ServerHostingUtils.LoadIfSaveValidAndHost("),
                 "a handed-over save must wait for the main menu, and go through the game's checks");
-            // The main menu's and a game's buttons, under Load game: Host, then Join.
+            // The main menu's Join, and a game's Host then Join, under Load game.
             string ui = Source("BeaverBuddies", "Connect", "ClientConnectionUI.cs");
             string add = Body(ui, "public void AddJoinButton(VisualElement __result, bool mainMenu)");
-            Check(add.Contains("DuplicateOrGetButton(__result, \"LoadGameButton\", HostButtonName,") && add.Contains("DuplicateOrGetButton(__result, HostButtonName, \"JoinButton\","),
-                "Host co-op game must come under Load game, and Join co-op game under it");
+            Check(add.Contains("DuplicateOrGetButton(__result, \"LoadGameButton\", HostButtonName,") && add.Contains("mainMenu ? \"LoadGameButton\" : HostButtonName, \"JoinButton\","),
+                "Host co-op game must come under Load game in a game, and Join co-op game under it (under Load game in the main menu)");
             string dressInGame = Body(ui, "private void DressHostInGame(Button host)");
             // rc5 (A8): decided by how the game was loaded (HostButtonRules), so a session that ended changes nothing.
             Check(dressInGame.Contains("HostKind()") && dressInGame.Contains("kind != HostButtonKind.Hidden") && dressInGame.Contains("SaveAndRehostButton"),
                 "in a game: Host co-op game alone, Save and Rehost when hosting, nothing for a guest");
-            Check(Body(ui, "private void HostClicked(bool mainMenu)").Contains(".SetConfirmButton(") , "leaving the game must be asked first");
-            // Both ways a game hosts itself: saved, then its page in the main menu.
-            string rehosting = Source("BeaverBuddies", "Connect", "RehostingService.cs");
-            Check(Body(rehosting, "public bool RehostGame()").Contains("HostCoopFlow.HostInMainMenu(_mainMenuSceneLoader, save, rehost: true)"),
-                "Save and Rehost must open the Co-op Game page in the main menu");
-            Check(Body(rehosting, "public bool HostThisGame()").Contains("HostCoopFlow.HostInMainMenu(_mainMenuSceneLoader, save, rehost: false), true, \" Co-op\""),
-                "Host co-op game in a game must save a new Co-op save and open its page");
+            Check(Body(ui, "private void HostClicked()").Contains(".SetConfirmButton(") , "hosting this game must be asked first");
             // What the box says of the selected save.
             Check(BeaverBuddies.Lobby.LobbyRules.SaveStatusKey(false, true, false, 3) == null, "a save that could not be read: nothing");
             Check(BeaverBuddies.Lobby.LobbyRules.SaveStatusKey(true, false, false, 0) == "BeaverBuddies.Saving.Status.Shared", "shared");

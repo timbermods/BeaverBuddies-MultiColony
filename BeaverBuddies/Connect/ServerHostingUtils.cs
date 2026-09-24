@@ -26,9 +26,10 @@ namespace BeaverBuddies.Connect
 {
 
     /// <summary>
-    /// The Load Game box's Host co-op game button (a copy of its Load), shown only while the box is open as the main
-    /// menu's Host co-op game box (HostCoopMenu, 1.4.0-rc4). The Load Game box itself only loads, in the main menu and in a
-    /// game: a game hosts itself from its game menu.
+    /// The Load game box's Host co-op game button (1.4.0-rc7): a copy of its Load, right of it, in the main menu and in a
+    /// game. It hosts the selected save through its Co-op Game room (LobbyHostPanel.OpenForSave): the main menu's page, or
+    /// a game's window over the game. Load, Enter and a double-click load, as the game made them. Shown as the game menu's
+    /// hosting button is (HostButtonRules.ShowOnLoadBox): not for a game loaded as a guest, nor after a failed action.
     /// </summary>
     public static class LoadGameBoxHostButton
     {
@@ -42,53 +43,25 @@ namespace BeaverBuddies.Connect
         {
             if (__result == null) return;
             ILoc _loc = __instance._loc;
-            ButtonInserter.DuplicateOrGetButton(__result, "LoadButton", LoadGameBoxHostButton.Name, (button) =>
+            Button host = ButtonInserter.DuplicateOrGetButton(__result, "LoadButton", LoadGameBoxHostButton.Name, (button) =>
             {
                button.text = _loc.T("BeaverBuddies.Saving.HostCoopGame");
                button.clicked += () => HostSelectedGame(__instance);
             }, __instance._visualElementLoader?._visualElementInitializer);
-            // Null in a game (the main menu's alone): the box is the Load Game box there.
-            HostCoopMenu menu = SingletonManager.GetSingleton<HostCoopMenu>();
-            if (menu != null) menu.Dress(__result);
-            else __result.Q<Button>(LoadGameBoxHostButton.Name)?.ToggleDisplayStyle(false);
+            bool shown = HostButtonRules.ShowOnLoadBox(SingletonManager.GetSingleton<BeaverBuddies.Lobby.LobbyHostPanel>() != null,
+                ClientConnectionUI.HostKind());
+            host.ToggleDisplayStyle(shown);
+            // Four medium buttons do not fit the box as the game sizes it: it is made wider while Host co-op game is there
+            // (LoadBoxFit), never its buttons narrower.
+            VisualElement box = __result.Q(className: "load-box");
+            if (box != null) box.style.width = shown ? new StyleLength(LoadBoxFit.WidenedBox) : new StyleLength(StyleKeyword.Null);
+            // Under the picture, what the selected save is.
+            LoadGameBoxColonies.Of(__result);
         }
-
-        /// <summary>Enter or a double-click on a save: in the Host co-op game box, host it rather than load it.</summary>
-        internal static void HostSelectedGameFromBox(LoadGameBox box) => HostSelectedGame(box);
 
         [ManualMethodOverwrite]
         /*
-         * 04/19/2025
-        if (_saveList.TryGetSelectedSave(out var selectedSave))
-        {
-            if (_gameSaveRepository.SaveExists(selectedSave.SaveReference))
-            {
-                _validatingGameLoader.LoadGameIfSaveValid(selectedSave.SaveReference);
-                return true;
-            }
-
-            Debug.LogWarning("Save: " + selectedSave.DisplayName + " doesn't exist, failed to load.");
-        }
-        return false;
-         */
-        // Duplicates the LoadGameBox.LoadGame method, but loads the game with
-        // the HostingSaveReference instead of ValidatingGameLoader
-        private static void HostSelectedGame(LoadGameBox __instance)
-        {
-            if (__instance._saveList.TryGetSelectedSave(out var selectedSave))
-            {
-                if (__instance._gameSaveRepository.SaveExists(selectedSave.SaveReference))
-                {
-                    ServerHostingUtils.LoadIfSaveValidAndHost(__instance._validatingGameLoader, __instance._dialogBoxShower, selectedSave.SaveReference);
-                }
-                // Debug.LogWarning("Save: " + selectedSave.DisplayName + " doesn't exist, failed to load.");
-            }
-        }
-    }
-
-    [ManualMethodOverwrite]
-    /*
-     * 2026-09-23, Timberborn 1.1.2.4, GameSaveRepositorySystemUI: LoadGameBox.LoadGame
+         * 2026-09-23, Timberborn 1.1.2.4, GameSaveRepositorySystemUI: LoadGameBox.LoadGame
         if (_saveList.TryGetSelectedSave(out var selectedSave))
         {
             if (_gameSaveRepository.SaveExists(selectedSave.SaveReference))
@@ -99,41 +72,35 @@ namespace BeaverBuddies.Connect
             UnityEngine.Debug.LogWarning("Save: " + selectedSave.DisplayName + " doesn't exist, failed to load.");
         }
         return false;
-     */
-    /// <summary>The Host co-op game box's Enter and double-click host the selected save (1.4.0-rc4); the Load Game box loads it.</summary>
-    [HarmonyPatch(typeof(LoadGameBox), "LoadGame")]
-    public class LoadGameBoxLoadGamePatcher
-    {
-        [HarmonyPriority(Priority.Last)]
-        static bool Prefix(LoadGameBox __instance, ref bool __result)
+         */
+        // LoadGameBox.LoadGame, hosting the selected save through the game's own save checks (ValidatingGameLoader's
+        // validators, as a load goes through them) instead of loading it.
+        private static void HostSelectedGame(LoadGameBox __instance)
         {
-            // Only the main menu's box hosts; a game's Load Game box always loads (1.4.0-rc5 review, A7).
-            if (!HostCoopMenu.HostMode || HostCoopMenu.Instance == null) return true;
-            __result = __instance._saveList.TryGetSelectedSave(out _);
-            LoadGameBoxGetPanelPatcher.HostSelectedGameFromBox(__instance);
-            return false;
+            if (__instance._saveList.TryGetSelectedSave(out var selectedSave))
+            {
+                if (__instance._gameSaveRepository.SaveExists(selectedSave.SaveReference))
+                {
+                    ServerHostingUtils.LoadIfSaveValidAndHost(__instance._validatingGameLoader, __instance._dialogBoxShower, selectedSave.SaveReference);
+                    return;
+                }
+                Plugin.LogWarning("[Lobby] The save " + selectedSave.SaveReference.SaveName + " doesn't exist, so it was not hosted.");
+            }
         }
     }
 
-    /// <summary>The box closed: the next time it opens from Load Game it is the Load Game box again.</summary>
-    [HarmonyPatch(typeof(LoadGameBox), nameof(LoadGameBox.OnUICancelled))]
-    public class LoadGameBoxClosedPatcher
-    {
-        static void Postfix() => HostCoopMenu.BoxClosed();
-    }
-
-    /// <summary>A save was picked: the Host co-op game box's button follows the game's Load, and it says what the save is.</summary>
+    /// <summary>A save was picked: Host co-op game follows the game's Load, and the line under the picture says what it is.</summary>
     [HarmonyPatch(typeof(LoadGameBox), "OnSaveSelectionChanged")]
     public class LoadGameBoxSaveSelectedPatcher
     {
         static void Postfix(LoadGameBox __instance)
         {
-            if (!HostCoopMenu.HostMode || HostCoopMenu.Instance == null) return;
             try
             {
                 bool selected = __instance._saveList.TryGetSelectedSave(out GameSaveItem save);
-                __instance.GetPanel()?.Q<Button>(LoadGameBoxHostButton.Name)?.SetEnabled(selected);
-                HostCoopMenu.Instance?.SaveSelected(selected ? save.SaveReference : null);
+                VisualElement root = __instance.GetPanel();
+                root?.Q<Button>(LoadGameBoxHostButton.Name)?.SetEnabled(selected);
+                LoadGameBoxColonies.Of(root)?.Show(selected ? save.SaveReference : null, __instance._gameSaveRepository);
             }
             catch (Exception error)
             {

@@ -50,8 +50,6 @@ namespace BeaverBuddies
             // Host co-op game in a game played alone, and Save and Rehost in co-op: both save this game and open its Co-op
             // Game page in the main menu. Bound in every game, before the co-op-only services below (1.4.0-rc5 review, A1).
             containerDefinition.Bind<RehostingService>().AsSingleton();
-            // The Host co-op game box is the main menu's: a game's Load Game box only loads (A7).
-            HostCoopMenu.BoxClosed();
 
             // EventIO gets set before load, so if it's null, this is a regular
             // game, so don't initialize these services.
@@ -120,7 +118,7 @@ namespace BeaverBuddies
             containerDefinition.Bind<BeaverBuddies.Factions.NewGameFactionCapture>().AsSingleton();
             // The Game Mode page's colony checkboxes (Separate colonies, and under it science and factions).
             containerDefinition.Bind<BeaverBuddies.Lobby.NewGameColonyOptions>().AsSingleton();
-            // Host co-op game on the main menu (the Load Game box as the Host co-op game box), and a save a game handed over.
+            // A save a game handed over, whose Co-op Game page opens once the main menu is up.
             containerDefinition.Bind<HostCoopMenu>().AsSingleton();
 
             //new ReportingService().PostDesync("test").ContinueWith(result => Plugin.Log($"Posted: {result.Result}"));

@@ -93,21 +93,25 @@ namespace BeaverBuddies.Connect
         }
     }
 
-    /// <summary>The main menu's band, grown to fit its panel with the mod's two buttons (ClientConnectionUI.FitMainMenu).</summary>
-    public static class MainMenuFit
+    /// <summary>
+    /// The Load game box made wide enough for Host co-op game beside its Load (1.4.0-rc7). The game's numbers (UI.zip,
+    /// read again by RuntimeChecks): <c>.load-box</c> is 800 px wide (OptionsStyle), its <c>.box__content-container</c> has
+    /// 45 px of padding each side (CoreStyle), which leaves 710 px, and a <c>.menu-button--medium</c> is at least 184 px
+    /// (CoreStyle): four are 736 px in a centred row (<c>.box-buttons</c>). The box grows; the game's buttons stay its size.
+    /// </summary>
+    public static class LoadBoxFit
     {
-        /// <summary>
-        /// The band's height: the game's <paramref name="band"/> (720 px), or, when the panel and the logo above it need
-        /// more with <paramref name="gap"/> above and below the panel, that much, but never taller than the screen
-        /// (<paramref name="screen"/>) the band is centred on. Before the first layout (no sizes yet) the game's height.
-        /// </summary>
-        public static float Band(float panel, float logo, float screen, float band, float gap)
-        {
-            if (!(panel > 0) || !(logo > 0)) return band;
-            float need = panel + logo + 2 * gap;
-            if (screen > 0 && need > screen) need = screen;
-            return need > band ? need : band;
-        }
+        public const float Box = 800;
+        public const float Padding = 45;
+        public const float ButtonMinWidth = 184;
+        public const float Extra = 70;
+        public static float WidenedBox => Box + Extra;
+
+        /// <summary>The room inside a box <paramref name="width"/> wide, for its row of buttons.</summary>
+        public static float Inside(float width) => width - 2 * Padding;
+
+        /// <summary>Whether <paramref name="buttons"/> medium buttons fit side by side in a box <paramref name="width"/> wide.</summary>
+        public static bool Fits(int buttons, float width) => buttons * ButtonMinWidth <= Inside(width);
     }
 
     /// <summary>What the game menu's hosting button is (ClientConnectionUI).</summary>
@@ -137,5 +141,13 @@ namespace BeaverBuddies.Connect
             if (replayFailure || !loadedAsHost) return HostButtonKind.Hidden;
             return HostButtonKind.SaveAndRehost;
         }
+
+        /// <summary>
+        /// The Load game box's Host co-op game (1.4.0-rc7): wherever a Co-op Game room can be opened
+        /// (<paramref name="roomPanelBound"/>: the room's panel is bound in this scene), and in a game as the game menu's
+        /// hosting button is shown (<see cref="Decide"/>): never for a guest's game, nor after a failed action. It hosts the
+        /// selected save, whatever the game menu's button is called.
+        /// </summary>
+        public static bool ShowOnLoadBox(bool roomPanelBound, HostButtonKind kind) => roomPanelBound && kind != HostButtonKind.Hidden;
     }
 }

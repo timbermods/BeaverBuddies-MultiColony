@@ -127,16 +127,14 @@ static class Rc5Checks
                 Check(connect.Contains("if (!quietJoin) ShowError(\"BeaverBuddies.JoinCoopGame.Error." + key + "\");"), key + " is shown at every quiet try");
         });
 
-        yield return ("A7: only the main menu's box hosts; a game's Load Game box loads, and a game scene clears the box's host mode", () =>
+        yield return ("A7: the Load game box loads as the game made it: no host mode to leak into a game (since rc7 it hosts with its own button)", () =>
         {
             string hosting = Source("BeaverBuddies", "Connect", "ServerHostingUtils.cs");
-            Check(Body(hosting, "static bool Prefix(LoadGameBox __instance, ref bool __result)").Contains("HostCoopMenu.Instance == null) return true;"),
-                "a game's Load Game box hosts (does nothing) after a game started from the Host co-op game box");
-            Check(Body(hosting, "public class LoadGameBoxSaveSelectedPatcher").Contains("HostCoopMenu.Instance == null) return;"),
-                "a game's Load Game box reads saves for the Host co-op game box's line");
-            string configure = Body(Source("BeaverBuddies", "Plugin.cs"), "public class ReplayConfigurator");
-            int reset = configure.IndexOf("HostCoopMenu.BoxClosed();", StringComparison.Ordinal);
-            Check(reset >= 0 && reset < configure.IndexOf("if (EventIO.IsNull) return;", StringComparison.Ordinal), "a game scene keeps the box's host mode");
+            // rc4's host mode made the box's Enter and double-click host, and a game's box did nothing after hosting from the
+            // main menu's. rc7 has no mode: Load, Enter and a double-click load; Host co-op game is a button of its own.
+            Check(!hosting.Contains("[HarmonyPatch(typeof(LoadGameBox), \"LoadGame\")]"), "the box's LoadGame is patched again (a host mode)");
+            Check(!hosting.Contains("HostMode") && !hosting.Contains("BoxClosed"), "the box has a host mode again");
+            Check(!Body(Source("BeaverBuddies", "Plugin.cs"), "public class ReplayConfigurator").Contains("BoxClosed"), "a game scene clears a host mode that no longer exists");
         });
 
         yield return ("A8: the game menu's hosting button follows how the game was loaded, not whether its session is live", () =>
@@ -147,22 +145,24 @@ static class Rc5Checks
             Check(HostButtonRules.Decide(true, true, true) == HostButtonKind.Hidden, "after a failed action nothing is rehosted");
             string ui = Source("BeaverBuddies", "Connect", "ClientConnectionUI.cs");
             Check(!Body(ui, "private void DressHostInGame(Button host)").Contains("EventIO.IsNull"), "the button still reads a session that ended as playing alone");
-            Check(Body(ui, "private static HostButtonKind HostKind()").Contains("replay?.LoadedAsHost"), "the button no longer asks how the game was loaded");
-            Check(Body(ui, "private void HostClicked(bool mainMenu)").Contains("kind == HostButtonKind.Hidden) return;"), "a hidden button's click still hosts");
+            Check(Body(ui, "internal static HostButtonKind HostKind()").Contains("replay?.LoadedAsHost"), "the button no longer asks how the game was loaded");
+            Check(Body(ui, "private void HostClicked()").Contains("kind == HostButtonKind.Hidden) return;"), "a hidden button's click still hosts");
             Check(Source("BeaverBuddies", "ReplayService.cs").Contains("LoadedAsHost = EventIO.Get() is ServerEventIO;"), "the game no longer records whether it was loaded as the host");
         });
 
-        yield return ("A9: the Host co-op game box's gold line comes back with the box after the Co-op Game page closes", () =>
+        yield return ("A9: the Load game box's gold line comes back with the box after a Co-op Game room closes over it", () =>
         {
-            string dress = Body(Source("BeaverBuddies", "Connect", "HostCoopFlow.cs"), "public void Dress(VisualElement root)");
-            Check(dress.Contains("read.TryGetValue(shownKey, out SaveColonyInfo shown)") && !dress.Contains("status.text = \"\";"),
-                "the box blanks the selected save's line each time it is shown again");
+            // rc7: the line lives in the box (LoadGameBoxColonies) and is made once; showing the box again never blanks it.
+            string line = Source("BeaverBuddies", "Connect", "LoadGameBoxColonies.cs");
+            string of = Body(line, "public static LoadGameBoxColonies Of(VisualElement root)");
+            Check(of.Contains("userData is LoadGameBoxColonies line) return line;"), "each showing of the box makes a new, empty line");
+            Check(!of.Contains(".text ="), "showing the box again blanks the selected save's line");
         });
 
-        yield return ("A10: the Host co-op game box reads a save's file off the menu's thread", () =>
+        yield return ("A10: the Load game box reads a save's file off the game's thread", () =>
         {
-            string selected = Body(Source("BeaverBuddies", "Connect", "HostCoopFlow.cs"), "public void SaveSelected(SaveReference save)");
-            Check(!selected.Contains("GetMapBtyes"), "the whole save is read on the menu's thread");
+            string selected = Body(Source("BeaverBuddies", "Connect", "LoadGameBoxColonies.cs"), "public void Show(SaveReference save, GameSaveRepository repository)");
+            Check(!selected.Contains("GetMapBtyes"), "the whole save is read on the game's thread");
             int task = selected.IndexOf("Task.Run(", StringComparison.Ordinal);
             Check(task > 0 && selected.IndexOf("stream.CopyTo(bytes)", StringComparison.Ordinal) > task, "the file is not read inside the task");
         });
@@ -235,16 +235,17 @@ static class Rc5Checks
 
         // ---- C: UI, strings and docs ----
 
-        yield return ("C3: the main menu's band grows to fit its panel with Host co-op game and Join co-op game, up to the screen", () =>
+        yield return ("C3: the main menu's band is the game's: with Join co-op game alone the panel fits it (rc7), so nothing resizes it", () =>
         {
-            // The game's ten buttons and Discord (UI.zip, MainMenuPanel.uxml; RuntimeChecks reads the sizes): 558 px.
-            Check(MainMenuFit.Band(558, 104, 1080, 720, 24) == 720, "the game's own menu changes size");
-            Check(MainMenuFit.Band(646, 104, 1080, 720, 24) == 646 + 104 + 48, "the menu with the mod's two buttons hangs over the band");
-            Check(MainMenuFit.Band(646, 104, 760, 720, 24) == 760, "the band grows past the screen");
-            Check(MainMenuFit.Band(646, 104, 700, 720, 24) == 720, "the band shrinks below the game's on a small screen");
-            Check(MainMenuFit.Band(float.NaN, 104, 1080, 720, 24) == 720 && MainMenuFit.Band(0, 0, 0, 720, 24) == 720, "the band changes before the first layout");
-            string add = Body(Source("BeaverBuddies", "Connect", "ClientConnectionUI.cs"), "public void AddJoinButton(VisualElement __result, bool mainMenu)");
-            Check(add.Contains("if (mainMenu) FitMainMenu(__result);"), "the main menu no longer fits its panel");
+            // rc5 grew the band for Host co-op game and Join co-op game (646 px against 616). rc7 takes Host co-op game off
+            // the main menu (the Load game box hosts): 602 px, as before rc4, so the fit is gone with it.
+            string ui = Source("BeaverBuddies", "Connect", "ClientConnectionUI.cs");
+            string add = Body(ui, "public void AddJoinButton(VisualElement __result, bool mainMenu)");
+            Check(!ui.Contains("FitMainMenu") && !ui.Contains("main-menu__content"), "the main menu's band is still resized");
+            Check(add.Contains("if (!mainMenu)") && add.IndexOf("HostButtonName", StringComparison.Ordinal) > add.IndexOf("if (!mainMenu)", StringComparison.Ordinal),
+                "the main menu has Host co-op game again");
+            Check(add.Contains("mainMenu ? \"LoadGameButton\" : HostButtonName, \"JoinButton\""), "Join co-op game is no longer right under Load game in the main menu");
+            Check(!File.ReadAllText(Path.Combine(Root(), "BeaverBuddies", "Connect", "JoinFlowRules.cs")).Contains("class MainMenuFit"), "the band's rule is back");
         });
 
         yield return ("C5: a rejoin gives up, and says why, only when waiting can't help: another build, or a full room", () =>

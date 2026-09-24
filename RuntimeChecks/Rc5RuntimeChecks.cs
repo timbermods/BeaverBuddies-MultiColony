@@ -32,18 +32,19 @@ internal static class Rc5RuntimeChecks
             return float.Parse(value.Groups[2].Value);
         }
 
-        test("A1, A7: every game has the rehosting service (Host co-op game alone), and a game clears the Host co-op game box's mode", () =>
+        test("A1, A7: every game has the rehosting service (Host co-op game alone); the Load game box has no host mode (rc7)", () =>
         {
             var configure = IlScan.Instructions(Only(Mod("BeaverBuddies.ReplayConfigurator"), "Configure"));
             int coopOnly = configure.FindIndex(i => i.Calls && i.Member?.Name == "get_IsNull");
             int bind = configure.FindIndex(i => i.Calls && i.Member is MethodInfo m && m.Name == "Bind" && m.IsGenericMethod
                 && m.GetGenericArguments()[0].Name == "RehostingService");
-            int reset = configure.FindIndex(i => i.Calls && i.Is("BeaverBuddies.Connect.HostCoopMenu", "BoxClosed"));
             if (coopOnly < 0) throw new Exception("the configurator no longer tells co-op games apart");
             if (bind < 0 || bind > coopOnly) throw new Exception("RehostingService is bound only in co-op: a game played alone has no Host co-op game");
-            if (reset < 0 || reset > coopOnly) throw new Exception("a game keeps the Host co-op game box's mode: its Load game hosts, and does nothing");
             if (configure.Count(i => i.Calls && i.Member is MethodInfo m && m.Name == "Bind" && m.IsGenericMethod
                 && m.GetGenericArguments()[0].Name == "RehostingService") != 1) throw new Exception("RehostingService is bound twice");
+            // rc7: the box's Load, Enter and double-click load as the game made them; Host co-op game is a button of its own.
+            foreach (string gone in new[] { "BeaverBuddies.Connect.LoadGameBoxLoadGamePatcher", "BeaverBuddies.Connect.LoadGameBoxClosedPatcher" })
+                if (mod.GetType(gone) != null) throw new Exception(gone + " is back: the Load game box has a host mode again");
         });
 
         test("A2: a closed Connecting box's Cancel still takes it away", () =>
@@ -79,7 +80,7 @@ internal static class Rc5RuntimeChecks
                 throw new Exception("RehostingService asks for a loader it never uses");
         });
 
-        test("C3: the game's main menu band has no room for two more buttons, so the mod fits the band to its panel", () =>
+        test("C3: the game's main menu band fits its panel with Join co-op game alone (rc7), so the mod leaves the band as it is", () =>
         {
             string panel = Ui("Views/MainMenu/MainMenuPanel.uxml");
             string misc = Ui("Views/MainMenu/MainMenuMiscStyle.uss").Replace("\r\n", "\n");
@@ -88,17 +89,12 @@ internal static class Rc5RuntimeChecks
             float band = Px(misc, ".main-menu__content", "height"), logo = Px(misc, ".background__logo", "height");
             float row = Px(core, ".menu-button", "height"), padding = Px(misc, ".main-menu-panel", "padding");
             float discord = Px(misc, ".main-menu-panel__discord-button", "height") + Px(misc, ".main-menu-panel__discord-button", "margin-top");
-            float game = 2 * padding + buttons * row + discord, withMod = game + 2 * row;
+            float game = 2 * padding + buttons * row + discord, withMod = game + row;
             if (buttons != 10 || band != 720 || logo != 104 || row != 44) throw new Exception($"the main menu changed: {buttons} buttons, band {band}, logo {logo}, rows {row}");
-            if (withMod <= band - logo) throw new Exception($"the panel ({withMod} px) fits the band's {band - logo} px now: the fit may be dropped");
+            if (withMod > band - logo) throw new Exception($"the panel with Join co-op game ({withMod} px) hangs over the band's {band - logo} px");
             Type ui = Mod("BeaverBuddies.Connect.ClientConnectionUI");
-            if (!IlScan.Instructions(Only(ui, "AddJoinButton")).Any(i => i.Calls && i.Member?.Name == "FitMainMenu"))
-                throw new Exception($"the panel ({withMod} px) hangs over the band's {band - logo} px: the menu no longer fits it");
-            var fit = IlScan.Instructions(Only(ui, "FitMainMenu"));
-            foreach (string name in new[] { "main-menu__content", "background__logo", "MainMenuPanel" })
-                if (!fit.Any(i => i.Text == name)) throw new Exception("the fit no longer finds " + name);
-            if (!panel.Contains("name=\"MainMenuPanel\"") || !Ui("Views/MainMenu/Background/LogoBackground.uxml").Contains("background__logo"))
-                throw new Exception("the main menu's panel or logo band is renamed");
+            if (ui.GetMethod("FitMainMenu", All) != null) throw new Exception("the band is resized again, which the main menu no longer needs");
+            if (!panel.Contains("name=\"MainMenuPanel\"") || !panel.Contains("name=\"LoadGameButton\"")) throw new Exception("the main menu's panel or its Load game button is renamed");
         });
 
         test("C8: the mod's buttons are initialised as the game's (NineSliceButton, the scene's initializer); the game's members it reads are there", () =>
