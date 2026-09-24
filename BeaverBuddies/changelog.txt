@@ -1,3 +1,7 @@
+v1.4.0-rc8 (BeaverBuddies MultiColony)
+* The Co-op Game room says what kind of game it is in two words: Shared colony, or Separate colony.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc7 (BeaverBuddies MultiColony)
 * Host a save from Load game, in the main menu or in a game: pick a save and press Host co-op game, right of Load. The main menu's own Host co-op game is gone.
 * The Co-op Game room opens over your game as a window, and the game pauses under it; Cancel or Leave takes you back to your game as it was. Nobody goes through the main menu any more.

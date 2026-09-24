@@ -286,6 +286,14 @@ static class RcMainChecks
                 "a guest's page must use the rule on the host's summary");
         });
 
+        yield return ("rc8: the room's gold line is two words, Shared colony or Separate colony", () =>
+        {
+            string csv = Source("BeaverBuddies", "Localizations", "enUS_BeaverBuddie.csv").Replace("\r\n", "\n");
+            Check(csv.Contains("\nBeaverBuddies.Lobby.Colonies.Shared,\"Shared colony\","), "a shared room must say Shared colony");
+            foreach (string key in new[] { "Colonies.Separate", "Colonies.SeparateMixed", "Colonies.SeparateSave" })
+                Check(csv.Contains("\nBeaverBuddies.Lobby." + key + ",\"Separate colony\","), key + " must say Separate colony");
+        });
+
         // ---- 1.4.0-rc4: a save is hosted through its Co-op Game page (rc7: from the Load game box, and in a game) ----
 
         yield return ("rc4: a save is hosted only through its Co-op Game room: the Load game box's Host co-op game, and a game hosts itself (rc7: in the game)", () =>
