@@ -352,7 +352,7 @@
         <span class="plate c2 grommets">Player 2's colony</span>
       </div>
       <h2 id="trading-h">Barter at a Trading Post</h2>
-      <p>No prices, no currency: this many of one thing for that many of another, so many times. Nothing is given before its return is in. Try the panel below, a working copy with the mod's own rules.</p>
+      <p>Swap goods, science or beavers: this many for that many, round after round. A round crosses only when both sides are in. Try it below, with the mod's own rules.</p>
     </div>
     <noscript><p class="muted">The interactive panel needs JavaScript.</p></noscript>
     <div class="tp-stage">
@@ -361,9 +361,9 @@
           <div>
             <span class="tp-ctl-label" id="tp-me-label">You are</span>
             <div class="tp-ctl-group" role="group" aria-labelledby="tp-me-label">
-              <button class="tp-ctl" type="button" data-me="0" aria-pressed="true">Player 1 (colony 1)</button>
-              <button class="tp-ctl c2" type="button" data-me="1" aria-pressed="false">Player 2 (colony 2)</button>
-              <label class="tp-ctl" style="display:inline-flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" data-auto checked style="margin:0"> the other player answers by itself</label>
+              <button class="tp-ctl" type="button" data-me="0" aria-pressed="true">Player 1</button>
+              <button class="tp-ctl c2" type="button" data-me="1" aria-pressed="false">Player 2</button>
+              <label class="tp-ctl" style="display:inline-flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" data-auto checked style="margin:0"> The other player answers automatically</label>
             </div>
           </div>
           <div>
@@ -374,23 +374,23 @@
               <button class="tp-ctl" type="button" data-preset="science">Science for berries</button>
               <button class="tp-ctl" type="button" data-preset="beavers">2 beavers for carrots</button>
               <button class="tp-ctl" type="button" data-preset="standing">A standing deal</button>
-              <button class="tp-ctl" type="button" data-reset>Reset demo</button>
+              <button class="tp-ctl" type="button" data-reset>Reset</button>
             </div>
           </div>
           <div>
             <span class="tp-ctl-label" id="tp-w-label">Workers on your half</span>
             <div class="tp-ctl-group" role="group" aria-labelledby="tp-w-label">
-              <select class="tp-ctl" data-workers aria-label="Workers on your half"><option value="0">0 (nobody brings your side)</option><option value="1">1</option><option value="2" selected>2</option></select>
+              <select class="tp-ctl" data-workers aria-label="Workers on your half"><option value="0">0</option><option value="1">1</option><option value="2" selected>2</option></select>
             </div>
           </div>
         </div>
         <h3>Things to try</h3>
         <ol class="tp-tips">
-          <li>Press <strong>Make offer</strong>. Player 2 accepts after a moment; your workers bring the logs to <strong>your half</strong> and theirs bring the gears to theirs. The round crosses only when both bars are full, and the <strong>ledger</strong> gets a line.</li>
-          <li>Untick <strong>answers by itself</strong>, make an offer, then switch to <strong>Player 2</strong>: you see the offer from their side, with <strong>Accept</strong> and <strong>Decline</strong>. Every exchange in the game is agreed this way, one player per side. (The panel names a colony by the player who runs it, as the game does.)</li>
-          <li>Set <strong>Workers on your half</strong> to 0 during a round: your side stops arriving and the status line says why. Nothing crosses until it is in.</li>
-          <li>Press <strong>Cancel exchange</strong> mid-round. The other player must agree; until then nothing moves. Once it ends, what waited on each half goes back home.</li>
-          <li>Type <strong>150</strong> in an amount box: the line turns red and <strong>Make offer</strong> grays out. Set <strong>Rounds</strong> higher instead, or tick <strong>Repeat until cancelled</strong>.</li>
+          <li>Press <strong>Make offer</strong>. Player 2 accepts, and each side's workers carry its goods to its own half. When both bars fill, the round crosses and the <strong>Ledger</strong> gets a line.</li>
+          <li>Untick <strong>answers automatically</strong> and make an offer. Then switch to <strong>Player 2</strong> to <strong>Accept</strong> or <strong>Decline</strong> it.</li>
+          <li>Set <strong>Workers on your half</strong> to 0 during a round. Your side stops, and nothing crosses.</li>
+          <li>Press <strong>Cancel exchange</strong>. It ends when the other player agrees, and anything still waiting goes home.</li>
+          <li>Type <strong>150</strong> in an amount box. Each side gives at most 100 per round, so add <strong>Rounds</strong> or tick <strong>Repeat until cancelled</strong>.</li>
         </ol>
         <div class="tp-log" data-tp-log aria-live="polite"></div>
       </div>
@@ -415,10 +415,10 @@
           </div>
           <section class="tp-sec tp-section" data-tp-panel aria-label="Trading"></section>
         </div>
-        <p class="tp-fine"><span data-clock>Cycle 3, day 12</span> &middot; A replica for illustration, not part of the game. Goods icons are Timberborn's; nothing here is saved.</p>
+        <p class="tp-fine"><span data-clock>Cycle 3, day 12</span> &middot; A copy to try things out; nothing is saved. Goods icons are Timberborn's.</p>
       </div>
     </div>
-    <p class="muted" style="margin-top:2rem;max-width:72ch">In the game: build a <b>Trading Post</b> (District Management, 10 logs, no science) between your road and another colony's, one half's door on each road. It trades once both roads reach it; until then its panel says <i>Not trading yet</i>. <kbd>Ctrl</kbd>+<kbd>T</kbd> lists all your posts and every colony, with what each is <b>looking for</b>.</p>
+    <p class="muted" style="margin-top:2rem;max-width:72ch">In the game: build a <b>Trading Post</b> (District Management, 10 logs) with one half's door on your road and the other on a neighbour's. It trades once both roads reach it. <kbd>Ctrl</kbd>+<kbd>T</kbd> lists your Trading Posts and every colony.</p>
   </div>
 </section>
 
