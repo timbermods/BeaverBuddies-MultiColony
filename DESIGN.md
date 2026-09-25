@@ -294,7 +294,7 @@ Buttons are plates you can press.
 ### Timber Post and Rail Vocabulary
 Timber is the structure every sign hangs on:
 - **Hero post:** a 12px grained timber post down the left of the hero column, carrying the name plate.
-- **Name plate:** the one enamel plate with no white keyline. It sits in a 13px mitred timber frame, nailed at the corners (`name-frame-day.svg` / `name-frame-night.svg`, a 96px nine-slice with 16px boards: lighter wood by day, darker at night), with the mount shadow on the frame. The motto starts under the left edge of the name's T stem, at 0.22 of the name's size (at least 0.78rem).
+- **Name plate:** the one enamel plate with no white keyline and no grommets (Kyler, 2026-09-24). It sits in a 13px mitred timber frame, nailed at the corners (`name-frame-day.svg` / `name-frame-night.svg`, a 96px nine-slice with 16px boards: lighter wood by day, darker at night), with the mount shadow on the frame. The motto starts under the left edge of the name's T stem, at 0.22 of the name's size (at least 0.78rem).
 - **Section marker:** an amber half and a teal half meeting on a 5px timber post (26×12px each). Decorative and aria-hidden. It is the only mark above a section heading.
 - **Rail:** a 10px timber-deep beam behind the three How it works plates, with caution arrows between them. It turns vertical on phones.
 - **Install step rules:** each step is a full-width row between 2px timber rules. A large display numeral sits under painted measuring ticks.
