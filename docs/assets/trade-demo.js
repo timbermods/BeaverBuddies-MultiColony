@@ -49,7 +49,7 @@
       serial: 0
     };
     render();
-    say('Demo reset. You are ' + colored(0) + ' (colony 1), at your half of the post.');
+    say('Reset. You are ' + colored(0) + '.');
   }
 
   // ---- rules (TradeOfferForm.Judge) ----
@@ -124,10 +124,10 @@
     }
     x.done++;
     var beavers = x.side[0].good === BEAVERS ? [0, x.side[0].total] : x.side[1].good === BEAVERS ? [1, x.side[1].total] : null;
-    say('Round ' + x.done + ' crossed: both sides were in.' + (beavers ? ' ' + beavers[1] + ' beaver' + (beavers[1] === 1 ? '' : 's') + ' joined ' + colored(1 - beavers[0]) + ' from ' + colored(beavers[0]) + ' through the Trading Post.' : ''));
+    say('Round ' + x.done + ' crossed.' + (beavers ? ' ' + beavers[1] + ' beaver' + (beavers[1] === 1 ? '' : 's') + ' moved from ' + colored(beavers[0]) + ' to ' + colored(1 - beavers[0]) + '.' : ''));
     if (!x.repeat && x.done >= x.rounds) {
       S.exchange = null;
-      say('The exchange is complete. The Trading Post is free for the next one.');
+      say('Exchange complete. The post is free again.');
     }
   }
   function ensureTimer() {
@@ -143,7 +143,7 @@
     side[me] = { good: j.give > 0 ? d.give : null, total: j.give, held: 0 };
     side[them] = { good: j.get > 0 ? d.get : null, total: j.get, held: 0 };
     S.exchange = { by: me, side: side, rounds: j.rounds, repeat: d.repeat, done: 0, state: 'proposed', cancelAsked: [false, false], serial: ++S.serial };
-    say(colored(me) + ' made an offer; ' + colored(them) + ' gets a notice.');
+    say(colored(me) + ' made an offer.');
     render(true);
     if (S.auto) setTimeout(function () {
       if (S.exchange && S.exchange.state === 'proposed' && S.exchange.serial === (S.serial)) { S.me === them ? null : null; accept(them, true); }
@@ -152,7 +152,7 @@
   function accept(who, auto) {
     var x = S.exchange; if (!x || x.state !== 'proposed' || who === x.by) return;
     x.state = 'active';
-    say(colored(who) + ' accepted' + (auto ? ' (by itself: untick "answers by itself" to play both sides)' : '') + '. Each colony\'s workers now bring its side to its own half.');
+    say(colored(who) + ' accepted. Workers are bringing each side to its half.');
     render(true);
   }
   function decline(who) {
@@ -164,14 +164,14 @@
   function askCancel(who) {
     var x = S.exchange; if (!x || x.state !== 'active') return;
     x.cancelAsked[who] = true;
-    say(colored(who) + ' asked to end the exchange. Nothing is brought and nothing crosses until ' + colored(1 - who) + ' answers.');
+    say(colored(who) + ' asked to end the exchange. Everything waits for ' + colored(1 - who) + '\'s answer.');
     render(true);
     if (S.auto && who === S.me) setTimeout(function () { if (S.exchange === x && x.cancelAsked[who]) agreeCancel(1 - who, true); }, 1800);
   }
   function keep(who) {
     var x = S.exchange; if (!x) return;
     x.cancelAsked = [false, false];
-    say(colored(who) + ' chose to keep trading; the round goes on.');
+    say(colored(who) + ' kept trading.');
     render(true);
   }
   function agreeCancel(who, auto) {
@@ -179,7 +179,7 @@
     // What waits on each half goes back into its own colony's storage; rounds that crossed stay crossed.
     for (var c = 0; c < 2; c++) { var s = x.side[c]; if (s.good && !good(s.good).special) S.stock[c][s.good] += s.held; }
     S.exchange = null;
-    say(colored(who) + (auto ? ' agreed to cancel (by itself)' : ' agreed to cancel') + '. What waited on each half went back home; ' + x.done + ' round' + (x.done === 1 ? '' : 's') + ' stay' + (x.done === 1 ? 's' : '') + ' in the ledger.');
+    say(colored(who) + ' agreed to cancel. Anything waiting on each half went home.');
     render(true);
   }
 
@@ -433,7 +433,7 @@
     logEl = document.querySelector('[data-tp-log]');
     if (!root || !side) return;
     Array.prototype.forEach.call(side.querySelectorAll('[data-me]'), function (el) {
-      el.addEventListener('click', function () { S.me = parseInt(el.getAttribute('data-me'), 10); S.pickerOpen = null; render(true); say('You are now ' + colored(S.me) + ' (colony ' + (S.me + 1) + '), at their half.'); });
+      el.addEventListener('click', function () { S.me = parseInt(el.getAttribute('data-me'), 10); S.pickerOpen = null; render(true); say('You are now ' + colored(S.me) + '.'); });
     });
     Array.prototype.forEach.call(side.querySelectorAll('[data-preset]'), function (el) {
       el.addEventListener('click', function () { preset(el.getAttribute('data-preset')); });
