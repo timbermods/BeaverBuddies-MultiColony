@@ -5,6 +5,26 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc12
+
+**The Trading Post is the District Crossing's model again.** Asked for by Kyler after rc11: rc10's own model and
+3 × 2 halves are taken out. No change to trading or the wire; everyone needs this build (the join checks the
+version). Built against Timberborn 1.1.2.4: both configurations with 0 warnings; StabilityTests 503 and RuntimeChecks
+454 pass. **Not played.**
+
+- **Both Trading Post blueprints are rc9's again:** the game's District Crossing in every part but its name, price,
+  texts and mark, so its model, its 3 × 1 halves (the whole post 3 × 2, doors 3 cells apart), colliders and
+  construction base are the game's own. The four `.timbermesh` models and the `.gitattributes` rule for them are
+  gone.
+- **Kept from rc10:** the host judges a post's two halves together where the game's tool lays them down
+  (`ColonyGameWorld.SecondHalf`, `AreHalvesOfOnePost`; it had paired halves one cell apart, which the game never
+  does), and its RuntimeChecks test against the game's own `HalvesCoordinates`, now for the 3 × 1 half only.
+- **RuntimeChecks:** the Trading Post checks are rc9's again (the post equals the game's crossing but for its name,
+  price, texts and mark), plus the pairing test.
+- **Docs and site:** the Trading Post's own model is out of *Not played yet* (README and site), TWO-COLONIES no
+  longer gives the 3 × 4 size, the site's release section and Script A's step 7 describe the crossing's model again,
+  and step 22h is gone.
+
 ## 1.4.0-rc11
 
 **The duplicate-mod warning says "multiplayer mod".** Asked for by Kyler, to match the website. Text only: no

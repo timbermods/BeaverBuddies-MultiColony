@@ -1,3 +1,7 @@
+v1.4.0-rc12 (Timber Together)
+* The Trading Post uses the District Crossing's model again, with its two 3 by 1 halves.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc11 (Timber Together)
 * If another multiplayer mod is enabled, the main menu's warning says so in those words: "Another multiplayer mod is enabled", with its name.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
