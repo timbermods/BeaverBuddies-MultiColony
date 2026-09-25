@@ -153,8 +153,7 @@ no Trading Posts.
 ## Trading Posts
 
 The **Trading Post** is in District Management, next to the District Crossing. It **costs 10 logs and needs no
-science**, and appears only in separate-colonies games. It's two halves back to back, each 3 × 2, so the whole post is
-3 wide and 4 deep, with a door at each end.
+science**, and appears only in separate-colonies games.
 
 **Placing it.** Build it between two colonies' roads, one road end at each half's door. Either colony may place it,
 before the roads or after; the placer's builders build it. It trades once each half is reached by a different

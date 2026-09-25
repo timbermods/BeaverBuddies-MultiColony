@@ -61,8 +61,3 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
-
-###############################################################################
-# Game models (zlib-compressed .timbermesh) are binary: never touch their bytes.
-###############################################################################
-*.timbermesh binary
