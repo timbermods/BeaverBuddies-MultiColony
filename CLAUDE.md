@@ -103,10 +103,10 @@ Kyler, 2026-09-24: "simplicity and elegance is effective and desirable." Every c
 - Plates: `.plate` + `enamel | c1 | c2 | caution` (navy by default), optional `.grommets`; 7px corners, 1px rim, white
   keyline inset ~5–7px, mount shadow. Buttons 6px, code/keys 4px, tags 3px. Focus: 3px caution outline, offset 3px.
 - The hero name plate is the exception (Kyler, 2026-09-24): no keyline, set in a mitred timber frame
-  (`docs/assets/name-frame-{day,night}.svg`, a border-image nine-slice), the name in Barlow ExtraBold with hand-cut edges
+  (`docs/assets/name-frame-{day,night}.svg`, a border-image nine-slice), the name in Barlow Bold with hand-cut edges
   (`#hewn` filter) and a split log-end o. DESIGN.md's Name plate entry has the details.
-- Fonts: Barlow Semi Condensed 600/700, and 800 for the name plate only
-  (`docs/assets/fonts/barlow-semi-condensed-latin-{600,700,800}.woff2`, licence `OFL-Barlow.txt`); body is system-ui,
+- Fonts: Barlow Semi Condensed 600/700
+  (`docs/assets/fonts/barlow-semi-condensed-latin-{600,700}.woff2`, licence `OFL-Barlow.txt`); body is system-ui,
   mono ui-monospace. Noto Sans 400/700 (`noto-sans-latin-*.woff2`, `OFL.txt`) is for the Trading Post replica only.
   No other webfonts, nothing from a CDN at runtime.
 - Textures and art: none are raster. Timber grain, grommets, ticks and icons are inline SVG / CSS data URIs; the hero

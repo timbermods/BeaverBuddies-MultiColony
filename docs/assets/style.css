@@ -6,7 +6,6 @@
  */
 @font-face { font-family: "Barlow Semi Condensed"; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/barlow-semi-condensed-latin-600.woff2) format("woff2"); }
 @font-face { font-family: "Barlow Semi Condensed"; font-style: normal; font-weight: 700; font-display: swap; src: url(fonts/barlow-semi-condensed-latin-700.woff2) format("woff2"); }
-@font-face { font-family: "Barlow Semi Condensed"; font-style: normal; font-weight: 800; font-display: swap; src: url(fonts/barlow-semi-condensed-latin-800.woff2) format("woff2"); }
 
 :root {
   /* river-stone ground and enamel */
@@ -241,22 +240,22 @@ pre code { background: none; border: 0; padding: 0; font-size: inherit; overflow
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='90'%3E%3Cpath d='M3 0c1 20-1 40 0 60s1 22 0 30M8 0c-1 14 1 30 0 48s-1 30 0 42' fill='none' stroke='%23000' stroke-opacity='.18' stroke-width='1'/%3E%3C/svg%3E");
 }
 /* The name plate (Kyler, 2026-09-24): enamel with no keyline, set in a mitred timber frame (a drawn nine-slice) and hung
-   on the post. The name is Barlow ExtraBold in one line, sized to the column: 6.83em wide with its log-end o, inside 2.2rem
+   on the post. The name is Barlow Bold in one line, sized to the column: 6.58em wide with its log-end o, inside 2.2rem
    of plate padding and 26px of frame (the frame keeps its size; the name takes the side padding's room). The motto starts
-   under the left edge of the T's stem (.185 of the title size, less the
+   under the left edge of the T's stem (.19 of the title size, less the
    B's own .065). */
 .post { container-type: inline-size; }
 .name-frame {
-  --ts: min(4.84rem, calc((100cqi - 2.2rem - 26px) / 6.95)); --ms: max(.78rem, calc(var(--ts) * .22));
+  --ts: min(5.02rem, calc((100cqi - 2.2rem - 26px) / 6.7)); --ms: max(.78rem, calc(var(--ts) * .22));
   display: inline-block; margin: 0 0 1.6rem; border: 13px solid transparent; border-image: var(--name-frame) 16 stretch; box-shadow: var(--mount);
 }
-.name-plate { display: block; padding: .95rem 1.1rem 1rem; border-radius: 2px; box-shadow: inset 0 0 0 1px var(--plate-rim), inset 0 3px 7px rgba(0, 0, 0, .35); }
-.name-plate h1 { margin: 0; font-size: var(--ts); font-weight: 800; line-height: .92; letter-spacing: 0; white-space: nowrap; filter: url(#hewn) drop-shadow(0 .045em 0 rgba(0, 0, 0, .45)); }
+.name-plate { display: block; padding: .86rem 1.1rem .9rem; border-radius: 2px; box-shadow: inset 0 0 0 1px var(--plate-rim), inset 0 3px 7px rgba(0, 0, 0, .35); }
+.name-plate h1 { margin: 0; font-size: var(--ts); font-weight: 700; line-height: .92; letter-spacing: -.01em; white-space: nowrap; filter: url(#hewn) drop-shadow(0 .045em 0 rgba(0, 0, 0, .45)); }
 /* the o as a log end, split between the two colonies; the real letter stays in the text for readers, search and copying */
 .ring-o { position: relative; display: inline-block; width: .54em; height: .54em; margin: 0 .01em; vertical-align: -.01em; }
 .ring-o > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .ring-o svg { display: block; width: 100%; height: 100%; }
-.name-plate .motto { margin: .5em 0 0; padding-left: calc(var(--ts) * .185 - var(--ms) * .065); font: 600 var(--ms)/1.2 var(--display); letter-spacing: .14em; text-transform: uppercase; opacity: .88; }
+.name-plate .motto { margin: .5em 0 0; padding-left: calc(var(--ts) * .19 - var(--ms) * .065); font: 600 var(--ms)/1.2 var(--display); letter-spacing: .14em; text-transform: uppercase; opacity: .88; }
 svg.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .pitch { font-size: clamp(1.18rem, 2.2vw, 1.4rem); line-height: 1.45; margin: 0 0 .7rem; max-width: 34ch; font-weight: 500; }
 .differs { color: var(--ink-soft); margin: 0 0 1.6rem; max-width: 46ch; }
@@ -581,8 +580,8 @@ td:first-child { font-variant-numeric: tabular-nums; }
 }
 @media (max-width: 640px) {
   body { font-size: 16.5px; }
-  .name-plate { padding: .95rem .9rem .85rem; }
-  .name-frame { --ts: min(4.84rem, calc((100cqi - 1.8rem - 26px) / 6.95)); }
+  .name-plate { padding: .9rem .9rem .8rem; }
+  .name-frame { --ts: min(5.02rem, calc((100cqi - 1.8rem - 26px) / 6.7)); }
   .btn-row .btn { flex: 1 1 100%; }
   .status-tag { padding-left: 1.7rem; }
   /* the map's labels become a numbered key under it */
