@@ -296,6 +296,7 @@ namespace BeaverBuddies.Colonies
             s.justifyContent = Justify.FlexStart;
             s.flexGrow = 1;
             s.flexShrink = 1;
+            s.minWidth = 0;
             s.minHeight = 32;
             s.height = 32;
             s.paddingLeft = 6;
@@ -306,7 +307,13 @@ namespace BeaverBuddies.Colonies
             o.Name = NativeElements.Text("", 13);
             o.Name.style.flexGrow = 1;
             o.Name.style.flexShrink = 1;
+            o.Name.style.minWidth = 0;
             o.Name.style.unityTextAlign = TextAnchor.MiddleLeft;
+            // One line in the 32 px selector, cut with an ellipsis when it doesn't fit, as the game's own dropdowns show an
+            // item (CommonStyle .dropdown-item__text): a long name wrapped onto a second line that spilled out of the box.
+            o.Name.style.whiteSpace = WhiteSpace.NoWrap;
+            o.Name.style.overflow = Overflow.Hidden;
+            o.Name.style.textOverflow = TextOverflow.Ellipsis;
             o.Name.pickingMode = PickingMode.Ignore;
             o.Selector.Add(o.Name);
             o.Selector.Add(NativeElements.DropdownArrow());

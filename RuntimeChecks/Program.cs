@@ -137,6 +137,8 @@ Rc5RuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Test);
 Rc6RuntimeChecks.Run(assembly, Test);
 // 1.4.0-rc7: hosting and joining from inside a running game (design/IN-GAME-HOSTING-PLAN.md).
 Rc7RuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Test);
+// 1.4.0-rc14: the Trading Post's goods selector keeps a long name on one line.
+Rc14RuntimeChecks.Run(assembly, Path.GetFullPath(args[1]), Test);
 Console.WriteLine($"{total-failures}/{total} passed");
 return failures == 0 ? 0 : 1;
 

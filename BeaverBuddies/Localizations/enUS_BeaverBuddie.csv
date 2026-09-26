@@ -498,7 +498,7 @@ BeaverBuddies.Colony.Trade.StatusTheirHalfBlocked,"Your side is in. {0}'s half i
 BeaverBuddies.Colony.Trade.StatusTheirNoWorkers,"Your side is in. {0}'s half has no workers to bring their side.",""
 BeaverBuddies.Colony.Trade.StatusTheirNoStock,"Your side is in. {0} has no more {1} to bring.",""
 BeaverBuddies.Colony.Trade.StatusHaulAway,"Your side is in. {0} {1} from the last round still wait on your half: once your workers haul them away (they need storage room), {2} can bring the next round's.",""
-BeaverBuddies.Colony.Trade.Notice.PostRemoved,"An exchange ended: its Trading Post was removed. What waited on its halves was left there as goods for any colony to pick up.",""
+BeaverBuddies.Colony.Trade.Notice.PostRemoved,"A Trading Post was removed, so its exchange has ended. The goods waiting on it are left on the ground for any colony to collect.",""
 BeaverBuddies.CoopFix.Stopped,"Co-op has stopped. This version of Timberborn changed a part of the game Timber Together keeps in step for co-op, and this game needs it: {0}. Played together, the game would go out of step. You can play on alone. To play together again, update Timber Together, and check that every player runs the same Timberborn version.",""
 BeaverBuddies.NewGame.SeparateColonies,"Separate colonies",""
 BeaverBuddies.NewGame.SeparateColonies.Tooltip,"Co-op: each player builds their own colony. Unticked, everyone plays one shared colony; another player can still found their own later, from the game menu (Esc).",""

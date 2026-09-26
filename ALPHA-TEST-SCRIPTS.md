@@ -651,7 +651,7 @@ goes on with no desync dialog (D-new-2; before rc1, switching it on mid-game rea
 9. **Mixed** (C1). A three-colony mixed game hosted as Folktails, with two Iron Teeth colonies trading Grease. Remove
    the road at one half: the exchange shows *paused*, not ended. Restore the road: it goes on.
 10. **A post blown up mid-round** (C5). With goods held on both halves, blow the post up with dynamite. Both players
-    get *An exchange ended: its Trading Post was removed…*; the log lists what waited; the goods lie as recovered goods.
+    get *A Trading Post was removed, so its exchange has ended…*; the log lists what waited; the goods lie as recovered goods.
     No desync.
 11. **Save and rehost mid-round** (T1). With rounds half filled at several posts, save, reload and rehost: the bars show
     the same held amounts, the rounds finish, there is no desync, and the day's trade lines still match.
