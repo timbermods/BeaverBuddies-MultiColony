@@ -69,12 +69,15 @@ static class Rc15Checks
             Check(client.Contains("if (isHistory) Chat.AddHistory(numbered);"), "a guest no longer marks the history it is sent as history");
         });
 
-        yield return ("rc15: a chat message from another player chimes from the connection panel, open or collapsed", () =>
+        yield return ("rc15: a chat message from another player chimes, whether the connection panel is open, collapsed or hidden", () =>
         {
-            string chat = Body(Source("BeaverBuddies", "Panel", "ConnectionPanelService.cs"), "void UpdateChat(TimberNetBase net, bool expanded)");
-            int chime = chat.IndexOf("ChatFormat.Chimes(log.Since(heardSequence), myPlayerId, log.HistoryThrough)", StringComparison.Ordinal);
-            Check(chime >= 0 && chime < chat.IndexOf("if (expanded)", StringComparison.Ordinal), "the chat's chime is gone, or plays only with the chat open");
-            Check(chat.Contains("if (chime && myPlayerIdKnown) sounds.Play(BeaverBuddies.Util.NoticeSounds.ChatSound);"), "the chat no longer plays its chime");
+            string panel = Source("BeaverBuddies", "Panel", "ConnectionPanelService.cs");
+            string tick = Body(panel, "void Tick()");
+            int listen = tick.IndexOf("if (net != null && !chimeFailed) ListenForChat(net);", StringComparison.Ordinal);
+            Check(listen >= 0 && listen < tick.IndexOf("if (mode == PanelDisplayMode.Hidden", StringComparison.Ordinal), "the chat's chime is gone, or is silent while the panel is hidden");
+            string chat = Body(panel, "void ListenForChat(TimberNetBase net)");
+            Check(chat.Contains("bool chime = me >= 0 && ChatFormat.Chimes(log.Since(heardSequence), me, log.HistoryThrough);")
+                && chat.Contains("if (chime) sounds.Play(BeaverBuddies.Util.NoticeSounds.ChatSound);"), "the chat no longer plays its chime");
             string sounds = Source("BeaverBuddies", "Util", "NoticeSounds.cs");
             Check(sounds.Contains("\"Environment.Buildings.Speaker.Chime_01\"") && sounds.Contains("\"Environment.Buildings.Speaker.Chime_02\""),
                 "the chimes are no longer the Speaker's");

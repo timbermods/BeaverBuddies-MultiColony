@@ -21,9 +21,10 @@ configurations with 0 warnings; StabilityTests 513 and RuntimeChecks 459 pass. *
   the same post takes the older one's place. The message is built on the frame after the action, never inside a tick;
   if it cannot be built, the passing notice shows as before.
 - **Chimes** (`NoticeSounds`, new): the Speaker's built-in *Chime 1* as a trade message appears, and its *Chime 2*
-  when another player's chat message arrives, with the chat open or collapsed. Played flat through the game's interface
-  volume (the UI mixer, as a non-spatial Speaker plays them), each at most once a second. Your own messages and the
-  history a guest is sent on joining are silent (`ChatLog.HistoryThrough`, set by the guest's history batches).
+  when another player's chat message arrives, with the connection panel open, collapsed or hidden. Played flat through
+  the game's interface volume (the UI mixer, as a non-spatial Speaker plays them), each at most once a second. Your own
+  messages and the history a guest is sent on joining are silent (`ChatLog.HistoryThrough`, set by the guest's history
+  batches).
 - **Texts.** The cancelled exchange's notice: *The exchange between A and B was cancelled. Any goods already brought to
   the Trading Post go back to the colony that brought them.* (It read *What waited on each half goes back to its own
   colony.*) The **Cancel exchange** and **Agree to cancel** tooltips say the same (and *Finished rounds are not undone*);

@@ -67,10 +67,11 @@ internal static class Rc15RuntimeChecks
             if (!uxml.Contains("game-text-normal")) throw new Exception("the game's quick notification no longer uses game-text-normal");
         });
 
-        test("rc15: a chat message from another player chimes, from the connection panel", () =>
+        test("rc15: a chat message from another player chimes, from the connection panel, even hidden", () =>
         {
             Type panel = mod.GetType("BeaverBuddies.Panel.ConnectionPanelService", true)!;
-            List<string?> chat = Calls(panel, "UpdateChat");
+            if (!Calls(panel, "Tick").Contains("ConnectionPanelService.ListenForChat")) throw new Exception("the chat is no longer listened to for its chime");
+            List<string?> chat = Calls(panel, "ListenForChat");
             if (!chat.Contains("ChatFormat.Chimes") || !chat.Contains("NoticeSounds.Play")) throw new Exception("the chat no longer chimes");
             if (!chat.Contains("ChatLog.get_HistoryThrough")) throw new Exception("the chat chimes for the history a guest gets on joining");
         });
