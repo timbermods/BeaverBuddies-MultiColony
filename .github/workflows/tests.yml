@@ -52,7 +52,9 @@ jobs:
             # 1.4.0-rc1: compares two timed loops (about 15 ms against 140 ms locally); a busy runner can stall the short one.
             "D-S1: a sampled profiler spot counts every call, times one in 16 and reports it scaled up, for less than a timed spot costs",
             # 1.4.0-rc6: waits 1 to 2 s for a pipe session's fault to cross two threads; missed twice on a runner (rc3, rc6).
-            "Host replay failure reaches client before disconnect cleanup"
+            "Host replay failure reaches client before disconnect cleanup",
+            # 1.4.0-rc16: its twin (a guest's fault crossing the same pipe session to the host); missed once on a runner.
+            "Client replay failure notifies host on update thread"
           )
           dotnet run --project StabilityTests --no-restore | Tee-Object -Variable output
           $code = $LASTEXITCODE
