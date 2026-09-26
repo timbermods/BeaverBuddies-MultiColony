@@ -1,3 +1,8 @@
+v1.4.0-rc14 (Timber Together)
+* Long goods names fit the Trading Post's panel: they stay on one line.
+* Removing a Trading Post that is trading says so plainly: the exchange ends, and the waiting goods are left on the ground for any colony to collect.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc13 (Timber Together)
 * Found your own colony now separates science too: every colony keeps what was unlocked so far, the science already earned stays with the host's colony, and each colony earns its own from then on.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.

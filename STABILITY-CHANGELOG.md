@@ -5,6 +5,23 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc14
+
+**Two things from Kyler's rc12 playtest.** No change to the wire or saves; everyone needs this build (the join checks
+the version). Built against Timberborn 1.1.2.4: both configurations with 0 warnings; StabilityTests 508 and
+RuntimeChecks 455 pass. **Not played.**
+
+- **A long good's name fits the Trading Post's selector.** In the 32 px goods selector (*You give*, *You get*) a name
+  like *Grilled potatoes* wrapped onto a second line that spilled out of the box. It now stays on one line and is cut
+  with an ellipsis when it doesn't fit, as the game's own dropdowns show an item (CommonStyle `.dropdown-item__text`:
+  nowrap, overflow hidden, text-overflow ellipsis). The selector and the name may shrink to their row (`minWidth` 0).
+- **The removed Trading Post's message** (`Colony.Trade.Notice.PostRemoved`), which both colonies get when a post with
+  an exchange under way is removed: *A Trading Post was removed, so its exchange has ended. The goods waiting on it are
+  left on the ground for any colony to collect.* (It spoke of the post's halves.) Script T follows.
+- **Checks:** StabilityTests 506 → **508** (`Rc14Checks.cs`: the selector's one-line name, the message);
+  RuntimeChecks 454 → **455** (`Rc14RuntimeChecks.cs`: the game's dropdown item still cuts with an ellipsis, and the
+  selector sets the same three styles; it fails on rc13's DLL).
+
 ## 1.4.0-rc13
 
 **A split separates science.** Kyler, after playing rc12: a friend split their shared game with **Found your own
