@@ -58,7 +58,7 @@ namespace BeaverBuddies.MultiStart
 				GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.RecordStartingSettings(ReadStartingSettings(startBuildingService));
 				if (separateOne)
 					GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Enable(ReadStartingSettings(startBuildingService), "new game with one start",
-						scienceOne, newGame: true);
+						scienceOne, newGame: true, unlocksForEveryColony: true);
 				return true;
 			}
 
@@ -79,7 +79,7 @@ namespace BeaverBuddies.MultiStart
 			GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.RecordStartingSettings(ReadStartingSettings(startBuildingService));
 			if (separateColonies)
 				GetSingleton<BeaverBuddies.Colonies.ColonyModeService>()?.Enable(ReadStartingSettings(startBuildingService), "new game with several starts",
-					separateScience, newGame: true);
+					separateScience, newGame: true, unlocksForEveryColony: true);
 
 			// Initialize each starting location; not just the first
 			foreach (var startingLocation in startingLocations)

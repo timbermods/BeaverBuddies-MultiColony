@@ -96,7 +96,8 @@ Keep a copy of the save first.
 
 In a shared game, a player other than the host can choose Esc → **Found your own colony**. It asks first, since it
 can't be undone, then they place their district center. That placement makes the split: everything built so far,
-marks included, stays the host's colony, and science stays one pool. Other players who played the shared colony
+marks included, stays the host's colony, with the science earned so far. Every colony keeps the unlocks made so far,
+and each earns and spends its own science from then on. Other players who played the shared colony
 then found their own (Ctrl+K), or look after the host's.
 
 ## Mixed factions

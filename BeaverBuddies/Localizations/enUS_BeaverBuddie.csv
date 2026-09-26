@@ -514,15 +514,15 @@ BeaverBuddies.Lobby.Colonies.SeparateSave,"Separate colony",""
 BeaverBuddies.Lobby.Colonies.Shared,"Shared colony",""
 BeaverBuddies.Colony.Founding.SharedHost,"This game has one shared colony, which you play as host. The other players can found their own from the game menu (Esc).",""
 BeaverBuddies.Colony.Founding.SharedUseMenu,"This game has one shared colony. To found your own, choose Found your own colony in the game menu (Esc).",""
-BeaverBuddies.Colony.Founding.SplitDone,"Your colony is founded. This game now has separate colonies, for good.",""
-BeaverBuddies.Colony.Founding.SplitHost,"A new colony has been founded: {0}. This game now has separate colonies, for good; the shared colony is yours.",""
+BeaverBuddies.Colony.Founding.SplitDone,"Your colony is founded. This game now has separate colonies, for good, and each colony earns its own science.",""
+BeaverBuddies.Colony.Founding.SplitHost,"A new colony has been founded: {0}. This game now has separate colonies, for good. The shared colony and its science are yours, and each colony earns its own science from now on.",""
 BeaverBuddies.Colony.Founding.SplitOther,"A new colony has been founded: {0}. This game now has separate colonies, for good. Found your own with Ctrl+K, or ask the host to let you look after theirs (Ctrl+T).",""
 BeaverBuddies.Colony.Split.Button,"Found your own colony",""
 BeaverBuddies.Colony.Split.Confirm,"Found your own colony?
 
 This turns the game into a separate-colonies game for every player, and it can't be undone: it will never be one shared colony again. The shared colony, with everything built so far, stays the host's.
 
-You place a new district center, which starts with the game's starting beavers and goods. Science and unlocks stay shared by every colony.",""
+You place a new district center, which starts with the game's starting beavers and goods. Your colony keeps every unlock made so far, then earns its own science. The science already earned stays with the host's colony.",""
 BeaverBuddies.Colony.Split.ConfirmButton,"Found my colony",""
 BeaverBuddies.Colony.Split.AlreadySeparate,"This game already has separate colonies. Found your own with Ctrl+K.",""
 BeaverBuddies.Lobby.Colonies.SharedToSeparate,"Separate colonies from Start: everything built so far becomes the host's colony, and each other player founds their own.",""

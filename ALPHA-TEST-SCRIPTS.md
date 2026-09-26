@@ -522,8 +522,8 @@ happen and, in brackets, the review finding it checks (`design/REVIEW-FINDINGS-1
    - a gravity battery on a power shaft that ends at that edge.
 3. Save.
 4. Main menu → **Host co-op game** → the save → **Host co-op game**, leaving **Separate colonies** unticked on its page
-   (step 1 splits it). The guest joins; Start. (A split keeps one pool of science and unlocks, so the guest can build the
-   late game at once.)
+   (step 1 splits it). The guest joins; Start. (A split gives the guest's colony every unlock made so far, so the guest
+   can build the late game at once.)
 
 1. **Founding beside your fields** (E-7). The guest splits the game (Esc → **Found your own colony** → **Found my
    colony**) and places their district center right beside the host's farms and forests, then
@@ -732,10 +732,12 @@ and no text may overlap or run off.
    in hand. Leave the tool (right-click or Esc): the game is still shared, and the button is still in the menu. (From
    now on the guest's **Ctrl+K** opens the founding tool directly: they have said yes once.)
 8. **The split.** Again, **Found my colony**, and place the district center; the host unpauses if needed. The guest
-   reads *Your colony is founded. This game now has separate colonies, for good.*; the host reads that a new colony has
-   been founded and the shared colony is theirs. Both logs: `[Colony] Separate colonies switched on: slot 1 founded a
-   colony in a shared game`. The top bar's science is the same number on both (one pool). Neither game menu has the
-   button any more.
+   reads *Your colony is founded. This game now has separate colonies, for good, and each colony earns its own
+   science.*; the host reads that a new colony has been founded and the shared colony and its science are theirs. Both
+   logs: `[Colony] Separate colonies switched on: slot 1 founded a colony in a shared game` and `Separate science
+   switched on: slot 0 keeps … science; every colony has the … unlocks so far`. *(rc13)* The host's top bar keeps the
+   science earned so far; the guest's starts at 0. The guest can build everything the shared colony had unlocked, and
+   what each earns from now on is their own. Neither game menu has the button any more.
 9. **For good.** The host's Save and Rehost: the guest is brought into the room over their game *(rc7)*; Ready,
    Start: still two colonies, no button, and the guest's Ctrl+K says they already have a colony.
 10. **A separate room.** New game, **Separate colonies** ticked and **Separate science and unlocks** unticked → Host co-op

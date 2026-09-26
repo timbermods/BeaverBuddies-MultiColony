@@ -88,8 +88,10 @@ namespace BeaverBuddies.Colonies
             ColonyModeService mode = ColonyModeService.Instance;
             if (mode == null || mode.Enabled) return;
             ColonyFoundingService founding = SingletonManager.GetSingleton<ColonyFoundingService>();
+            // With separate science the host's colony keeps the unlocks so far and the friends' colonies start with none (the
+            // room's tooltip says so); unticked, one pool.
             mode.Enable(startingSettings ?? founding?.HostStartingSettings(), "the host hosted this save as separate colonies", separateScience,
-                newGame: false);
+                newGame: false, unlocksForEveryColony: false);
             // Display, on each computer: the host is told the colony so far is theirs; a guest is offered to found theirs.
             try
             {

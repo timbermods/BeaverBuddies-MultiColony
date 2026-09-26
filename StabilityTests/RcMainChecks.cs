@@ -251,7 +251,9 @@ static class RcMainChecks
             Check(founding.Contains("private static bool FoundingAllowed => ColonyModeService.IsSeparateColonies || SharedColonySplit.Confirmed;"),
                 "in a shared game the founding tool opens only after the split is confirmed");
             string found = Body(founding, "public void Found(Placement placement, int slot, ColonyStartingSettings settings, string faction = null)");
-            Check(found.Contains("separateScience: false") && found.Contains("newGame: false"), "a split keeps one pool of science and unlocks");
+            // rc13: a split separates science, and every colony keeps the unlocks so far (Rc13Checks).
+            Check(found.Contains("separateScience: true") && found.Contains("newGame: false") && found.Contains("unlocksForEveryColony: true"),
+                "a split separates science and gives every colony the unlocks so far");
             Check(Body(founding, "public void BeginSplit()").Contains("SharedColonySplit.Confirmed = true"), "BeginSplit must allow this guest's founding");
             Check(Body(founding, "public ColonyFoundingService(").Contains("SharedColonySplit.Confirmed = false"), "a new scene must forget an earlier session's confirmation");
 

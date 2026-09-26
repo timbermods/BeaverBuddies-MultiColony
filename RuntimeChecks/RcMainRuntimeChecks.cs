@@ -147,10 +147,12 @@ internal static class RcMainRuntimeChecks
             if (!Offered(true, false, true, false)) throw new Exception("a seated guest without a colony in a shared game is not offered the split");
             if (Offered(false, false, true, false) || Offered(true, true, true, false) || Offered(true, false, true, true) || Offered(true, false, false, false))
                 throw new Exception("the split is offered where it should not be (the host, a separate game, a player with a colony, before seating)");
-            // The split keeps one pool of science: the Enable of a founding in a shared game passes separateScience false.
+            // rc13: the split separates science and gives every colony the unlocks so far: the Enable of a founding in a
+            // shared game passes separateScience true, newGame false, unlocksForEveryColony true (the last three arguments).
             var found = IlScan.Instructions(Only(founding, "Found"));
             int enable = found.FindIndex(i => i.Calls && i.Member?.Name == "Enable" && i.Member.DeclaringType?.Name == "ColonyModeService");
-            if (enable < 2 || found[enable - 2].Op != OpCodes.Ldc_I4_0) throw new Exception("a split no longer keeps science shared (separateScience false)");
+            if (enable < 3 || found[enable - 3].Op != OpCodes.Ldc_I4_1 || found[enable - 2].Op != OpCodes.Ldc_I4_0 || found[enable - 1].Op != OpCodes.Ldc_I4_1)
+                throw new Exception("a split no longer separates science with every colony keeping the unlocks so far (true, false, true)");
             // The game menu's button: through the started check and the confirmation, which comes before BeginSplit.
             Type split = mod.GetType("BeaverBuddies.Colonies.SharedColonySplit", true)!;
             var ask = IlScan.Instructions(Only(split, "Ask"));
