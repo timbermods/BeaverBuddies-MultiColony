@@ -46,6 +46,9 @@ namespace BeaverBuddies
             containerDefinition.Bind<Settings>().AsSingleton();
             containerDefinition.Bind<ModListService>().AsSingleton();
 
+            // The chimes for a trade message that asks for an answer and for chat from another player (1.4.0-rc15).
+            containerDefinition.Bind<BeaverBuddies.Util.NoticeSounds>().AsSingleton();
+
             MultiStartConfigurator.Configure(containerDefinition);
             BeaverBuddies.Colonies.ColonyConfigurator.Configure(containerDefinition);
             // A new game's waiting room makes its world in a single-player scene, then loads it as the hosted game.

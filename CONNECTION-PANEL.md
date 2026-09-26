@@ -70,6 +70,9 @@ Player 2: on it
   a color by player number, so no two start the same. Pick the color you see your own name in under Options (Esc) →
   **Player cursors**.
 - **Everyone sees the same conversation**, in the same order. A player who joins later gets the history.
+- **A chime** plays when another player's message arrives, with the panel open, collapsed or hidden (at most once a
+  second).
+  It follows the game's interface volume. Your own messages and the history you get on joining are silent.
 - **Chat isn't saved**: it starts empty after a reload or a rehost. Messages are one line, up to 200 characters.
 
 **Speed boost.** The row at the top of the chat adds to the speed everyone picked. **−** and **+** step by 0.5, or

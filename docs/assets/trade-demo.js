@@ -176,10 +176,10 @@
   }
   function agreeCancel(who, auto) {
     var x = S.exchange; if (!x) return;
-    // What waits on each half goes back into its own colony's storage; rounds that crossed stay crossed.
+    // Any goods already brought go back to the colony that brought them; finished rounds are not undone.
     for (var c = 0; c < 2; c++) { var s = x.side[c]; if (s.good && !good(s.good).special) S.stock[c][s.good] += s.held; }
     S.exchange = null;
-    say(colored(who) + ' agreed to cancel. Anything waiting on each half went home.');
+    say(colored(who) + ' agreed to cancel. Any goods already brought went back to the colony that brought them.');
     render(true);
   }
 
@@ -332,9 +332,9 @@
     if (theyAsked) h += '<span class="tp-muted tp-warn">' + colored(them) + ' asks to end this exchange. Nothing crosses until you answer.</span>';
     else if (iAsked) h += '<span class="tp-muted">You asked ' + esc(COLONY[them]) + ' to end this exchange. Nothing crosses until they answer.</span>';
     h += '<div class="tp-btns">';
-    if (theyAsked) h += '<button class="tp-btn tp-btn--red" type="button" data-agree title="Ends the exchange. What waits on each half goes back to its own colony; rounds that crossed stay crossed.">Agree to cancel</button><button class="tp-btn" type="button" data-keep>Keep trading</button>';
+    if (theyAsked) h += '<button class="tp-btn tp-btn--red" type="button" data-agree title="Ends the exchange. Any goods already brought for the round go back to the colony that brought them. Finished rounds are not undone.">Agree to cancel</button><button class="tp-btn" type="button" data-keep>Keep trading</button>';
     else if (iAsked) h += '<button class="tp-btn" type="button" data-keep>Keep trading</button>';
-    else h += '<button class="tp-btn tp-btn--red" type="button" data-ask title="Asks ' + esc(COLONY[them]) + ' to end the exchange. It ends when both colonies agree; what waits on each half then goes back home.">Cancel exchange</button>';
+    else h += '<button class="tp-btn tp-btn--red" type="button" data-ask title="Asks ' + esc(COLONY[them]) + ' to end the exchange. It ends once both colonies agree. Any goods already brought for the round then go back to the colony that brought them. Finished rounds are not undone.">Cancel exchange</button>';
     h += '</div></div>';
     return h;
   }

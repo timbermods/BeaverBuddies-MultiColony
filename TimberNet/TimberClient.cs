@@ -173,8 +173,9 @@ namespace TimberNet
         protected override void HandleChat(ISocketStream source, IReadOnlyList<ChatMessage> messages, bool isHistory)
         {
             // Only the host numbers messages; an unnumbered one is not from the host.
-            foreach (ChatMessage message in messages)
-                if (message.Sequence > 0) Chat.Add(message);
+            IEnumerable<ChatMessage> numbered = messages.Where(message => message.Sequence > 0);
+            if (isHistory) Chat.AddHistory(numbered);
+            else foreach (ChatMessage message in numbered) Chat.Add(message);
         }
 
         protected override void ProcessReceivedEvent(JObject message)

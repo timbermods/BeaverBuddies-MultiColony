@@ -171,8 +171,9 @@ gears, 4 rounds*. You trade from **your half**, the one your roads reach.
    from 0 to 100 (**−**/**+** by 10, Shift by 1; beavers by 1). Set **Rounds** (1 to 99), or tick **Repeat until
    cancelled**. A side at 0 is a gift, or a request for help. For more than one round, **Keep at least** holds back a
    reserve so a long deal never empties your stock. Then **Make offer**.
-2. **Answer.** The other player selects their half and chooses **Accept** or **Decline**. Until then you can
-   **Withdraw offer**. A declined or withdrawn offer stays in the form, ready to change.
+2. **Answer.** The offer reaches the other player as a message under the top bar, with a chime. It stays until they
+   click it: a click takes them to their half of the post, and its **×** just closes it. They choose **Accept** or
+   **Decline**. Until then you can **Withdraw offer**. A declined or withdrawn offer stays in the form, ready to change.
 3. **Each round.** Each colony's Trading Post workers bring its side to its own half, where it waits. Science and
    beavers aren't carried: their bar shows what the colony can give. If a round waits, the panel says why: paused or
    flooded, no workers, no room, or nothing left to bring.
@@ -182,8 +183,9 @@ gears, 4 rounds*. You trade from **your half**, the one your roads reach.
    it was traded for is in.
 5. **Done.** After the last round both players get a notice, and the post is free again.
 
-**Ending early takes both players.** **Cancel exchange** asks the other player, who chooses **Agree to cancel** or
-**Keep trading**. Then whatever waits on each half goes home; rounds that crossed stay crossed. If a road is removed,
+**Ending early takes both players.** **Cancel exchange** asks the other player (the same kind of message as an offer),
+who chooses **Agree to cancel** or **Keep trading**. Then any goods already brought go back to the colony that brought
+them; finished rounds are not undone. If a road is removed,
 the exchange pauses, and either colony can **End exchange** alone. An exchange also ends if a colony is handed over,
 or if the post is removed.
 

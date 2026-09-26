@@ -37,12 +37,16 @@ namespace BeaverBuddies.Panel
         readonly InputService input;
         readonly ILoc loc;
         readonly SpeedManager speed;
+        readonly BeaverBuddies.Util.NoticeSounds sounds;
         readonly TickRateMeter tickMeter = new TickRateMeter();
         ConnectionPanelView view;
         bool loaded, failed, chatFailed;
         // Chat: the session the chat belongs to, how far messages have been counted, and what is unread.
         TimberNetBase chatNet;
         int countedSequence, unread, myPlayerId;
+        // How far messages have been listened to for the chime, which plays whether the panel is open, collapsed or hidden.
+        int heardSequence;
+        bool chimeFailed;
         // Whether myPlayerId has been read from the connection yet (a guest is told its number a moment after joining).
         bool myPlayerIdKnown;
         float lastChatSend;
@@ -51,9 +55,11 @@ namespace BeaverBuddies.Panel
         float nextRefresh, nextTickSample, waitingSince = -1;
         double? tickRate;
 
-        public ConnectionPanelService(UILayout layout, VisualElementInitializer initializer, InputService input, ILoc loc, SpeedManager speed)
+        public ConnectionPanelService(UILayout layout, VisualElementInitializer initializer, InputService input, ILoc loc, SpeedManager speed,
+            BeaverBuddies.Util.NoticeSounds sounds)
         {
             this.layout = layout; this.initializer = initializer; this.input = input; this.loc = loc; this.speed = speed;
+            this.sounds = sounds;
         }
 
         public void PostLoad()
@@ -158,6 +164,7 @@ namespace BeaverBuddies.Panel
             var mode = Settings.ConnectionPanelDisplayMode;
             var net = CurrentNetwork();
             if (!ReferenceEquals(net, chatNet)) StartChatSession(net);
+            if (net != null && !chimeFailed) ListenForChat(net);
             if (mode == PanelDisplayMode.Hidden || net == null)
             {
                 view.SetVisible(false);
@@ -191,7 +198,7 @@ namespace BeaverBuddies.Panel
         // A new session (or none) starts an empty chat; the messages themselves live with the network session.
         void StartChatSession(TimberNetBase net)
         {
-            chatNet = net; countedSequence = 0; unread = 0; lastChatSend = -100; myPlayerIdKnown = false;
+            chatNet = net; countedSequence = 0; heardSequence = 0; unread = 0; lastChatSend = -100; myPlayerIdKnown = false;
             if (view.Chat == null || chatFailed) return;
             try { view.Chat.ReleaseFocus(); view.Chat.Clear(); view.SetUnread(0); }
             catch (Exception error) { DisableChat(error); }
@@ -236,6 +243,27 @@ namespace BeaverBuddies.Panel
                 view.SetUnread(expanded ? 0 : unread);
             }
             catch (Exception error) { DisableChat(error); }
+        }
+
+        // A message from another player chimes as it arrives, whether the panel is open, collapsed or hidden. Your own
+        // do not, nor does the history a guest is sent as it joins, nor anything before a guest knows its own number.
+        void ListenForChat(TimberNetBase net)
+        {
+            try
+            {
+                ChatLog log = net.Chat;
+                if (log.LastSequence <= heardSequence) return;
+                NetworkStatus status = net.GetNetworkStatus();
+                int me = status.IsHost ? 0 : status.YourPlayerId;
+                bool chime = me >= 0 && ChatFormat.Chimes(log.Since(heardSequence), me, log.HistoryThrough);
+                heardSequence = log.LastSequence;
+                if (chime) sounds.Play(BeaverBuddies.Util.NoticeSounds.ChatSound);
+            }
+            catch (Exception error)
+            {
+                chimeFailed = true;
+                Plugin.LogWarning("The chat's chime is off for this scene: " + error.Message);
+            }
         }
 
         // Chat follows the cursor colors: what you see on a player's cursor is the color of what they say. That is the

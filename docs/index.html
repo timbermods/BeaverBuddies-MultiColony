@@ -62,7 +62,7 @@
         </a>
         <a class="btn ghost" href="#install">Install guide</a>
       </div>
-      <p class="status-tag plate caution"><span><span data-release="version">1.4.0-rc14</span></span><span>Timberborn 1.1.2.4</span><span>Beta: back up your saves</span></p>
+      <p class="status-tag plate caution"><span><span data-release="version">1.4.0-rc15</span></span><span>Timberborn 1.1.2.4</span><span>Beta: back up your saves</span></p>
     </div>
 
     <figure class="map-figure plate enamel">
@@ -243,7 +243,7 @@
     <ol class="steps">
       <li><div>
         <h3>Download the zip</h3>
-        <p>From the <a href="https://github.com/timbermods/TimberTogether/releases" data-release-href="notes">newest release</a>, download <code><span data-release="asset-name">TimberTogether-1.4.0-rc14.zip</span></code> under <b>Assets</b> (not "Source code"). Got a zip from your host? Use that one.</p>
+        <p>From the <a href="https://github.com/timbermods/TimberTogether/releases" data-release-href="notes">newest release</a>, download <code><span data-release="asset-name">TimberTogether-1.4.0-rc15.zip</span></code> under <b>Assets</b> (not "Source code"). Got a zip from your host? Use that one.</p>
       </div></li>
       <li><div>
         <h3>Close Timberborn</h3>
@@ -269,7 +269,7 @@
       <h3>Before you join: compare three things with your host</h3>
       <p>All three must match.</p>
       <dl class="readings">
-        <div><dt>The mod</dt><dd class="val" data-release="version">1.4.0-rc14</dd><dd class="why">The mod list shows <b>Timber Together</b> with its version.</dd></div>
+        <div><dt>The mod</dt><dd class="val" data-release="version">1.4.0-rc15</dd><dd class="why">The mod list shows <b>Timber Together</b> with its version.</dd></div>
         <div><dt>The game</dt><dd class="val">Timberborn 1.1.2.4</dd><dd class="why">The same Timberborn version for everyone.</dd></div>
         <div><dt>The download</dt><dd class="val">The same zip</dd><dd class="why">The same file, not only the same number.</dd></div>
       </dl>
@@ -389,7 +389,7 @@
           <li>Press <strong>Make offer</strong>. Player 2 accepts, and each side's workers carry its goods to its own half. When both bars fill, the round crosses and the <strong>Ledger</strong> gets a line.</li>
           <li>Untick <strong>answers automatically</strong> and make an offer. Then switch to <strong>Player 2</strong> to <strong>Accept</strong> or <strong>Decline</strong> it.</li>
           <li>Set <strong>Workers on your half</strong> to 0 during a round. Your side stops, and nothing crosses.</li>
-          <li>Press <strong>Cancel exchange</strong>. It ends when the other player agrees, and anything still waiting goes home.</li>
+          <li>Press <strong>Cancel exchange</strong>. It ends when the other player agrees, and any goods already brought go back to the colony that brought them.</li>
           <li>Type <strong>150</strong> in an amount box. Each side gives at most 100 per round, so add <strong>Rounds</strong> or tick <strong>Repeat until cancelled</strong>.</li>
         </ol>
         <div class="tp-log" data-tp-log aria-live="polite"></div>
@@ -549,22 +549,25 @@
   <div class="wrap">
     <div class="head">
       <div class="marker" aria-hidden="true"><i></i><b></b><i></i></div>
-      <h2 id="release-h">What's in <span data-release="version">1.4.0-rc14</span></h2>
+      <h2 id="release-h">What's in <span data-release="version">1.4.0-rc15</span></h2>
     </div>
     <div class="release">
       <div class="plate grommets">
-        <span class="ver" data-release="version">1.4.0-rc14</span>
+        <span class="ver" data-release="version">1.4.0-rc15</span>
         <p>The release candidate for 1.4.0. Everyone in a game needs this build.</p>
         <div class="btn-row">
           <a class="btn ghost" href="https://github.com/timbermods/TimberTogether/releases" data-release-href="notes">Release notes</a>
         </div>
         <p style="margin:1.1rem 0 0"><a href="https://github.com/timbermods/TimberTogether/releases">All releases</a> &middot; <a href="https://github.com/timbermods/TimberTogether/blob/main/STABILITY-CHANGELOG.md">Changelog</a></p>
       </div>
-      <div class="measure" data-release-pinned="1.4.0-rc14">
+      <div class="measure" data-release-pinned="1.4.0-rc15">
+        <h3>Trade offers wait for you</h3>
+        <p>An offer, or a request to end an exchange, stays on screen until you click it. Clicking it takes you to the Trading Post; the <b>&times;</b> just closes it.</p>
+        <p>A chime plays for a trade offer, and for each chat message from another player.</p>
         <h3>A split separates science</h3>
         <p>When a friend chooses <b>Found your own colony</b>, each colony earns its own science from then on.</p>
         <p>Every colony keeps what was unlocked so far, and the science already earned stays with the host's colony.</p>
-        <p>Long goods names fit the Trading Post's panel, and removing a Trading Post that is trading says so plainly.</p>
+        <p>Long goods names fit the Trading Post's panel, and its messages read plainly.</p>
       </div>
     </div>
   </div>

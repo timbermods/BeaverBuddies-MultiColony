@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using TimberNet;
 
 namespace BeaverBuddies.Panel
 {
@@ -21,6 +23,13 @@ namespace BeaverBuddies.Panel
         // Rich text is on so the name can be colored, so nothing a player types may carry a tag of its own.
         // (Chat is already cleaned when it arrives; this keeps the line safe whatever calls it.)
         static string Plain(string value) => (value ?? "").Replace("<", "").Replace(">", "");
+
+        /// <summary>
+        /// Whether new messages chime: one from another player that arrived live. Your own never do, and nor does the
+        /// history a guest is sent as it joins (up to <paramref name="historyThrough"/>): it was said before they came.
+        /// </summary>
+        public static bool Chimes(IEnumerable<ChatMessage> fresh, int myPlayerId, int historyThrough) =>
+            fresh.Any(message => message.Sequence > historyThrough && message.PlayerId != myPlayerId);
 
         /// <summary>The color as six hex digits, lightened if it would be hard to read on the panel's dark background.</summary>
         public static string ReadableHex(string hex)

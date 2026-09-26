@@ -5,6 +5,37 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc15
+
+**Trade messages that wait for an answer, and chimes.** Kyler asked for an offer's notice to stay until it is clicked
+away, or to take the player to the Trading Post when clicked, with a sound; and for chat to chime. No change to the wire
+or saves; everyone needs this build (the join checks the version). Built against Timberborn 1.1.2.4: both
+configurations with 0 warnings; StabilityTests 513 and RuntimeChecks 459 pass. **Not played.**
+
+- **An offer stays until clicked** (`TradeNotices`, new). The offer's notice (`Colony.Trade.Notice.Proposed`) was the
+  game's quick notification, gone after a few seconds. It is now the same green board with the game's text and a round
+  close button at its end, just below where the quick notification appears, and it stays. A click on it selects the
+  player's half of that post and moves the camera there (`SelectAndFocusOn`, as Ctrl+T's **Go to**); its **×** only
+  closes it; answering at that post (accept, decline, cancel, keep trading) closes it too. A request to end an exchange
+  (`Notice.CancelAsked`) works the same way, on the red board its notice had. Up to five stack; a newer message for
+  the same post takes the older one's place. The message is built on the frame after the action, never inside a tick;
+  if it cannot be built, the passing notice shows as before.
+- **Chimes** (`NoticeSounds`, new): the Speaker's built-in *Chime 1* as a trade message appears, and its *Chime 2*
+  when another player's chat message arrives, with the connection panel open, collapsed or hidden. Played flat through
+  the game's interface volume (the UI mixer, as a non-spatial Speaker plays them), each at most once a second. Your own
+  messages and the history a guest is sent on joining are silent (`ChatLog.HistoryThrough`, set by the guest's history
+  batches).
+- **Texts.** The cancelled exchange's notice: *The exchange between A and B was cancelled. Any goods already brought to
+  the Trading Post go back to the colony that brought them.* (It read *What waited on each half goes back to its own
+  colony.*) The **Cancel exchange** and **Agree to cancel** tooltips say the same (and *Finished rounds are not undone*);
+  **End exchange** and the paused line speak of *the goods waiting on your half*; the offer and the request end *Click
+  here to answer.* The site's Trading Post demo follows. README, TWO-COLONIES and CONNECTION-PANEL describe the
+  messages and the chimes; ALPHA-TEST-SCRIPTS gains Script N.
+- **Checks:** StabilityTests 508 → **513** (`Rc15Checks.cs`: when chat chimes, the history mark, the panel's chime, the
+  offer and request paths, the texts and the demo); RuntimeChecks 455 → **459** (`Rc15RuntimeChecks.cs`: the chimes are
+  the game's Speaker sounds through the UI mixer, the offer and request post messages that stay and go to the post, the
+  game's boards and close button, the chat's chime; it fails on rc14's DLL).
+
 ## 1.4.0-rc14
 
 **Two things from Kyler's rc12 playtest.** No change to the wire or saves; everyone needs this build (the join checks

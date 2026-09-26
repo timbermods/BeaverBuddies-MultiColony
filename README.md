@@ -116,12 +116,13 @@ half's door on each road. It's the only place two colonies' roads meet, and it s
 1. **Offer.** Select your half. Choose what **You give** and **You get** (0 to 100 of each a round) and how many
    **Rounds**, or tick **Repeat until cancelled**. A side at 0 is a gift. **Keep at least** holds back a reserve so
    a long deal never empties your stock. Then **Make offer**.
-2. **They accept** on their half, or decline; a declined offer stays in your form, ready to adjust.
+2. **They accept** on their half, or decline; a declined offer stays in your form, ready to adjust. The offer reaches
+   them as a message that stays until they click it, with a chime; clicking it takes them to the post.
 3. **The beavers carry it out.** Each colony's workers bring its side to its own half, and when both are in, the
    round crosses at once. Nothing is given before what it was traded for is in.
 
-Science (with separate science) and adult beavers can be traded the same way. **Cancel exchange** needs the other player to agree; whatever
-waits on each half then goes home. One exchange runs per post at a time: build more posts for more.
+Science (with separate science) and adult beavers can be traded the same way. **Cancel exchange** needs the other player to agree; any goods
+already brought then go back to the colony that brought them. One exchange runs per post at a time: build more posts for more.
 
 **Ctrl+T** (or the **Trade** button, top right) lists your posts and every colony, with its food and water in days,
 what it is **looking for**, and who looks after it. Set what your colony is looking for there.
@@ -152,7 +153,7 @@ Change them under Options → Bindings → **Timber Together**. **Ping Location*
 - **Direct IP** needs port **25565** forwarded to the host, or a virtual LAN such as Hamachi. Anyone who can reach
   that port while you host can join, unverified: open it only for people you trust.
 - **The connection panel** (top left) shows each player and their colony, ping, sync and tick rate, with chat and a
-  speed boost for everyone.
+  speed boost for everyone. A message from another player plays a chime.
 - **Other mods** must match on every computer, at the same versions. You get a warning when they differ; a mod that
   changes the simulation will make the games drift apart.
 - **Dev mode** desyncs the game, except its instant unlock, *Finish now* and *Add 1000 Science*.

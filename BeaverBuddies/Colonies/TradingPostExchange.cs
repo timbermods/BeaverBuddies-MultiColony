@@ -779,7 +779,7 @@ namespace BeaverBuddies.Colonies
             theirs.RememberTerms(ExchangeTerms.EncodeTerms(getGood, getAmount, giveGood, giveAmount, rounds, repeat, 0));
             Plugin.Log($"[Colony] Slot {from} offers {giveAmount} {giveGood} for {getAmount} {getGood} from slot {to}, "
                 + $"{(repeat ? "repeating" : rounds + " rounds")}{(keep > 0 ? $", keeping {keep}" : "")} (exchange {serial})");
-            Tell(() => to, null, () => string.Format(T("BeaverBuddies.Colony.Trade.Notice.Proposed"),
+            Ask(() => to, partner, () => string.Format(T("BeaverBuddies.Colony.Trade.Notice.Proposed"),
                 ColonyName(from), Amount(giveAmount, giveGood), Amount(getAmount, getGood)), warning: false);
         }
 
@@ -790,6 +790,7 @@ namespace BeaverBuddies.Colonies
         public void Accept(DistrictCrossing half, int actorSlot, int serial, string giveGood, int giveAmount, string getGood, int getAmount,
             int rounds, bool repeat)
         {
+            Answered(half, actorSlot);
             CrossingExchange mine = Of(half);
             DistrictCrossing partner = TradingPosts.Partner(half);
             CrossingExchange theirs = Of(partner);
@@ -830,6 +831,7 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public void Cancel(DistrictCrossing half, int actorSlot, int serial)
         {
+            Answered(half, actorSlot);
             if (!TryGetOwnOpen(half, actorSlot, serial, "cancel", out CrossingExchange mine, out DistrictCrossing partner, out CrossingExchange theirs))
                 return;
             int me = OwnerOf(half), them = theirs?.Colony ?? OwnerOf(partner);
@@ -851,7 +853,7 @@ namespace BeaverBuddies.Colonies
             if (mine.CancelAsked) return;
             mine.AskCancel(true);
             Plugin.Log($"[Colony] Slot {me} asks to end exchange {serial}");
-            Tell(() => them, null, () => string.Format(T("BeaverBuddies.Colony.Trade.Notice.CancelAsked"), ColonyName(me)), warning: true);
+            Ask(() => them, partner, () => string.Format(T("BeaverBuddies.Colony.Trade.Notice.CancelAsked"), ColonyName(me)), warning: true);
         }
 
         /// <summary>
@@ -876,6 +878,7 @@ namespace BeaverBuddies.Colonies
         /// </summary>
         public void Keep(DistrictCrossing half, int actorSlot, int serial)
         {
+            Answered(half, actorSlot);
             if (!TryGetOwnOpen(half, actorSlot, serial, "keep", out CrossingExchange mine, out DistrictCrossing partner, out CrossingExchange theirs))
                 return;
             if (!mine.IsActive || theirs == null || (!mine.CancelAsked && !theirs.CancelAsked)) return;
@@ -1072,6 +1075,39 @@ namespace BeaverBuddies.Colonies
             catch (Exception error)
             {
                 Plugin.LogWarning("[Colony] Could not show an exchange notice: " + error.Message);
+            }
+        }
+
+        /// <summary>
+        /// A notice that asks the player of <paramref name="slot"/> to answer at a Trading Post: it stays on screen until
+        /// they click it away, and a click on it goes to <paramref name="half"/>, their side of the post (TradeNotices).
+        /// Built only where shown, like <see cref="Tell"/>.
+        /// </summary>
+        private void Ask(Func<int> slot, DistrictCrossing half, Func<string> text, bool warning)
+        {
+            try
+            {
+                int local = ColonySession.LocalSlot;
+                if (local < 0 || local != slot()) return;
+                string message = text();
+                if (TradeNotices.Instance?.Post(message, half, warning) != true) _colonyRulesService.ShowNotice(message, warning);
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Colony] Could not show an exchange notice: " + error.Message);
+            }
+        }
+
+        /// <summary>This computer's player answered at <paramref name="half"/>: the message asking them to is closed.</summary>
+        private static void Answered(DistrictCrossing half, int actorSlot)
+        {
+            try
+            {
+                if (actorSlot >= 0 && actorSlot == ColonySession.LocalSlot) TradeNotices.Instance?.Answered(half);
+            }
+            catch (Exception error)
+            {
+                Plugin.LogWarning("[Colony] Could not close an exchange notice: " + error.Message);
             }
         }
 

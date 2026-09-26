@@ -161,9 +161,11 @@ namespace TimberNet
 
         readonly object gate = new object();
         readonly List<ChatMessage> messages = new List<ChatMessage>();
-        int lastSequence;
+        int lastSequence, historyThrough;
 
         public int LastSequence { get { lock (gate) return lastSequence; } }
+        /// <summary>The newest message that came in the history a guest is sent as it joins (0 for none): older news.</summary>
+        public int HistoryThrough { get { lock (gate) return historyThrough; } }
         public int Count { get { lock (gate) return messages.Count; } }
 
         /// <summary>Adds a message. False if its sequence is not newer than the last one (a duplicate or a stale frame).</summary>
@@ -176,6 +178,19 @@ namespace TimberNet
                 lastSequence = message.Sequence;
                 if (messages.Count > MaxMessages) messages.RemoveRange(0, messages.Count - MaxMessages);
                 return true;
+            }
+        }
+
+        /// <summary>Adds the messages of a history batch, remembering them as history before any is seen.</summary>
+        public void AddHistory(IEnumerable<ChatMessage> history)
+        {
+            lock (gate)
+            {
+                foreach (ChatMessage message in history)
+                {
+                    if (message.Sequence > historyThrough) historyThrough = message.Sequence;
+                    Add(message);
+                }
             }
         }
 
