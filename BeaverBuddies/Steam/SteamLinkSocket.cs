@@ -101,7 +101,7 @@ namespace BeaverBuddies.Steam
         {
             if (!settled.Wait(timeoutMilliseconds))
             {
-                Fail("Steam did not connect in time. Check that both players are online in Steam and that the host is still hosting.");
+                Fail("Steam didn't connect in time. Check that both players are online in Steam and the host is still hosting.");
                 throw new IOException(FailureReason);
             }
             lock (gate)
@@ -259,7 +259,7 @@ namespace BeaverBuddies.Steam
                     if (closing) return CloseNative(SteamEndReasons.SessionEnded, "closed while connecting", false);
                     if (now - startedAt > ConnectTimeoutSeconds)
                     {
-                        Fail("Steam could not reach the other player in time. Check that both players are online in Steam.");
+                        Fail("Steam couldn't reach the other player in time. Check that both players are online in Steam.");
                         return CloseNative(SteamEndReasons.SessionEnded, "connect timeout", false);
                     }
                     return false;
@@ -319,7 +319,7 @@ namespace BeaverBuddies.Steam
             int n = backend.Receive(handle, OnMessage, MaxReceivesPerPump);
             if (n < 0)
             {
-                Fail("Steam could not read data from the other player.");
+                Fail("Steam couldn't read data from the other player.");
                 return false;
             }
             return true;

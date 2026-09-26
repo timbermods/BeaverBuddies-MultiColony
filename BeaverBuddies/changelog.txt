@@ -1,3 +1,7 @@
+v1.4.0-rc16 (Timber Together)
+* Every message, button and setting is reworded to be plain and short. Nothing works differently.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc15 (Timber Together)
 * A trade offer stays on screen until you click it. Clicking it takes you to the Trading Post; the X just closes it. A request to end an exchange works the same way.
 * A chime plays for a trade offer, and for each chat message from another player.

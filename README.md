@@ -46,9 +46,9 @@ Together**.
 
 ## Host a game
 
-Every co-op game starts in a **Co-op Game** room. Invite with **Invite Friends** (Steam) or give your IP address
-(port **25565**); friends press **Ready**, and your **Start Game** loads the game for everyone at once, paused.
-Nobody can join after that, until you **Save and Rehost**.
+Every co-op game starts in a **Co-op Game** room. Invite with **Invite friends** (Steam) or give your IP address
+(port **25565**); friends press **Ready**, and your **Start game** loads the game for everyone at once, paused.
+Nobody can join after that, until you **Save and rehost**.
 
 **A new game.** New Game → faction → map → difficulty. Under the game's **Tutorial** checkbox:
 
@@ -58,7 +58,7 @@ Nobody can join after that, until you **Save and Rehost**.
   - **Mixed factions** (unticked): each player picks Folktails or Iron Teeth in the room. Greyed unless every faction
     is unlocked and no other faction mod is installed.
 
-Then press **Host co-op game** beside **Start** and name your settlement. **Invite Friends** lights up as soon as
+Then press **Host co-op game** beside **Start** and name your settlement. **Invite friends** lights up as soon as
 the Steam lobby is ready.
 
 **A save.** Load game (main menu, or Esc in a game) → pick a save → **Host co-op game**, right of **Load**. A gold
@@ -68,7 +68,7 @@ Start, for good. Your colony keeps everything built so far, and each friend foun
 
 **The game you're in.** Playing alone, Esc → **Host co-op game** saves the game and opens its room over it.
 
-**Save and Rehost.** In a co-op game, that button reads **Save and Rehost**: the game is saved and everyone meets in
+**Save and rehost.** In a co-op game, that button reads **Save and rehost**: the game is saved and everyone meets in
 its room again, to let someone new in or to recover from a dropped connection or a desync. Guests come along by
 themselves; one who missed it chooses **Rejoin**.
 
@@ -79,7 +79,7 @@ press **Join**. Or accept the host's Steam invite, or type their IP address unde
 **Ready** and wait for the host.
 
 Joined from inside a game, the room opens over it and your game waits, paused. **Leave** takes you back to it; at
-**Start Game** it is saved as at *Exit to menu*, and the host's game loads. In a co-op game, leave it first to accept
+**Start game** it is saved as at *Exit to menu*, and the host's game loads. In a co-op game, leave it first to accept
 someone else's invite.
 
 **Found your colony.** In the game you're offered a district center to place (**Place district center**, or
@@ -144,7 +144,7 @@ so far, and each earns its own science from then on.
 | **Home** | Back to your colony (click a name in the connection panel to go to that player) |
 | **Ctrl+Shift+J** | Write a diagnostics report |
 
-Change them under Options → Bindings → **Timber Together**. **Ping Location**, **Toggle connection panel** and
+Change them under Options → Bindings → **Timber Together**. **Ping location**, **Toggle connection panel** and
 **Chat: start typing** have no key until you set one there.
 
 ## Co-op basics
@@ -167,9 +167,9 @@ More: [Steam invites](STEAM-INVITES.md), [the connection panel](CONNECTION-PANEL
 ## Troubleshooting
 
 - **Multiplayer build mismatch:** someone has a different build. Everyone installs the same zip and restarts.
-- **Someone dropped out or wants in late:** the host chooses Esc → **Save and Rehost**; they choose **Rejoin**, or
+- **Someone dropped out or wants in late:** the host chooses Esc → **Save and rehost**; they choose **Rejoin**, or
   join from **Join co-op game**.
-- **A desync:** the host chooses **Save and Rehost**; guests choose **Reconnect (wait for Rehost)**.
+- **A desync:** the host chooses **Save and rehost**; guests choose **Reconnect (wait for rehost)**.
 - **"That would join another colony's roads":** keep your roads a cell apart from theirs, or link them with a Trading
   Post.
 - **A Trading Post says *Not trading yet*:** each half needs a different colony's road at its door.

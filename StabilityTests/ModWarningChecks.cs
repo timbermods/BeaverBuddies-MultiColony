@@ -122,13 +122,13 @@ static class ModWarningChecks
         {
             var difference = ModListComparer.Compare(Host.Append(M("Shared", "Shared Mod", "v1.0")), Guest.Append(M("Shared", "Shared Mod", "v1.1")));
             string text = Build("sarawr", difference);
-            Check(text.Contains("Your mods and sarawr's mods are not the same"), text);
+            Check(text.Contains("Your mods don't match sarawr's."), text);
             Check(text.Contains("Only on your computer:\n- Optimized Local Housing (v0.1.0)"), text);
             Check(text.Contains("Only on sarawr's computer:\n- Bobingabout's Housing Optimize (v1.1.1.0)"), text);
             Check(text.Contains("Different versions:\n- Shared Mod: you have v1.0, sarawr has v1.1"), text);
             Check(text.TrimEnd().EndsWith("usually harmless."), "the advice should close the message: " + text);
             // Without a name the message still reads properly.
-            Check(Build(null, difference).Contains("Your mods and the other player's mods"), "no fallback for a missing name");
+            Check(Build(null, difference).Contains("Your mods don't match the other player's."), "no fallback for a missing name");
             // Only the sections that apply are shown.
             string onlyOne = Build("sarawr", ModListComparer.Compare(Host, Host.Take(2)));
             Check(onlyOne.Contains("Only on your computer:") && !onlyOne.Contains("Only on sarawr's computer:") && !onlyOne.Contains("Different versions:"), onlyOne);
@@ -141,7 +141,7 @@ static class ModWarningChecks
             Check(text.Contains("...and 15 more"), text);
             // A player name with line breaks and a huge length stays a short single line.
             string hostile = Build("evil\r\nname" + new string('x', 500), ModListComparer.Compare(many.Take(1), new ModEntry[0]));
-            var name = Regex.Match(hostile, "^Your mods and (.*)'s mods are not the same").Groups[1].Value;
+            var name = Regex.Match(hostile, @"^Your mods don't match (.*)'s\.").Groups[1].Value;
             Check(name.StartsWith("evil name") && name.Length <= 40 && name.IndexOfAny(new[] { '\r', '\n' }) < 0, "name: [" + name + "]");
         });
         yield return ("Every string the warning asks for exists in the English file", () =>
@@ -275,7 +275,7 @@ static class ModWarningChecks
                 Check(SpinWait.SpinUntil(() => { host.Update(); guest.Update(); return errors.Count > 0; }, 4000), "the failed load was never reported");
                 guest.Update();
                 Check(goodMaps == 1, "the second map handler did not run");
-                Check(errors.Count == 1 && errors[0].Contains("could not be loaded"), string.Join(" | ", errors));
+                Check(errors.Count == 1 && errors[0].Contains("couldn't be loaded"), string.Join(" | ", errors));
                 Check(logs.Any(l => l.Contains("Ignoring an error in a handler")), "the failure was not logged");
             }
             finally { host.Close(); guest.Close(); }

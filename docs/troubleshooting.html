@@ -90,7 +90,7 @@
             <li>Install and enable <b>Harmony</b> and <b>Mod Settings</b>.</li>
             <li>Enable <b>Timber Together</b> in the mod manager and restart the game.</li>
             <li>Check the game version: Timberborn 1.1 (tested on 1.1.2.4).</li>
-            <li>Search <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> for <code>Timber Together v<span data-release="version">1.4.0-rc15</span> is loaded!</code>. If it's there, the mod loaded.</li>
+            <li>Search <code>%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log</code> for <code>Timber Together v<span data-release="version">1.4.0-rc16</span> is loaded!</code>. If it's there, the mod loaded.</li>
           </ol>
         </div>
       </details>
@@ -142,11 +142,11 @@
       </details>
 
       <details class="q" id="steam-invite">
-        <summary>Invite Friends does nothing, or my friend gets no invite</summary>
+        <summary>Invite friends does nothing, or my friend gets no invite</summary>
         <div class="answer">
           <ol>
-            <li><b>Invite Friends</b> stays greyed until the Steam lobby is ready: give it a moment after you start hosting.</li>
-            <li>Check <b>Enable Steam Networking</b> is on in Timber Together's settings (the default).</li>
+            <li><b>Invite friends</b> stays greyed until the Steam lobby is ready: give it a moment after you start hosting.</li>
+            <li>Check <b>Enable Steam networking</b> is on in Timber Together's settings (the default).</li>
             <li>Both of you must be online in Steam, be Steam friends, and own Timberborn on Steam.</li>
             <li>Your friend can also find your game in <b>Join co-op game</b>.</li>
             <li>Still stuck? Use direct IP or Hamachi instead.</li>
@@ -157,14 +157,14 @@
       <details class="q" id="already-started">
         <summary>The invite says the host has already started</summary>
         <div class="answer">
-          <p>Nobody can join once the host presses <b>Start Game</b>, and a started game may also drop off the <b>Join co-op game</b> list. The host chooses Esc &rarr; <b>Save and Rehost</b> and sends a new invite, or you join from <b>Join co-op game</b> once the room is open.</p>
+          <p>Nobody can join once the host presses <b>Start game</b>, and a started game may also drop off the <b>Join co-op game</b> list. The host chooses Esc &rarr; <b>Save and rehost</b> and sends a new invite, or you join from <b>Join co-op game</b> once the room is open.</p>
         </div>
       </details>
 
       <details class="q" id="rejoin">
         <summary>A friend lost the connection</summary>
         <div class="answer">
-          <p>They choose <b>Rejoin</b> on the lost-connection message: it waits in their game and joins the host's room as soon as it opens. The host chooses Esc &rarr; <b>Save and Rehost</b>. Either can go first; when everyone is ready, <b>Start Game</b> carries on.</p>
+          <p>They choose <b>Rejoin</b> on the lost-connection message: it waits in their game and joins the host's room as soon as it opens. The host chooses Esc &rarr; <b>Save and rehost</b>. Either can go first; when everyone is ready, <b>Start game</b> carries on.</p>
         </div>
       </details>
 
@@ -176,9 +176,9 @@
       </details>
 
       <details class="q" id="load-failed">
-        <summary>My game failed to load after Start Game</summary>
+        <summary>My game failed to load after Start game</summary>
         <div class="answer">
-          <p>Nobody can join a game that has started. The host uses <b>Save and Rehost</b>, and you join that room. If it happens again, send every player's logs.</p>
+          <p>Nobody can join a game that has started. The host uses <b>Save and rehost</b>, and you join that room. If it happens again, send every player's logs.</p>
         </div>
       </details>
 
@@ -269,9 +269,9 @@
           <p>The players' games have drifted apart. The log says which check caught it: <i>Random state mismatch</i>, or <i>Colony state differs</i> in a separate-colonies game (that one may be a bug in the check itself, so please send the logs).</p>
           <p class="sub">Try this</p>
           <ol>
-            <li>The host chooses <b>Save and Rehost</b>.</li>
-            <li>Guests choose <b>Reconnect (wait for Rehost)</b>, in any order: each waits in their game and joins the host's room when it opens.</li>
-            <li>Everyone presses <b>Ready</b>; the host presses <b>Start Game</b>.</li>
+            <li>The host chooses <b>Save and rehost</b>.</li>
+            <li>Guests choose <b>Reconnect (wait for rehost)</b>, in any order: each waits in their game and joins the host's room when it opens.</li>
+            <li>Everyone presses <b>Ready</b>; the host presses <b>Start game</b>.</li>
           </ol>
           <p class="sub">Common causes</p>
           <ul>
@@ -287,7 +287,7 @@
         <summary>"Multiplayer has stopped because this action may have changed only part of the game state"</summary>
         <div class="answer">
           <p>An action couldn't be completed on one player's game, so the session stops rather than let the games differ unnoticed. Open the menu (Esc), reload a known-good save, and don't overwrite it with the stopped session. If it repeats with the same action, send the logs and say what you were doing.</p>
-          <p>A guest who sees <i>An action from the host could not be read</i> is missing a mod the host uses, named in the message. That guest has left the game and the others play on: install the same mods, and the host uses <b>Save and Rehost</b> to let them back in.</p>
+          <p>A guest who sees <i>An action from the host could not be read</i> is missing a mod the host uses, named in the message. That guest has left the game and the others play on: install the same mods, and the host uses <b>Save and rehost</b> to let them back in.</p>
         </div>
       </details>
 
@@ -302,7 +302,7 @@
         <summary>The game is laggy or my FPS is low in multiplayer</summary>
         <div class="answer">
           <ol>
-            <li>Turn off <b>Always Use Detailed Logging</b> in Timber Together's settings on every computer. It's off by default, and costly.</li>
+            <li>Turn off <b>Always use detailed logging</b> in Timber Together's settings on every computer. It's off by default, and costly.</li>
             <li>Check the connection panel: a red ping means the connection is the problem.</li>
             <li>Try a lower game speed. The host can also click <b>Ease off below</b> in the connection panel to slow a little for a slow guest.</li>
             <li>More colonies mean more to simulate: prefer a smaller map. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> writes a report showing where the time goes.</li>
@@ -333,7 +333,7 @@
             <li><b>Player activity indicators</b> must be on in Timber Together's settings, for them and for you.</li>
             <li>A cursor hides over the game's interface, outside the window, or off the map.</li>
             <li>In Options &rarr; <b>Player cursors</b>, check you haven't shrunk or faded that player's cursor. <b>Reset</b> restores the defaults.</li>
-            <li>For pings, bind <b>Ping Location</b> in the game's key bindings.</li>
+            <li>For pings, bind <b>Ping location</b> in the game's key bindings.</li>
           </ul>
         </div>
       </details>
@@ -353,7 +353,7 @@
         <span class="sign-label">Before you share</span>
         <p>Logs contain file paths, which include your Windows user name. Look through the file before you post it if that matters to you.</p>
       </div>
-      <p>Nothing is uploaded for you: send the files by hand. Leave <b>Always Use Detailed Logging</b> off unless you're asked to turn it on.</p>
+      <p>Nothing is uploaded for you: send the files by hand. Leave <b>Always use detailed logging</b> off unless you're asked to turn it on.</p>
     </section>
 
     <section id="help">

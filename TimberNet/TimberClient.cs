@@ -11,7 +11,7 @@ namespace TimberNet
 {
     public class ConnectionFailureException : Exception
     {
-        public ConnectionFailureException() : base("Client connection timed out") { }
+        public ConnectionFailureException() : base("Connecting to the host timed out.") { }
         public ConnectionFailureException(string message) : base(message) { }
     }
 
@@ -114,7 +114,7 @@ namespace TimberNet
             }
             catch (Exception e)
             {
-                HandleConnectionFailure(client, "Could not reach the host's waiting room: " + e.Message);
+                HandleConnectionFailure(client, "Couldn't reach the host's waiting room: " + e.Message);
                 return false;
             }
         }

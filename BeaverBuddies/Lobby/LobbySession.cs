@@ -93,8 +93,8 @@ namespace BeaverBuddies.Lobby
     public sealed class LobbySession
     {
         /// <summary>The refusal a player gets who tries to come in after Start (English, like the server's other refusals).</summary>
-        public const string ClosedMessage = "The Host has already started this game from its waiting room, so it can no longer be " +
-            "joined. Ask the Host to save and rehost.";
+        public const string ClosedMessage = "The host has already started this game from its waiting room, so it can't be " +
+            "joined now. Ask the host to save and rehost.";
         /// <summary>How long making and saving the world may take before the host gives up on the co-op start.</summary>
         public const double CreateTimeoutMs = 120000;
         /// <summary>How long the host waits for every guest's join to be queued before it loads the save anyway.</summary>
@@ -245,7 +245,7 @@ namespace BeaverBuddies.Lobby
             }
             catch (Exception error)
             {
-                Fail("the new world could not be made: " + error.Message);
+                Fail("the new world couldn't be made: " + error.Message);
             }
         }
 
@@ -273,7 +273,7 @@ namespace BeaverBuddies.Lobby
             double elapsed = RttTracker.NowMs - stateSinceMs;
             if (State == LobbySessionState.CreatingWorld && elapsed > CreateTimeoutMs)
             {
-                Fail("the new world was not saved in time");
+                Fail("the new world wasn't saved in time");
                 return;
             }
             if (State != LobbySessionState.SendingWorld) return;
@@ -285,7 +285,7 @@ namespace BeaverBuddies.Lobby
                 foreach (LobbyMemberInfo guest in Room.Snapshot().Guests.Where(g => !g.InGame))
                 {
                     Plugin.LogWarning($"[Lobby] Guest {guest.Number} ({guest.Name}) was not ready to receive the world; leaving it out");
-                    Server.RemoveFromLobby(guest.Number, LobbyEndReason.Failed, "Your connection did not take the world in time.");
+                    Server.RemoveFromLobby(guest.Number, LobbyEndReason.Failed, "The world didn't reach you in time.");
                 }
             }
             SetState(LobbySessionState.Loading);
@@ -301,7 +301,7 @@ namespace BeaverBuddies.Lobby
             }
             catch (Exception error)
             {
-                Fail("the saved world could not be loaded: " + error.Message);
+                Fail("the saved world couldn't be loaded: " + error.Message);
             }
         }
 

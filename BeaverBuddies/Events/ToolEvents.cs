@@ -286,8 +286,8 @@ namespace BeaverBuddies.Events
             // meets it, when the host marks a crop from a mod this guest does not run. Found before anything is marked,
             // so this guest leaves quietly and the others play on (ReplayService), as for a building (E-1).
             if (NamesUnknownPlant(context))
-                throw new MissingContentException($"The host marked {prefabName} for planting, which this game does not have " +
-                    "(it comes from a mod that is not installed here).");
+                throw new MissingContentException($"The host marked {prefabName} for planting, which this game doesn't have " +
+                    "(it comes from a mod that isn't installed here).");
             var plantingService = context.GetSingleton<PlantingSelectionService>();
             List<Vector3Int> leveled = coordinates
                 ?? LevelAbove(inputBlocks, plantingService._terrainAreaService._terrainService.OnGround);

@@ -123,8 +123,8 @@ namespace BeaverBuddies.Events
                 // so only a guest meets one: the host used a recipe from a mod this guest does not run. Nothing of the
                 // action has been played, so this guest can leave without harm to anyone (1.4.0-rc1, H1).
                 if (!TryGetRecipe(recipes, itemID, out recipe))
-                    throw new MissingContentException($"The host chose the recipe {itemID}, which this game does not have " +
-                        "(it comes from a mod that is not installed here).");
+                    throw new MissingContentException($"The host chose the recipe {itemID}, which this game doesn't have " +
+                        "(it comes from a mod that isn't installed here).");
             }
             prioritizer.SetRecipe(recipe);
         }

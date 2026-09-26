@@ -14,8 +14,8 @@ namespace BeaverBuddies.Connect
         {
             string text = "The multiplayer connection was lost.";
             if (!string.IsNullOrWhiteSpace(reason)) text += "\n\"" + reason.Trim() + "\"";
-            return text + "\n\nMultiplayer has ended for this game and it is paused. " +
-                "Rejoin waits here and joins the host's Co-op Game room as soon as they host this game again. " +
+            return text + "\n\nMultiplayer has ended and this game is paused. " +
+                "Rejoin waits here and joins the host's waiting room as soon as they host this game again. " +
                 "Or open the menu to save this game alone.";
         }
     }

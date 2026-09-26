@@ -359,7 +359,7 @@ static class SteamLinkChecks
             var guest = rig.ConnectGuest();            // nobody is listening, so Steam never answers
             rig.Clock.Now += SteamLinkSocket.ConnectTimeoutSeconds + 1;
             var error = Assert.Throws<IOException>(() => guest.WaitForConnection(3000));
-            Check(error.Message.Contains("could not reach"), error.Message);
+            Check(error.Message.Contains("couldn't reach"), error.Message);
         });
         yield return ("A send that makes no progress fails clearly instead of hanging forever", () =>
         {

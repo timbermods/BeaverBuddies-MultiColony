@@ -256,10 +256,10 @@ static class Rc5Checks
         {
             Check(JoinFlowRules.RejoinGivesUp("Multiplayer build mismatch. Both players must install the same archive and restart Timberborn."), "a build mismatch is waited out for ever");
             Check(JoinFlowRules.RejoinGivesUp("The waiting room is full."), "a full room is waited out");
-            const string started = "The Host has already started this game from its waiting room, so it can no longer be ";
+            const string started = "The host has already started this game from its waiting room, so it can't be ";
             Check(Source("BeaverBuddies", "Lobby", "LobbySession.cs").Contains("ClosedMessage = \"" + started), "the running game's refusal changed");
-            Check(!JoinFlowRules.RejoinGivesUp(started + "joined. Ask the Host to save and rehost."), "the running game's refusal ends the rejoin before the host rehosts");
-            Check(!JoinFlowRules.RejoinGivesUp("Error receiving data: connection reset"), "a connection cut as the host rehosts ends the rejoin");
+            Check(!JoinFlowRules.RejoinGivesUp(started + "joined now. Ask the host to save and rehost."), "the running game's refusal ends the rejoin before the host rehosts");
+            Check(!JoinFlowRules.RejoinGivesUp("Couldn't receive data: connection reset"), "a connection cut as the host rehosts ends the rejoin");
             Check(!JoinFlowRules.RejoinGivesUp(null!) && !JoinFlowRules.RejoinGivesUp(""), "nobody listening ends the rejoin");
             Check(JoinFlowRules.RoomFullMessage == TimberNet.LobbyRoom.FullMessage, "the full room's message changed in TimberNet");
             Check(Source("TimberNet", "CompatibilityHandshake.cs").Contains("\"" + JoinFlowRules.BuildMismatchMarker), "the handshake's mismatch message changed");
@@ -316,7 +316,7 @@ static class Rc5Checks
             Check(Csv("BeaverBuddies.Colony.Overview.AwayNoSameFaction")!.Contains("being played"), "the status says no colony of its faction is in the game");
             Check(Csv("BeaverBuddies.Colony.Overview.HandToOtherFactionTooltip")!.StartsWith("The colonies of {0} and {1}"), "the tooltip calls two players factions");
             Check(Csv("BeaverBuddies.Colony.Handover.Tomorrow")!.Contains("nearest colony of its faction"), "the warning names any nearest colony in a mixed game");
-            Check(Csv("BeaverBuddies.Rejoin.Waiting")!.StartsWith("Waiting for the host's Co-op Game room"), "the rejoin's text is the old one");
+            Check(Csv("BeaverBuddies.Rejoin.Waiting")!.StartsWith("Waiting for the host to open the waiting room"), "the rejoin's text is the old one");
             Check(!Csv("BeaverBuddies.Lobby.Colonies.SharedToSeparate")!.Contains("is the host's colony, and each player"), "the host's own page tells the host to found");
             Check(!Source("BeaverBuddies", "Connect", "SessionEndMessages.cs").Contains("(Save and Rehost)"), "the lost connection names only Save and Rehost");
             Check(!Csv("BeaverBuddies.Colony.Refused.NotStartedYet")!.Contains("unpause"), "the wait's refusal asks the host to unpause");

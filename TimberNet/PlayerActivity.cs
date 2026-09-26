@@ -206,7 +206,7 @@ namespace TimberNet
                     {
                         // A failed write may leave a partial frame, so this connection is finished.
                         Close();
-                        fail(stream, "Error sending activity: " + e.Message);
+                        fail(stream, "Couldn't send activity: " + e.Message);
                         return;
                     }
                 }

@@ -258,10 +258,10 @@ namespace BeaverBuddies.IO
             stoppedAccepting = true;
             Plugin.Log(gameChanged ? "The game was changed before the first tick: no longer accepting clients" : "Game started: no longer accepting clients");
             string message = gameChanged
-                ? "The Host has already changed the game (placed, marked or founded something), so it can no longer be joined. " +
-                  "Ask the Host to save and rehost, and join before they change anything."
-                : "The Host has already started the game, and the game can no longer be joined. " +
-                  "Ask the Host to rehost and join before they unpause.";
+                ? "The host has already changed the game (placed, marked or founded something), so it can't be joined now. " +
+                  "Ask the host to save and rehost, then join before they change anything."
+                : "The host has already started the game, so it can't be joined now. " +
+                  "Ask the host to rehost, then join before they unpause.";
             // Called from inside a replay, so a server that never started must not throw here.
             NetBase?.StopAcceptingClients(message);
             // Tell Steam friends too, so an old invite explains itself instead of hanging. This can run inside a

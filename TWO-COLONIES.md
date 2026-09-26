@@ -49,23 +49,23 @@ Every co-op game starts in a **Co-op Game** room. The host opens it with **Host 
 
 Friends join with **Join co-op game** (main menu, or Esc while playing alone), a Steam invite, or the host's IP
 address (port 25565). The room lists everyone, host first, then guests in the order they came, each **Ready** or
-**Not ready**. The host can remove a guest. **Start Game** asks first if someone isn't ready or nobody came.
+**Not ready**. The host can remove a guest. **Start game** asks first if someone isn't ready or nobody came.
 
 **In a game, the room is a window over it.** The game pauses underneath. **Cancel** (host) or **Leave** (guest)
-returns you to your game as it was. At **Start Game**, a game of your own gets its usual exit save first, unless it
+returns you to your game as it was. At **Start game**, a game of your own gets its usual exit save first, unless it
 was just saved for the room.
 
-**At Start Game:**
+**At Start game:**
 
-- Joining closes. To let someone in later, the host uses **Save and Rehost**.
+- Joining closes. To let someone in later, the host uses **Save and rehost**.
 - Everyone loads the same world, paused. The connection panel shows *(loading)* beside a guest until they're in.
 - On a multi-start map, each player gets a start in room order, as many as there are players (at most the map's
-  **Max Starting Locations**, and four). Anyone beyond founds a colony; past four colonies, players are helpers.
+  **Max starting locations**, and four). Anyone beyond founds a colony; past four colonies, players are helpers.
 
-**Save and Rehost.** In a co-op game, the host's game menu has **Save and Rehost** instead of Host co-op game. The
+**Save and rehost.** In a co-op game, the host's game menu has **Save and rehost** instead of Host co-op game. The
 game is saved and its room opens; connected guests come along by themselves, the room opening over their game. A
 guest who missed it sees *The multiplayer connection was lost* and chooses **Rejoin**, which waits in the game and
-joins the room when it opens. After a desync, guests choose **Reconnect (wait for Rehost)**, which does the same.
+joins the room when it opens. After a desync, guests choose **Reconnect (wait for rehost)**, which does the same.
 
 A guest's game has no hosting buttons: its copy may be out of step.
 
@@ -192,7 +192,7 @@ or if the post is removed.
 **Offer again.** A line above the form offers the last exchange at this post again. Clicking a row in the post's
 ledger puts that round's terms in the form.
 
-**The Ctrl+T window** (also the **Trade** button at the top right, or **All Posts** on a post) lists:
+**The Ctrl+T window** (also the **Trade** button at the top right, or **All posts** on a post) lists:
 
 - each of your posts, its exchange and round, with **Go to**;
 - each colony: its population, whether its player is playing, its **food and water** in days, what it's **looking
@@ -307,7 +307,7 @@ been joined…*), and the game keeps running: remove the joining path or buildin
 **Dev mode** (Alt+Shift+Z) in co-op: only its instant unlock, *Finish now* and *Add 1000 Science* are shared. Its other
 tools desync the game, and its Ctrl placement keys are off. **Tick once** (the period key by default, while paused) is off in co-op.
 
-**Testing alone:** with **Always Use Detailed Logging** on and nobody connected, the host can press **Ctrl+Shift+K** to
+**Testing alone:** with **Always use detailed logging** on and nobody connected, the host can press **Ctrl+Shift+K** to
 act as the next colony (1 → 2 → 3 → 4 → 1).
 
 ## Known limits
@@ -335,7 +335,7 @@ act as the next colony (1 → 2 → 3 → 4 → 1).
 - After a Timberborn update that changes something this mod corrects, co-op stops at load with a message. Update
   Timber Together.
 - **Performance:** more colonies mean more to simulate; prefer a smaller map. Many deletions in one tick (harvests,
-  deaths, blasts) can slow a fast game. **Always Use Detailed Logging** is for small colonies only.
+  deaths, blasts) can slow a fast game. **Always use detailed logging** is for small colonies only.
 - A speed boost the computers can't keep up with leaves a guest a few seconds behind, so their actions show late.
 
 How separate colonies are kept in step: [DEVELOPING.md](DEVELOPING.md#separate-colonies-under-the-hood).

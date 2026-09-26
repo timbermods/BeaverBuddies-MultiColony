@@ -87,14 +87,14 @@ namespace BeaverBuddies.Steam
             {
                 case 3001: text = "Steam is in offline mode."; break;
                 case 4001: text = "The other player stopped responding."; break;
-                case 5003: text = "The connection timed out. Steam could not find a working route between you."; break;
+                case 5003: text = "The connection timed out. Steam couldn't find a working route between you."; break;
                 case 5009: text = "A firewall or router blocked the connection."; break;
                 default:
                     if (reason >= 1000 && reason < 2000) text = "The other player ended the connection.";
                     else if (reason >= 2000 && reason < 3000) text = "The other player's game ended the connection unexpectedly.";
                     else if (reason >= 3000 && reason < 4000) text = "Steam reported a problem with this computer's connection.";
                     else if (reason >= 4000 && reason < 5000) text = "Steam reported a problem reaching the other player.";
-                    else if (reason >= 5000 && reason < 6000) text = "Steam could not keep the connection open.";
+                    else if (reason >= 5000 && reason < 6000) text = "Steam couldn't keep the connection open.";
                     else text = "The Steam connection ended.";
                     break;
             }
