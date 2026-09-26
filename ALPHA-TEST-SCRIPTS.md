@@ -4,7 +4,7 @@ For the 1.4.0 betas and release candidates (separate colonies, trading posts and
 1.4.0-rc1 the late-game playtest, since 1.4.0-rc3 Script S: separate or shared, chosen on the New Game page, since
 1.4.0-rc4 Script H: hosting a save, and hosting from a game, with 1.4.0-rc5's fixes marked *(rc5)*, and since
 1.4.0-rc7 Script G: hosting and joining from inside a game, with the steps of older scripts it changed marked
-*(rc7)*). The scripts began with the alphas; a label such as *(alpha13)* or *(beta2)* says which build a line was
+*(rc7)*, and since 1.4.0-rc15 Script N: trade messages and chat chimes). The scripts began with the alphas; a label such as *(alpha13)* or *(beta2)* says which build a line was
 added for. Please report a result for **every line**: *works*, *fails* (what you saw), or *not tried*. A screenshot
 helps for anything drawn on screen (the trading-post panel, a notice, the connection panel, the toolbar). Send
 `Player.log` at the end (`%USERPROFILE%\AppData\LocalLow\Mechanistry\Timberborn\Player.log`). Lines from this mode
@@ -865,3 +865,28 @@ them, so please screenshot each one named below, at your usual resolution and at
 16. **Removed.** The host removes the guest (the red cross): the guest's window closes, *Kyler removed you from the
     waiting room.*, and the guest is back in their game, which plays on.
 17. Send both `Player.log` files, with the screenshots (1, 2, 3, 3b, 5, 6, 7). Lines start with `[Lobby]` and `[Join]`.
+
+## Script N: trade messages and chat chimes (two players, about 15 minutes) *(1.4.0-rc15)*
+
+**Setup:** a separate-colonies game with two colonies, hosted, the guest joined, and two Trading Posts between them far
+apart. Game sound on, interface volume up.
+
+1. **An offer stays.** The host makes an offer at post 1. The guest hears a chime and sees *Kyler offers … at a Trading
+   Post. Click here to answer.* on a green board under the top bar, with a round **×** at its end (screenshot please).
+   Wait a minute: it is still there. The host sees nothing new.
+2. **Click to go.** The guest, with the camera far away, clicks the message (not the ×): the camera moves to post 1 and
+   the guest's half is selected, showing the offer. The message is gone. **Accept**.
+3. **Close only.** The host makes an offer at post 2. The guest clicks the **×**: the message closes, the camera stays,
+   and the click sound is the game's cancel sound.
+4. **Answering closes it.** The host withdraws and offers again at post 2. The guest selects post 2 by hand and
+   **Declines**: the message goes away by itself.
+5. **Two posts.** The host makes offers at both posts, a few seconds apart: two messages, stacked, each with a chime and each
+   going to its own post.
+6. **Ending early.** At post 1, the host clicks **Cancel exchange**: the guest gets *Kyler asks to end your exchange at a
+   Trading Post. Click here to answer.* the same way. **Agree to cancel**: both get *The exchange between … was
+   cancelled. Any goods already brought to the Trading Post go back to the colony that brought them.*
+7. **Chat.** The host writes in the chat: the guest hears a chime (not the offer's), with the chat open and with it collapsed.
+   The host hears nothing for their own message. Three messages in a row chime at most once a second. Rehost and let the
+   guest join again: the history comes back silently.
+8. **Volume.** Turn the game's interface volume down: both chimes go quieter with it.
+9. Send both `Player.log` files: no `Could not show` or `notice sound` warnings.

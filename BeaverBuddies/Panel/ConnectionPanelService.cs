@@ -37,12 +37,15 @@ namespace BeaverBuddies.Panel
         readonly InputService input;
         readonly ILoc loc;
         readonly SpeedManager speed;
+        readonly BeaverBuddies.Util.NoticeSounds sounds;
         readonly TickRateMeter tickMeter = new TickRateMeter();
         ConnectionPanelView view;
         bool loaded, failed, chatFailed;
         // Chat: the session the chat belongs to, how far messages have been counted, and what is unread.
         TimberNetBase chatNet;
         int countedSequence, unread, myPlayerId;
+        // How far messages have been listened to for the chime, which plays whether the chat is open or not.
+        int heardSequence;
         // Whether myPlayerId has been read from the connection yet (a guest is told its number a moment after joining).
         bool myPlayerIdKnown;
         float lastChatSend;
@@ -51,9 +54,11 @@ namespace BeaverBuddies.Panel
         float nextRefresh, nextTickSample, waitingSince = -1;
         double? tickRate;
 
-        public ConnectionPanelService(UILayout layout, VisualElementInitializer initializer, InputService input, ILoc loc, SpeedManager speed)
+        public ConnectionPanelService(UILayout layout, VisualElementInitializer initializer, InputService input, ILoc loc, SpeedManager speed,
+            BeaverBuddies.Util.NoticeSounds sounds)
         {
             this.layout = layout; this.initializer = initializer; this.input = input; this.loc = loc; this.speed = speed;
+            this.sounds = sounds;
         }
 
         public void PostLoad()
@@ -191,7 +196,7 @@ namespace BeaverBuddies.Panel
         // A new session (or none) starts an empty chat; the messages themselves live with the network session.
         void StartChatSession(TimberNetBase net)
         {
-            chatNet = net; countedSequence = 0; unread = 0; lastChatSend = -100; myPlayerIdKnown = false;
+            chatNet = net; countedSequence = 0; heardSequence = 0; unread = 0; lastChatSend = -100; myPlayerIdKnown = false;
             if (view.Chat == null || chatFailed) return;
             try { view.Chat.ReleaseFocus(); view.Chat.Clear(); view.SetUnread(0); }
             catch (Exception error) { DisableChat(error); }
@@ -203,6 +208,14 @@ namespace BeaverBuddies.Panel
             try
             {
                 ChatLog log = net.Chat;
+                // A message from another player chimes as it arrives; the history a guest is sent as it joins does not.
+                if (log.LastSequence > heardSequence)
+                {
+                    bool chime = ChatFormat.Chimes(log.Since(heardSequence), myPlayerId, log.HistoryThrough);
+                    heardSequence = log.LastSequence;
+                    // Until this computer knows its own number (a guest learns it a moment after joining), nothing chimes.
+                    if (chime && myPlayerIdKnown) sounds.Play(BeaverBuddies.Util.NoticeSounds.ChatSound);
+                }
                 if (expanded)
                 {
                     view.Chat.Tick();

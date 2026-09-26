@@ -84,6 +84,8 @@ namespace BeaverBuddies.Colonies
             containerDefinition.Bind<ColonyLifecycle>().AsSingleton();
             containerDefinition.Bind<ColonyRoadOverlay>().AsSingleton();
             containerDefinition.Bind<TradeOverviewPanel>().AsSingleton();
+            // A trade message that asks for an answer stays until clicked, and a click goes to the post (1.4.0-rc15).
+            containerDefinition.Bind<TradeNotices>().AsSingleton();
             containerDefinition.Bind<ColonyDiagnostics>().AsSingleton();
             containerDefinition.Bind<ColonyStewards>().AsSingleton();
             containerDefinition.Bind<ColonyWishlist>().AsSingleton();
