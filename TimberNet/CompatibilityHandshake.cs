@@ -51,9 +51,9 @@ namespace TimberNet
                     if (!hello.StartsWith(Prefix, StringComparison.Ordinal)) throw new IOException(hello);
                     string remote = hello.Substring(Prefix.Length);
                     if (!string.Equals(remote, identity, StringComparison.Ordinal))
-                        throw new IOException($"Multiplayer build mismatch. Install the same archive and restart both games.\nHost: {remote}\nClient: {identity}");
+                        throw new IOException($"Multiplayer build mismatch. Install the same mod zip on both computers and restart both games.\nHost: {remote}\nYou: {identity}");
                     Write(stream, identity, false);
-                    if (Read(stream, false) != "OK") throw new IOException("Host did not accept multiplayer compatibility.");
+                    if (Read(stream, false) != "OK") throw new IOException("The host didn't accept the compatibility check.");
                     if (advisory != null)
                     {
                         remoteAdvisory = ReadAdvisory(stream);
@@ -69,7 +69,7 @@ namespace TimberNet
             {
                 stream.Close();
                 if (Volatile.Read(ref timedOut) == 1)
-                    throw new IOException("Multiplayer compatibility check timed out. Make sure both players use the same preview and restart Timberborn.", error);
+                    throw new IOException("The compatibility check timed out. Make sure both players have the same Timber Together version, then restart Timberborn.", error);
                 throw;
             }
         }
@@ -92,7 +92,7 @@ namespace TimberNet
         private static string Read(ISocketStream stream, bool marker, int maxBytes = MaxIdentityBytes, int maxTextBytes = 64 * 1024)
         {
             if (marker && ReadLength(stream) != 0)
-                throw new IOException("The host is running an older BeaverBuddies build without compatibility checking. Update both players to the same preview and restart.");
+                throw new IOException("The host runs an older BeaverBuddies build without the compatibility check. Install the same version on both computers and restart.");
             int length = ReadLength(stream);
             if (length <= 0 || length > maxBytes) throw new IOException("Invalid multiplayer compatibility response.");
             return CompressionUtils.Decompress(stream.ReadUntilComplete(length), maxTextBytes);

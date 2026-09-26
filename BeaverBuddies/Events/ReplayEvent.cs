@@ -129,8 +129,8 @@ namespace BeaverBuddies.Events
             try { result = context.GetSingleton<BuildingService>()?.GetBuildingTemplate(buildingName); }
             catch (ArgumentException) { }
             if (result == null)
-                throw new MissingContentException($"The host used the building {buildingName}, which this game does not have " +
-                    "(it comes from a mod that is not installed here).");
+                throw new MissingContentException($"The host used the building {buildingName}, which this game doesn't have " +
+                    "(it comes from a mod that isn't installed here).");
             return result;
         }
 

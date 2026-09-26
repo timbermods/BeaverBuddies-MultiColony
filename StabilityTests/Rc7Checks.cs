@@ -461,7 +461,7 @@ static class Rc7Checks
             string inLobby = watch.Substring(from, watch.IndexOf("case ReconnectStep.JoinSteamLobby:", from, StringComparison.Ordinal) - from);
             InOrder(inLobby, "the kept lobby", "if (!RejoinLobbyOpen(plan.Lobby)", "quietJoin = true;", "TryToConnect(new CSteamID(host));", "quietJoin = false;");
             Check(SessionEndMessages.ConnectionLost(null).Contains("Rejoin waits here"), "the lost connection still sends the player to the main menu");
-            Check(Csv("BeaverBuddies.Rejoin.Waiting")!.Contains("Co-op Game room"), "the rejoin's box still names a page in the main menu");
+            Check(Csv("BeaverBuddies.Rejoin.Waiting")!.Contains("waiting room"), "the rejoin's box still names a page in the main menu");
         });
 
         yield return ("rc7 (review): a move that fails after the guests were told ends the session they left; a kept lobby never outlives it", () =>

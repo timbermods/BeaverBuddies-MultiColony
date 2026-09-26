@@ -16,10 +16,10 @@ BeaverBuddies is still enabled, the main menu names it (please check that messag
 
 ## Script A: host alone (about 30 minutes)
 
-Setup: in **Mod Settings → Timber Together** tick **Always Use Detailed Logging** (debug mode). Start a **new game** on a
+Setup: in **Mod Settings → Timber Together** tick **Always use detailed logging** (debug mode). Start a **new game** on a
 **standard map**, with **Separate colonies** and **Separate science and unlocks** ticked on the difficulty page (under
 Tutorial; since 1.4.0-rc3, a Mod Setting before). Save, then from the main menu **Host co-op game** → select the save →
-**Host co-op game** → **Start Game** (yes to starting alone).
+**Host co-op game** → **Start game** (yes to starting alone).
 
 1. **Seats.** The log has `[Colony] Separate colonies switched on: new game with one start` (while creating the game)
    and, after hosting, `[Colony] The host plays slot 0`.
@@ -47,7 +47,7 @@ Tutorial; since 1.4.0-rc3, a Mod Setting before). Save, then from the main menu 
    its half, select the post: *Not trading yet*, and why.
 8. **The panel.** Select colony 1's half. The panel is titled **Trading Post** and describes a trading post; there
    is no *Imported goods* box beside it (no **Manage distribution**), no stock list and no *No goods in stock* box. At
-   the bottom: *Trading with Colony 2* in its color with **All Posts**; a **You give** and a **You get** card, each
+   the bottom: *Trading with Colony 2* in its color with **All posts**; a **You give** and a **You get** card, each
    with a good (the one that colony has most of), *You have …* / *Colony 2 has …*, **−**, an amount box and **+**; a
    **Rounds** card with **−**, a box and **+**, and **Repeat until cancelled**; a line reading the offer back; **Make
    offer**; the **Ledger** (*No round has crossed here yet*); and *Traded with Colony 2* (screenshot please: it should
@@ -88,7 +88,7 @@ Tutorial; since 1.4.0-rc3, a Mod Setting before). Save, then from the main menu 
     science bar shows how much colony 1 can spare, and the science moves between the top bars' pools **only when the
     berries are in**, not before. Offer **1 beaver** for 30 berries: the beaver moves to the other colony only when the
     berries are in, and colony 2's notification journal (bottom left) says *… joined the colony from Colony 1 through a
-    Trading Post*. Press **Ctrl+T**, the square **Trade** button at the top right, or **All Posts**: a box like the
+    Trading Post*. Press **Ctrl+T**, the square **Trade** button at the top right, or **All posts**: a box like the
     game's own (a title badge, a red close button) lists every trading post of your colony with its exchange, round and
     **Go to**, and both colonies with their population; the game keeps running behind it. Close it with its close
     button, then open it and press Esc, then Ctrl+T: each closes it. Drag it by its title to one side, close it and
@@ -151,13 +151,13 @@ Tutorial; since 1.4.0-rc3, a Mod Setting before). Save, then from the main menu 
 
 Both install the same zip. The host hosts a game as in Script A (debug mode not needed): a new standard-map game, an
 existing save, or a new multi-start map game. The friend joins its Co-op Game page over a Steam invite, before the host
-presses Start Game (since rc4 nobody can join a started game).
+presses Start game (since rc4 nobody can join a started game).
 
 1. The friend is seated (log: `[Colony] Player 1 (…) plays slot 1`). The connection panel shows each name with its
    colony, e.g. *Alex (colony 2)*.
 1a. **Seating checks the Steam connection (beta8).** The friend who joined over Steam is seated as above, and the host's log
     has no `[Colony] Refused PlayerHelloEvent` line. If a third player can, they join **by IP** (direct connection):
-    also seated, with no refusal. After **Save and Rehost** (line 7) each gets their own colony again.
+    also seated, with no refusal. After **Save and rehost** (line 7) each gets their own colony again.
 2. On a standard map or an existing separate-colonies save: as soon as the friend is in (paused or not), they see the
    offer to place a district center and found their colony. The friend's notice is
    *A new colony has been founded.*; the host's is a plain notice, not a warning: *A new colony has been founded:
@@ -169,12 +169,12 @@ presses Start Game (since rc4 nobody can join a started game).
 5. Separate science (Script A line 12), one player per colony.
 6. Play 30 minutes at your normal speed with trade running. No desync dialog. Note the guest's frame rate from the
    connection panel at the start and at the end.
-7. **Save and Rehost.** Both players get the same colony again. Then **swap hosts**: the friend hosts the same save;
+7. **Save and rehost.** Both players get the same colony again. Then **swap hosts**: the friend hosts the same save;
    each player still gets their own colony.
 8. **Away.** The friend leaves while the host plays on (no rehost): from the next day the Ctrl+T window shows
    *player away (missed N days of hosted play)* and offers **Hand to …** at once. Wait the number of days in the
    host's setting (set it to 2 for this test; it can be changed during the game): the friend's colony is handed to
-   the host's. Do this once with the host's **Always Use Detailed Logging** on: the hand-over must still happen
+   the host's. Do this once with the host's **Always use detailed logging** on: the hand-over must still happen
    (before alpha12 it never did with logging on). When the friend joins again (the host saves and rehosts), they get
    the notice and can found a new colony.
 8a. **Every tick compared (alpha13).** Play a quarter of an hour at speed 1 to 3 with building, marking and an
@@ -194,10 +194,10 @@ presses Start Game (since rc4 nobody can join a started game).
 8d. **Gates, two players (alpha14).** One player opens a gate on their own roads while the other hovers a path
     preview across it: it opens on both screens within a tick. A gate that would join the two colonies' roads stays
     shut with the conflict mark on both.
-8j. **Player colors (beta4).** With neither player having changed Ping Color: the host's cursor, selection outline,
+8j. **Player colors (beta4).** With neither player having changed Ping color: the host's cursor, selection outline,
     label and chat name are orange on the guest's screen, and the guest's are blue on the host's; a chat message is
     in the panel's normal color with only the name colored. Under Options, Player cursors, *Their color* shows the
-    same color. One player sets a Ping Color: theirs changes everywhere, the other's does not. In the trading window
+    same color. One player sets a Ping color: theirs changes everywhere, the other's does not. In the trading window
     and the road overlay (Ctrl+L) the colony colors are the colonies' own (brighter on the roads), not these.
 8k. **Speed boost (beta5).** At speed 1, the host clicks **+** in the chat box's top row once: the row shows +0.5
     and *= 1.5x* on both computers, the game's speed buttons show *x1.5* on the last one, and the panel's *Speed*
@@ -206,7 +206,7 @@ presses Start Game (since rc4 nobody can join a started game).
     comes back at 9x, not more. Type something in the box and press Esc: nothing changes. Set the boost back to 0
     with **-** or by typing 0. Host again: it starts at 0.
 8l. **Your own chat color (beta6).** Options, **Player cursors**: the first card, **You, in the chat**, shows your
-    default swatch (orange for the host, blue for the guest, or your Ping Color if you changed it). Pick a preset:
+    default swatch (orange for the host, blue for the guest, or your Ping color if you changed it). Pick a preset:
     your name in the chat changes on your screen within a moment, and not on the other player's. Drag a slider:
     the same. **Reset**: back to the default. Restart the game and host again: the color is remembered. The other
     player's card still has Size and Transparency; yours does not.
@@ -234,7 +234,7 @@ presses Start Game (since rc4 nobody can join a started game).
     the host enables it, the friend does not (ignore the mod warning). The host changes a storage's allocation: the
     friend's game stops with *An action from the host could not be read … Nothing of that action was played here*,
     and the host's game **goes on** (no dialog; the friend leaves the connection panel). The host keeps playing a
-    minute, then **Save and Rehost**; the friend enables the mod and joins again. The other way round (the friend has
+    minute, then **Save and rehost**; the friend enables the mod and joins again. The other way round (the friend has
     the mod, the host does not): the friend's allocation change is refused with *The host could not accept that
     action*, and nothing else the friend does is refused.
 8q. **The fuller desync check (beta10).** Play a quarter of an hour at speed 3, then five minutes at speed 7, both
@@ -242,11 +242,11 @@ presses Start Game (since rc4 nobody can join a started game).
     `Entity mismatch` or `Walker mismatch` line (logged once, the game goes on) or a `Random state mismatch: the
     first word agrees but the rest does not` line (that one stops the game). Any of them in a healthy game is a false
     alarm of the new check: send both `Player.log` files.
-8r. **Reconnect after a desync (beta10, rc4).** Only if a desync happens: the host chooses **Save and Rehost** and the
-    guest **Reconnect (wait for Rehost)**, in either order. Both go to the main menu; the guest waits (*Waiting for the
+8r. **Reconnect after a desync (beta10, rc4).** Only if a desync happens: the host chooses **Save and rehost** and the
+    guest **Reconnect (wait for rehost)**, in either order. Both go to the main menu; the guest waits (*Waiting for the
     host to host again…*) and lands on the host's Co-op Game page as soon as it opens: a Steam guest through the host's
-    lobby (with the host's **Allow Friends to Join Directly via Steam** on) or its invite, a direct-IP guest by
-    redialling the address it typed. Ready, Start Game.
+    lobby (with the host's **Allow friends to join directly via Steam** on) or its invite, a direct-IP guest by
+    redialling the address it typed. Ready, Start game.
 8s. **Tick once while a guest waits (beta10).** On a guest, press the period key while the game runs at speed 7 and
     the guest briefly waits for the host (the connection panel's *Waiting for host*), or on a host easing off for a
     slow guest: the game pauses for everyone, as the pause button does, and no *Tick once is off* notice shows. Press
@@ -254,7 +254,7 @@ presses Start Game (since rc4 nobody can join a started game).
 8t. **The Earth Repopulator (beta12).** On an Iron Teeth map, with one player's frame rate capped at 15 (the game's
     or the graphics driver's limit) and the other uncapped, activate a finished Earth Repopulator with 8 pilots. All 8
     planes launch, the Wonder deactivates and the pilots disappear half an hour later, with no desync and no
-    `Walker mismatch` line. Save and Rehost once while a plane is on the runway and once while the launcher turns.
+    `Walker mismatch` line. Save and rehost once while a plane is on the runway and once while the launcher turns.
     Activate a Folktails Earth Recultivator in co-op, and again right after it deactivates. With LateGamePerformance on
     both computers, repeat the launch with one player's camera turned away from the Wonder. The launch should look
     smooth at speed 1.
@@ -289,9 +289,9 @@ presses Start Game (since rc4 nobody can join a started game).
 8ac. **Another mod's settings (beta16).** With MixedStorage on both computers, the friend selects the host's
     warehouse or pile and changes its goods in the MixedStorage menu: refused with *That belongs to another colony.*,
     and nothing changes on either screen. On the friend's own warehouse it works.
-8ad. **The trading posts window (beta16).** Open it (Ctrl+T or **All Posts**) and drag it by its title to the side:
+8ad. **The trading posts window (beta16).** Open it (Ctrl+T or **All posts**) and drag it by its title to the side:
     it moves, and stays on screen however far you drag it. Close it and open it again: it opens where it was left.
-    On a Trading Post, the **All Posts** button sits above the scrolling part, clear of its scroll bar.
+    On a Trading Post, the **All posts** button sits above the scrolling part, clear of its scroll bar.
 8ae. **Whose roads are whose (beta16).** At night and by day, press **Ctrl+L**: every road cell of each colony shows as
     a bright square in its color (colony 1 red, colony 2 green-teal), easy to tell apart on grass and on the paths
     themselves; a district center's and stairs' squares lie on the ground, none float inside them. Pick a building:
@@ -342,14 +342,14 @@ presses Start Game (since rc4 nobody can join a started game).
 
 ## Script C: scale (an evening, three or four players)
 
-Everyone installs the same zip; the host turns on **Always Use Detailed Logging** (the log then has one line a day
+Everyone installs the same zip; the host turns on **Always use detailed logging** (the log then has one line a day
 per colony: population, exchanges).
 
-1. Everyone joins the host's Co-op Game page and readies up; **Start Game**; then three or four players each found a
+1. Everyone joins the host's Co-op Game page and readies up; **Start game**; then three or four players each found a
    colony on a medium map, and link each pair of neighbors with a trading post. Once the game has started, a fifth
-   player tries to join: refused (the game has started; the host must Save and Rehost).
+   player tries to join: refused (the game has started; the host must Save and rehost).
 1a. **Two join by IP at once (beta11, rc4).** With a save of a grown colony (a few MB) on its Co-op Game page, two
-    guests press **Join co-op game** by IP within a few seconds of each other and ready up; **Start Game**. While both
+    guests press **Join co-op game** by IP within a few seconds of each other and ready up; **Start game**. While both
     receive the save, the host's loading goes on and both guests load. Before beta11 the host froze until the first
     guest's save had arrived.
 1b. **High ping at a boosted speed (beta12).** A player far away (ping 150 ms or more) and a speed boost to 30: the
@@ -377,8 +377,8 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
    name already used shows the game's own message and the box stays. Name it and go on.
 3. **The host's page.** A **Co-op Game** page like the New Game pages: the banner and title, the "Folktails - map -
    Normal" plate centred, the settlement's name in gold, **Players (1)** with your row (your faction's logo, *Host ·
-   Colony 1*, a green tick and **Ready** on the right), **Invite Friends** (usable after a moment), the IP line,
-   **Cancel** and **Start Game** *(beta23: seen)*. Screenshot it at your usual resolution and at the smallest window
+   Colony 1*, a green tick and **Ready** on the right), **Invite friends** (usable after a moment), the IP line,
+   **Cancel** and **Start game** *(beta23: seen)*. Screenshot it at your usual resolution and at the smallest window
    you use.
 4. **Joining.** Guest, from the main menu: accept the invite. A *Connecting to …* box, then the **Player 1's Game** page:
    the same plate and players, your row marked *(you)*, **Ready** and **Leave**. The host's row for you shows
@@ -400,8 +400,8 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
 6b. **Leave and come back (beta21).** Over Steam: the guest leaves and accepts the invite again, five times; each time
    its row comes back. (Known limit: the host's Steam lobby keeps everyone who left. If a rejoin is refused as full,
    say after how many.)
-7. **Start with someone not ready.** Guest joins again and is not ready. Host: **Start Game** → *Not everyone is
-   ready (…)* → **Keep waiting**: nothing happens. Guest: ready. Host: **Start Game**. Both see the loading screen
+7. **Start with someone not ready.** Guest joins again and is not ready. Host: **Start game** → *Not everyone is
+   ready (…)* → **Keep waiting**: nothing happens. Guest: ready. Host: **Start game**. Both see the loading screen
    with the mod's line (*Creating the world…*, *Loading your co-op game…*, *Loading Player 1's co-op game…*). The host
    never sees the new world before it.
 7a. **The guest gets in (beta21).** The guest's game loads (its log has `Loading map` and no `NullReferenceException`).
@@ -413,9 +413,9 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
    log has `[Lobby] Guest 1 (…) seated in colony 2`. Unpause and play 5 minutes: no desync.
 9. **A multi-start map.** Players field 4, two players: two starts are filled, the guest's is start 2, and nobody
    founds anything. (`[Lobby] Filling 2 start(s)` in the host's log.)
-10. **Too late.** A third account accepts an old invite after **Start Game**: refused with "The host has already
+10. **Too late.** A third account accepts an old invite after **Start game**: refused with "The host has already
     started the game…".
-10b. **Start at once (beta21).** Host opens a room and presses **Start Game** straight away (yes to starting alone): on a
+10b. **Start at once (beta21).** Host opens a room and presses **Start game** straight away (yes to starting alone): on a
     friend's Steam friends list the host shows no *Join game*.
 11. **Cancel.** Host opens a waiting room, the guest joins, host **Cancel** → confirm: the guest sees *Kyler closed
     the waiting room.* The host is back on the difficulty page; **Load game** → any save → **Host co-op game** still
@@ -430,9 +430,9 @@ with the mock-ups in `design/pre-game-lobby/` (in the repository); a screenshot 
     played → **Host co-op game** (right of Load). The same page opens: the plate says the settlement, the gold line the save's name (an autosave
     reads *Autosave*) and its date as the Load Game box writes it; each row names the player's colony, with its
     faction's logo.
-    The guest joins from the main menu and readies up; **Start Game**: both load the save, paused, and each is in the
+    The guest joins from the main menu and readies up; **Start game**: both load the save, paused, and each is in the
     colony the save remembers (`[Colony] Player … plays slot …`). **Cancel** instead goes back to the Load game box.
-15a. **From a game (beta19; rc7).** The old dialog (connected players, Invite Friends, Start Game) is gone: hosting from
+15a. **From a game (beta19; rc7).** The old dialog (connected players, Invite friends, Start game) is gone: hosting from
     a game opens the same room as a window over the game (Script G).
 15b. **A player new to the save (beta19).** A third player who never played the save joins its waiting room: in the
     game they take the next free colony (or found one), as before.
@@ -499,7 +499,7 @@ happen and, in brackets, the review finding it checks (`design/REVIEW-FINDINGS-1
 
 **For every part:**
 - Both players install the same zip and use the same mods and settings.
-- The host turns on **Always Use Detailed Logging** only for Script T and small tests. From 200 beavers and bots it
+- The host turns on **Always use detailed logging** only for Script T and small tests. From 200 beavers and bots it
   costs too much, and the desync dialog no longer offers it.
 - After each part, send both players' `Player.log` and the Ctrl+Shift+J report (press it just before leaving; it is
   saved in `TimberTogether-Reports` next to `Player.log`).
@@ -567,7 +567,7 @@ happen and, in brackets, the review finding it checks (`design/REVIEW-FINDINGS-1
 12a. **Off by default** *(1.4.0-rc2)*. On a fresh install, Mod Settings shows *Hand over a colony after its player is
     away* at 0. With it at 0, the guest leaves for three in-game days: no warning and no hand-over; the host's Ctrl+T
     says *the host hands no colony over for absence* on the guest's colony.
-13. **Save and Rehost.** Esc → **Save and Rehost**; the guest chooses **Rejoin** and lands on the page; Ready, Start
+13. **Save and rehost.** Esc → **Save and rehost**; the guest chooses **Rejoin** and lands on the page; Ready, Start
     Game: everything as before, no desync. Both players
     press Ctrl+Shift+J and compare the `day N tick T:` check lines: equal.
 14. Send both `Player.log` files and reports.
@@ -672,7 +672,7 @@ goes on with no desync dialog (D-new-2; before rc1, switching it on mid-game rea
    then enabled (restart). Tick time within 1 % of each other; PerformanceLog no longer lists Timber Together on
    `TickableEntity.Tick`.
 2. **P2, hosting with nobody joined** (B2, B3, C3, S9). Host the late save from the main menu, start alone, and record.
-   Then Esc → **Save and Rehost**; a guest joins the page; Start; the guest splits it (Esc → **Found your own
+   Then Esc → **Save and rehost**; a guest joins the page; Start; the guest splits it (Esc → **Found your own
    colony**), let a day pass, and record again. In each, also hold a path tool over roads for 30 s. Timber Together's share of tick time: at most 5 % shared and
    7 % split. No Timber Together method among the top allocators.
 3. **P3, with a guest** (B4, S2, S5). The late save split into two colonies, a guest joined. Three minutes each at
@@ -685,8 +685,8 @@ goes on with no desync dialog (D-new-2; before rc1, switching it on mid-game rea
 5. **P5, with LateGamePerformance** (C1). P2 again with LateGamePerformance 0.4.28 on both computers. The same daily
    `[Colony] Check` lines on both (no desync). LateGamePerformance's own warning about `ColonyStamp`'s hash appears
    once (C1-4, a finding for that mod).
-6. **P6, a rehost** (B5, S6). In P3's session, Esc → **Save and Rehost**; the guest chooses **Rejoin**, then Ready, and
-   the host **Start Game**. From the click to the
+6. **P6, a rehost** (B5, S6). In P3's session, Esc → **Save and rehost**; the guest chooses **Rejoin**, then Ready, and
+   the host **Start game**. From the click to the
    guest playing: under 30 s on a home network, and no host freeze over 1 s.
 7. **P7, big actions** (A6, E). Record the frames around each of these on the split late save:
    - placing a 50-building automation blueprint;
@@ -738,7 +738,7 @@ and no text may overlap or run off.
    switched on: slot 0 keeps … science; every colony has the … unlocks so far`. *(rc13)* The host's top bar keeps the
    science earned so far; the guest's starts at 0. The guest can build everything the shared colony had unlocked, and
    what each earns from now on is their own. Neither game menu has the button any more.
-9. **For good.** The host's Save and Rehost: the guest is brought into the room over their game *(rc7)*; Ready,
+9. **For good.** The host's Save and rehost: the guest is brought into the room over their game *(rc7)*; Ready,
    Start: still two colonies, no button, and the guest's Ctrl+K says they already have a colony.
 10. **A separate room.** New game, **Separate colonies** ticked and **Separate science and unlocks** unticked → Host co-op
     game: the gold line reads *Separate colony* *(rc8)*. In the game, the guest is offered
@@ -781,20 +781,20 @@ as a window (Script G). Screenshots help for every box and page here: nothing ma
 6. **From a game played alone** *(rc7)*. Load any save with **Load game** and play a minute. Esc: **Host co-op game**
    and **Join co-op game** are under Load game. **Host co-op game**: a box says the game is saved and its room opens
    over it. Confirm: a save named *… Co-op*, and its room as a window over the game (Script G, step 9). The friend
-   joins; Ready; **Start Game**: both in the game you left.
-7. **The menu in co-op.** In that game, the host's Esc menu has **Save and Rehost** where Host co-op game was; the
+   joins; Ready; **Start game**: both in the game you left.
+7. **The menu in co-op.** In that game, the host's Esc menu has **Save and rehost** where Host co-op game was; the
    guest's has neither. After step 8's lost connection, a guest who chooses **Stay here** still has neither *(rc5)*.
-8. **Save and Rehost** *(rc7)*. The host chooses Esc → **Save and Rehost** and confirms. The guest is brought into the
-   host's room over their own game, with no *connection lost* (Script G, step 10). Ready; **Start Game**: both carry on
+8. **Save and rehost** *(rc7)*. The host chooses Esc → **Save and rehost** and confirms. The guest is brought into the
+   host's room over their own game, with no *connection lost* (Script G, step 10). Ready; **Start game**: both carry on
    where they were, each in their own colony.
-9. **The guest first** *(rc5; rc7)*. To press first the guest needs the desync dialog's **Reconnect (wait for Rehost)**
+9. **The guest first** *(rc5; rc7)*. To press first the guest needs the desync dialog's **Reconnect (wait for rehost)**
    (step 10), or drops their own network for a minute while the host plays on, then **Rejoin**. The guest waits in
    their game, under *Waiting for the host's Co-op Game room…*, while the host is still in the game: no error, the
-   guest's game stays smooth, and the host gets at most one *mods differ* message, not one every few seconds. Then the host's **Save and Rehost**: the guest joins
+   guest's game stays smooth, and the host gets at most one *mods differ* message, not one every few seconds. Then the host's **Save and rehost**: the guest joins
    as the page opens. Once more, and the guest presses **Cancel** while waiting: it stops, and **Join co-op game** still
    works. Also once with the Steam overlay open (Shift+Tab) as the guest gets in: the waiting box goes away once the
    overlay closes, and **Cancel** always works.
-10. **After a desync** (if one happens): the desync dialog's **Save and Rehost** and **Reconnect (wait for Rehost)** do
+10. **After a desync** (if one happens): the desync dialog's **Save and rehost** and **Reconnect (wait for rehost)** do
     the same as step 8.
 11. **Both ways of joining.** Do step 8 once with the guest joined over Steam and once by IP address.
 12. **An invite in a game** *(rc6; rc7)*. The guest plays a save alone; the host opens a Co-op Game page and invites
@@ -822,14 +822,14 @@ them, so please screenshot each one named below, at your usual resolution and at
 3. **The host's window.** In that game, Esc → **Load game** → another save → **Host co-op game**. The window opens over
    the game, which pauses (the clock stops, the speed buttons are locked): the capsule title *Co-op Game*, a close
    button, the plate (the settlement), the gold line (the save's name and date), **Players (1)** with your row (*Host*),
-   **Invite Friends**, the IP line, the status line, and **Cancel** / **Start Game** at the bottom. Nothing overlaps,
+   **Invite friends**, the IP line, the status line, and **Cancel** / **Start game** at the bottom. Nothing overlaps,
    the window fits the screen, and any long line wraps within two lines. **Screenshot 3** (usual size) and **3b** (the
    smallest window). The log has `[Lobby] Waiting room open for the save`.
 4. **Cancel returns.** **Cancel**: back to the Load game box, its gold line there; Esc → the game menu; Esc → the game,
    at the speed it had. Open the room again; with a guest in it (step 6), the close button and Esc ask first.
 5. **A shared save and a mixed save.** Host a shared save from a game: the **Separate colonies** checkboxes in the
    window line up, nothing overlaps (**Screenshot 5**). A mixed save (if you have one): each row's faction logo.
-6. **Joining from a game.** The guest plays a save alone. The host invites them (**Invite Friends**); the guest accepts
+6. **Joining from a game.** The guest plays a save alone. The host invites them (**Invite friends**); the guest accepts
    (Shift+Tab): a *Connecting* box over the guest's game, then the *Player 1's Game* window over it, the game paused, with
    **Ready** and **Leave**. **Screenshot 6.** The guest's log: `[Lobby] Joining from a game: this game stays
    single-player until the host's save arrives`. **Ready**, **Not ready**: the host's row follows. **Leave** (asks):
@@ -837,17 +837,17 @@ them, so please screenshot each one named below, at your usual resolution and at
 7. **Join co-op game in a game.** The guest, Esc → **Join co-op game**: the Join box over the game menu, the host's row
    listed (**Screenshot 7**); **Join** → the window. Leave, and join by IP from the same box. Also: a co-op game's menu
    has no **Join co-op game**, and neither has the menu of a player whose room is open.
-8. **Start from games.** Both in the room (host from a game, guest from a game), **Start Game**: both load the hosted
+8. **Start from games.** Both in the room (host from a game, guest from a game), **Start game**: both load the hosted
    save, paused, each in their colony, without the main menu. Afterwards **Load game** shows an exit save of each game
    that was replaced (as Exit to menu makes); logs: `[Lobby] This game's exit save is made`.
 9. **Host the game you're in.** Play alone, Esc → **Host co-op game** → confirm: a save *… Co-op* and its window over
-   the game. The guest joins; **Start Game**: no exit save of the host's game this time (log: `No exit save of this
+   the game. The guest joins; **Start game**: no exit save of the host's game this time (log: `No exit save of this
    game at Start (it was just saved for the room)`).
-10. **Carried, over Steam.** In a co-op game joined over Steam, the host: Esc → **Save and Rehost** → confirm. The guest
+10. **Carried, over Steam.** In a co-op game joined over Steam, the host: Esc → **Save and rehost** → confirm. The guest
     sees no *connection lost*: a box *The host is moving this game to a Co-op Game room…*, then, within a few seconds,
     the host's window over their game, already in the room. Host log: `[Lobby] Moving to a waiting room: told 1
     guest(s); Steam lobby … kept for the room`, `Steam lobby … kept from the game and reopened`; guest log: `[Lobby] The
-    host is moving this game to a waiting room; following it`, then `connecting to the host`. Ready, **Start Game**:
+    host is moving this game to a waiting room; following it`, then `connecting to the host`. Ready, **Start game**:
     carry on; no exit save of the guest's game (`it was loaded as a guest`). Once more with the host's **Allow Friends
     to Join Directly via Steam** off: the guest still comes back.
 11. **Carried, by IP.** The same with the guest joined by IP address: the guest comes back within a few seconds.
@@ -856,10 +856,10 @@ them, so please screenshot each one named below, at your usual resolution and at
     guest's does not.
 13. **A lost connection.** In a co-op game the guest pulls their network cable for a minute: *The multiplayer connection
     was lost* with **Rejoin** and **Stay here**. **Rejoin**: a box over the guest's game, *Waiting for the host's Co-op
-    Game room…*. The host: **Save and Rehost**: the guest's window opens over their game. Once more, and the guest
+    Game room…*. The host: **Save and rehost**: the guest's window opens over their game. Once more, and the guest
     presses **Cancel** while waiting: the wait stops, and **Join co-op game** in the game menu still works.
-14. **After a desync** (if one happens): the host's **Save and Rehost** carries any guest still connected; the desynced
-    guest's **Reconnect (wait for Rehost)** waits in their game and joins the room.
+14. **After a desync** (if one happens): the host's **Save and rehost** carries any guest still connected; the desynced
+    guest's **Reconnect (wait for rehost)** waits in their game and joins the room.
 15. **Refusals.** A guest in someone else's co-op game accepts an invite: a box says to leave that game first; that game
     carries on. The host, with a room open, accepts someone else's invite: a box says to close the room first.
 16. **Removed.** The host removes the guest (the red cross): the guest's window closes, *Kyler removed you from the

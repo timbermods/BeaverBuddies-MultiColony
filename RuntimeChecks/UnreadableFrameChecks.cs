@@ -190,7 +190,7 @@ internal static class UnreadableFrameChecks
                 if (faults.Count != 1) throw new Exception($"With {bad.Kind}, the session fault was raised {faults.Count} times");
                 // Nothing of that tick is played: the session is over and part of the tick would be worse.
                 if (events.Count != 0) throw new Exception($"With {bad.Kind}, {events.Count} actions of the tick were still played");
-                if (!faults[0].StartsWith("An action from the host could not be read"))
+                if (!faults[0].StartsWith("An action from the host couldn't be read"))
                     throw new Exception($"With {bad.Kind}, the reason does not say what happened: {faults[0]}");
                 foreach (string name in bad.Named)
                     if (!faults[0].Contains(name)) throw new Exception($"With {bad.Kind}, the reason does not name {name}: {faults[0]}");

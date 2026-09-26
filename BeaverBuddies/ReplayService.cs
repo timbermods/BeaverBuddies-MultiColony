@@ -444,7 +444,7 @@ namespace BeaverBuddies
                 if (error is MissingContentException missing && io is ClientEventIO)
                     AbortReplay(missing.Message, leaveQuietly: true);
                 else
-                    AbortReplay("A multiplayer action could not be completed.");
+                    AbortReplay("A multiplayer action couldn't be completed.");
             }, active => IsReplayingEvents = active, IsReplayingEvents);
         }
 
@@ -508,11 +508,11 @@ namespace BeaverBuddies
 
         public void AbortReplay(string reason) => AbortReplay(reason, leaveQuietly: false);
 
-        private const string FailedActionAdvice = "Multiplayer has stopped because this action may have changed only part of the game state. "
-            + "Return to the main menu and reload a known-good save before rehosting. Do not overwrite your good save with this session.";
-        private const string LeftQuietlyAdvice = "Nothing of that action was played here, so no save is harmed, but this game can no longer "
-            + "keep up with the host's: you have left the game, and the host and the other players play on. To play together again, "
-            + "install the mod named above (or the host stops using it), then the host saves and hosts again, and you join.";
+        private const string FailedActionAdvice = "Multiplayer has stopped because this action may have changed only part of the game. "
+            + "Go back to the main menu and load a good save before rehosting. Don't save this game over your good save.";
+        private const string LeftQuietlyAdvice = "None of that action was played here, so no save is harmed. But this game can't keep up "
+            + "with the host's anymore, so you have left, and the others play on. To play together again, install the mod "
+            + "named above (or the host stops using it). Then the host saves and hosts again, and you join.";
 
         /// <summary>
         /// Stops multiplayer here: an action failed partway, or another player said one did. With

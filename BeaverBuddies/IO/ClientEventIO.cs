@@ -84,7 +84,7 @@ namespace BeaverBuddies.IO
         {
             Plugin.LogError("Could not read an action from the host: " + problem);
             LeftOverUnreadableAction = true;
-            NetBase?.RaiseSessionFault("An action from the host could not be read, so this game would no longer " +
+            NetBase?.RaiseSessionFault("An action from the host couldn't be read, so this game would no longer " +
                 "match the host's. " + problem);
             return false;
         }

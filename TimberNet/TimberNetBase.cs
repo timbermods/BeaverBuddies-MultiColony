@@ -437,7 +437,7 @@ namespace TimberNet
                 SendDataWithLength(client, wire);
             } catch (Exception e)
             {
-                HandleConnectionFailure(client, $"Error sending event: {e.Message}");
+                HandleConnectionFailure(client, $"Couldn't send an action: {e.Message}");
             }
         }
 
@@ -496,7 +496,7 @@ namespace TimberNet
             }
             catch (Exception e)
             {
-                if (!IsStopped) HandleConnectionFailure(client, $"Error receiving data: {e.Message}");
+                if (!IsStopped) HandleConnectionFailure(client, $"Couldn't receive data: {e.Message}");
             }
             finally
             {
@@ -607,7 +607,7 @@ namespace TimberNet
                 }
                 if ((string?)control[TYPE_KEY] == "SessionFault")
                 {
-                    sessionFaults.Enqueue("A peer could not replay a multiplayer action. Reload a known-good save before rehosting.");
+                    sessionFaults.Enqueue("Another player's game couldn't play a multiplayer action. Load a good save before rehosting.");
                     return;
                 }
                 //Log($"Queuing message of length {messageLength} bytes");
@@ -745,7 +745,7 @@ namespace TimberNet
             if (!NotifyEach(OnMapReceived, handler => ((MapReceived)handler)(received), "the received save"))
             {
                 // Without this the guest would sit in the menu with no explanation.
-                QueueError("The save from the host arrived but could not be loaded. See Player.log for details.");
+                QueueError("The host's save arrived but couldn't be loaded. Player.log says why.");
             }
         }
 

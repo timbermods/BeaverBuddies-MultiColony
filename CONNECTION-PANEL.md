@@ -66,7 +66,7 @@ Player 2: on it
 - **Send:** click the box, type and press **Enter**. Enter on an empty box, **Esc** or a click on the game gives the
   keyboard back. **Chat: start typing** (Options → Bindings) can open the box with a key.
 - **Typing doesn't play the game:** the game's hotkeys are off while you type.
-- **Names** are each player's **Ping Display Name**, in their cursor color. A player who kept the default yellow gets
+- **Names** are each player's **Ping display name**, in their cursor color. A player who kept the default yellow gets
   a color by player number, so no two start the same. Pick the color you see your own name in under Options (Esc) →
   **Player cursors**.
 - **Everyone sees the same conversation**, in the same order. A player who joins later gets the history.

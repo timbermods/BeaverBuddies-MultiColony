@@ -61,8 +61,8 @@ on one map, links them only through Trading Post barter, and still offers ordina
   - **The Co-op Game room:** every game is hosted through it. A new game (**Host co-op game** beside Start), a save
     (**Load game** → **Host co-op game**, right of Load, in the main menu or in a game; a gold line under the save's
     picture says what it is), or the game you're playing (Esc → **Host co-op game**, the room opening over the game;
-    for a co-op host, **Save and Rehost**, which brings the guests along, with **Rejoin** / **Reconnect** for one who
-    missed it). The host invites (Steam or IP), friends ready up, and Start Game loads everyone together. Guests find
+    for a co-op host, **Save and rehost**, which brings the guests along, with **Rejoin** / **Reconnect** for one who
+    missed it). The host invites (Steam or IP), friends ready up, and Start game loads everyone together. Guests find
     the host's game under **Join co-op game**, in the main menu or the game menu while playing alone.
   - **Mixed factions:** the *Mixed factions* checkbox under *Separate colonies* on the New Game page, unticked by
     default. Each player picks Folktails or Iron Teeth for their own colony on the Co-op Game page.

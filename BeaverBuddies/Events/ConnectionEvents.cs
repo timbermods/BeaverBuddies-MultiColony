@@ -49,18 +49,18 @@ namespace BeaverBuddies.Events
             string warningMessage = null;
             if (serverGameVersion != GameVersions.CurrentVersion.ToString())
             {
-                warningMessage = $"Warning! Server Timberborn version ({serverGameVersion}) does not match client Timberborn version ({GameVersions.CurrentVersion}).\n" +
-                    $"Please ensure that you are running the same version of the game.";
+                warningMessage = $"Your Timberborn version ({GameVersions.CurrentVersion}) doesn't match the host's ({serverGameVersion}).\n" +
+                    $"Make sure you both run the same version of the game.";
             } else if (serverModVersion != Plugin.Version)
             {
-                warningMessage = $"Warning! Server mod version ({serverModVersion}) does not match client mod version ({Plugin.Version}).\n" +
-                    $"Please ensure that you are running the same version of the {Plugin.Name} mod.";
+                warningMessage = $"Your {Plugin.Name} version ({Plugin.Version}) doesn't match the host's ({serverModVersion}).\n" +
+                    $"Make sure you both run the same version of {Plugin.Name}.";
             } else if (isDebugMode != Settings.Debug)
             {
                 // TODO: Should debug mode just come from the server?
                 // Could be a bit tricky, since it must come before load
-                warningMessage = $"Warning! Server debug mode ({isDebugMode}) does not match client debug mode ({Settings.Debug}).\n" +
-                    $"Please update your config files to be in or not in debug mode.";
+                warningMessage = $"Your debug mode ({Settings.Debug}) doesn't match the host's ({isDebugMode}).\n" +
+                    $"Change your config files so debug mode matches the host's.";
             }
             if (warningMessage != null)
             {

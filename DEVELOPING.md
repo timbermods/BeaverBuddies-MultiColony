@@ -31,7 +31,7 @@ How the mod keeps separate colonies in step, and how to build and check it. For 
 
 - **The waiting room** keeps its players in a room of its own on the host's server, before any save exists: small
   messages of their own after the build check (a guest's hello and ready, the host's roster and progress), never game
-  actions. At **Start Game** the host's computer makes the world as a single-player game, saves it at tick 0, sends
+  actions. At **Start game** the host's computer makes the world as a single-player game, saves it at tick 0, sends
   those bytes to every player in the room, and loads the same bytes itself as the hosted game, as **Host co-op game**
   on a save does. The colony slot table is filled in the room's order before that first save.
 - **A room opened in a game** is the same room in a window. A guest who joins from a game stays in a single-player game,
@@ -105,7 +105,7 @@ The Steam transport uses `ISteamNetworkingSockets`, the API Valve recommends (th
 is deprecated), from the game's own Steamworks assembly.
 
 - **Lobby.** The host opens a friends-only Steam lobby; the overlay invites into it. Lobby data says whether the room
-  is open, and closes at **Start Game**, so an old invite explains itself instead of hanging. On a rehost the lobby
+  is open, and closes at **Start game**, so an old invite explains itself instead of hanging. On a rehost the lobby
   is handed to the new room, so connected guests come straight back.
 - **Admission.** The host accepts a connection only from a lobby member, so a stranger who knows a Steam ID can't
   connect. A guest that arrives before the host's lobby view catches up gets a five-second grace period.

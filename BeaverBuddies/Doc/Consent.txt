@@ -1,21 +1,21 @@
 (The text of the data-sharing consent dialog, as the game shows it: the BeaverBuddies.ClientDesynced.ConsentMessage
-line in Localizations/enUS_BeaverBuddie.csv is the copy that ships; edit both. In this fork's builds the Post Bug
-Report button uploads nothing, because they carry no upload token: after a desync, send every player's report from
+line in Localizations/enUS_BeaverBuddie.csv is the copy that ships; edit both. In this fork's builds the Post bug
+report button uploads nothing, because they carry no upload token: after a desync, send every player's report from
 TimberTogether-Reports next to Player.log by hand, as README.md and the troubleshooting page say.)
 
-Consent to Share Usage Data
+Consent to share usage data
 
-By choosing to share your data, you agree to send certain information from your gameplay session to the developers of this mod. This may include:
+If you agree, the following from this game session is sent to the developers of this mod:
 
-- Log Data: Information automatically collected during your gameplay session, such as game events and user interactions.
-- Save File: Your current game save file.
+- Log data: collected automatically while you play, such as game events and what you do in the game.
+- Save file: your current game save.
 
-We strive to maintain your privacy by keeping this data largely anonymous. However, because the data is collected as-is, it may inadvertently include details that could identify you (such as file paths or usernames). The developers will not attempt to identify you using this information.
+We try to keep this data mostly anonymous. But because it is sent as it is, it may include details that could identify you (such as file paths or usernames). The developers won't try to identify you from it.
 
-Your Choices:
-- If you agree, this data will be sent securely to the developers and used to improve the mod.
-- If you do not agree, no data will be sent, and your gameplay will continue without any changes.
+Your choices:
+- If you agree, the data is sent securely to the developers and used to improve the mod.
+- If you don't agree, nothing is sent, and your game carries on as before.
 
-By proceeding, you confirm that you are at least the legal age of digital consent in your country of residence.
+By continuing, you confirm that you are at least the legal age of digital consent where you live.
 
 Do you agree to share your data with the developers of this mod?

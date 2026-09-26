@@ -61,7 +61,7 @@ namespace BeaverBuddies.Connect
             if (ReplayService.HasReplayFailure)
             {
                 _dialogBoxShower.Create()
-                    .SetMessage("This session stopped after a failed multiplayer action. Return to the main menu and reload a known-good save before rehosting.")
+                    .SetMessage("This game stopped after a failed multiplayer action. Go back to the main menu and load a good save before rehosting.")
                     .SetDefaultCancelButton().Show();
                 return false;
             }

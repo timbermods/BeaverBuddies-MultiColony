@@ -15,7 +15,7 @@ colonies too.
   water or automation settings), it shows **Editing:**. It's a notice, not a lock.
 - **Finding a player**: click their row in the [connection panel](CONNECTION-PANEL.md) to go to their cursor or
   selection. Your own row, or **Home**, takes you back to your colony.
-- **Pings** (bind **Ping Location** under Options → Bindings) mark a spot on everyone's map, in your **Ping Color**.
+- **Pings** (bind **Ping location** under Options → Bindings) mark a spot on everyone's map, in your **Ping color**.
 
 In a separate-colonies game, cursor colors are each player's own, while colony colors (each colony's roads under
 Ctrl+L, and colony names in the trading window) are the colony's. The two needn't match.
@@ -41,7 +41,7 @@ display name, so a friend keeps their look next time.
 In Timber Together's settings (**Mods** → the settings button beside it):
 
 - **Player activity indicators** (on): share your cursor, selection and edits, and show others'.
-- **Ping Display Name** and **Ping Color** (yellow): what others see for you. Left on "Player", the name becomes
+- **Ping display name** and **Ping color** (yellow): what others see for you. Left on "Player", the name becomes
   your Steam name. Left on yellow, you get a color by player number (the host orange, then blue, green, pink, purple,
   teal, red and lime), so players who never change it still look different.
 

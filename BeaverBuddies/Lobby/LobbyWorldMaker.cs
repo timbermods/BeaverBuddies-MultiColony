@@ -69,7 +69,7 @@ namespace BeaverBuddies.Lobby
             if (session.State != LobbySessionState.CreatingWorld) return;
             if (!_sceneLoader.TryGetSceneParameters(out GameSceneParameters parameters) || !parameters.NewGame)
             {
-                Fail(session, "the game did not open the new world");
+                Fail(session, "the game didn't open the new world");
                 return;
             }
             making = true;
@@ -93,7 +93,7 @@ namespace BeaverBuddies.Lobby
             }
             catch (Exception error)
             {
-                Fail(session, "the new world could not be saved: " + error.Message);
+                Fail(session, "the new world couldn't be saved: " + error.Message);
             }
         }
 
@@ -107,7 +107,7 @@ namespace BeaverBuddies.Lobby
                 {
                     if (!saveWritten)
                     {
-                        if (RttTracker.NowMs - queuedAtMs > SaveTimeoutMs) Fail(session, "the new world's save was not written");
+                        if (RttTracker.NowMs - queuedAtMs > SaveTimeoutMs) Fail(session, "the new world's save wasn't written");
                         return;
                     }
                     // The save's file is closed only after its callback returns: read it a frame later (RehostingService).
