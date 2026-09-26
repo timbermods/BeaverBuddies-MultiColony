@@ -134,8 +134,10 @@ namespace BeaverBuddies.Colonies
 
             var label = new Label(NativeElements.Plain(text));
             label.AddToClassList("game-text-normal");
+            // A long message wraps inside the board's width instead of pushing the close button out of it.
             label.style.whiteSpace = WhiteSpace.Normal;
             label.style.flexShrink = 1;
+            label.style.minWidth = 0;
             label.style.marginRight = 6;
             board.Add(label);
 
