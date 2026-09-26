@@ -259,7 +259,7 @@ internal static class RcColonyRuntimeChecks
                     object marks = Activator.CreateInstance(marksType, null, planting, cutting)!;
                     marksType.GetMethod("SetPlanting", All)!.Invoke(marks, new[] { V(2, 2, 1), (object)1 });
                     object mode = Activator.CreateInstance(modeType, new object?[] { null })!;
-                    modeType.GetMethod("Enable")!.Invoke(mode, new object?[] { null, "a check", false, newGame });
+                    modeType.GetMethod("Enable")!.Invoke(mode, new object?[] { null, "a check", false, newGame, newGame });
                     int? Owner(string of, object tile) => (int?)marksType.GetMethod(of)!.Invoke(marks, new[] { tile });
                     int? expected = newGame ? null : 0;
                     if (Owner("PlantingOwner", V(1, 1, 1)) != expected || Owner("CuttingOwner", V(3, 3, 1)) != expected || Owner("CuttingOwner", V(4, 4, 1)) != expected)

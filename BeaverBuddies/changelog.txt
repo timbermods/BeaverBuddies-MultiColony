@@ -1,3 +1,7 @@
+v1.4.0-rc13 (Timber Together)
+* Found your own colony now separates science too: every colony keeps what was unlocked so far, the science already earned stays with the host's colony, and each colony earns its own from then on.
+* Full details for every version: STABILITY-CHANGELOG.md in the mod folder.
+
 v1.4.0-rc12 (Timber Together)
 * The Trading Post uses the District Crossing's model again, with its two 3 by 1 halves.
 * Full details for every version: STABILITY-CHANGELOG.md in the mod folder.

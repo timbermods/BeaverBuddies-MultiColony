@@ -222,7 +222,7 @@ static class Rc5Checks
             Check(Body(conversion, "public override void Replay(IReplayContext context)").Contains("SaveConversion.Played();"), "the wait never ends");
         });
 
-        yield return ("B5: a shared save made separate at Start keeps one pool of science by default, as a guest's split does", () =>
+        yield return ("B5: a shared save made separate at Start keeps one pool of science by default", () =>
         {
             string options = Body(Source("BeaverBuddies", "Lobby", "LobbyHostPanel.cs"), "private VisualElement BuildConvertOptions(LobbySetup setup)");
             Check(options.Contains("setup.ConvertScience = false;"), "the friends' colonies start with none of the science they earned");

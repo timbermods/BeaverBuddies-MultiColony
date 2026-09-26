@@ -233,8 +233,9 @@ namespace BeaverBuddies.Lobby
             _tooltipRegistrar.Register(separateRow, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Convert.SeparateTooltip"));
             _tooltipRegistrar.Register(convertScienceRow, RegisteredLocalizationService.T("BeaverBuddies.Lobby.Convert.ScienceTooltip"));
             setup.ConvertSeparate = false;
-            // The science starts shared, as a guest's split keeps it: the players of a shared save earned it together, and
-            // separate science would leave each friend's new colony with none of it (1.4.0-rc5 review, B5).
+            // The science starts shared: the players of a shared save earned it together, and separate science here would
+            // leave each friend's new colony with none of it (1.4.0-rc5 review, B5). (A guest's split, since rc13, gives
+            // every colony the unlocks so far instead.)
             setup.ConvertScience = false;
             convertSeparate.SetValueWithoutNotify(false);
             convertScience.SetValueWithoutNotify(setup.ConvertScience);

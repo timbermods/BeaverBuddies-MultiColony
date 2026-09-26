@@ -400,11 +400,12 @@ namespace BeaverBuddies.Colonies
             bool split = !_colonyModeService.Enabled;
             if (split)
             {
-                // A guest splits a shared game (1.4.0-rc3): it becomes a separate-colonies game for good. Science and
-                // unlocks stay one pool for every colony, as they were while the colony was shared: the guest earned them
-                // too. Every computer plays it the same way.
-                _colonyModeService.Enable(start, $"slot {slot} founded a colony in a shared game", separateScience: false,
-                    newGame: false);
+                // A guest splits a shared game (1.4.0-rc3): it becomes a separate-colonies game for good. Each colony earns
+                // and spends its own science from now on (1.4.0-rc13; one pool before). Every colony keeps the unlocks made
+                // so far, which the guest helped earn; the science points so far stay with the host's colony, and the new
+                // colony starts at 0. Every computer plays it the same way.
+                _colonyModeService.Enable(start, $"slot {slot} founded a colony in a shared game", separateScience: true,
+                    newGame: false, unlocksForEveryColony: true);
             }
 
             // A mixed game's colony plays the faction the host allowed (the event's), recorded before anything is made.

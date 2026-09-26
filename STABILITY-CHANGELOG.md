@@ -5,6 +5,27 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc13
+
+**A split separates science.** Kyler, after playing rc12: a friend split their shared game with **Found your own
+colony**, and the science stayed one pool. Now each colony earns and spends its own from the split on. No change to the
+wire or saves; everyone needs this build (the join checks the version). Built against Timberborn 1.1.2.4: both
+configurations with 0 warnings; StabilityTests 506 and RuntimeChecks 454 pass. **Not played.**
+
+- **The split** (`ColonyFoundingService.Found`) switches separate science on with the colonies: every colony keeps the
+  buildings and bot types unlocked so far, the science points so far stay with the host's colony, and the new colony
+  starts at 0. Until rc12 the split kept one pool and one unlock set for every colony.
+- **How:** `ColonyModeService.Enable` takes the unlock rule on its own (`unlocksForEveryColony`), no longer from
+  `newGame`, which still decides the split's stamping of buildings and marks. A new game gives every colony the unlocks
+  (as before); a shared save made separate at Start with **Separate science and unlocks** keeps them the host's (as its
+  tooltip says).
+- **Games already split** keep their one pool.
+- **Texts:** the split's confirmation and its two founding notices say the science is now each colony's; README,
+  TWO-COLONIES, the site's FAQ and home page, and Scripts L and S follow.
+- **Checks:** StabilityTests 503 → **506** (`Rc13Checks.cs`: the split's call, the science service's rule, the other
+  callers unchanged, the texts); rc3's split checks in `RcMainChecks` and `RcMainRuntimeChecks` now expect the
+  separate science, and fail on rc12's DLL.
+
 ## 1.4.0-rc12
 
 **The Trading Post is the District Crossing's model again.** Asked for by Kyler after rc11: rc10's own model and

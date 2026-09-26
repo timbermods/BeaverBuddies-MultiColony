@@ -130,7 +130,8 @@ what it is **looking for**, and who looks after it. Set what your colony is look
 
 Untick **Separate colonies** on the New Game page and everyone builds one colony together, as in ordinary
 BeaverBuddies. Later, a player other than the host can split off once: Esc → **Found your own colony**. The game then
-has separate colonies for good: the shared colony stays the host's, and science stays one pool.
+has separate colonies for good. The shared colony and its science stay the host's. Every colony keeps the unlocks made
+so far, and each earns its own science from then on.
 
 ## Controls
 

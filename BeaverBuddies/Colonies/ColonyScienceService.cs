@@ -231,10 +231,11 @@ namespace BeaverBuddies.Colonies
         }
 
         /// <summary>
-        /// Separate science begins: the game's pool and unlocks so far become slot 0's (the first colony's). In a new
-        /// game every colony starts with the same unlocks; in a shared game being split, the new colonies start with none.
+        /// Separate science begins: the game's pool so far becomes slot 0's (the first colony's), and so do its unlocks.
+        /// With <paramref name="unlocksForEveryColony"/> every colony starts with those unlocks too (a new game; a guest's
+        /// split, since 1.4.0-rc13); without it the other colonies start with none (a shared save made separate at Start).
         /// </summary>
-        public void Enable(bool newGame)
+        public void Enable(bool unlocksForEveryColony)
         {
             if (Enabled) return;
             int shared = _scienceService.SciencePoints;
@@ -248,10 +249,11 @@ namespace BeaverBuddies.Colonies
             points[0] = shared;
             for (int i = 0; i < unlocked.Length; i++)
             {
-                if (i == 0 || newGame) unlocked[i].UnionWith(sharedUnlocked);
-                if (i == 0 || newGame) workerUnlocked[i].UnionWith(sharedWorkers);
+                if (i == 0 || unlocksForEveryColony) unlocked[i].UnionWith(sharedUnlocked);
+                if (i == 0 || unlocksForEveryColony) workerUnlocked[i].UnionWith(sharedWorkers);
             }
-            Plugin.Log($"[Colony] Separate science switched on: slot 0 keeps {shared} science and {sharedUnlocked.Count} unlocks");
+            Plugin.Log($"[Colony] Separate science switched on: slot 0 keeps {shared} science; " +
+                $"{(unlocksForEveryColony ? "every colony has" : "slot 0 keeps")} the {sharedUnlocked.Count} unlocks so far");
             RefreshToolLocks();
         }
 

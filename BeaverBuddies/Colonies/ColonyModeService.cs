@@ -155,7 +155,9 @@ namespace BeaverBuddies.Colonies
         /// <param name="separateScience">Also give each colony its own science and unlocks (fixed for the save).</param>
         /// <param name="newGame">A new game: every colony starts with the same unlocks. A shared game being split: the
         /// science and unlocks so far stay with the first colony.</param>
-        public void Enable(ColonyStartingSettings startingSettings, string how, bool separateScience, bool newGame)
+        /// <param name="unlocksForEveryColony">With separate science: every colony starts with the unlocks so far, not only
+        /// the first (ColonyScienceService.Enable).</param>
+        public void Enable(ColonyStartingSettings startingSettings, string how, bool separateScience, bool newGame, bool unlocksForEveryColony)
         {
             bool wasEnabled = Enabled;
             if (!Enabled) Plugin.Log($"[Colony] Separate colonies switched on: {how}");
@@ -166,7 +168,7 @@ namespace BeaverBuddies.Colonies
             if (!wasEnabled) ColonyStamps.Instance?.Begin(splittingSharedGame: !newGame);
             // Its marks too: the fields and forests the shared colony marked stay the first colony's (E-7).
             if (!wasEnabled && !newGame) ColonyMarks.Instance?.AdoptUnowned(0);
-            if (!wasEnabled && separateScience) ColonyScienceService.Instance?.Enable(newGame);
+            if (!wasEnabled && separateScience) ColonyScienceService.Instance?.Enable(unlocksForEveryColony);
             // Display: from now on the toolbar's locks follow the local player's colony (RefreshToolLocks did nothing before).
             if (!wasEnabled) ColonyScienceService.Instance?.RefreshToolLocks();
         }
