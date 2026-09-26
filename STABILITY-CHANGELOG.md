@@ -5,6 +5,24 @@ Every change this fork makes relative to the original BeaverBuddies `v1.1` branc
 1.1.2.4. For a plain-language summary, see the [README](README.md). Future releases add a new
 entry above the current one.
 
+## 1.4.0-rc16
+
+**Plain, short text.** A writing pass over every string a player sees (PR #42): plain words, short sentences, active
+voice, sentence case for labels and buttons, and one name for each thing. No change to the wire, saves or behaviour;
+everyone needs this build (the join checks the version). Built against Timberborn 1.1.2.4: both configurations with 0
+warnings; StabilityTests 513 and RuntimeChecks 459 pass. **Not played.**
+
+- **Localization:** 96 English strings rewritten, each as long or shorter; keys, placeholders and line breaks unchanged.
+  Other languages untouched; PR #42 lists the 37 keys whose translations now need updating.
+- **Labels in sentence case:** *Save and rehost*, *Reconnect (wait for rehost)*, *Start game*, *Invite friends*,
+  *Ping color*, *Ping display name*, *Ping location*, *Always use detailed logging*, *Enable Steam networking*, *Allow
+  friends to join directly via Steam*, *All posts* and the other Mod Settings names. The docs and the site follow.
+- **One name each:** the room before Start is the *waiting room* in every message (its window title stays **Co-op
+  Game**); *out of sync* for the state, *a desync* for the event; *Trading Posts* capitalized; US spelling.
+- **Hard-coded messages** (connection errors, the lost-connection and failed-action boxes, waiting-room refusals, the
+  version warnings, Steam reasons): 37 edits in 18 files. The two texts the rejoin matches on are unchanged.
+- **Checks:** 12 assertions that pinned old wording now pin the new wording; no new checks.
+
 ## 1.4.0-rc15
 
 **Trade messages that wait for an answer, and chimes.** Kyler asked for an offer's notice to stay until it is clicked
